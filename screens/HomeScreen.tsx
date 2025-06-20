@@ -1,14 +1,12 @@
-// HomeScreen.tsx - Updated with twrnc styling
+// HomeScreen.tsx - Updated with AI sparkle icon
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   View,
   Text,
   TouchableOpacity,
   TextInput,
-  Modal,
   SafeAreaView,
   StatusBar,
-  FlatList,
   LayoutAnimation,
   Platform,
   Animated,
@@ -17,6 +15,7 @@ import { Ionicons } from '@expo/vector-icons';
 import tw from 'twrnc';
 import ListView from '../components/ListView/ListView';
 import SwipeView from '../components/StoryView/SwipeView';
+import DateSelector from '../components/DateSelector';
 
 // Animated Toggle Button Component
 interface AnimatedToggleButtonProps {
@@ -136,7 +135,7 @@ const AnimatedToggleButton: React.FC<AnimatedToggleButtonProps> = ({
         {/* Animated sliding background */}
         <Animated.View
           style={[
-            tw`absolute top-0.5 w-21 h-10.5 bg-black rounded-2xl shadow-lg`,
+            tw`absolute top-0.5 w-21 h-10.5 bg-black rounded-3xl shadow-lg`,
             {
               left: slideLeft,
             },
@@ -325,7 +324,6 @@ const mockHotels: Hotel[] = [
 ];
 
 const HomeScreen = () => {
-  const [showDatePicker, setShowDatePicker] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [checkInDate, setCheckInDate] = useState<Date>(new Date());
   const [checkOutDate, setCheckOutDate] = useState<Date>(() => {
@@ -334,9 +332,8 @@ const HomeScreen = () => {
     return tomorrow;
   });
   const [showSwipeView, setShowSwipeView] = useState(false);
-  const [isListening, setIsListening] = useState(false);
+  const [isAiProcessing, setIsAiProcessing] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
-  const [selectingDate, setSelectingDate] = useState<'checkin' | 'checkout'>('checkin');
 
   // Auto-typing setup
   const hotelSearchSuggestions = [
@@ -360,14 +357,14 @@ const HomeScreen = () => {
   );
 
   // Event handlers
-  const handleVoiceSearch = useCallback(() => {
-    console.log('Voice button pressed');
-    setIsListening(!isListening);
+  const handleAiSearch = useCallback(() => {
+    console.log('AI search button pressed');
+    setIsAiProcessing(!isAiProcessing);
     setTimeout(() => {
-      setIsListening(false);
-      setSearchQuery("Hotels with pool and spa in Bali");
+      setIsAiProcessing(false);
+      setSearchQuery("AI-powered luxury hotels with spa and ocean view");
     }, 2000);
-  }, [isListening]);
+  }, [isAiProcessing]);
 
   const handleSearch = useCallback(() => {
     console.log('Searching for:', searchQuery);
@@ -378,10 +375,12 @@ const HomeScreen = () => {
     setSearchQuery('');
   }, []);
 
-  const handleDateSelect = useCallback((type: 'checkin' | 'checkout') => {
-    console.log('Opening date picker for:', type);
-    setSelectingDate(type);
-    setShowDatePicker(true);
+  const handleDateChange = useCallback((type: 'checkin' | 'checkout', date: Date) => {
+    if (type === 'checkin') {
+      setCheckInDate(date);
+    } else {
+      setCheckOutDate(date);
+    }
   }, []);
 
   // Enhanced view toggle handler with layout animation
@@ -413,106 +412,11 @@ const HomeScreen = () => {
     console.log('Book now pressed for:', hotel.name);
   }, []);
 
-  const formatDate = (date: Date) => {
-    return date.toLocaleDateString('en-US', { 
-      month: 'short', 
-      day: 'numeric' 
-    });
-  };
-
   const getPlaceholderText = () => {
     if (!isFocused && !searchQuery) {
       return `${displayText}${cursorVisible ? '|' : ''}`;
     }
     return "Search for amazing stays...";
-  };
-
-  const handleDateChange = (selectedDate: Date) => {
-    if (selectingDate === 'checkin') {
-      setCheckInDate(selectedDate);
-      if (selectedDate >= checkOutDate) {
-        const nextDay = new Date(selectedDate);
-        nextDay.setDate(nextDay.getDate() + 1);
-        setCheckOutDate(nextDay);
-      }
-    } else {
-      setCheckOutDate(selectedDate);
-    }
-    setShowDatePicker(false);
-  };
-
-  const generateCalendarDays = () => {
-    const today = new Date();
-    const currentMonth = today.getMonth();
-    const currentYear = today.getFullYear();
-    
-    const firstDayOfMonth = new Date(currentYear, currentMonth, 1);
-    const lastDayOfMonth = new Date(currentYear, currentMonth + 1, 0);
-    const daysInMonth = lastDayOfMonth.getDate();
-    const startingDayOfWeek = firstDayOfMonth.getDay();
-    
-    const days = [];
-    
-    for (let i = 0; i < startingDayOfWeek; i++) {
-      days.push({ key: `empty-${i}`, day: null, date: null });
-    }
-    
-    for (let day = 1; day <= daysInMonth; day++) {
-      const date = new Date(currentYear, currentMonth, day);
-      const isToday = date.toDateString() === today.toDateString();
-      const isSelected = 
-        (selectingDate === 'checkin' && date.toDateString() === checkInDate.toDateString()) ||
-        (selectingDate === 'checkout' && date.toDateString() === checkOutDate.toDateString());
-      
-      const isDisabled = 
-        selectingDate === 'checkin' 
-          ? date < today
-          : date <= checkInDate;
-      
-      days.push({
-        key: `day-${day}`,
-        day,
-        date,
-        isToday,
-        isSelected,
-        isDisabled
-      });
-    }
-    
-    return days;
-  };
-
-  const renderCalendarDay = ({ item }: any) => {
-    if (!item.day) {
-      return <View style={tw`flex-1 h-11 m-0.5`} />;
-    }
-    
-    return (
-      <TouchableOpacity
-        style={tw`flex-1 h-11 m-0.5 items-center justify-center rounded-lg ${
-          item.isToday ? 'bg-gray-100' : ''
-        } ${
-          item.isSelected ? 'bg-black' : ''
-        } ${
-          item.isDisabled ? 'opacity-30' : ''
-        }`}
-        onPress={() => !item.isDisabled && handleDateChange(item.date)}
-        disabled={item.isDisabled}
-        activeOpacity={0.7}
-      >
-        <Text
-          style={tw`text-base font-medium text-black ${
-            item.isToday ? 'font-bold' : ''
-          } ${
-            item.isSelected ? 'text-white font-bold' : ''
-          } ${
-            item.isDisabled ? 'text-gray-300' : ''
-          }`}
-        >
-          {item.day}
-        </Text>
-      </TouchableOpacity>
-    );
   };
 
   return (
@@ -548,29 +452,33 @@ const HomeScreen = () => {
           </View>
           
           <TouchableOpacity
-            style={tw`w-13 h-13 rounded-full bg-black items-center justify-center ${isListening ? 'bg-gray-800' : ''}`}
-            onPress={handleVoiceSearch}
+            style={tw`w-13 h-13 rounded-xl bg-black items-center justify-center ${isAiProcessing ? 'bg-purple-600' : ''}`}
+            onPress={handleAiSearch}
             activeOpacity={0.7}
           >
-            <Ionicons 
-              name={isListening ? "stop" : "mic"} 
-              size={20} 
-              color="#FFFFFF"
-            />
+            <View style={tw`items-center justify-center`}>
+              <Ionicons 
+                name={isAiProcessing ? "hourglass" : "sparkles"} 
+                size={20} 
+                color="#FFFFFF"
+              />
+            </View>
           </TouchableOpacity>
         </View>
 
-        {/* LISTENING INDICATOR */}
-        {isListening && (
-          <View style={tw`items-center mt-3 py-2.5 px-4 bg-gray-50 rounded-lg self-center`}>
-            <View style={tw`flex-row items-center gap-1 mb-1.5`}>
-              <View style={tw`w-1 h-2 bg-black rounded-full`} />
-              <View style={tw`w-1 h-4 bg-black rounded-full`} />
-              <View style={tw`w-1 h-6 bg-black rounded-full`} />
-              <View style={tw`w-1 h-5 bg-black rounded-full`} />
-              <View style={tw`w-1 h-3 bg-black rounded-full`} />
+        {/* AI PROCESSING INDICATOR */}
+        {isAiProcessing && (
+          <View style={tw`items-center mt-3 py-2.5 px-4 bg-purple-50 rounded-lg self-center border border-purple-200`}>
+            <View style={tw`flex-row items-center gap-2 mb-1.5`}>
+              <Ionicons name="sparkles" size={16} color="#7C3AED" />
+              <View style={tw`flex-row items-center gap-1`}>
+                <View style={tw`w-1.5 h-1.5 bg-purple-500 rounded-full`} />
+                <View style={tw`w-1.5 h-1.5 bg-purple-400 rounded-full`} />
+                <View style={tw`w-1.5 h-1.5 bg-purple-300 rounded-full`} />
+              </View>
+              <Ionicons name="sparkles" size={16} color="#7C3AED" />
             </View>
-            <Text style={tw`text-sm text-gray-600 font-medium`}>Listening...</Text>
+            <Text style={tw`text-sm text-purple-700 font-medium`}>AI is finding perfect matches...</Text>
           </View>
         )}
       </View>
@@ -578,27 +486,11 @@ const HomeScreen = () => {
       {/* CONTROLS ROW */}
       <View style={tw`flex-row justify-between items-center px-5 pb-4 gap-3`}>
         {/* DATE SELECTOR */}
-        <View style={tw`flex-row items-center bg-gray-50 rounded-xl border border-gray-100 overflow-hidden`}>
-          <TouchableOpacity
-            style={tw`py-3 px-4 items-center min-w-20`}
-            onPress={() => handleDateSelect('checkin')}
-            activeOpacity={0.7}
-          >
-            <Text style={tw`text-xs text-gray-600 font-medium mb-0.5`}>Check-in</Text>
-            <Text style={tw`text-sm text-black font-semibold`}>{formatDate(checkInDate)}</Text>
-          </TouchableOpacity>
-          
-          <View style={tw`w-px h-7 bg-gray-300`} />
-          
-          <TouchableOpacity
-            style={tw`py-3 px-4 items-center min-w-20`}
-            onPress={() => handleDateSelect('checkout')}
-            activeOpacity={0.7}
-          >
-            <Text style={tw`text-xs text-gray-600 font-medium mb-0.5`}>Check-out</Text>
-            <Text style={tw`text-sm text-black font-semibold`}>{formatDate(checkOutDate)}</Text>
-          </TouchableOpacity>
-        </View>
+        <DateSelector
+          checkInDate={checkInDate}
+          checkOutDate={checkOutDate}
+          onDateChange={handleDateChange}
+        />
         
         {/* ANIMATED VIEW TOGGLE */}
         <AnimatedToggleButton
@@ -621,63 +513,6 @@ const HomeScreen = () => {
           onBookNow={handleBookNow}
         />
       )}
-      
-      {/* DATE PICKER MODAL */}
-      <Modal
-        visible={showDatePicker}
-        transparent={true}
-        animationType="slide"
-        onRequestClose={() => setShowDatePicker(false)}
-      >
-        <View style={tw`flex-1 bg-black/30 justify-end`}>
-          <View style={tw`bg-white rounded-t-3xl px-6 pb-10 max-h-4/5`}>
-            <View style={tw`w-10 h-1 bg-gray-300 rounded-full self-center mt-3 mb-6`} />
-            
-            <View style={tw`flex-row justify-between items-center mb-8`}>
-              <Text style={tw`text-xl text-black font-bold`}>
-                Select {selectingDate === 'checkin' ? 'check-in' : 'check-out'} date
-              </Text>
-              <TouchableOpacity
-                style={tw`w-9 h-9 items-center justify-center rounded-2xl`}
-                onPress={() => setShowDatePicker(false)}
-                activeOpacity={0.6}
-              >
-                <Ionicons name="close" size={24} color="#000000" />
-              </TouchableOpacity>
-            </View>
-            
-            <View style={tw`items-center mb-6 py-4 bg-gray-50 rounded-xl`}>
-              <Text style={tw`text-lg text-black font-semibold`}>
-                {new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}
-              </Text>
-            </View>
-            
-            <View style={tw`flex-row mb-4`}>
-              {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map((day, index) => (
-                <View key={index} style={tw`flex-1 items-center py-3`}>
-                  <Text style={tw`text-sm text-gray-600 font-semibold`}>{day}</Text>
-                </View>
-              ))}
-            </View>
-            
-            <FlatList
-              data={generateCalendarDays()}
-              renderItem={renderCalendarDay}
-              numColumns={7}
-              style={tw`mb-8`}
-              scrollEnabled={false}
-            />
-            
-            <TouchableOpacity
-              style={tw`bg-black py-4 rounded-xl items-center`}
-              onPress={() => setShowDatePicker(false)}
-              activeOpacity={0.8}
-            >
-              <Text style={tw`text-white text-base font-bold`}>Confirm</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
     </SafeAreaView>
   );
 };

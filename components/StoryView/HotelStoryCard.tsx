@@ -1,4 +1,4 @@
-// HotelStoryCard.tsx - Updated with smooth progress bar animation
+// HotelStoryCard.tsx - Updated with larger, more accessible buttons
 import React, { useState, useRef, useEffect } from 'react';
 import {
   View,
@@ -146,7 +146,7 @@ const StoryProgressBar: React.FC<StoryProgressBarProps> = ({
       {Array.from({ length: totalSlides }, (_, index) => (
         <TouchableOpacity
           key={index}
-          style={tw`flex-1 h-0.75 rounded-sm bg-white/20 overflow-hidden`}
+          style={tw`flex-1 h-1 rounded-sm bg-white/20 overflow-hidden`}
           onPress={() => onSlideChange(index)}
           activeOpacity={0.7}
         >
@@ -252,7 +252,7 @@ const HotelOverviewSlide: React.FC<{ hotel: EnhancedHotel }> = ({ hotel }) => {
       />
       
       {/* Subtle gradient overlay */}
-      <View style={tw`absolute bottom-0 left-0 right-0 h-48 bg-gradient-to-t from-black/70 to-transparent z-1`} />
+      <View style={tw`absolute bottom-0 left-0 right-0 h-52 bg-gradient-to-t from-black/70 to-transparent z-1`} />
       
       {/* Hotel Information - Bottom Overlay */}
       <View style={tw`absolute bottom-20 left-4 right-4 z-10`}>
@@ -387,10 +387,10 @@ const LocationSlide: React.FC<{ hotel: EnhancedHotel }> = ({ hotel }) => {
       />
       
       {/* Subtle gradient overlay */}
-      <View style={tw`absolute bottom-0 left-0 right-0 h-48 bg-gradient-to-t from-black/70 to-transparent z-1`} />
+      <View style={tw`absolute bottom-0 left-0 right-0 h-52 bg-gradient-to-t from-black/70 to-transparent z-1`} />
       
       {/* Location Information */}
-      <View style={tw`absolute bottom-20 left-4 right-4 z-10`}>
+      <View style={tw`absolute bottom-24 left-4 right-4 z-10`}>
         {/* Location Header */}
         <View style={tw`mb-3`}>
           <View style={tw`flex-row items-center mb-2`}>
@@ -510,10 +510,10 @@ const AmenitiesSlide: React.FC<{ hotel: EnhancedHotel }> = ({ hotel }) => {
       />
       
       {/* Subtle gradient overlay */}
-      <View style={tw`absolute bottom-0 left-0 right-0 h-48 bg-gradient-to-t from-black/70 to-transparent z-1`} />
+      <View style={tw`absolute bottom-0 left-0 right-0 h-52 bg-gradient-to-t from-black/70 to-transparent z-1`} />
       
       {/* Amenities Information */}
-      <View style={tw`absolute bottom-20 left-4 right-4 z-10`}>
+      <View style={tw`absolute bottom-24 left-4 right-4 z-10`}>
         {/* Amenities Header */}
         <View style={tw`mb-3`}>
           <View style={tw`flex-row items-center mb-2`}>
@@ -634,42 +634,48 @@ const HotelStoryCard: React.FC<HotelStoryCardProps> = ({
         onSlideChange={handleSlideChange}
       />
       
-      {/* Left Tap Zone - Bigger for easier tapping */}
+      {/* Left Tap Zone - Stops above buttons to prevent conflicts */}
       {currentSlide > 0 && (
         <TouchableOpacity
-          style={tw`absolute top-0 left-0 w-32 h-full z-20`}
+          style={[
+            tw`absolute top-0 left-0 w-40 z-20`,
+            { height: CARD_HEIGHT - 80 } // Stop 80px from bottom for smaller buttons
+          ]}
           onPress={handleLeftTap}
           activeOpacity={0}
         />
       )}
       
-      {/* Right Tap Zone - Bigger for easier tapping */}
+      {/* Right Tap Zone - Stops above buttons to prevent conflicts */}
       {currentSlide < 2 && (
         <TouchableOpacity
-          style={tw`absolute top-0 right-0 w-32 h-full z-20`}
+          style={[
+            tw`absolute top-0 right-0 w-40 z-20`,
+            { height: CARD_HEIGHT - 80 } // Stop 80px from bottom for smaller buttons
+          ]}
           onPress={handleRightTap}
           activeOpacity={0}
         />
       )}
       
-      {/* Subtle Navigation Buttons - Top area to avoid text */}
+      {/* Larger Navigation Buttons */}
       {currentSlide > 0 && (
         <TouchableOpacity
-          style={tw`absolute top-20 left-2 w-6 h-6 rounded-full bg-black/20 items-center justify-center z-25`}
+          style={tw`absolute top-24 left-3 w-8 h-8 rounded-full bg-black/30 items-center justify-center z-25`}
           onPress={handleLeftTap}
           activeOpacity={0.6}
         >
-          <Ionicons name="chevron-back" size={14} color="#FFFFFF" />
+          <Ionicons name="chevron-back" size={18} color="#FFFFFF" />
         </TouchableOpacity>
       )}
       
       {currentSlide < 2 && (
         <TouchableOpacity
-          style={tw`absolute top-20 right-2 w-6 h-6 rounded-full bg-black/20 items-center justify-center z-25`}
+          style={tw`absolute top-24 right-3 w-8 h-8 rounded-full bg-black/30 items-center justify-center z-25`}
           onPress={handleRightTap}
           activeOpacity={0.6}
         >
-          <Ionicons name="chevron-forward" size={14} color="#FFFFFF" />
+          <Ionicons name="chevron-forward" size={18} color="#FFFFFF" />
         </TouchableOpacity>
       )}
       
@@ -694,13 +700,13 @@ const HotelStoryCard: React.FC<HotelStoryCardProps> = ({
         </View>
       </ScrollView>
       
-      {/* Navigation Buttons */}
+      {/* MUCH LARGER Navigation Buttons - Main improvement */}
       <View style={tw`absolute bottom-4 left-4 right-4 z-10`}>
         <View style={tw`flex-row gap-2`}>
-          {/* Back button - only show if not first hotel */}
+          {/* Back button - back to original size */}
           {canGoPrev && (
             <TouchableOpacity
-              style={tw`w-12 h-12 bg-white/90 rounded-lg items-center justify-center shadow-md`}
+              style={tw`w-12 h-12 bg-white/95 rounded-lg items-center justify-center shadow-md`}
               onPress={onPrev}
               activeOpacity={0.8}
             >
@@ -708,10 +714,10 @@ const HotelStoryCard: React.FC<HotelStoryCardProps> = ({
             </TouchableOpacity>
           )}
           
-          {/* Save button */}
+          {/* Save button - back to original size */}
           <TouchableOpacity
             style={tw`w-12 h-12 rounded-lg items-center justify-center shadow-md ${
-              isCurrentHotelSaved ? 'bg-red-500' : 'bg-white/90'
+              isCurrentHotelSaved ? 'bg-red-500' : 'bg-white/95'
             }`}
             onPress={onSave}
             activeOpacity={0.8}
@@ -723,7 +729,7 @@ const HotelStoryCard: React.FC<HotelStoryCardProps> = ({
             />
           </TouchableOpacity>
           
-          {/* Main action button */}
+          {/* Main action button - back to original height */}
           <TouchableOpacity
             style={tw`flex-1 flex-row py-3 px-4 rounded-lg items-center justify-center shadow-md ${
               isLastHotel && hasSavedHotels
