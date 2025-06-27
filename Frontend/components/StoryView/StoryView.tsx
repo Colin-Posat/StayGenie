@@ -1,4 +1,4 @@
-// SwipeView.tsx - Updated with card swipe animations
+// StoryView.tsx - Updated with card swipe animations
 import React, { useState, useCallback, useRef } from 'react';
 import {
   View,
@@ -14,7 +14,7 @@ import HotelStoryCard, { Hotel, EnhancedHotel } from './HotelStoryCard';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
-interface SwipeViewProps {
+interface StoryViewProps {
   hotels: Hotel[];
   onHotelPress?: (hotel: Hotel) => void;
   onBookNow?: (hotel: Hotel) => void;
@@ -110,8 +110,8 @@ const enhanceHotel = (hotel: Hotel): EnhancedHotel => {
 const SWIPE_THRESHOLD = 120;
 const ANIMATION_DURATION = 250;
 
-// Main SwipeView Component
-const SwipeView: React.FC<SwipeViewProps> = ({ 
+// Main StoryView Component
+const StoryView: React.FC<StoryViewProps> = ({ 
   hotels = mockHotels, 
   onHotelPress, 
   onBookNow, 
@@ -295,4 +295,4 @@ const SwipeView: React.FC<SwipeViewProps> = ({
   );
 };
 
-export default SwipeView;
+export default StoryView;

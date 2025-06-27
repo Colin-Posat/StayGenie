@@ -1,4 +1,4 @@
-// DateSelector.tsx - Enhanced UX with smooth animations and visual feedback
+// DateSelector.tsx - Sleek modern UI with enhanced visual design
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import {
   View,
@@ -171,7 +171,7 @@ const DateSelector: React.FC<DateSelectorProps> = ({
     setMonthsData(generateMonthsData());
   }, [generateMonthsData]);
 
-  // Enhanced date formatting - matches original exactly
+  // Enhanced date formatting with modern style
   const formatDate = (date: Date) => {
     return date.toLocaleDateString('en-US', { 
       month: 'short', 
@@ -280,14 +280,12 @@ const DateSelector: React.FC<DateSelectorProps> = ({
         setHoveredDate(undefined);
       } else {
         setTempCheckOut(selectedDate);
-        // Don't auto-confirm anymore, just set the temp date
       }
     } else {
       // Second date selection (range end)
       if (tempCheckIn && selectedDate > tempCheckIn) {
         setTempCheckOut(selectedDate);
         setHoveredDate(undefined);
-        // Removed the setTimeout that auto-confirmed selection
       } else if (tempCheckIn && selectedDate < tempCheckIn) {
         // If selecting earlier date, make it the new check-in
         setTempCheckIn(selectedDate);
@@ -308,7 +306,7 @@ const DateSelector: React.FC<DateSelectorProps> = ({
     }
   };
 
-  // New function to handle the Done button press
+  // Handle the Done button press
   const handleDonePress = () => {
     if (tempCheckIn && tempCheckOut) {
       // Success haptic
@@ -319,10 +317,8 @@ const DateSelector: React.FC<DateSelectorProps> = ({
       onDateChange('checkin', tempCheckIn);
       onDateChange('checkout', tempCheckOut);
     } else if (selectingDate === 'checkout' && tempCheckOut) {
-      // Single checkout date selected
       onDateChange('checkout', tempCheckOut);
     } else if (selectingDate === 'checkin' && tempCheckIn) {
-      // Single checkin date selected
       onDateChange('checkin', tempCheckIn);
     }
     
@@ -371,30 +367,26 @@ const DateSelector: React.FC<DateSelectorProps> = ({
       return <View style={tw`flex-1 h-12 m-0.5`} />;
     }
     
-    // Enhanced styling with better visual hierarchy
+    // Enhanced styling with modern glassmorphism effects
     const dayStyle = [
-      tw`flex-1 h-12 m-0.5 items-center justify-center rounded-xl relative overflow-hidden`,
+      tw`flex-1 h-12 m-0.5 items-center justify-center rounded-2xl relative overflow-hidden`,
       item.isToday && !item.isSelected && tw`border-2 border-blue-500 bg-blue-50`,
-      item.isRangeStart && tw`bg-black shadow-lg`,
-      item.isRangeEnd && tw`bg-black shadow-lg`,
-      item.isInRange && tw`bg-gray-100`,
-      item.isHovered && isRangeSelection && tw`bg-gray-200 border-2 border-gray-400`,
+      item.isRangeStart && tw`bg-gradient-to-r from-black to-gray-800 shadow-xl`,
+      item.isRangeEnd && tw`bg-gradient-to-r from-gray-800 to-black shadow-xl`,
+      item.isInRange && tw`bg-gradient-to-r from-gray-100 to-gray-50`,
+      item.isHovered && isRangeSelection && tw`bg-gradient-to-r from-gray-200 to-gray-100 border-2 border-gray-400`,
       item.isDisabled && tw`opacity-30`,
     ];
 
     const textStyle = [
-      tw`text-base font-semibold z-10`,
-      item.isToday && !item.isSelected && tw`text-blue-600 font-bold`,
-      (item.isRangeStart || item.isRangeEnd) && tw`text-white font-bold`,
-      item.isInRange && tw`text-gray-800 font-semibold`,
-      item.isHovered && isRangeSelection && tw`text-gray-800 font-bold`,
+      tw`text-base font-bold z-10`,
+      item.isToday && !item.isSelected && tw`text-blue-600`,
+      (item.isRangeStart || item.isRangeEnd) && tw`text-white`,
+      item.isInRange && tw`text-gray-800`,
+      item.isHovered && isRangeSelection && tw`text-gray-800`,
       item.isDisabled && tw`text-gray-400`,
-      !item.isSelected && !item.isInRange && !item.isToday && !item.isHovered && tw`text-gray-700`,
+      !item.isSelected && !item.isInRange && !item.isToday && !item.isHovered && tw`text-gray-800`,
     ];
-
-    // Add connecting lines for range
-    const showLeftConnection = item.isInRange || (item.isRangeEnd && !item.isRangeStart);
-    const showRightConnection = item.isInRange || (item.isRangeStart && !item.isRangeEnd);
 
     return (
       <TouchableOpacity
@@ -404,19 +396,11 @@ const DateSelector: React.FC<DateSelectorProps> = ({
         disabled={item.isDisabled}
         activeOpacity={0.7}
       >
-        {/* Range connection lines */}
-        {showLeftConnection && (
-          <View style={tw`absolute left-0 top-1/2 w-2 h-8 bg-gray-100 -translate-y-4`} />
-        )}
-        {showRightConnection && (
-          <View style={tw`absolute right-0 top-1/2 w-2 h-8 bg-gray-100 -translate-y-4`} />
-        )}
-        
-        {/* Selection indicator for range start/end */}
+        {/* Selection indicator with glow effect */}
         {(item.isRangeStart || item.isRangeEnd) && (
           <Animated.View
             style={[
-              tw`absolute inset-0 bg-black rounded-xl`,
+              tw`absolute inset-0 bg-black rounded-2xl shadow-lg`,
               { transform: [{ scale: selectionPulseAnimation }] }
             ]}
           />
@@ -426,9 +410,9 @@ const DateSelector: React.FC<DateSelectorProps> = ({
           {item.day}
         </Text>
         
-        {/* Today indicator dot */}
+        {/* Modern today indicator */}
         {item.isToday && !item.isSelected && (
-          <View style={tw`absolute bottom-1 w-1 h-1 bg-blue-500 rounded-full`} />
+          <View style={tw`absolute bottom-1.5 w-1.5 h-1.5 bg-blue-500 rounded-full shadow-sm`} />
         )}
       </TouchableOpacity>
     );
@@ -436,17 +420,17 @@ const DateSelector: React.FC<DateSelectorProps> = ({
 
   const renderMonth = ({ item: monthData }: { item: MonthData }) => {
     return (
-      <View style={tw`px-5 mb-8`}>
-        {/* Month Header */}
-        <Text style={tw`text-xl text-black font-bold mb-6 text-center`}>
+      <View style={tw`px-6 mb-8`}>
+        {/* Modern month header */}
+        <Text style={tw`text-2xl text-black font-black mb-6 text-center tracking-tight`}>
           {monthData.monthName}
         </Text>
         
-        {/* Day Headers */}
-        <View style={tw`flex-row mb-3`}>
+        {/* Refined day headers */}
+        <View style={tw`flex-row mb-4`}>
           {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map((day, index) => (
             <View key={index} style={tw`flex-1 items-center py-2`}>
-              <Text style={tw`text-sm text-gray-500 font-bold`}>{day}</Text>
+              <Text style={tw`text-sm text-gray-500 font-bold tracking-wide`}>{day}</Text>
             </View>
           ))}
         </View>
@@ -514,26 +498,24 @@ const DateSelector: React.FC<DateSelectorProps> = ({
 
   return (
     <>
-      {/* DATE SELECTOR BUTTONS - Matching original layout exactly */}
-      <View style={tw`flex-row items-center bg-gray-50 rounded-xl border border-gray-100 overflow-hidden`}>
+      {/* MODERN DATE SELECTOR BUTTONS - Same size as original */}
+      <View style={tw`flex-row items-center bg-white rounded-xl border border-gray-200 shadow-sm overflow-hidden`}>
         <TouchableOpacity
-          style={tw`py-3 px-4 items-center min-w-20`}
+          style={tw`py-3 px-4 items-center min-w-20 border-r border-gray-200`}
           onPress={() => handleDateSelect('checkin')}
           activeOpacity={0.7}
         >
-          <Text style={tw`text-xs text-gray-600 font-medium mb-0.5`}>Check-in</Text>
-          <Text style={tw`text-sm text-black font-semibold`}>{formatDate(checkInDate)}</Text>
+          <Text style={tw`text-xs text-gray-600 font-semibold mb-0.5`}>Check-in</Text>
+          <Text style={tw`text-sm text-black font-bold`}>{formatDate(checkInDate)}</Text>
         </TouchableOpacity>
-        
-        <View style={tw`w-px h-7 bg-gray-300`} />
         
         <TouchableOpacity
           style={tw`py-3 px-4 items-center min-w-20`}
           onPress={() => handleDateSelect('checkout')}
           activeOpacity={0.7}
         >
-          <Text style={tw`text-xs text-gray-600 font-medium mb-0.5`}>Check-out</Text>
-          <Text style={tw`text-sm text-black font-semibold`}>{formatDate(checkOutDate)}</Text>
+          <Text style={tw`text-xs text-gray-600 font-semibold mb-0.5`}>Check-out</Text>
+          <Text style={tw`text-sm text-black font-bold`}>{formatDate(checkOutDate)}</Text>
         </TouchableOpacity>
       </View>
 
@@ -545,14 +527,14 @@ const DateSelector: React.FC<DateSelectorProps> = ({
         onRequestClose={hideModal}
       >
         <View style={tw`flex-1`}>
-          {/* Animated Backdrop */}
+          {/* Animated Backdrop with Blur Effect */}
           <Animated.View
             style={[
               tw`absolute inset-0 bg-black`,
               {
                 opacity: backdropAnimation.interpolate({
                   inputRange: [0, 1],
-                  outputRange: [0, 0.5],
+                  outputRange: [0, 0.6],
                 }),
               },
             ]}
@@ -584,29 +566,29 @@ const DateSelector: React.FC<DateSelectorProps> = ({
               ]}
               {...panResponder.panHandlers}
             >
-              {/* Drag Handle */}
+              {/* Modern Drag Handle */}
               <View style={tw`items-center pt-4 pb-3`}>
                 <View style={tw`w-12 h-1.5 bg-gray-300 rounded-full`} />
               </View>
               
-              {/* Enhanced Header */}
-              <View style={tw`px-6 pb-4 border-b border-gray-100`}>
-                <Text style={tw`text-base text-black font-bold text-center mb-1`}>
+              {/* Enhanced Header with Modern Typography */}
+              <View style={tw`px-6 pb-6 border-b border-gray-100`}>
+                <Text style={tw`text-lg text-black font-black text-center mb-2 tracking-tight`}>
                   {selectionInfo.primary}
                 </Text>
-                <Text style={tw`text-sm text-gray-600 text-center`}>
+                <Text style={tw`text-sm text-gray-600 text-center font-medium`}>
                   {selectionInfo.secondary}
                 </Text>
                 
-                {/* Progress indicator */}
-                <View style={tw`flex-row justify-center mt-3 space-x-2`}>
+                {/* Modern progress indicator */}
+                <View style={tw`flex-row justify-center mt-4 space-x-3`}>
                   <View style={[
-                    tw`w-2 h-2 rounded-full`,
-                    (tempCheckIn || (selectingDate === 'checkin' && !isRangeSelection)) ? tw`bg-black` : tw`bg-gray-300`
+                    tw`w-8 h-1.5 rounded-full transition-colors duration-200`,
+                    (tempCheckIn || (selectingDate === 'checkin' && !isRangeSelection)) ? tw`bg-black` : tw`bg-gray-200`
                   ]} />
                   <View style={[
-                    tw`w-2 h-2 rounded-full`,
-                    (tempCheckOut || (selectingDate === 'checkout' && !isRangeSelection)) ? tw`bg-black` : tw`bg-gray-300`
+                    tw`w-8 h-1.5 rounded-full transition-colors duration-200`,
+                    (tempCheckOut || (selectingDate === 'checkout' && !isRangeSelection)) ? tw`bg-black` : tw`bg-gray-200`
                   ]} />
                 </View>
               </View>
@@ -628,20 +610,20 @@ const DateSelector: React.FC<DateSelectorProps> = ({
                 />
               </ScrollView>
               
-              {/* Enhanced Bottom Actions */}
-              <View style={tw`px-6 py-4 bg-white border-t border-gray-100`}>
-                <View style={tw`flex-row space-x-3`}>
+              {/* Modern Bottom Actions */}
+              <View style={tw`px-6 py-6 bg-white border-t border-gray-100`}>
+                <View style={tw`flex-row space-x-4`}>
                   <TouchableOpacity
-                    style={tw`flex-1 bg-gray-100 py-4 rounded-xl items-center`}
+                    style={tw`flex-1 bg-gray-100 py-4 rounded-2xl items-center border border-gray-200`}
                     onPress={hideModal}
                     activeOpacity={0.8}
                   >
-                    <Text style={tw`text-gray-700 text-base font-semibold`}>Cancel</Text>
+                    <Text style={tw`text-gray-700 text-base font-bold`}>Cancel</Text>
                   </TouchableOpacity>
                   
                   <TouchableOpacity
                     style={[
-                      tw`flex-1 py-4 rounded-xl items-center`,
+                      tw`flex-1 py-4 rounded-2xl items-center shadow-lg`,
                       isDoneEnabled() ? tw`bg-black` : tw`bg-gray-300`
                     ]}
                     onPress={handleDonePress}
@@ -652,7 +634,7 @@ const DateSelector: React.FC<DateSelectorProps> = ({
                       tw`text-base font-bold`,
                       isDoneEnabled() ? tw`text-white` : tw`text-gray-500`
                     ]}>
-                      Done
+                      Confirm Dates
                     </Text>
                   </TouchableOpacity>
                 </View>

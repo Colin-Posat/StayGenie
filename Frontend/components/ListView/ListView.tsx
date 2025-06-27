@@ -20,6 +20,7 @@ interface Hotel {
   tags: string[];
   location: string;
   features: string[];
+  aiExcerpt?: string;
 }
 
 interface ListViewProps {
