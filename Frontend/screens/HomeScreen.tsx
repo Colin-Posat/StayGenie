@@ -1,4 +1,4 @@
-// HomeScreen.tsx - Updated with swipe icon for Story mode
+// HomeScreen.tsx - Updated with correct navigation
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   View,
@@ -18,6 +18,22 @@ import ListView from '../components/ListView/ListView';
 import StoryView from '../components/StoryView/StoryView';
 import DateSelector from '../components/HomeScreenTop/DateSelector';
 import AISearchOverlay from '../components/HomeScreenTop/AiSearchOverlay';
+import { useNavigation, useRoute } from '@react-navigation/native';
+import type { StackNavigationProp } from '@react-navigation/stack';
+
+interface RouteParams {
+  searchQuery?: string;
+}
+
+// Updated navigation types to match the new structure
+type FindStackParamList = {
+  InitialSearch: undefined;
+  Results: {
+    searchQuery?: string;
+  };
+};
+
+type HomeScreenNavigationProp = StackNavigationProp<FindStackParamList>;
 
 // Animated Toggle Button Component
 interface AnimatedToggleButtonProps {
@@ -379,6 +395,10 @@ const mockHotels: Hotel[] = [
 ];
 
 const HomeScreen = () => {
+  const route = useRoute();
+  const params = route.params as RouteParams;
+  const navigation = useNavigation<HomeScreenNavigationProp>();
+
   const [searchQuery, setSearchQuery] = useState('');
   const [checkInDate, setCheckInDate] = useState<Date>(() => {
     const today = new Date();
@@ -417,6 +437,12 @@ const HomeScreen = () => {
     60,
     2500
   );
+
+  useEffect(() => {
+    if (params?.searchQuery) {
+      setSearchQuery(params.searchQuery);
+    }
+  }, [params?.searchQuery]);
 
   // Event handlers
   const handleAiSearch = useCallback(() => {
@@ -467,6 +493,7 @@ const HomeScreen = () => {
         },
       });
     }
+    
 
     setShowStoryView(viewType === 'swipe');
   }, []);
@@ -478,6 +505,12 @@ const HomeScreen = () => {
   const handleBookNow = useCallback((hotel: Hotel) => {
     console.log('Book now pressed for:', hotel.name);
   }, []);
+
+  // Updated back press handler to match new navigation structure
+  const handleBackPress = useCallback(() => {
+    console.log('Back button pressed - returning to initial search');
+    navigation.navigate('InitialSearch');
+  }, [navigation]);
 
   const getPlaceholderText = () => {
     if (!isFocused && !searchQuery) {
@@ -497,7 +530,7 @@ const HomeScreen = () => {
           <View style={tw`flex-1 flex-row items-center bg-gray-50 rounded-2xl px-4 border border-gray-100 gap-2.5 h-13`}>
             <TouchableOpacity
               style={tw`w-5 h-5 items-center justify-center`}
-              onPress={() => console.log('Back button pressed')}
+              onPress={handleBackPress}
               activeOpacity={0.6}
             >
               <Ionicons name="arrow-back" size={20} color="#666666" />
@@ -571,8 +604,8 @@ const HomeScreen = () => {
         />
       </View>
 
-      {/* SEARCH RESULTS HEADER */}
-      {searchQuery.trim().length > 0 && (
+      {/* SEARCH RESULTS HEADER - Only show in List view */}
+      {!showStoryView && searchQuery.trim().length > 0 && (
         <View style={tw`px-5 pb-3`}>
           <Text style={tw`text-sm text-gray-500`}>
             Search results for "{searchQuery}"

@@ -53,7 +53,7 @@ interface TripFolder {
 const mockTripFolders: TripFolder[] = [
   {
     id: 'trip1',
-    name: 'Summer Vacation',
+    name: 'Our Summer Vancouver Trip',
     destination: 'California Coast',
     dateRange: 'Jul 15-22, 2025',
     color: '#FF6B6B',
@@ -98,7 +98,7 @@ const mockTripFolders: TripFolder[] = [
   },
   {
     id: 'trip2',
-    name: 'Business Trip',
+    name: 'NYC Work Trip',
     destination: 'New York City',
     dateRange: 'Aug 10-14, 2025',
     color: '#4ECDC4',
@@ -143,7 +143,7 @@ const mockTripFolders: TripFolder[] = [
   },
   {
     id: 'trip3',
-    name: 'Mountain Getaway',
+    name: 'Colorado Mountain Escape',
     destination: 'Colorado Rockies',
     dateRange: 'Sep 5-12, 2025',
     color: '#45B7D1',
@@ -171,7 +171,7 @@ const mockTripFolders: TripFolder[] = [
   },
   {
     id: 'trip4',
-    name: 'City Explorer',
+    name: 'Boston Weekend Getaway',
     destination: 'Historic Boston',
     dateRange: 'Oct 20-25, 2025',
     color: '#96CEB4',
@@ -253,9 +253,6 @@ const TripFolderCard: React.FC<TripFolderProps> = ({ folder, onPress, onOptions 
     });
   };
 
-  const minPrice = Math.min(...folder.hotels.map(h => h.price));
-  const maxPrice = Math.max(...folder.hotels.map(h => h.price));
-
   return (
     <Animated.View
       style={[
@@ -282,29 +279,10 @@ const TripFolderCard: React.FC<TripFolderProps> = ({ folder, onPress, onOptions 
         activeOpacity={1}
       >
         {/* Header */}
-        <View style={tw`flex-row items-start justify-between mb-4`}>
-          <View style={tw`flex-row items-center flex-1 mr-3`}>
-            <View
-              style={[
-                tw`w-10 h-10 rounded-xl items-center justify-center mr-3`,
-                { backgroundColor: folder.color + '15' }
-              ]}
-            >
-              <Ionicons name={folder.icon as any} size={20} color={folder.color} />
-            </View>
-
-            <View style={tw`flex-1`}>
-              <Text style={tw`text-[17px] font-semibold text-black leading-5 mb-1`}>
-                {folder.name}
-              </Text>
-              <Text style={tw`text-[13px] text-gray-600 mb-0.5`}>
-                {folder.destination}
-              </Text>
-              <Text style={tw`text-xs text-gray-500`}>
-                {folder.dateRange}
-              </Text>
-            </View>
-          </View>
+        <View style={tw`flex-row items-center justify-between mb-4`}>
+          <Text style={tw`text-[17px] font-semibold text-black leading-5`}>
+            {folder.name}
+          </Text>
 
           <TouchableOpacity
             style={tw`p-2 rounded-lg bg-gray-50 border border-gray-100`}
@@ -315,74 +293,32 @@ const TripFolderCard: React.FC<TripFolderProps> = ({ folder, onPress, onOptions 
           </TouchableOpacity>
         </View>
 
-        {/* Hotel Preview Section */}
-        <View style={tw`mb-4`}>
-          <View style={tw`flex-row items-center justify-between mb-3`}>
-            <Text style={tw`text-[13px] font-semibold text-gray-700`}>
-              {folder.hotels.length} saved hotel{folder.hotels.length > 1 ? 's' : ''}
-            </Text>
-            <View style={tw`flex-row items-center`}>
-              <Ionicons name="star" size={11} color="#FFB800" />
-              <Text style={tw`text-xs text-gray-500 ml-1`}>
-                {(folder.hotels.reduce((acc, h) => acc + h.rating, 0) / folder.hotels.length).toFixed(1)}
-              </Text>
-            </View>
+        {/* Hotel Count */}
+        <Text style={tw`text-[13px] font-medium text-gray-600 mb-3`}>
+          {folder.hotels.length} saved hotel{folder.hotels.length > 1 ? 's' : ''}
+        </Text>
+
+        {/* Hotel Images Grid */}
+        {folder.hotels.length > 0 && (
+          <View style={tw`flex-row gap-2`}>
+            {folder.hotels.slice(0, 4).map((hotel, index) => (
+              <View key={hotel.id} style={tw`relative flex-1`}>
+                <Image
+                  source={{ uri: hotel.image }}
+                  style={tw`w-full h-16 rounded-lg`}
+                  resizeMode="cover"
+                />
+                {index === 3 && folder.hotels.length > 4 && (
+                  <View style={tw`absolute inset-0 bg-black/60 rounded-lg items-center justify-center`}>
+                    <Text style={tw`text-white text-xs font-semibold`}>
+                      +{folder.hotels.length - 3}
+                    </Text>
+                  </View>
+                )}
+              </View>
+            ))}
           </View>
-
-          {/* Hotel Images Grid */}
-          {folder.hotels.length > 0 && (
-            <View style={tw`flex-row gap-2 mb-3`}>
-              {folder.hotels.slice(0, 4).map((hotel, index) => (
-                <View key={hotel.id} style={tw`relative flex-1`}>
-                  <Image
-                    source={{ uri: hotel.image }}
-                    style={tw`w-full h-14 rounded-lg`}
-                    resizeMode="cover"
-                  />
-                  {index === 3 && folder.hotels.length > 4 && (
-                    <View style={tw`absolute inset-0 bg-black/60 rounded-lg items-center justify-center`}>
-                      <Text style={tw`text-white text-xs font-semibold`}>
-                        +{folder.hotels.length - 3}
-                      </Text>
-                    </View>
-                  )}
-                </View>
-              ))}
-            </View>
-          )}
-
-          {/* Hotel Names Preview */}
-          <Text style={tw`text-xs text-gray-500 leading-4`}>
-            {folder.hotels.slice(0, 2).map(h => h.name).join(', ')}
-            {folder.hotels.length > 2 && ` and ${folder.hotels.length - 2} more`}
-          </Text>
-        </View>
-
-        {/* Stats Footer */}
-        <View style={tw`flex-row items-center justify-between pt-3 border-t border-gray-100`}>
-          <View style={tw`flex-row items-center gap-4`}>
-            <View style={tw`flex-row items-center`}>
-              <Ionicons name="location-outline" size={12} color="#9CA3AF" />
-              <Text style={tw`text-xs text-gray-500 ml-1`}>
-                {folder.destination}
-              </Text>
-            </View>
-
-            <View style={tw`flex-row items-center`}>
-              <Ionicons name="calendar-outline" size={12} color="#9CA3AF" />
-              <Text style={tw`text-xs text-gray-500 ml-1`}>
-                {folder.dateRange.split(',')[0]}
-              </Text>
-            </View>
-          </View>
-
-          <View style={tw`flex-row items-center`}>
-            <Text style={tw`text-[13px] font-semibold text-black mr-1.5`}>
-              ${minPrice}{minPrice !== maxPrice ? `-$${maxPrice}` : ''}
-            </Text>
-            <Ionicons name="chevron-forward" size={12} color="#9CA3AF" />
-          </View>
-        </View>
+        )}
       </TouchableOpacity>
     </Animated.View>
   );
@@ -586,26 +522,16 @@ const FavoritesScreen = () => {
       {/* SIMPLIFIED HEADER */}
       <View style={tw`px-5 pt-3 pb-4 bg-white`}>
         <View style={tw`flex-row items-center justify-between`}>
-          <View style={tw`flex-row items-center`}>
-            <TouchableOpacity
-              style={tw`w-10 h-10 items-center justify-center mr-3 rounded-lg bg-gray-50 border border-gray-100`}
-              onPress={handleBack}
-              activeOpacity={0.7}
-            >
-              <Ionicons name="arrow-back" size={20} color="#666666" />
-            </TouchableOpacity>
-
-            <View>
-              <Text style={tw`text-xl font-semibold text-black`}>
-                My Favorites
-              </Text>
-              <Text style={tw`text-[13px] text-gray-600 mt-0.5`}>
-                {tripFolders.length > 0
-                  ? `${tripFolders.length} trip${tripFolders.length > 1 ? 's' : ''} • ${totalHotels} saved hotels`
-                  : "Organize your favorite hotels by trip"
-                }
-              </Text>
-            </View>
+          <View style={tw`flex-1 mr-3`}>
+            <Text style={tw`text-xl font-semibold text-black`}>
+              My Favorites
+            </Text>
+            <Text style={tw`text-[13px] text-gray-600 mt-0.5`}>
+              {tripFolders.length > 0
+                ? `${tripFolders.length} trip${tripFolders.length > 1 ? 's' : ''} • ${totalHotels} saved hotels`
+                : "Organize your favorite hotels by trip"
+              }
+            </Text>
           </View>
 
           {tripFolders.length > 0 && (
