@@ -1,8 +1,10 @@
-// src/routes/hotelRoutes.ts
 import { Router } from 'express';
-import { getHotels } from '../controllers/hotelController';
+import { searchHotels } from '../controllers/hotelSearchController'; // The new controller
 
 const router = Router();
-router.get('/', getHotels); // GET /api/hotels
+
+
+// Route to search hotels using Amadeus API
+router.post('/search-hotels', searchHotels);
 
 export default router;
