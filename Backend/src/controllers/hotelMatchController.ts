@@ -350,7 +350,7 @@ export const smartHotelSearch = async (req: Request, res: Response): Promise<voi
         createHotelSummaryForAI(hotel, index, nights)
       );
   
-      // Step 9: Get AI recommendations (ALWAYS provide recommendations)
+      // Step 9: Get AI recommendations (ALWAYS provide exactly 5 recommendations)
 let aiRecommendations: any[] = [];
 console.log('Step 7: Getting AI recommendations...');
 
@@ -375,7 +375,7 @@ if (parsedQuery.minCost || parsedQuery.maxCost) {
     priceContext = `\nBUDGET REQUIREMENT: User wants hotels under ${maxText}.`;
   }
   
-  priceContext += `\nIMPORTANT: Prioritize hotels that match the user's budget! Consider price-to-value ratio.`;
+  priceContext += `\nIMPORTANT: First try to find hotels that match the budget, then fill remaining slots with closest alternatives.`;
 }
 
   const destination = `${parsedQuery.cityName}, ${parsedQuery.countryCode}`;
@@ -384,51 +384,67 @@ if (parsedQuery.minCost || parsedQuery.maxCost) {
   const hasSpecificPreferences = parsedQuery.aiSearch && parsedQuery.aiSearch.trim() !== '';
   
   const prompt = hasSpecificPreferences 
-    ? `Analyze these ${hotelSummariesForAI.length} hotels for: "${parsedQuery.aiSearch}"
+    ? `CRITICAL TASK: You MUST return exactly 5 hotels from the list below. No more, no less.
 
-Hotels:
+Search Criteria: "${parsedQuery.aiSearch}"
+
+Hotels Available (${hotelSummariesForAI.length} total):
 ${hotelSummaries}${priceContext}
 
-Create ${Math.min(5, hotelSummariesForAI.length)} hotel recommendations with personality!
+SELECTION STRATEGY:
+1. FIRST PRIORITY: Find up to 5 hotels that best match the search criteria "${parsedQuery.aiSearch}"
+2. SECOND PRIORITY: If fewer than 5 hotels perfectly match, fill remaining slots with hotels that are closest matches or still good options
+3. RESULT: Always return exactly 5 hotels total
 
-Return JSON array:
-[{"hotelName":"exact name","aiMatchPercent":85,"whyItMatches":"exciting reason why it's perfect","funFacts":["unique detail","cool feature"],"potentialDownsides":["minor drawback if any"]}]
+Return JSON array with exactly 5 hotels:
+[{"hotelName":"exact name","aiMatchPercent":85,"whyItMatches":"exciting reason why it's perfect or close match","funFacts":["unique detail","cool feature"],"matchType":"perfect|good|backup"}]
 
 Guidelines:
-✨ Use EXACT hotel names from the numbered list
-🎯 Match percentages: 75-95% (higher = better fit based on original search criteria)
-🎉 "whyItMatches": Write like an enthusiastic friend explaining why this hotel perfectly matches the original search (15-25 words)
-🏆 "funFacts": 2-3 genuinely interesting/unique details about the hotel
+✨ Use EXACT hotel names from the numbered list above
+🎯 Match percentages: 
+   - Perfect matches to criteria: 85-95%
+   - Good general matches: 70-84%
+   - Backup options (when needed to reach 5): 60-75%
+🎉 "whyItMatches": Explain why this hotel matches the original search or why it's still a good choice (15-25 words)
+🏆 "funFacts": 2-3 genuinely interesting details about the hotel
+📋 "matchType": "perfect" for ideal matches, "good" for solid alternatives, "backup" for filler options
 
-The "whyItMatches" should always reference back to the original search criteria and explain the connection in an exciting, friend-like way.
+IMPORTANT: Even if only 2-3 hotels perfectly match "${parsedQuery.aiSearch}", you must still return 5 total hotels. Fill the rest with the best available options from the list.
 
-Return pure JSON only. Make it sound like recommendations from a travel-obsessed best friend!`
-    : `Analyze these ${hotelSummariesForAI.length} hotels in ${destination} and create exciting highlights for each!
+Return pure JSON only with exactly 5 hotels.`
+    : `CRITICAL TASK: You MUST return exactly 5 hotels from the list below. No more, no less.
 
-Hotels:
+Hotels Available in ${destination} (${hotelSummariesForAI.length} total):
 ${hotelSummaries}${priceContext}
 
-Create ${Math.min(5, hotelSummariesForAI.length)} hotel recommendations with personality!
+SELECTION STRATEGY:
+1. FIRST PRIORITY: Select the 5 best hotels based on quality, location, amenities, and value
+2. SECOND PRIORITY: If budget constraints exist, prioritize hotels that fit the budget first
+3. RESULT: Always return exactly 5 hotels total
 
-Return JSON array:
-[{"hotelName":"exact name","aiMatchPercent":80,"whyItMatches":"exciting highlight about what makes this hotel special","funFacts":["unique detail","cool feature"]}]
+Return JSON array with exactly 5 hotels:
+[{"hotelName":"exact name","aiMatchPercent":80,"whyItMatches":"exciting highlight about what makes this hotel special","funFacts":["unique detail","cool feature"],"matchType":"top|good|value"}]
 
 Guidelines:
-✨ Use EXACT hotel names from the numbered list
-🎯 Match percentages: 70-90% (based on general appeal and quality indicators)
-🎉 "whyItMatches": Write like an enthusiastic friend highlighting what makes this hotel awesome (15-25 words)
-🏆 "funFacts": 2-3 genuinely interesting/unique details about the hotel
+✨ Use EXACT hotel names from the numbered list above
+🎯 Match percentages: 
+   - Top tier hotels: 80-90%
+   - Good quality hotels: 70-84%  
+   - Value/budget options: 60-75%
+🎉 "whyItMatches": Highlight what makes this hotel awesome (15-25 words)
+🏆 "funFacts": 2-3 genuinely interesting details about the hotel
+📋 "matchType": "top" for premium options, "good" for solid mid-range, "value" for budget-friendly
 
-Examples of great "whyItMatches" for general highlights:
-- "This place radiates luxury vibes with stunning architecture and world-class service that'll spoil you rotten!"
-- "Perfect location puts you in the heart of everything - walk to attractions, restaurants, and nightlife!"
-- "Family-friendly paradise with activities for everyone plus parents can actually relax and unwind!"
-- "Business travelers love the seamless WiFi, meeting spaces, and proximity to key locations!"
-- "Boutique charm meets modern comfort - Instagram-worthy spaces with authentic local character!"
+Examples of great "whyItMatches":
+- "Prime location puts you steps from major attractions with luxury amenities and impeccable service!"
+- "Perfect blend of modern comfort and local charm with rooftop views and authentic experiences!"
+- "Family-friendly paradise with kid activities, pools, and parents can actually relax and unwind!"
+- "Business traveler's dream with fast WiFi, meeting spaces, and convenient airport access!"
+- "Boutique gem offering Instagram-worthy spaces, unique design, and personalized service!"
 
-Focus on what makes each hotel special, exciting, and worth choosing. Make it sound like recommendations from a travel-obsessed best friend who knows great hotels!
+IMPORTANT: You must select exactly 5 hotels from the list above. Choose the best 5 available options.
 
-Return pure JSON only.`;
+Return pure JSON only with exactly 5 hotels.`;
 
   // 🚀 OPTIMIZED: Use faster model and reduced tokens
   const startTime = Date.now();
@@ -438,7 +454,7 @@ Return pure JSON only.`;
     model: 'gpt-4o-mini', // 🚀 Much faster and cheaper than gpt-4
     messages: [{ role: 'user', content: prompt }],
     temperature: 0.5, // Lower temperature for faster, more focused responses
-    max_tokens: 1000, // Reduced from 2000
+    max_tokens: 1500, // Increased slightly to ensure 5 hotels can be returned
   });
   
   const aiTime = Date.now() - startTime;
@@ -453,10 +469,18 @@ Return pure JSON only.`;
     const cleanResponse = aiResponse.replace(/```json\n?|\n?```/g, '').trim();
     const rawRecommendations: AIRecommendation[] = JSON.parse(cleanResponse);
     
-    console.log(`🎯 AI returned ${rawRecommendations.length} recommendations out of ${hotelSummariesForAI.length} available hotels`);
+    console.log(`🎯 AI returned ${rawRecommendations.length} recommendations (target was exactly 5)`);
     
-    if (rawRecommendations.length < Math.min(5, hotelSummariesForAI.length)) {
-      console.log(`⚠️  WARNING: Expected ${Math.min(5, hotelSummariesForAI.length)} hotels but got ${rawRecommendations.length}`);
+    if (rawRecommendations.length !== 5) {
+      console.log(`⚠️  WARNING: Expected exactly 5 hotels but got ${rawRecommendations.length}`);
+      // If we didn't get exactly 5, we should handle this by either truncating or padding
+      if (rawRecommendations.length > 5) {
+        rawRecommendations.splice(5); // Keep only first 5
+        console.log(`✂️  Truncated to 5 hotels`);
+      } else if (rawRecommendations.length < 5 && enrichedHotels.length >= 5) {
+        // If we have enough hotels but AI didn't return 5, we should log this as an issue
+        console.log(`🔄 AI didn't return 5 hotels despite having ${enrichedHotels.length} available. Using what we got.`);
+      }
     }
     
     // Match AI recommendations with full hotel data
@@ -547,6 +571,7 @@ Return pure JSON only.`;
         
         // Additional useful data
         funFacts: aiRec.funFacts,
+        matchType: (aiRec as any).matchType || 'good', // New field to indicate match quality
         address: matchingHotel.hotelInfo?.address || 'Address not available',
         amenities: matchingHotel.hotelInfo?.amenities || [],
         description: matchingHotel.hotelInfo?.description || 'No description available',
@@ -563,7 +588,7 @@ Return pure JSON only.`;
       };
     }).filter(Boolean);
 
-    console.log(`Step 7 ✅: AI selected ${aiRecommendations.length} hotels`);
+    console.log(`Step 7 ✅: AI selected ${aiRecommendations.length} hotels (target: exactly 5)`);
     
   } catch (parseError) {
     console.error('Failed to parse AI response, continuing without recommendations:', parseError);
@@ -608,6 +633,7 @@ Return pure JSON only.`;
         aiRecommendations.forEach((hotel, index) => {
           console.log(`${index + 1}. ${hotel.name}`);
           console.log(`   📊 AI Match: ${hotel.aiMatchPercent}%`);
+          console.log(`   🏷️  Match Type: ${hotel.matchType || 'good'}`);
           console.log(`   ⭐ Star Rating: ${hotel.starRating}/5`);
           console.log(`   💡 Why it matches: ${hotel.whyItMatches}`);
           console.log(`   🎯 Fun facts: ${hotel.funFacts.join(' | ')}`);
@@ -621,6 +647,7 @@ Return pure JSON only.`;
           console.log('');
         });
         console.log('='.repeat(50));
+        console.log(`✅ FINAL COUNT: ${aiRecommendations.length} hotels returned (target: exactly 5)`);
       }
   
       console.log('🚀 Smart Search Complete ✅');
