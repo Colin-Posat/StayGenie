@@ -18,6 +18,8 @@ interface ParsedSearchQuery {
   adults: number;
   children: number;
   aiSearch: string;
+  minCost?: number | null;  
+  maxCost?: number | null; 
 }
 
 interface HotelInfo {
@@ -66,6 +68,7 @@ interface HotelSummaryForAI {
   name: string;
   location: string;
   description: string;
+  pricePerNight: string; 
 }
 
 interface AIRecommendation {
@@ -75,7 +78,8 @@ interface AIRecommendation {
   funFacts: string[];
 }
 
-const createHotelSummaryForAI = (hotel: HotelWithRates, index: number): HotelSummaryForAI => {
+// Enhanced createHotelSummaryForAI function with price information
+const createHotelSummaryForAI = (hotel: HotelWithRates, index: number, nights: number): HotelSummaryForAI => {
   const hotelInfo = hotel.hotelInfo;
   
   if (!hotelInfo) {
@@ -84,8 +88,44 @@ const createHotelSummaryForAI = (hotel: HotelWithRates, index: number): HotelSum
       hotelId: hotel.hotelId,
       name: hotel.hotelId || 'Unknown Hotel',
       location: 'Location not available',
-      description: 'No description available'
+      description: 'No description available',
+      pricePerNight: 'Price not available'
     };
+  }
+
+  // Calculate price range using your existing logic
+  let priceRange = null;
+  if (hotel.roomTypes && hotel.roomTypes.length > 0) {
+    const prices = hotel.roomTypes
+      .flatMap(room => room.rates || [])
+      .map(rate => rate.retailRate?.total?.[0]?.amount)
+      .filter(price => price != null);
+    
+    if (prices.length > 0) {
+      const minPrice = Math.min(...prices);
+      const maxPrice = Math.max(...prices);
+      const currency = hotel.roomTypes[0].rates?.[0]?.retailRate?.total?.[0]?.currency || 'USD';
+      priceRange = {
+        min: minPrice,
+        max: maxPrice,
+        currency: currency,
+        display: minPrice === maxPrice ? `${minPrice}` : `${minPrice} - ${maxPrice}`
+      };
+    }
+  }
+
+  // Calculate price per night using YOUR exact logic
+  let pricePerNightInfo = 'Price not available';
+  if (priceRange && nights > 0) {
+    const pricePerNight = {
+      min: Math.round(priceRange.min / nights),
+      max: Math.round(priceRange.max / nights),
+      currency: priceRange.currency,
+      display: priceRange.min === priceRange.max 
+        ? `${Math.round(priceRange.min / nights)}/night`
+        : `${Math.round(priceRange.min / nights)} - ${Math.round(priceRange.max / nights)}/night`
+    };
+    pricePerNightInfo = `${pricePerNight.display}`;
   }
 
   // Keep description short for AI processing (50 chars max)
@@ -98,9 +138,11 @@ const createHotelSummaryForAI = (hotel: HotelWithRates, index: number): HotelSum
     hotelId: hotel.hotelId,
     name: hotelInfo.name || 'Unknown Hotel',
     location: hotelInfo.address || 'Location not available',
-    description: shortDescription
+    description: shortDescription,
+    pricePerNight: pricePerNightInfo // NEW: Price information for AI
   };
 };
+
 
 // Helper function to get detailed hotel information including images
 const getHotelDetails = async (hotelId: string): Promise<EnrichedHotel | null> => {
@@ -305,7 +347,7 @@ export const smartHotelSearch = async (req: Request, res: Response): Promise<voi
       // Step 8: Create lightweight summaries for AI
       console.log('Step 6: Creating lightweight summaries for AI...');
       const hotelSummariesForAI: HotelSummaryForAI[] = enrichedHotels.map((hotel, index) => 
-        createHotelSummaryForAI(hotel, index)
+        createHotelSummaryForAI(hotel, index, nights)
       );
   
       // Step 9: Get AI recommendations (ALWAYS provide recommendations)
@@ -315,9 +357,26 @@ console.log('Step 7: Getting AI recommendations...');
 try {
   const hotelSummaries = hotelSummariesForAI.map((hotel) => {
     return `${hotel.index}. ${hotel.name}
-Location: ${hotel.location}
-Description: ${hotel.description}`;
+  Location: ${hotel.location}
+  Price: ${hotel.pricePerNight}
+  Description: ${hotel.description}`;
   }).join('\n\n');
+
+  let priceContext = '';
+if (parsedQuery.minCost || parsedQuery.maxCost) {
+  const minText = parsedQuery.minCost ? `minimum $${parsedQuery.minCost}/night` : '';
+  const maxText = parsedQuery.maxCost ? `maximum $${parsedQuery.maxCost}/night` : '';
+  
+  if (minText && maxText) {
+    priceContext = `\nBUDGET REQUIREMENT: User wants hotels between ${minText} and ${maxText}.`;
+  } else if (minText) {
+    priceContext = `\nBUDGET REQUIREMENT: User wants hotels with ${minText} or higher.`;
+  } else if (maxText) {
+    priceContext = `\nBUDGET REQUIREMENT: User wants hotels under ${maxText}.`;
+  }
+  
+  priceContext += `\nIMPORTANT: Prioritize hotels that match the user's budget! Consider price-to-value ratio.`;
+}
 
   const destination = `${parsedQuery.cityName}, ${parsedQuery.countryCode}`;
   
@@ -328,7 +387,7 @@ Description: ${hotel.description}`;
     ? `Analyze these ${hotelSummariesForAI.length} hotels for: "${parsedQuery.aiSearch}"
 
 Hotels:
-${hotelSummaries}
+${hotelSummaries}${priceContext}
 
 Create ${Math.min(5, hotelSummariesForAI.length)} hotel recommendations with personality!
 
@@ -347,7 +406,7 @@ Return pure JSON only. Make it sound like recommendations from a travel-obsessed
     : `Analyze these ${hotelSummariesForAI.length} hotels in ${destination} and create exciting highlights for each!
 
 Hotels:
-${hotelSummaries}
+${hotelSummaries}${priceContext}
 
 Create ${Math.min(5, hotelSummariesForAI.length)} hotel recommendations with personality!
 
@@ -726,7 +785,7 @@ export const searchHotelAvailability = async (req: Request, res: Response): Prom
   
       // 🚀 NEW: Create lightweight summaries for AI processing
       const hotelSummariesForAI: HotelSummaryForAI[] = enrichedHotels.map((hotel, index) => 
-        createHotelSummaryForAI(hotel, index)
+        createHotelSummaryForAI(hotel, index, nights)
       );
   
       console.log(`Step 4: Successfully found rates for ${enrichedHotels.length} hotels`);
