@@ -2,11 +2,7 @@
 import express from 'express';
 import dotenv from 'dotenv';
 import cors from 'cors';
-import hotelRoutes from './routes/hotelRoutes';
-import supabase from './lib/supabaseClient';
-import parseRoutes from './routes/parseRoutes';
-import matchRoutes from './routes/matchRoutes'
-
+import apiRoutes from './routes/api';
 
 dotenv.config();
 
@@ -14,10 +10,8 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Use different base paths to avoid conflicts
-app.use('/api/parse', parseRoutes);
-app.use('/api/hotels', hotelRoutes);
-app.use('/api/match', matchRoutes);
+// Single API base path - all routes go through /api
+app.use('/api', apiRoutes);
 
 const PORT = process.env.PORT || 3003;
 

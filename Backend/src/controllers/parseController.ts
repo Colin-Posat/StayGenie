@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import { OpenAI } from 'openai';
 import dotenv from 'dotenv';
+
 dotenv.config();
 
 const openai = new OpenAI({
@@ -30,30 +31,32 @@ Output a JSON object with the following fields:
 {
   "checkin": "YYYY-MM-DD",
   "checkout": "YYYY-MM-DD",
-  "city": "3-letter IATA city code (e.g., PAR for Paris, LON for London, NYC for New York)",
-  "country": "Country Name (if available)",
-  "price": "Optional price range or budget",
+  "countryCode": "ISO-2 country code (e.g., FR for France, GB for UK, US for USA)",
+  "cityName": "Full city name (e.g., Paris, London, New York)",
+  "language": "ISO-639-1 language code (e.g., en, fr, es, de) - infer from location or default to 'en'",
   "adults": Number of adult guests (default to 2 if not specified),
   "children": Number of children (default to 0),
-  "extra": ["All other descriptive or preference-related info that doesn't fit above"]
+  "aiSearch": "All other descriptive info including preferences, amenities, budget, hotel type, style, etc."
 }
 
 Rules:
 - If the user doesn't provide check-in/check-out dates, default to:
   "checkin": "${formattedCheckin}"
   "checkout": "${formattedCheckout}"
-- IMPORTANT: Always return the 3-letter IATA city code in the "city" field, not the city name
-- Common city codes: PAR (Paris), LON (London), NYC (New York), TYO (Tokyo), MAD (Madrid), ROM (Rome), BCN (Barcelona), AMS (Amsterdam), BER (Berlin), VIE (Vienna), PRG (Prague), DUB (Dublin), LIS (Lisbon), MIL (Milan), VCE (Venice), FLR (Florence), ATH (Athens), IST (Istanbul), MOW (Moscow), STO (Stockholm), CPH (Copenhagen), OSL (Oslo), HEL (Helsinki), WAW (Warsaw), BUD (Budapest), ZUR (Zurich), GVA (Geneva), BRU (Brussels), BOM (Mumbai), DEL (Delhi), BLR (Bangalore), SYD (Sydney), MEL (Melbourne), PER (Perth), LAX (Los Angeles), SFO (San Francisco), CHI (Chicago), MIA (Miami), LAS (Las Vegas), BOS (Boston), WAS (Washington), SEA (Seattle), DEN (Denver), ATL (Atlanta), YTO (Toronto), YVR (Vancouver), YMQ (Montreal)
-- If they provide only a country, choose a major city code in that country based on their vibe/criteria
-- If no location is provided, infer one from their preferences (e.g., 'igloo' → 'TRD' for Trondheim, Norway)
+- IMPORTANT: Always return the ISO-2 country code in "countryCode" field (e.g., FR, GB, US, DE, IT, ES, etc.)
+- IMPORTANT: Always return the full city name in "cityName" field (e.g., Paris, London, New York)
+- For language, infer from the location (e.g., FR → "fr", GB → "en", ES → "es", DE → "de", IT → "it") or default to "en"
+- Put ALL other search criteria in "aiSearch": price range, hotel preferences, amenities, style, luxury level, business/leisure, etc.
+- If they provide only a country, choose a major city in that country
+- If no location is provided, infer one from their preferences
+- If number of people is not specified, default to 2 adults and 0 children
 - Only return the JSON. No explanation or extra formatting.
-- If number of people is not specified, default to 2 adults and 0 children.
 
 User input: "${userInput}"
 `;
 
     const completion = await openai.chat.completions.create({
-      model: 'gpt-4',
+      model: 'gpt-4o-mini',
       messages: [{ role: 'user', content: prompt }],
     });
 
