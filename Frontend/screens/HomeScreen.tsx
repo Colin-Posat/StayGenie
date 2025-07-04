@@ -1,4 +1,4 @@
-// HomeScreen.tsx - Updated with test mode and unified swipeable story card view
+// HomeScreen.tsx - Updated to pass Google Maps props to SwipeableStoryView
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   View,
@@ -267,6 +267,8 @@ const HomeScreen = () => {
     today.setDate(today.getDate() + 32);
     return today;
   });
+  const [adults, setAdults] = useState(2);
+  const [children, setChildren] = useState(0);
   const [isFocused, setIsFocused] = useState(false);
   const [showAiOverlay, setShowAiOverlay] = useState(false);
 
@@ -306,8 +308,8 @@ const HomeScreen = () => {
           countryCode: 'US',
           cityName: 'Various',
           language: 'en',
-          adults: 2,
-          children: 0,
+          adults: adults,
+          children: children,
           aiSearch: "Luxury hotels with amazing amenities",
           nights: 2,
           currency: 'USD'
@@ -321,7 +323,7 @@ const HomeScreen = () => {
       };
       setSearchResults(mockSearchResults);
     }
-  }, [TEST_MODE, displayHotels.length, checkInDate, checkOutDate]);
+  }, [TEST_MODE, displayHotels.length, checkInDate, checkOutDate, adults, children]);
 
   // API request helper
   const makeRequest = async (endpoint: string, data: any) => {
@@ -523,11 +525,18 @@ const HomeScreen = () => {
       
       setDisplayHotels(convertedHotels);
 
+      // Update dates and guest info from search response
       if (searchResponse.searchParams.checkin) {
         setCheckInDate(new Date(searchResponse.searchParams.checkin));
       }
       if (searchResponse.searchParams.checkout) {
         setCheckOutDate(new Date(searchResponse.searchParams.checkout));
+      }
+      if (searchResponse.searchParams.adults) {
+        setAdults(searchResponse.searchParams.adults);
+      }
+      if (searchResponse.searchParams.children) {
+        setChildren(searchResponse.searchParams.children);
       }
 
       const alertTitle = searchResponse.aiRecommendationsAvailable 
@@ -622,7 +631,7 @@ const HomeScreen = () => {
     if (hotel.pricePerNight) {
       bookingMessage += `Price: ${hotel.pricePerNight.display}\n`;
     } else {
-      bookingMessage += `Price: $${hotel.price}/night\n`;
+      bookingMessage += `Price: ${hotel.price}/night\n`;
     }
     
     if (searchResults?.searchParams) {
@@ -631,6 +640,12 @@ const HomeScreen = () => {
       bookingMessage += `Guests: ${params.adults} adults`;
       if (params.children > 0) {
         bookingMessage += `, ${params.children} children`;
+      }
+    } else {
+      bookingMessage += `Dates: ${checkInDate.toISOString().split('T')[0]} to ${checkOutDate.toISOString().split('T')[0]}\n`;
+      bookingMessage += `Guests: ${adults} adults`;
+      if (children > 0) {
+        bookingMessage += `, ${children} children`;
       }
     }
     
@@ -642,7 +657,7 @@ const HomeScreen = () => {
         { text: 'Proceed to Book', style: 'default' }
       ]
     );
-  }, [searchResults]);
+  }, [searchResults, checkInDate, checkOutDate, adults, children]);
 
   const handleViewDetails = useCallback((hotel: Hotel) => {
     console.log('View details pressed for:', hotel.name);
@@ -676,7 +691,7 @@ const HomeScreen = () => {
     if (hotel.pricePerNight) {
       detailsMessage += `\nPrice: ${hotel.pricePerNight.display}`;
     } else {
-      detailsMessage += `\nPrice: $${hotel.price}/night`;
+      detailsMessage += `\nPrice: ${hotel.price}/night`;
     }
     
     if (searchResults?.searchParams) {
@@ -685,6 +700,12 @@ const HomeScreen = () => {
       detailsMessage += `\nGuests: ${params.adults} adults`;
       if (params.children > 0) {
         detailsMessage += `, ${params.children} children`;
+      }
+    } else {
+      detailsMessage += `\nDates: ${checkInDate.toISOString().split('T')[0]} to ${checkOutDate.toISOString().split('T')[0]}`;
+      detailsMessage += `\nGuests: ${adults} adults`;
+      if (children > 0) {
+        detailsMessage += `, ${children} children`;
       }
     }
     
@@ -696,7 +717,7 @@ const HomeScreen = () => {
         { text: 'Book Now', style: 'default', onPress: () => handleBookNow(hotel) }
       ]
     );
-  }, [searchResults, handleBookNow]);
+  }, [searchResults, handleBookNow, checkInDate, checkOutDate, adults, children]);
 
   const handleHotelPress = useCallback((hotel: Hotel) => {
     console.log('Hotel selected:', hotel.name);
@@ -843,11 +864,15 @@ const HomeScreen = () => {
         </View>
       )}
 
-      {/* CONTENT VIEW - Always Story View */}
+      {/* CONTENT VIEW - Story View with Google Maps Props */}
       <SwipeableStoryView
         hotels={displayHotels}
         onHotelPress={handleHotelPress}
         onViewDetails={handleViewDetails}
+        checkInDate={checkInDate}
+        checkOutDate={checkOutDate}
+        adults={adults}
+        children={children}
       />
 
       {/* AI SEARCH OVERLAY */}
