@@ -1,4 +1,4 @@
-// HotelStoryCard.tsx - Updated with larger, more accessible buttons
+// SwipeableHotelStoryCard.tsx - Individual story card without navigation buttons
 import React, { useState, useRef, useEffect } from 'react';
 import {
   View,
@@ -30,6 +30,16 @@ interface Hotel {
   tags: string[];
   location: string;
   features: string[];
+  aiExcerpt?: string;
+  whyItMatches?: string;
+  funFacts?: string[];
+  aiMatchPercent?: number;
+  pricePerNight?: {
+    display: string;
+    min: number;
+    max: number;
+    currency: string;
+  };
 }
 
 interface EnhancedHotel extends Hotel {
@@ -38,16 +48,14 @@ interface EnhancedHotel extends Hotel {
   nearbyAttractions: string[];
 }
 
-interface HotelStoryCardProps {
+interface SwipeableHotelStoryCardProps {
   hotel: EnhancedHotel;
   onSave: () => void;
-  onNext: () => void;
-  onPrev: () => void;
-  isLastHotel: boolean;
-  hasSavedHotels: boolean;
+  onViewDetails: () => void;
+  onHotelPress: () => void;
   isCurrentHotelSaved: boolean;
-  onViewSavedHotels: () => void;
-  canGoPrev: boolean;
+  index: number;
+  totalCount: number;
 }
 
 // Generate AI insights based on hotel characteristics
@@ -170,11 +178,13 @@ const StoryProgressBar: React.FC<StoryProgressBarProps> = ({
   );
 };
 
+
+
 // Slide 1: Hotel Overview with panning effect
 const HotelOverviewSlide: React.FC<{ hotel: EnhancedHotel }> = ({ hotel }) => {
   const aiInsight = generateAIInsight(hotel);
   const panAnimation = useRef(new Animated.Value(0)).current;
-  const scaleAnimation = useRef(new Animated.Value(1.2)).current; // Start larger
+  const scaleAnimation = useRef(new Animated.Value(1.2)).current;
 
   useEffect(() => {
     // Start panning animation
@@ -193,7 +203,7 @@ const HotelOverviewSlide: React.FC<{ hotel: EnhancedHotel }> = ({ hotel }) => {
       ])
     );
 
-    // Start subtle scale animation (always keep it large enough)
+    // Start subtle scale animation
     const scalingAnimation = Animated.loop(
       Animated.sequence([
         Animated.timing(scaleAnimation, {
@@ -220,12 +230,12 @@ const HotelOverviewSlide: React.FC<{ hotel: EnhancedHotel }> = ({ hotel }) => {
 
   const translateX = panAnimation.interpolate({
     inputRange: [0, 1],
-    outputRange: [-15, 15], // Reduced range since we have larger base scale
+    outputRange: [-15, 15],
   });
 
   const translateY = panAnimation.interpolate({
     inputRange: [0, 1],
-    outputRange: [-8, 8], // Reduced range
+    outputRange: [-8, 8],
   });
 
   return (
@@ -235,10 +245,10 @@ const HotelOverviewSlide: React.FC<{ hotel: EnhancedHotel }> = ({ hotel }) => {
         style={[
           {
             position: 'absolute',
-            width: '120%', // Make image larger than container
-            height: '120%', // Make image larger than container
-            left: '-10%', // Center the oversized image
-            top: '-10%', // Center the oversized image
+            width: '120%',
+            height: '120%',
+            left: '-10%',
+            top: '-10%',
           },
           {
             transform: [
@@ -307,13 +317,12 @@ const HotelOverviewSlide: React.FC<{ hotel: EnhancedHotel }> = ({ hotel }) => {
   );
 };
 
-// Slide 2: Location - Minimalistic with panning effect
+// Slide 2: Location
 const LocationSlide: React.FC<{ hotel: EnhancedHotel }> = ({ hotel }) => {
   const panAnimation = useRef(new Animated.Value(0)).current;
-  const scaleAnimation = useRef(new Animated.Value(1.2)).current; // Start larger
+  const scaleAnimation = useRef(new Animated.Value(1.2)).current;
 
   useEffect(() => {
-    // Different panning pattern for location slide
     const panningAnimation = Animated.loop(
       Animated.sequence([
         Animated.timing(panAnimation, {
@@ -355,12 +364,12 @@ const LocationSlide: React.FC<{ hotel: EnhancedHotel }> = ({ hotel }) => {
 
   const translateX = panAnimation.interpolate({
     inputRange: [0, 1],
-    outputRange: [12, -12], // Reduced range
+    outputRange: [12, -12],
   });
 
   const translateY = panAnimation.interpolate({
     inputRange: [0, 1],
-    outputRange: [6, -6], // Reduced range
+    outputRange: [6, -6],
   });
 
   return (
@@ -370,10 +379,10 @@ const LocationSlide: React.FC<{ hotel: EnhancedHotel }> = ({ hotel }) => {
         style={[
           {
             position: 'absolute',
-            width: '120%', // Make image larger than container
-            height: '120%', // Make image larger than container
-            left: '-10%', // Center the oversized image
-            top: '-10%', // Center the oversized image
+            width: '120%',
+            height: '120%',
+            left: '-10%',
+            top: '-10%',
           },
           {
             transform: [
@@ -415,7 +424,7 @@ const LocationSlide: React.FC<{ hotel: EnhancedHotel }> = ({ hotel }) => {
           </Text>
         </View>
         
-        {/* Nearby Attractions - Simple List */}
+        {/* Nearby Attractions */}
         <View style={tw`bg-black/50 p-3 rounded-lg border border-white/20`}>
           <Text style={tw`text-white text-sm font-semibold mb-2`}>Nearby</Text>
           {hotel.nearbyAttractions.slice(0, 3).map((attraction, index) => (
@@ -430,13 +439,12 @@ const LocationSlide: React.FC<{ hotel: EnhancedHotel }> = ({ hotel }) => {
   );
 };
 
-// Slide 3: Amenities & Features - Minimalistic with panning effect
+// Slide 3: Amenities & Features
 const AmenitiesSlide: React.FC<{ hotel: EnhancedHotel }> = ({ hotel }) => {
   const panAnimation = useRef(new Animated.Value(0)).current;
-  const scaleAnimation = useRef(new Animated.Value(1.2)).current; // Start larger
+  const scaleAnimation = useRef(new Animated.Value(1.2)).current;
 
   useEffect(() => {
-    // Unique panning pattern for amenities slide
     const panningAnimation = Animated.loop(
       Animated.sequence([
         Animated.timing(panAnimation, {
@@ -478,12 +486,12 @@ const AmenitiesSlide: React.FC<{ hotel: EnhancedHotel }> = ({ hotel }) => {
 
   const translateX = panAnimation.interpolate({
     inputRange: [0, 1],
-    outputRange: [-10, 10], // Reduced range
+    outputRange: [-10, 10],
   });
 
   const translateY = panAnimation.interpolate({
     inputRange: [0, 1],
-    outputRange: [12, -12], // Reduced range
+    outputRange: [12, -12],
   });
 
   return (
@@ -493,10 +501,10 @@ const AmenitiesSlide: React.FC<{ hotel: EnhancedHotel }> = ({ hotel }) => {
         style={[
           {
             position: 'absolute',
-            width: '120%', // Make image larger than container
-            height: '120%', // Make image larger than container
-            left: '-10%', // Center the oversized image
-            top: '-10%', // Center the oversized image
+            width: '120%',
+            height: '120%',
+            left: '-10%',
+            top: '-10%',
           },
           {
             transform: [
@@ -530,7 +538,7 @@ const AmenitiesSlide: React.FC<{ hotel: EnhancedHotel }> = ({ hotel }) => {
           </Text>
         </View>
         
-        {/* Features Grid - Simple */}
+        {/* Features Grid */}
         <View style={tw`bg-black/50 p-3 rounded-lg border border-white/20 mb-3`}>
           <View style={tw`flex-row flex-wrap gap-2`}>
             {hotel.features.map((feature, index) => (
@@ -558,17 +566,15 @@ const AmenitiesSlide: React.FC<{ hotel: EnhancedHotel }> = ({ hotel }) => {
   );
 };
 
-// Main Hotel Story Card Component
-const HotelStoryCard: React.FC<HotelStoryCardProps> = ({ 
+// Main Swipeable Hotel Story Card Component
+const SwipeableHotelStoryCard: React.FC<SwipeableHotelStoryCardProps> = ({ 
   hotel, 
   onSave, 
-  onNext, 
-  onPrev, 
-  isLastHotel, 
-  hasSavedHotels, 
-  isCurrentHotelSaved, 
-  onViewSavedHotels,
-  canGoPrev 
+  onViewDetails, 
+  onHotelPress,
+  isCurrentHotelSaved,
+  index,
+  totalCount
 }) => {
   const [currentSlide, setCurrentSlide] = useState(0);
   const scrollViewRef = useRef<ScrollView>(null);
@@ -580,7 +586,7 @@ const HotelStoryCard: React.FC<HotelStoryCardProps> = ({
       setCurrentSlide(0);
       scrollViewRef.current?.scrollTo({
         x: 0,
-        animated: false, // No animation for hotel change
+        animated: false,
       });
       prevHotelId.current = hotel.id;
     }
@@ -613,8 +619,14 @@ const HotelStoryCard: React.FC<HotelStoryCardProps> = ({
     }
   };
 
+  const handleCardPress = () => {
+    onHotelPress();
+  };
+
   return (
-    <View 
+    <TouchableOpacity
+      activeOpacity={0.95}
+      onPress={handleCardPress}
       style={[
         tw`bg-white rounded-2xl shadow-xl overflow-hidden relative`,
         { width: CARD_WIDTH, height: CARD_HEIGHT },
@@ -627,6 +639,7 @@ const HotelStoryCard: React.FC<HotelStoryCardProps> = ({
         }
       ]}
     >
+
       {/* Smooth Story Progress Bar */}
       <StoryProgressBar
         currentSlide={currentSlide}
@@ -639,7 +652,7 @@ const HotelStoryCard: React.FC<HotelStoryCardProps> = ({
         <TouchableOpacity
           style={[
             tw`absolute top-0 left-0 w-40 z-20`,
-            { height: CARD_HEIGHT - 80 } // Stop 80px from bottom for smaller buttons
+            { height: CARD_HEIGHT - 80 } // Stop 80px from bottom
           ]}
           onPress={handleLeftTap}
           activeOpacity={0}
@@ -651,14 +664,14 @@ const HotelStoryCard: React.FC<HotelStoryCardProps> = ({
         <TouchableOpacity
           style={[
             tw`absolute top-0 right-0 w-40 z-20`,
-            { height: CARD_HEIGHT - 80 } // Stop 80px from bottom for smaller buttons
+            { height: CARD_HEIGHT - 80 } // Stop 80px from bottom
           ]}
           onPress={handleRightTap}
           activeOpacity={0}
         />
       )}
       
-      {/* Larger Navigation Buttons */}
+      {/* Navigation Buttons */}
       {currentSlide > 0 && (
         <TouchableOpacity
           style={tw`absolute top-24 left-3 w-8 h-8 rounded-full bg-black/30 items-center justify-center z-25`}
@@ -700,26 +713,18 @@ const HotelStoryCard: React.FC<HotelStoryCardProps> = ({
         </View>
       </ScrollView>
       
-      {/* MUCH LARGER Navigation Buttons - Main improvement */}
+      {/* Bottom Action Buttons */}
       <View style={tw`absolute bottom-4 left-4 right-4 z-10`}>
         <View style={tw`flex-row gap-2`}>
-          {/* Back button - back to original size */}
-          {canGoPrev && (
-            <TouchableOpacity
-              style={tw`w-12 h-12 bg-white/95 rounded-lg items-center justify-center shadow-md`}
-              onPress={onPrev}
-              activeOpacity={0.8}
-            >
-              <Ionicons name="chevron-back" size={20} color="#000000" />
-            </TouchableOpacity>
-          )}
-          
-          {/* Save button - back to original size */}
+          {/* Save button */}
           <TouchableOpacity
             style={tw`w-12 h-12 rounded-lg items-center justify-center shadow-md ${
               isCurrentHotelSaved ? 'bg-red-500' : 'bg-white/95'
             }`}
-            onPress={onSave}
+            onPress={(e) => {
+              e.stopPropagation();
+              onSave();
+            }}
             activeOpacity={0.8}
           >
             <Ionicons 
@@ -729,43 +734,24 @@ const HotelStoryCard: React.FC<HotelStoryCardProps> = ({
             />
           </TouchableOpacity>
           
-          {/* Main action button - back to original height */}
+          {/* View Details button */}
           <TouchableOpacity
-            style={tw`flex-1 flex-row py-3 px-4 rounded-lg items-center justify-center shadow-md ${
-              isLastHotel && hasSavedHotels
-                ? 'bg-green-600'
-                : isLastHotel
-                ? 'bg-gray-600'
-                : 'bg-black'
-            }`}
-            onPress={isLastHotel && hasSavedHotels ? onViewSavedHotels : onNext}
+            style={tw`flex-1 flex-row py-3 px-4 rounded-lg items-center justify-center shadow-md bg-black`}
+            onPress={(e) => {
+              e.stopPropagation();
+              onViewDetails();
+            }}
             activeOpacity={0.8}
           >
             <Text style={tw`text-white text-base font-bold mr-2`}>
-              {isLastHotel && hasSavedHotels
-                ? 'View Saved Hotels'
-                : isLastHotel
-                ? 'Start Over'
-                : 'Next Hotel'
-              }
+              View Details
             </Text>
-            <Ionicons 
-              name={
-                isLastHotel && hasSavedHotels
-                  ? "heart"
-                  : isLastHotel
-                  ? "refresh"
-                  : "chevron-forward"
-              } 
-              size={18} 
-              color="#FFFFFF" 
-            />
           </TouchableOpacity>
         </View>
       </View>
-    </View>
+    </TouchableOpacity>
   );
 };
 
-export default HotelStoryCard;
-export type { Hotel, EnhancedHotel, HotelStoryCardProps };
+export default SwipeableHotelStoryCard;
+export type { Hotel, EnhancedHotel, SwipeableHotelStoryCardProps };

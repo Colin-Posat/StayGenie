@@ -1,4 +1,4 @@
-// HomeScreen.tsx - Updated with modern loading screen
+// HomeScreen.tsx - Updated with test mode and unified swipeable story card view
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   View,
@@ -7,15 +7,12 @@ import {
   TextInput,
   SafeAreaView,
   StatusBar,
-  LayoutAnimation,
   Platform,
-  Animated,
   Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import tw from 'twrnc';
-import ListView from '../components/ListView/ListView';
-import StoryView from '../components/StoryView/StoryView';
+import SwipeableStoryView from '../components/StoryView/SwipeableStoryView';
 import DateSelector from '../components/HomeScreenTop/DateSelector';
 import AISearchOverlay from '../components/HomeScreenTop/AiSearchOverlay';
 import LoadingScreen from '../components/HomeScreenTop/LoadingScreen';
@@ -135,7 +132,10 @@ interface Hotel {
   roomTypes?: any[];
 }
 
-// Mock hotels data (fallback)
+// Test mode configuration
+const TEST_MODE = false; // Set to true to enable test mode, false for normal operation
+
+// Mock hotels data for test mode
 const mockHotels: Hotel[] = [
   {
     id: 1,
@@ -150,175 +150,56 @@ const mockHotels: Hotel[] = [
     transitDistance: "3 min walk to beach",
     tags: ["Ocean view", "Fine dining", "Spa"],
     location: "Wailea, Maui",
-    features: ["Ocean view rooms", "Award-winning restaurant", "Spa"],
-    aiExcerpt: "Panoramic ocean views from all rooms plus award-winning seafood restaurant."
+    features: ["Ocean view rooms", "Award-winning restaurant", "Full-service spa"],
+    aiExcerpt: "Panoramic ocean views from all rooms plus award-winning seafood restaurant.",
+    whyItMatches: "Perfect oceanfront location with luxury amenities you're looking for",
+    funFacts: ["Home to endangered Hawaiian monk seals", "Features a rooftop infinity pool", "Offers traditional Hawaiian luau experiences"],
+    aiMatchPercent: 95
   },
+  {
+    id: 2,
+    name: "Tokyo Business District Hotel",
+    image: "https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?auto=format&fit=crop&w=800&q=80",
+    price: 189,
+    originalPrice: 220,
+    priceComparison: "15% below average",
+    rating: 4.6,
+    reviews: 1248,
+    safetyRating: 9.2,
+    transitDistance: "2 min walk to subway",
+    tags: ["Business center", "Free WiFi", "24/7 concierge"],
+    location: "Shibuya, Tokyo",
+    features: ["High-speed internet", "Meeting rooms", "Executive lounge"],
+    aiExcerpt: "Modern business hotel in heart of Tokyo with excellent connectivity.",
+    whyItMatches: "Ideal for business travelers with modern amenities and prime location",
+    funFacts: ["Located in world's busiest pedestrian crossing", "Offers authentic Japanese breakfast", "Features traditional Japanese garden"],
+    aiMatchPercent: 88
+  },
+  {
+    id: 3,
+    name: "Parisian Boutique Retreat",
+    image: "https://images.unsplash.com/photo-1571896349842-33c89424de2d?auto=format&fit=crop&w=800&q=80",
+    price: 295,
+    originalPrice: 275,
+    priceComparison: "7% above average",
+    rating: 4.8,
+    reviews: 2156,
+    safetyRating: 9.5,
+    transitDistance: "5 min walk to Metro",
+    tags: ["Historic", "Art gallery", "Wine cellar"],
+    location: "Marais District, Paris",
+    features: ["Historic architecture", "Art collection", "Wine tasting"],
+    aiExcerpt: "Charming boutique hotel in historic Parisian neighborhood.",
+    whyItMatches: "Perfect blend of history and modern luxury in artistic district",
+    funFacts: ["Building dates back to 1640", "Houses works by local artists", "Secret underground wine cellar"],
+    aiMatchPercent: 92
+  }
 ];
 
 // Base URL
 const BASE_URL = 'http://localhost:3003';
 
-// Animated Toggle Button Component (keeping existing implementation)
-interface AnimatedToggleButtonProps {
-  showStoryView: boolean;
-  onViewToggle: (viewType: 'list' | 'swipe') => void;
-}
-
-const AnimatedToggleButton: React.FC<AnimatedToggleButtonProps> = ({
-  showStoryView,
-  onViewToggle,
-}) => {
-  const slideAnimation = useRef(new Animated.Value(showStoryView ? 1 : 0)).current;
-  const scaleAnimation = useRef(new Animated.Value(1)).current;
-  const glowAnimation = useRef(new Animated.Value(0)).current;
-  const buttonWidth = 90;
-
-  useEffect(() => {
-    Animated.parallel([
-      Animated.spring(slideAnimation, {
-        toValue: showStoryView ? 1 : 0,
-        useNativeDriver: false,
-        tension: 150,
-        friction: 8,
-      }),
-      Animated.sequence([
-        Animated.timing(scaleAnimation, {
-          toValue: 0.95,
-          duration: 100,
-          useNativeDriver: true,
-        }),
-        Animated.timing(scaleAnimation, {
-          toValue: 1,
-          duration: 150,
-          useNativeDriver: true,
-        }),
-      ]),
-    ]).start();
-  }, [showStoryView]);
-
-  useEffect(() => {
-    const glowLoop = Animated.loop(
-      Animated.sequence([
-        Animated.timing(glowAnimation, {
-          toValue: 1,
-          duration: 1500,
-          useNativeDriver: true,
-        }),
-        Animated.timing(glowAnimation, {
-          toValue: 0,
-          duration: 1500,
-          useNativeDriver: true,
-        }),
-      ])
-    );
-    glowLoop.start();
-    return () => glowLoop.stop();
-  }, []);
-
-  const handlePress = (viewType: 'list' | 'swipe') => {
-    Animated.sequence([
-      Animated.timing(scaleAnimation, {
-        toValue: 0.9,
-        duration: 75,
-        useNativeDriver: true,
-      }),
-      Animated.timing(scaleAnimation, {
-        toValue: 1,
-        duration: 100,
-        useNativeDriver: true,
-      }),
-    ]).start();
-    onViewToggle(viewType);
-  };
-
-  const slideLeft = slideAnimation.interpolate({
-    inputRange: [0, 1],
-    outputRange: [1, buttonWidth - 1],
-  });
-
-  const glowOpacity = glowAnimation.interpolate({
-    inputRange: [0, 1],
-    outputRange: [0.3, 0.8],
-  });
-
-  return (
-    <Animated.View
-      style={[
-        tw`relative`,
-        { transform: [{ scale: scaleAnimation }] },
-      ]}
-    >
-      <Animated.View
-        style={[
-          tw`absolute -top-1 -left-1 -right-1 -bottom-1 bg-black/10 rounded-3xl`,
-          { opacity: glowOpacity },
-        ]}
-      />
-      <View style={tw`flex-row bg-gray-100 rounded-3xl border border-gray-200 overflow-hidden relative z-10 h-11`}>
-        <Animated.View
-          style={[
-            tw`absolute top-0.5 w-22 h-10 bg-black rounded-3xl shadow-lg`,
-            { left: slideLeft },
-          ]}
-        />
-        <TouchableOpacity
-          style={tw`items-center justify-center py-2.5 px-5 w-22 h-11 z-20`}
-          onPress={() => handlePress('list')}
-          activeOpacity={0.8}
-        >
-          <Animated.View
-            style={[
-              tw`flex-row items-center gap-1.5`,
-              {
-                opacity: slideAnimation.interpolate({
-                  inputRange: [0, 0.5, 1],
-                  outputRange: [1, 0.7, 0.5],
-                }),
-              },
-            ]}
-          >
-            <Ionicons
-              name="list"
-              size={16}
-              color={!showStoryView ? '#FFFFFF' : '#666666'}
-            />
-            <Text style={tw`text-sm font-semibold ${!showStoryView ? 'text-white' : 'text-gray-500'}`}>
-              List
-            </Text>
-          </Animated.View>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={tw`items-center justify-center py-2.5 px-5 w-22 h-11 z-20`}
-          onPress={() => handlePress('swipe')}
-          activeOpacity={0.8}
-        >
-          <Animated.View
-            style={[
-              tw`flex-row items-center gap-1.5`,
-              {
-                opacity: slideAnimation.interpolate({
-                  inputRange: [0, 0.5, 1],
-                  outputRange: [0.5, 0.7, 1],
-                }),
-              },
-            ]}
-          >
-            <Ionicons
-              name="copy"
-              size={16}
-              color={showStoryView ? '#FFFFFF' : '#666666'}
-            />
-            <Text style={tw`text-sm font-semibold ${showStoryView ? 'text-white' : 'text-gray-500'}`}>
-              Story
-            </Text>
-          </Animated.View>
-        </TouchableOpacity>
-      </View>
-    </Animated.View>
-  );
-};
-
-// Custom hook for typing placeholder (keeping existing implementation)
+// Custom hook for typing placeholder
 const useTypingPlaceholder = (
   words: string[],
   typingSpeed = 100,
@@ -375,7 +256,7 @@ const HomeScreen = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearching, setIsSearching] = useState(false);
   const [searchResults, setSearchResults] = useState<SmartSearchResponse | null>(null);
-  const [displayHotels, setDisplayHotels] = useState<Hotel[]>(mockHotels);
+  const [displayHotels, setDisplayHotels] = useState<Hotel[]>(TEST_MODE ? mockHotels : []);
   const [checkInDate, setCheckInDate] = useState<Date>(() => {
     const today = new Date();
     today.setDate(today.getDate() + 30);
@@ -386,7 +267,6 @@ const HomeScreen = () => {
     today.setDate(today.getDate() + 32);
     return today;
   });
-  const [showStoryView, setShowStoryView] = useState(false);
   const [isFocused, setIsFocused] = useState(false);
   const [showAiOverlay, setShowAiOverlay] = useState(false);
 
@@ -411,6 +291,38 @@ const HomeScreen = () => {
     2500
   );
 
+  // Initialize test mode data on component mount
+  useEffect(() => {
+    if (TEST_MODE && displayHotels.length === 0) {
+      console.log('🧪 TEST MODE: Loading mock hotels');
+      setDisplayHotels(mockHotels);
+      setSearchQuery("Luxury hotels with amazing amenities");
+      
+      // Set mock search results
+      const mockSearchResults: SmartSearchResponse = {
+        searchParams: {
+          checkin: checkInDate.toISOString().split('T')[0],
+          checkout: checkOutDate.toISOString().split('T')[0],
+          countryCode: 'US',
+          cityName: 'Various',
+          language: 'en',
+          adults: 2,
+          children: 0,
+          aiSearch: "Luxury hotels with amazing amenities",
+          nights: 2,
+          currency: 'USD'
+        },
+        totalHotelsFound: 3,
+        hotelsWithRates: 3,
+        aiRecommendationsCount: 3,
+        aiRecommendationsAvailable: true,
+        generatedAt: new Date().toISOString(),
+        searchId: 'test-mode-search'
+      };
+      setSearchResults(mockSearchResults);
+    }
+  }, [TEST_MODE, displayHotels.length, checkInDate, checkOutDate]);
+
   // API request helper
   const makeRequest = async (endpoint: string, data: any) => {
     try {
@@ -434,167 +346,151 @@ const HomeScreen = () => {
     }
   };
 
-// Convert recommendation to display format
-const convertRecommendationToDisplayHotel = (recommendation: HotelRecommendation, index: number): Hotel => {
-  // Improved image selection logic for LiteAPI structure
-  const getHotelImage = (recommendation: HotelRecommendation): string => {
-    const defaultImage = "https://images.unsplash.com/photo-1564501049412-61c2a3083791?auto=format&fit=crop&w=800&q=80";
-    
-    console.log(`🖼️ Processing images for ${recommendation.name}:`);
-    console.log('Recommendation object keys:', Object.keys(recommendation));
-    
-    // Check for main_photo first (highest quality)
-    if (recommendation.images && recommendation.images.length > 0) {
-      console.log(`Found images array:`, recommendation.images);
-      const firstImage = recommendation.images[0];
-      if (firstImage && typeof firstImage === 'string' && firstImage.trim() !== '') {
-        if (firstImage.startsWith('http://') || firstImage.startsWith('https://') || firstImage.startsWith('//')) {
-          console.log(`✅ Using image from array: ${firstImage}`);
-          return firstImage;
+  // Convert recommendation to display format
+  const convertRecommendationToDisplayHotel = (recommendation: HotelRecommendation, index: number): Hotel => {
+    const getHotelImage = (recommendation: HotelRecommendation): string => {
+      const defaultImage = "https://images.unsplash.com/photo-1564501049412-61c2a3083791?auto=format&fit=crop&w=800&q=80";
+      
+      if (recommendation.images && recommendation.images.length > 0) {
+        const firstImage = recommendation.images[0];
+        if (firstImage && typeof firstImage === 'string' && firstImage.trim() !== '') {
+          if (firstImage.startsWith('http://') || firstImage.startsWith('https://') || firstImage.startsWith('//')) {
+            return firstImage;
+          }
         }
       }
-    }
-    
-    // If recommendation has main_photo directly (from AI processing)
-    if ((recommendation as any).main_photo) {
-      const mainPhoto = (recommendation as any).main_photo;
-      if (mainPhoto && typeof mainPhoto === 'string' && mainPhoto.trim() !== '') {
-        console.log(`✅ Using main_photo: ${mainPhoto}`);
-        return mainPhoto;
+      
+      if ((recommendation as any).main_photo) {
+        const mainPhoto = (recommendation as any).main_photo;
+        if (mainPhoto && typeof mainPhoto === 'string' && mainPhoto.trim() !== '') {
+          return mainPhoto;
+        }
       }
-    }
-    
-    // If recommendation has thumbnail
-    if ((recommendation as any).thumbnail) {
-      const thumbnail = (recommendation as any).thumbnail;
-      if (thumbnail && typeof thumbnail === 'string' && thumbnail.trim() !== '') {
-        console.log(`✅ Using thumbnail: ${thumbnail}`);
-        return thumbnail;
+      
+      if ((recommendation as any).thumbnail) {
+        const thumbnail = (recommendation as any).thumbnail;
+        if (thumbnail && typeof thumbnail === 'string' && thumbnail.trim() !== '') {
+          return thumbnail;
+        }
       }
-    }
-    
-    console.log(`⚠️ No valid images found for ${recommendation.name}, using default`);
-    return defaultImage;
-  };
-
-  // Extract price information
-  let price = 200; // Default fallback
-  let originalPrice = price * 1.15;
-  let priceComparison = "Standard rate";
-
-  if (recommendation.pricePerNight) {
-    price = recommendation.pricePerNight.min;
-    originalPrice = Math.round(price * 1.15);
-    priceComparison = recommendation.pricePerNight.display;
-  }
-
-  return {
-    id: index + 1,
-    name: recommendation.name,
-    image: getHotelImage(recommendation), // Use improved image selection
-    price: Math.round(price),
-    originalPrice: Math.round(originalPrice),
-    priceComparison: priceComparison,
-    rating: recommendation.starRating || 4.0,
-    reviews: Math.floor(Math.random() * 1000) + 100, // Mock reviews
-    safetyRating: 8.5 + Math.random() * 1.5, // Mock safety rating
-    transitDistance: "Check location details", // Mock transit
-    tags: recommendation.amenities?.slice(0, 3) || ["Standard amenities"],
-    location: recommendation.address,
-    features: recommendation.amenities || ["Standard features"],
-    aiExcerpt: recommendation.whyItMatches,
-    whyItMatches: recommendation.whyItMatches,
-    funFacts: recommendation.funFacts,
-    aiMatchPercent: recommendation.aiMatchPercent,
-    pricePerNight: recommendation.pricePerNight,
-    roomTypes: recommendation.roomTypes
-  };
-};
-
-// Convert regular hotel to display format (fallback)
-const convertHotelToDisplayHotel = (hotel: HotelWithRates, index: number): Hotel => {
-  // Improved image selection logic for LiteAPI structure
-  const getHotelImage = (hotelInfo: any): string => {
-    const defaultImage = "https://images.unsplash.com/photo-1564501049412-61c2a3083791?auto=format&fit=crop&w=800&q=80";
-    
-    if (!hotelInfo) {
-      console.log(`⚠️ No hotelInfo for hotel at index ${index}`);
+      
       return defaultImage;
+    };
+
+    let price = 200;
+    let originalPrice = price * 1.15;
+    let priceComparison = "Standard rate";
+
+    if (recommendation.pricePerNight) {
+      price = recommendation.pricePerNight.min;
+      originalPrice = Math.round(price * 1.15);
+      priceComparison = recommendation.pricePerNight.display;
     }
 
-    console.log(`🖼️ Processing images for ${hotelInfo.name || 'Unknown Hotel'}:`);
-    console.log('HotelInfo keys:', Object.keys(hotelInfo));
-    
-    // Check for main_photo first (highest quality)
-    if (hotelInfo.main_photo) {
-      const mainPhoto = hotelInfo.main_photo;
-      if (mainPhoto && typeof mainPhoto === 'string' && mainPhoto.trim() !== '') {
-        console.log(`✅ Using main_photo: ${mainPhoto}`);
-        return mainPhoto;
+    return {
+      id: index + 1,
+      name: recommendation.name,
+      image: getHotelImage(recommendation),
+      price: Math.round(price),
+      originalPrice: Math.round(originalPrice),
+      priceComparison: priceComparison,
+      rating: recommendation.starRating || 4.0,
+      reviews: Math.floor(Math.random() * 1000) + 100,
+      safetyRating: 8.5 + Math.random() * 1.5,
+      transitDistance: "Check location details",
+      tags: recommendation.amenities?.slice(0, 3) || ["Standard amenities"],
+      location: recommendation.address,
+      features: recommendation.amenities || ["Standard features"],
+      aiExcerpt: recommendation.whyItMatches,
+      whyItMatches: recommendation.whyItMatches,
+      funFacts: recommendation.funFacts,
+      aiMatchPercent: recommendation.aiMatchPercent,
+      pricePerNight: recommendation.pricePerNight,
+      roomTypes: recommendation.roomTypes
+    };
+  };
+
+  // Convert regular hotel to display format (fallback)
+  const convertHotelToDisplayHotel = (hotel: HotelWithRates, index: number): Hotel => {
+    const getHotelImage = (hotelInfo: any): string => {
+      const defaultImage = "https://images.unsplash.com/photo-1564501049412-61c2a3083791?auto=format&fit=crop&w=800&q=80";
+      
+      if (!hotelInfo) {
+        return defaultImage;
       }
-    }
-    
-    // Check for thumbnail as backup
-    if (hotelInfo.thumbnail) {
-      const thumbnail = hotelInfo.thumbnail;
-      if (thumbnail && typeof thumbnail === 'string' && thumbnail.trim() !== '') {
-        console.log(`✅ Using thumbnail: ${thumbnail}`);
-        return thumbnail;
+
+      if (hotelInfo.main_photo) {
+        const mainPhoto = hotelInfo.main_photo;
+        if (mainPhoto && typeof mainPhoto === 'string' && mainPhoto.trim() !== '') {
+          return mainPhoto;
+        }
       }
-    }
-    
-    // Check legacy images array (if it exists)
-    if (hotelInfo.images && Array.isArray(hotelInfo.images) && hotelInfo.images.length > 0) {
-      console.log(`Found images array:`, hotelInfo.images);
-      const firstImage = hotelInfo.images[0];
-      if (firstImage && typeof firstImage === 'string' && firstImage.trim() !== '') {
-        if (firstImage.startsWith('http://') || firstImage.startsWith('https://') || firstImage.startsWith('//')) {
-          console.log(`✅ Using image from array: ${firstImage}`);
-          return firstImage;
+      
+      if (hotelInfo.thumbnail) {
+        const thumbnail = hotelInfo.thumbnail;
+        if (thumbnail && typeof thumbnail === 'string' && thumbnail.trim() !== '') {
+          return thumbnail;
+        }
+      }
+      
+      if (hotelInfo.images && Array.isArray(hotelInfo.images) && hotelInfo.images.length > 0) {
+        const firstImage = hotelInfo.images[0];
+        if (firstImage && typeof firstImage === 'string' && firstImage.trim() !== '') {
+          if (firstImage.startsWith('http://') || firstImage.startsWith('https://') || firstImage.startsWith('//')) {
+            return firstImage;
+          }
+        }
+      }
+      
+      return defaultImage;
+    };
+
+    let price = 200;
+    if (hotel.roomTypes && hotel.roomTypes.length > 0) {
+      const rates = hotel.roomTypes.flatMap(room => room.rates || []);
+      if (rates.length > 0) {
+        const prices = rates
+          .map(rate => rate.retailRate?.total?.[0]?.amount)
+          .filter(p => p != null);
+        if (prices.length > 0) {
+          price = Math.min(...prices);
         }
       }
     }
-    
-    console.log(`⚠️ No valid images found for ${hotelInfo.name || 'Unknown Hotel'}, using default`);
-    return defaultImage;
-  };
 
-  // Calculate price from room rates
-  let price = 200; // Default
-  if (hotel.roomTypes && hotel.roomTypes.length > 0) {
-    const rates = hotel.roomTypes.flatMap(room => room.rates || []);
-    if (rates.length > 0) {
-      const prices = rates
-        .map(rate => rate.retailRate?.total?.[0]?.amount)
-        .filter(p => p != null);
-      if (prices.length > 0) {
-        price = Math.min(...prices);
-      }
-    }
-  }
-
-  return {
-    id: index + 1,
-    name: hotel.hotelInfo?.name || 'Unknown Hotel',
-    image: getHotelImage(hotel.hotelInfo), // Use improved image selection
-    price: Math.round(price),
-    originalPrice: Math.round(price * 1.15),
-    priceComparison: "Standard rate",
-    rating: hotel.hotelInfo?.rating || hotel.hotelInfo?.starRating || hotel.hotelInfo?.rating || 6.0,
-    reviews: Math.floor(Math.random() * 1000) + 100,
-    safetyRating: 8.5 + Math.random() * 1.5,
-    transitDistance: "Check location details",
-    tags: hotel.hotelInfo?.amenities?.slice(0, 3) || ["Standard amenities"],
-    location: hotel.hotelInfo?.address || 'Location not available',
-    features: hotel.hotelInfo?.amenities || ["Standard features"],
-    aiExcerpt: hotel.hotelInfo?.description?.substring(0, 100) + "..." || "Great hotel choice",
-    roomTypes: hotel.roomTypes
+    return {
+      id: index + 1,
+      name: hotel.hotelInfo?.name || 'Unknown Hotel',
+      image: getHotelImage(hotel.hotelInfo),
+      price: Math.round(price),
+      originalPrice: Math.round(price * 1.15),
+      priceComparison: "Standard rate",
+      rating: hotel.hotelInfo?.rating || hotel.hotelInfo?.starRating || hotel.hotelInfo?.rating || 6.0,
+      reviews: Math.floor(Math.random() * 1000) + 100,
+      safetyRating: 8.5 + Math.random() * 1.5,
+      transitDistance: "Check location details",
+      tags: hotel.hotelInfo?.amenities?.slice(0, 3) || ["Standard amenities"],
+      location: hotel.hotelInfo?.address || 'Location not available',
+      features: hotel.hotelInfo?.amenities || ["Standard features"],
+      aiExcerpt: hotel.hotelInfo?.description?.substring(0, 100) + "..." || "Great hotel choice",
+      roomTypes: hotel.roomTypes
+    };
   };
-};
 
   // Main search execution using smart search endpoint
   const executeSmartSearch = async (userInput: string) => {
     if (!userInput.trim()) return;
+
+    // Skip API call in test mode
+    if (TEST_MODE) {
+      console.log('🧪 TEST MODE: Skipping API call, using mock data');
+      Alert.alert(
+        'Test Mode Active',
+        'You\'re viewing mock hotel data. Set TEST_MODE to false to use real API calls.',
+        [{ text: 'Got it!' }]
+      );
+      return;
+    }
 
     try {
       console.log('\n' + '='.repeat(80));
@@ -603,22 +499,13 @@ const convertHotelToDisplayHotel = (hotel: HotelWithRates, index: number): Hotel
       
       setIsSearching(true);
 
-      // Call the smart search endpoint
       const searchResponse: SmartSearchResponse = await makeRequest('/api/hotels/smart-search', {
         userInput: userInput
       });
 
       console.log('✅ Smart Search Complete!');
-      console.log('📊 Search Summary:', {
-        totalHotelsFound: searchResponse.totalHotelsFound,
-        hotelsWithRates: searchResponse.hotelsWithRates,
-        aiRecommendationsCount: searchResponse.aiRecommendationsCount,
-        aiRecommendationsAvailable: searchResponse.aiRecommendationsAvailable
-      });
-
       setSearchResults(searchResponse);
 
-      // Convert to display format
       let convertedHotels: Hotel[] = [];
 
       if (searchResponse.aiRecommendationsAvailable && searchResponse.recommendations) {
@@ -626,20 +513,6 @@ const convertHotelToDisplayHotel = (hotel: HotelWithRates, index: number): Hotel
         convertedHotels = searchResponse.recommendations.map((rec, index) => 
           convertRecommendationToDisplayHotel(rec, index)
         );
-        
-        // Log AI recommendations
-        console.log('\n🤖 AI RECOMMENDATIONS:');
-        searchResponse.recommendations.forEach((rec, index) => {
-          console.log(`${index + 1}. ${rec.name}`);
-          console.log(`   📊 AI Match: ${rec.aiMatchPercent}%`);
-          console.log(`   ⭐ Stars: ${rec.starRating}/5`);
-          console.log(`   💡 Why: ${rec.whyItMatches}`);
-          console.log(`   🎯 Facts: ${rec.funFacts.join(' | ')}`);
-          if (rec.pricePerNight) {
-            console.log(`   💰 Price: ${rec.pricePerNight.display}`);
-          }
-          console.log('');
-        });
       } else {
         console.log('📋 Using Regular Hotel Results');
         const hotelsToConvert = searchResponse.hotels || searchResponse.allHotels || [];
@@ -650,7 +523,6 @@ const convertHotelToDisplayHotel = (hotel: HotelWithRates, index: number): Hotel
       
       setDisplayHotels(convertedHotels);
 
-      // Update dates from search params
       if (searchResponse.searchParams.checkin) {
         setCheckInDate(new Date(searchResponse.searchParams.checkin));
       }
@@ -658,13 +530,12 @@ const convertHotelToDisplayHotel = (hotel: HotelWithRates, index: number): Hotel
         setCheckOutDate(new Date(searchResponse.searchParams.checkout));
       }
 
-      // Show success message
       const alertTitle = searchResponse.aiRecommendationsAvailable 
         ? 'AI-Powered Results! 🤖✨' 
         : 'Search Complete! 🏨';
         
       const alertMessage = searchResponse.aiRecommendationsAvailable
-        ? `Found ${searchResponse.aiRecommendationsCount} personalized AI recommendations!\n\nThese hotels are specifically matched to your preferences with AI analysis.`
+        ? `Found ${searchResponse.aiRecommendationsCount} personalized AI recommendations!`
         : `Found ${convertedHotels.length} available hotels for your search.`;
 
       Alert.alert(alertTitle, alertMessage, [{ text: 'View Results' }]);
@@ -692,11 +563,9 @@ const convertHotelToDisplayHotel = (hotel: HotelWithRates, index: number): Hotel
 
   // Handle search query from InitialSearchScreen
   useEffect(() => {
-    if (params?.searchQuery && params.searchQuery !== searchQuery) {
+    if (params?.searchQuery && params.searchQuery !== searchQuery && !TEST_MODE) {
       console.log('📥 Received search query from InitialSearchScreen:', params.searchQuery);
       setSearchQuery(params.searchQuery);
-      
-      // Automatically execute smart search
       executeSmartSearch(params.searchQuery);
     }
   }, [params?.searchQuery]);
@@ -713,7 +582,6 @@ const convertHotelToDisplayHotel = (hotel: HotelWithRates, index: number): Hotel
 
   const handleSearchUpdate = useCallback((newSearch: string) => {
     setSearchQuery(newSearch);
-    // Auto-search when updated from overlay
     if (newSearch.trim()) {
       executeSmartSearch(newSearch);
     }
@@ -730,7 +598,11 @@ const convertHotelToDisplayHotel = (hotel: HotelWithRates, index: number): Hotel
     console.log('Clear button pressed');
     setSearchQuery('');
     setSearchResults(null);
-    setDisplayHotels(mockHotels);
+    if (TEST_MODE) {
+      setDisplayHotels(mockHotels);
+    } else {
+      setDisplayHotels([]);
+    }
   }, []);
 
   const handleDateChange = useCallback((type: 'checkin' | 'checkout', date: Date) => {
@@ -741,22 +613,90 @@ const convertHotelToDisplayHotel = (hotel: HotelWithRates, index: number): Hotel
     }
   }, []);
 
-  const handleViewToggle = useCallback((viewType: 'list' | 'swipe') => {
-    console.log(`${viewType} view selected`);
-    if (Platform.OS === 'ios') {
-      LayoutAnimation.configureNext({
-        duration: 300,
-        create: {
-          type: LayoutAnimation.Types.easeInEaseOut,
-          property: LayoutAnimation.Properties.opacity,
-        },
-        update: {
-          type: LayoutAnimation.Types.easeInEaseOut,
-        },
-      });
+  // Define handleBookNow first
+  const handleBookNow = useCallback((hotel: Hotel) => {
+    console.log('Book now pressed for:', hotel.name);
+    
+    let bookingMessage = `Ready to book ${hotel.name}!\n\n`;
+    
+    if (hotel.pricePerNight) {
+      bookingMessage += `Price: ${hotel.pricePerNight.display}\n`;
+    } else {
+      bookingMessage += `Price: $${hotel.price}/night\n`;
     }
-    setShowStoryView(viewType === 'swipe');
-  }, []);
+    
+    if (searchResults?.searchParams) {
+      const params = searchResults.searchParams;
+      bookingMessage += `Dates: ${params.checkin} to ${params.checkout}\n`;
+      bookingMessage += `Guests: ${params.adults} adults`;
+      if (params.children > 0) {
+        bookingMessage += `, ${params.children} children`;
+      }
+    }
+    
+    Alert.alert(
+      'Booking Confirmation',
+      bookingMessage,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { text: 'Proceed to Book', style: 'default' }
+      ]
+    );
+  }, [searchResults]);
+
+  const handleViewDetails = useCallback((hotel: Hotel) => {
+    console.log('View details pressed for:', hotel.name);
+    
+    let detailsMessage = `Hotel Details for ${hotel.name}\n\n`;
+    
+    if (hotel.aiMatchPercent) {
+      detailsMessage += `🤖 AI Match: ${hotel.aiMatchPercent}%\n`;
+    }
+    
+    if (hotel.whyItMatches) {
+      detailsMessage += `Why it matches: ${hotel.whyItMatches}\n\n`;
+    }
+    
+    if (hotel.funFacts && hotel.funFacts.length > 0) {
+      detailsMessage += `Fun facts:\n${hotel.funFacts.map(fact => `• ${fact}`).join('\n')}\n\n`;
+    }
+    
+    detailsMessage += `⭐ Rating: ${hotel.rating}/5 (${hotel.reviews} reviews)\n`;
+    detailsMessage += `📍 Location: ${hotel.location}\n`;
+    detailsMessage += `🚶 Transit: ${hotel.transitDistance}\n`;
+    
+    if (hotel.features && hotel.features.length > 0) {
+      detailsMessage += `\nAmenities: ${hotel.features.join(', ')}\n`;
+    }
+    
+    if (hotel.tags && hotel.tags.length > 0) {
+      detailsMessage += `\nPerfect for: ${hotel.tags.join(', ')}\n`;
+    }
+    
+    if (hotel.pricePerNight) {
+      detailsMessage += `\nPrice: ${hotel.pricePerNight.display}`;
+    } else {
+      detailsMessage += `\nPrice: $${hotel.price}/night`;
+    }
+    
+    if (searchResults?.searchParams) {
+      const params = searchResults.searchParams;
+      detailsMessage += `\nDates: ${params.checkin} to ${params.checkout}`;
+      detailsMessage += `\nGuests: ${params.adults} adults`;
+      if (params.children > 0) {
+        detailsMessage += `, ${params.children} children`;
+      }
+    }
+    
+    Alert.alert(
+      'Hotel Details',
+      detailsMessage,
+      [
+        { text: 'Close', style: 'cancel' },
+        { text: 'Book Now', style: 'default', onPress: () => handleBookNow(hotel) }
+      ]
+    );
+  }, [searchResults, handleBookNow]);
 
   const handleHotelPress = useCallback((hotel: Hotel) => {
     console.log('Hotel selected:', hotel.name);
@@ -789,36 +729,6 @@ const convertHotelToDisplayHotel = (hotel: HotelWithRates, index: number): Hotel
     );
   }, []);
 
-  const handleBookNow = useCallback((hotel: Hotel) => {
-    console.log('Book now pressed for:', hotel.name);
-    
-    let bookingMessage = `Ready to book ${hotel.name}!\n\n`;
-    
-    if (hotel.pricePerNight) {
-      bookingMessage += `Price: ${hotel.pricePerNight.display}\n`;
-    } else {
-      bookingMessage += `Price: ${hotel.price}/night\n`;
-    }
-    
-    if (searchResults?.searchParams) {
-      const params = searchResults.searchParams;
-      bookingMessage += `Dates: ${params.checkin} to ${params.checkout}\n`;
-      bookingMessage += `Guests: ${params.adults} adults`;
-      if (params.children > 0) {
-        bookingMessage += `, ${params.children} children`;
-      }
-    }
-    
-    Alert.alert(
-      'Booking Confirmation',
-      bookingMessage,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { text: 'Proceed to Book', style: 'default' }
-      ]
-    );
-  }, [searchResults]);
-
   const handleBackPress = useCallback(() => {
     console.log('Back button pressed - returning to initial search');
     navigation.navigate('InitialSearch');
@@ -831,8 +741,8 @@ const convertHotelToDisplayHotel = (hotel: HotelWithRates, index: number): Hotel
     return "Search for amazing stays...";
   };
 
-  // Show loading screen while searching
-  if (isSearching) {
+  // Show loading screen while searching (but not in test mode)
+  if (isSearching && !TEST_MODE) {
     return <LoadingScreen searchQuery={searchQuery} />;
   }
 
@@ -840,119 +750,105 @@ const convertHotelToDisplayHotel = (hotel: HotelWithRates, index: number): Hotel
     <SafeAreaView style={tw`flex-1 bg-white`}>
       <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
 
+      {/* TEST MODE INDICATOR */}
+      {TEST_MODE && (
+        <View style={tw`bg-orange-100 px-4 py-2 border-b border-orange-200`}>
+          <Text style={tw`text-orange-800 text-sm font-medium text-center`}>
+            🧪 TEST MODE ACTIVE - Using mock data
+          </Text>
+        </View>
+      )}
+
       {/* SEARCH HEADER */}
       <View style={tw`px-5 pt-3 pb-4 bg-white`}>
-        <View style={tw`flex-row items-center gap-3`}>
-          <View style={tw`flex-1 flex-row items-center bg-gray-50 rounded-2xl px-4 border border-gray-100 gap-2.5 h-13`}>
+        {/* Main Search Bar - Full Width */}
+        <View style={tw`flex-row items-center bg-gray-50 rounded-2xl px-4 border border-gray-100 gap-2.5 h-13 mb-3`}>
+          <TouchableOpacity
+            style={tw`w-5 h-5 items-center justify-center`}
+            onPress={handleBackPress}
+            activeOpacity={0.6}
+          >
+            <Ionicons name="arrow-back" size={20} color="#666666" />
+          </TouchableOpacity>
+          
+          <TextInput
+            style={[
+              tw`flex-1 text-base text-black font-normal`,
+              {
+                lineHeight: Platform.OS === 'ios' ? 20 : 22,
+                includeFontPadding: false,
+                textAlignVertical: 'center',
+                paddingVertical: 0,
+                margin: 0
+              }
+            ]}
+            placeholder={getPlaceholderText()}
+            placeholderTextColor="#999999"
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+            onFocus={() => setIsFocused(true)}
+            onBlur={() => setIsFocused(false)}
+            onSubmitEditing={handleSearch}
+            autoCorrect={false}
+            autoCapitalize="none"
+            multiline={false}
+            numberOfLines={1}
+            returnKeyType="search"
+            editable={!isSearching}
+          />
+          
+          {/* Show clear button if there's text */}
+          {searchQuery.length > 0 && (
             <TouchableOpacity
               style={tw`w-5 h-5 items-center justify-center`}
-              onPress={handleBackPress}
+              onPress={handleClearSearch}
               activeOpacity={0.6}
             >
-              <Ionicons name="arrow-back" size={20} color="#666666" />
+              <Ionicons name="close-circle" size={20} color="#666666" />
             </TouchableOpacity>
-            
-            <TextInput
-              style={[
-                tw`flex-1 text-base text-black font-normal`,
-                {
-                  lineHeight: Platform.OS === 'ios' ? 20 : 22,
-                  includeFontPadding: false,
-                  textAlignVertical: 'center',
-                  paddingVertical: 0,
-                  margin: 0
-                }
-              ]}
-              placeholder={getPlaceholderText()}
-              placeholderTextColor="#999999"
-              value={searchQuery}
-              onChangeText={setSearchQuery}
-              onFocus={() => setIsFocused(true)}
-              onBlur={() => setIsFocused(false)}
-              onSubmitEditing={handleSearch}
-              autoCorrect={false}
-              autoCapitalize="none"
-              multiline={false}
-              numberOfLines={1}
-              returnKeyType="search"
-              editable={!isSearching}
-            />
-            
-            {/* Show clear button if there's text */}
-            {searchQuery.length > 0 && (
-              <TouchableOpacity
-                style={tw`w-5 h-5 items-center justify-center`}
-                onPress={handleClearSearch}
-                activeOpacity={0.6}
-              >
-                <Ionicons name="close-circle" size={20} color="#666666" />
-              </TouchableOpacity>
-            )}
-          </View>
-
-          {/* Refine button */}
-          <TouchableOpacity
-            style={tw`flex-row items-center gap-1.5 px-3 py-2.5 rounded-xl bg-black/5 border border-gray-200 h-13`}
-            onPress={handleAiSearch}
-            activeOpacity={0.7}
-            disabled={isSearching}
-          >
-            <Ionicons
-              name="sparkles"
-              size={16}
-              color="#666666"
-            />
-            <Text style={tw`text-sm font-medium text-gray-600`}>
-              Refine
-            </Text>
-          </TouchableOpacity>
+          )}
         </View>
-      </View>
 
-      {/* CONTROLS ROW */}
-      <View style={tw`flex-row justify-between items-center px-5 pb-4 gap-3`}>
-        <DateSelector
-          checkInDate={checkInDate}
-          checkOutDate={checkOutDate}
-          onDateChange={handleDateChange}
-        />
-        <AnimatedToggleButton
-          showStoryView={showStoryView}
-          onViewToggle={handleViewToggle}
-        />
+        {/* Refine button - Full Width Below */}
+        <TouchableOpacity
+          style={tw`flex-row items-center justify-center gap-2 px-4 py-3 rounded-xl bg-black/5 border border-gray-200 w-full`}
+          onPress={handleAiSearch}
+          activeOpacity={0.7}
+          disabled={isSearching}
+        >
+          <Ionicons
+            name="sparkles"
+            size={16}
+            color="#666666"
+          />
+          <Text style={tw`text-sm font-medium text-gray-600`}>
+            Refine Search with AI
+          </Text>
+        </TouchableOpacity>
       </View>
 
       {/* SEARCH RESULTS HEADER */}
-      {!showStoryView && searchQuery.trim().length > 0 && (
+      {searchQuery.trim().length > 0 && (
         <View style={tw`px-5 pb-3`}>
           <Text style={tw`text-sm text-gray-500`}>
-            {searchResults?.aiRecommendationsAvailable 
-              ? `AI-matched results for "${searchQuery}" (${searchResults.aiRecommendationsCount} hotels)`
-              : searchResults?.hotelsWithRates 
-              ? `Search results for "${searchQuery}" (${searchResults.hotelsWithRates} hotels)`
-              : `Search results for "${searchQuery}"`
+            {TEST_MODE ? 
+              `Test mode results for "${searchQuery}" (${displayHotels.length} hotels)` :
+              searchResults?.aiRecommendationsAvailable 
+                ? `AI-matched results for "${searchQuery}" (${searchResults.aiRecommendationsCount} hotels)`
+                : searchResults?.hotelsWithRates 
+                ? `Search results for "${searchQuery}" (${searchResults.hotelsWithRates} hotels)`
+                : `Search results for "${searchQuery}"`
             }
           </Text>
         </View>
       )}
 
-      {/* CONTENT VIEW */}
-      {showStoryView ? (
-        <StoryView
-          hotels={displayHotels}
-          onHotelPress={handleHotelPress}
-          onBookNow={handleBookNow}
-        />
-      ) : (
-        <ListView
-          hotels={displayHotels}
-          onHotelPress={handleHotelPress}
-          checkInDate={checkInDate}
-          checkOutDate={checkOutDate}
-          adults={searchResults?.searchParams?.adults || 2}
-          children={searchResults?.searchParams?.children || 0}
-        />
-      )}
+      {/* CONTENT VIEW - Always Story View */}
+      <SwipeableStoryView
+        hotels={displayHotels}
+        onHotelPress={handleHotelPress}
+        onViewDetails={handleViewDetails}
+      />
 
       {/* AI SEARCH OVERLAY */}
       <AISearchOverlay
