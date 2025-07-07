@@ -1,10 +1,9 @@
-// HomeScreen.tsx - Updated to pass Google Maps props to SwipeableStoryView
+// HomeScreen.tsx - Sleek dark theme version with same functionality
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   View,
   Text,
   TouchableOpacity,
-  TextInput,
   SafeAreaView,
   StatusBar,
   Platform,
@@ -13,7 +12,6 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import tw from 'twrnc';
 import SwipeableStoryView from '../components/StoryView/SwipeableStoryView';
-import DateSelector from '../components/HomeScreenTop/DateSelector';
 import AISearchOverlay from '../components/HomeScreenTop/AiSearchOverlay';
 import LoadingScreen from '../components/HomeScreenTop/LoadingScreen';
 import { useNavigation, useRoute } from '@react-navigation/native';
@@ -199,54 +197,6 @@ const mockHotels: Hotel[] = [
 // Base URL
 const BASE_URL = 'http://localhost:3003';
 
-// Custom hook for typing placeholder
-const useTypingPlaceholder = (
-  words: string[],
-  typingSpeed = 100,
-  deletingSpeed = 50,
-  delayAfterWord = 2000
-) => {
-  const [displayText, setDisplayText] = useState('');
-  const [isDeleting, setIsDeleting] = useState(false);
-  const [wordIndex, setWordIndex] = useState(0);
-  const [cursorVisible, setCursorVisible] = useState(true);
-
-  const currentIndex = useRef(0);
-  const currentWord = words[wordIndex];
-
-  useEffect(() => {
-    const cursorInterval = setInterval(() => {
-      setCursorVisible(prev => !prev);
-    }, 500);
-    return () => clearInterval(cursorInterval);
-  }, []);
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      if (isDeleting) {
-        setDisplayText(currentWord.substring(0, currentIndex.current - 1));
-        currentIndex.current -= 1;
-        if (currentIndex.current <= 0) {
-          setIsDeleting(false);
-          setWordIndex((prev) => (prev + 1) % words.length);
-        }
-      } else {
-        setDisplayText(currentWord.substring(0, currentIndex.current + 1));
-        currentIndex.current += 1;
-        if (currentIndex.current >= currentWord.length) {
-          setTimeout(() => {
-            setIsDeleting(true);
-          }, delayAfterWord);
-        }
-      }
-    }, isDeleting ? deletingSpeed : typingSpeed);
-
-    return () => clearTimeout(timer);
-  }, [currentWord, isDeleting, typingSpeed, deletingSpeed, delayAfterWord, words]);
-
-  return { displayText, cursorVisible };
-};
-
 const HomeScreen = () => {
   const route = useRoute();
   const params = route.params as RouteParams;
@@ -269,29 +219,7 @@ const HomeScreen = () => {
   });
   const [adults, setAdults] = useState(2);
   const [children, setChildren] = useState(0);
-  const [isFocused, setIsFocused] = useState(false);
   const [showAiOverlay, setShowAiOverlay] = useState(false);
-
-  // Auto-typing setup
-  const hotelSearchSuggestions = [
-    "Luxury spa hotels in Paris",
-    "Beach resorts with pools in Maldives",
-    "Boutique hotels near museums in Rome",
-    "Mountain lodges with views in Swiss Alps",
-    "Business hotels with WiFi in Tokyo",
-    "Family resorts with kids clubs in Orlando",
-    "Historic hotels with character in Prague",
-    "Eco-friendly lodges in Costa Rica",
-    "Rooftop bars and city views in NYC",
-    "Wellness retreats with yoga in Bali"
-  ];
-
-  const { displayText, cursorVisible } = useTypingPlaceholder(
-    hotelSearchSuggestions,
-    120,
-    60,
-    2500
-  );
 
   // Initialize test mode data on component mount
   useEffect(() => {
@@ -576,6 +504,9 @@ const HomeScreen = () => {
       console.log('📥 Received search query from InitialSearchScreen:', params.searchQuery);
       setSearchQuery(params.searchQuery);
       executeSmartSearch(params.searchQuery);
+    } else if (params?.searchQuery && TEST_MODE) {
+      // In test mode, just set the search query for display
+      setSearchQuery(params.searchQuery);
     }
   }, [params?.searchQuery]);
 
@@ -593,24 +524,6 @@ const HomeScreen = () => {
     setSearchQuery(newSearch);
     if (newSearch.trim()) {
       executeSmartSearch(newSearch);
-    }
-  }, []);
-
-  const handleSearch = useCallback(() => {
-    console.log('🔍 Manual search triggered:', searchQuery);
-    if (searchQuery.trim()) {
-      executeSmartSearch(searchQuery);
-    }
-  }, [searchQuery]);
-
-  const handleClearSearch = useCallback(() => {
-    console.log('Clear button pressed');
-    setSearchQuery('');
-    setSearchResults(null);
-    if (TEST_MODE) {
-      setDisplayHotels(mockHotels);
-    } else {
-      setDisplayHotels([]);
     }
   }, []);
 
@@ -755,21 +668,14 @@ const HomeScreen = () => {
     navigation.navigate('InitialSearch');
   }, [navigation]);
 
-  const getPlaceholderText = () => {
-    if (!isFocused && !searchQuery) {
-      return `${displayText}${cursorVisible ? '|' : ''}`;
-    }
-    return "Search for amazing stays...";
-  };
-
   // Show loading screen while searching (but not in test mode)
   if (isSearching && !TEST_MODE) {
     return <LoadingScreen searchQuery={searchQuery} />;
   }
 
   return (
-    <SafeAreaView style={tw`flex-1 bg-white`}>
-      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
+    <SafeAreaView style={tw`flex-1 bg-gray-50`}>
+      <StatusBar barStyle="dark-content" backgroundColor="#F9FAFB" />
 
       {/* TEST MODE INDICATOR */}
       {TEST_MODE && (
@@ -780,100 +686,64 @@ const HomeScreen = () => {
         </View>
       )}
 
-      {/* SEARCH HEADER */}
-      <View style={tw`px-5 pt-3 pb-4 bg-white`}>
-        {/* Main Search Bar - Full Width */}
-        <View style={tw`flex-row items-center bg-gray-50 rounded-2xl px-4 border border-gray-100 gap-2.5 h-13 mb-3`}>
+      {/* SLEEK HEADER */}
+      <View style={tw`px-5 pt-3 pb-4 bg-gray-50`}>
+        {/* Back button and AI Search button */}
+        <View style={tw`flex-row items-center gap-3 mb-4`}>
           <TouchableOpacity
-            style={tw`w-5 h-5 items-center justify-center`}
+            style={tw`w-11 h-11 items-center justify-center rounded-full bg-white border border-gray-200 shadow-sm`}
             onPress={handleBackPress}
-            activeOpacity={0.6}
+            activeOpacity={0.7}
           >
-            <Ionicons name="arrow-back" size={20} color="#666666" />
+            <Ionicons name="arrow-back" size={20} color="#374151" />
           </TouchableOpacity>
           
-          <TextInput
-            style={[
-              tw`flex-1 text-base text-black font-normal`,
-              {
-                lineHeight: Platform.OS === 'ios' ? 20 : 22,
-                includeFontPadding: false,
-                textAlignVertical: 'center',
-                paddingVertical: 0,
-                margin: 0
-              }
-            ]}
-            placeholder={getPlaceholderText()}
-            placeholderTextColor="#999999"
-            value={searchQuery}
-            onChangeText={setSearchQuery}
-            onFocus={() => setIsFocused(true)}
-            onBlur={() => setIsFocused(false)}
-            onSubmitEditing={handleSearch}
-            autoCorrect={false}
-            autoCapitalize="none"
-            multiline={false}
-            numberOfLines={1}
-            returnKeyType="search"
-            editable={!isSearching}
-          />
-          
-          {/* Show clear button if there's text */}
-          {searchQuery.length > 0 && (
-            <TouchableOpacity
-              style={tw`w-5 h-5 items-center justify-center`}
-              onPress={handleClearSearch}
-              activeOpacity={0.6}
-            >
-              <Ionicons name="close-circle" size={20} color="#666666" />
-            </TouchableOpacity>
-          )}
+          <TouchableOpacity
+           style={tw`flex-1 flex-row items-center justify-center gap-3 px-6 py-3 rounded-2xl bg-gray-900 shadow-xl`}
+            onPress={handleAiSearch}
+            activeOpacity={0.8}
+            disabled={isSearching}
+          >
+            <Ionicons
+              name="sparkles"
+              size={18}
+              color="#FFFFFF"
+            />
+            <Text style={tw`text-base font-bold text-white`}>
+              Refine Search with AI
+            </Text>
+          </TouchableOpacity>
         </View>
 
-        {/* Refine button - Full Width Below */}
-        <TouchableOpacity
-          style={tw`flex-row items-center justify-center gap-2 px-4 py-3 rounded-xl bg-black/5 border border-gray-200 w-full`}
-          onPress={handleAiSearch}
-          activeOpacity={0.7}
-          disabled={isSearching}
-        >
-          <Ionicons
-            name="sparkles"
-            size={16}
-            color="#666666"
-          />
-          <Text style={tw`text-sm font-medium text-gray-600`}>
-            Refine Search with AI
-          </Text>
-        </TouchableOpacity>
+{/* SEARCH RESULTS HEADER */}
+{searchQuery.trim().length > 0 && (
+  <View style={tw`bg-white px-3 py-2 rounded-lg border border-gray-200`}>
+    <Text style={tw`text-xs text-gray-500`}>
+      {TEST_MODE ? 
+        `Test results for "${searchQuery}" (${displayHotels.length} hotels)` :
+        searchResults?.aiRecommendationsAvailable 
+          ? `Results for "${searchQuery}" (${searchResults.aiRecommendationsCount} hotels)`
+          : searchResults?.hotelsWithRates 
+          ? `Results for "${searchQuery}" (${searchResults.hotelsWithRates} hotels)`
+          : `Results for "${searchQuery}"`
+      }
+    </Text>
+  </View>
+)}
       </View>
 
-      {/* SEARCH RESULTS HEADER */}
-      {searchQuery.trim().length > 0 && (
-        <View style={tw`px-5 pb-3`}>
-          <Text style={tw`text-sm text-gray-500`}>
-            {TEST_MODE ? 
-              `Test mode results for "${searchQuery}" (${displayHotels.length} hotels)` :
-              searchResults?.aiRecommendationsAvailable 
-                ? `AI-matched results for "${searchQuery}" (${searchResults.aiRecommendationsCount} hotels)`
-                : searchResults?.hotelsWithRates 
-                ? `Search results for "${searchQuery}" (${searchResults.hotelsWithRates} hotels)`
-                : `Search results for "${searchQuery}"`
-            }
-          </Text>
-        </View>
-      )}
-
       {/* CONTENT VIEW - Story View with Google Maps Props */}
-      <SwipeableStoryView
-        hotels={displayHotels}
-        onHotelPress={handleHotelPress}
-        onViewDetails={handleViewDetails}
-        checkInDate={checkInDate}
-        checkOutDate={checkOutDate}
-        adults={adults}
-        children={children}
-      />
+      <View style={tw`flex-1 bg-gray-50`}>
+        <SwipeableStoryView
+          hotels={displayHotels}
+          onHotelPress={handleHotelPress}
+          onViewDetails={handleViewDetails}
+          checkInDate={checkInDate}
+          checkOutDate={checkOutDate}
+          adults={adults}
+          children={children}
+        />
+      </View>
 
       {/* AI SEARCH OVERLAY */}
       <AISearchOverlay

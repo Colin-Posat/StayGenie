@@ -1,4 +1,4 @@
-// SwipeableHotelStoryCard.tsx - Updated with Google Maps deep linking and API data integration
+// SwipeableHotelStoryCard.tsx - Enhanced with sleek Instagram-style bottom section
 import React, { useState, useRef, useEffect } from 'react';
 import {
   View,
@@ -16,7 +16,7 @@ import tw from 'twrnc';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 const CARD_WIDTH = screenWidth - 40;
-const CARD_HEIGHT = screenHeight * 0.65;
+const CARD_HEIGHT = screenHeight * 0.55;
 
 interface Hotel {
   id: number;
@@ -294,43 +294,19 @@ const HotelOverviewSlide: React.FC<{ hotel: EnhancedHotel }> = ({ hotel }) => {
       <View style={tw`absolute bottom-0 left-0 right-0 h-52 bg-gradient-to-t from-black/70 to-transparent z-1`} />
       
       {/* Hotel Information - Bottom Overlay */}
-      <View style={tw`absolute bottom-20 left-4 right-4 z-10`}>
-        {/* Hotel Name and Rating */}
+      <View style={tw`absolute bottom-6 left-4 right-4 z-10`}>
+        {/* Hotel Name */}
         <View style={tw`mb-3`}>
           <Text style={[
-            tw`text-2xl font-bold text-white mb-2`, 
+            tw`text-2xl font-bold text-white mb-3`, 
             { textShadowColor: 'rgba(0, 0, 0, 0.8)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 3 }
           ]}>
             {hotel.name}
           </Text>
-          
-          <View style={tw`flex-row items-center justify-between mb-3`}>
-            {/* Rating */}
-            <View style={tw`flex-row items-center bg-black/40 px-3 py-1.5 rounded-lg`}>
-              <Ionicons name="star" size={16} color="#FFB800" />
-              <Text style={tw`text-white text-sm font-semibold ml-1`}>
-                {hotel.rating}
-              </Text>
-              <Text style={tw`text-white/80 text-xs ml-1`}>
-                ({hotel.reviews.toLocaleString()})
-              </Text>
-            </View>
-            
-            {/* Price */}
-            <View style={tw`flex-row items-baseline`}>
-              <Text style={[
-                tw`text-3xl font-bold text-white`, 
-                { textShadowColor: 'rgba(0, 0, 0, 0.8)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 3 }
-              ]}>
-                {getDisplayPrice()}
-              </Text>
-              <Text style={tw`text-white/80 text-sm ml-1`}>/night</Text>
-            </View>
-          </View>
         </View>
         
         {/* AI Match Insight - Uses API data */}
-        <View style={tw`bg-black/50 p-3 rounded-lg border border-white/20`}>
+        <View style={tw`bg-black/50 p-3 rounded-lg border border-white/20 mb-4`}>
           <View style={tw`flex-row items-center mb-1.5`}>
             <Ionicons name="sparkles" size={14} color="#FFD700" />
             <Text style={tw`text-yellow-400 text-xs font-semibold ml-1`}>
@@ -340,6 +316,32 @@ const HotelOverviewSlide: React.FC<{ hotel: EnhancedHotel }> = ({ hotel }) => {
           <Text style={tw`text-white text-sm leading-5`}>
             {aiInsight}
           </Text>
+        </View>
+
+        {/* Price and Reviews - Anchored at bottom */}
+        <View style={tw`flex-row items-center gap-3`}>
+          {/* Price */}
+          <View style={tw`bg-black/60 px-4 py-2 rounded-lg`}>
+            <View style={tw`flex-row items-baseline`}>
+              <Text style={tw`text-2xl font-bold text-white`}>
+                {getDisplayPrice()}
+              </Text>
+              <Text style={tw`text-white/80 text-sm ml-1`}>/night</Text>
+            </View>
+          </View>
+          
+          {/* Reviews */}
+          <View style={tw`bg-black/60 px-3 py-2 rounded-lg`}>
+            <View style={tw`flex-row items-center`}>
+              <Ionicons name="star" size={14} color="#FFB800" />
+              <Text style={tw`text-white text-sm font-semibold ml-1`}>
+                {hotel.rating}
+              </Text>
+              <Text style={tw`text-white/80 text-xs ml-1`}>
+                ({hotel.reviews.toLocaleString()})
+              </Text>
+            </View>
+          </View>
         </View>
       </View>
     </View>
@@ -428,7 +430,7 @@ const LocationSlide: React.FC<{ hotel: EnhancedHotel }> = ({ hotel }) => {
       <View style={tw`absolute bottom-0 left-0 right-0 h-52 bg-gradient-to-t from-black/70 to-transparent z-1`} />
       
       {/* Location Information */}
-      <View style={tw`absolute bottom-24 left-4 right-4 z-10`}>
+      <View style={tw`absolute bottom-6 left-4 right-4 z-10`}>
         {/* Location Header */}
         <View style={tw`mb-3`}>
           <View style={tw`flex-row items-center mb-2`}>
@@ -562,7 +564,7 @@ const AmenitiesSlide: React.FC<{ hotel: EnhancedHotel }> = ({ hotel }) => {
       <View style={tw`absolute bottom-0 left-0 right-0 h-52 bg-gradient-to-t from-black/70 to-transparent z-1`} />
       
       {/* Amenities Information */}
-      <View style={tw`absolute bottom-24 left-4 right-4 z-10`}>
+      <View style={tw`absolute bottom-6 left-4 right-4 z-10`}>
         {/* Amenities Header */}
         <View style={tw`mb-3`}>
           <View style={tw`flex-row items-center mb-2`}>
@@ -607,7 +609,7 @@ const AmenitiesSlide: React.FC<{ hotel: EnhancedHotel }> = ({ hotel }) => {
   );
 };
 
-// Main Swipeable Hotel Story Card Component - now with Google Maps integration
+// Main Swipeable Hotel Story Card Component - now with enhanced Instagram-style bottom
 const SwipeableHotelStoryCard: React.FC<SwipeableHotelStoryCardProps> = ({ 
   hotel, 
   onSave, 
@@ -741,134 +743,123 @@ const SwipeableHotelStoryCard: React.FC<SwipeableHotelStoryCardProps> = ({
     onHotelPress();
   };
 
-  return (
-    <TouchableOpacity
-      activeOpacity={0.95}
-      onPress={handleCardPress}
-      style={[
-        tw`bg-white rounded-2xl shadow-xl overflow-hidden relative`,
-        { width: CARD_WIDTH, height: CARD_HEIGHT },
-        { 
-          shadowColor: '#000000',
-          shadowOffset: { width: 0, height: 4 },
-          shadowOpacity: 0.15,
-          shadowRadius: 12,
-          elevation: 8,
-        }
-      ]}
-    >
+  // Get display price for bottom section
+  const getDisplayPrice = () => {
+    if (hotel.pricePerNight) {
+      return `$${hotel.pricePerNight.min}`;
+    }
+    return `$${hotel.price}`;
+  };
 
-      {/* Smooth Story Progress Bar */}
-      <StoryProgressBar
-        currentSlide={currentSlide}
-        totalSlides={3}
-        onSlideChange={handleSlideChange}
-      />
-      
-      {/* Left Tap Zone - Stops above buttons to prevent conflicts */}
-      {currentSlide > 0 && (
-        <TouchableOpacity
-          style={[
-            tw`absolute top-0 left-0 w-40 z-20`,
-            { height: CARD_HEIGHT - 80 } // Stop 80px from bottom
-          ]}
-          onPress={handleLeftTap}
-          activeOpacity={0}
-        />
-      )}
-      
-      {/* Right Tap Zone - Stops above buttons to prevent conflicts */}
-      {currentSlide < 2 && (
-        <TouchableOpacity
-          style={[
-            tw`absolute top-0 right-0 w-40 z-20`,
-            { height: CARD_HEIGHT - 80 } // Stop 80px from bottom
-          ]}
-          onPress={handleRightTap}
-          activeOpacity={0}
-        />
-      )}
-      
-      {/* Navigation Buttons */}
-      {currentSlide > 0 && (
-        <TouchableOpacity
-          style={tw`absolute top-24 left-3 w-8 h-8 rounded-full bg-black/30 items-center justify-center z-25`}
-          onPress={handleLeftTap}
-          activeOpacity={0.6}
-        >
-          <Ionicons name="chevron-back" size={18} color="#FFFFFF" />
-        </TouchableOpacity>
-      )}
-      
-      {currentSlide < 2 && (
-        <TouchableOpacity
-          style={tw`absolute top-24 right-3 w-8 h-8 rounded-full bg-black/30 items-center justify-center z-25`}
-          onPress={handleRightTap}
-          activeOpacity={0.6}
-        >
-          <Ionicons name="chevron-forward" size={18} color="#FFFFFF" />
-        </TouchableOpacity>
-      )}
-      
-      {/* Slides */}
-      <ScrollView
-        ref={scrollViewRef}
-        horizontal
-        pagingEnabled
-        showsHorizontalScrollIndicator={false}
-        onScroll={handleScroll}
-        scrollEventThrottle={16}
-        style={tw`flex-1`}
+  return (
+    <View style={tw`bg-white rounded-2xl overflow-hidden shadow-lg`}>
+      {/* Hotel Card */}
+      <TouchableOpacity
+        activeOpacity={0.95}
+        onPress={handleCardPress}
+        style={[
+          tw`bg-white overflow-hidden relative rounded-t-2xl`,
+          { width: CARD_WIDTH, height: CARD_HEIGHT },
+        ]}
       >
-        <View style={{ width: CARD_WIDTH, height: CARD_HEIGHT }}>
-          <HotelOverviewSlide hotel={hotel} />
-        </View>
-        <View style={{ width: CARD_WIDTH, height: CARD_HEIGHT }}>
-          <LocationSlide hotel={hotel} />
-        </View>
-        <View style={{ width: CARD_WIDTH, height: CARD_HEIGHT }}>
-          <AmenitiesSlide hotel={hotel} />
-        </View>
-      </ScrollView>
-      
-      {/* Bottom Action Buttons */}
-      <View style={tw`absolute bottom-4 left-4 right-4 z-10`}>
-        <View style={tw`flex-row gap-2`}>
-          {/* Save button */}
+        {/* Smooth Story Progress Bar */}
+        <StoryProgressBar
+          currentSlide={currentSlide}
+          totalSlides={3}
+          onSlideChange={handleSlideChange}
+        />
+        
+        {/* Left Tap Zone - Full height since no buttons are inside */}
+        {currentSlide > 0 && (
           <TouchableOpacity
-            style={tw`w-12 h-12 rounded-lg items-center justify-center shadow-md ${
-              isCurrentHotelSaved ? 'bg-red-500' : 'bg-white/95'
-            }`}
-            onPress={(e) => {
-              e.stopPropagation();
-              onSave();
-            }}
-            activeOpacity={0.8}
+            style={tw`absolute top-0 left-0 w-40 h-full z-20`}
+            onPress={handleLeftTap}
+            activeOpacity={0}
+          />
+        )}
+        
+        {/* Right Tap Zone - Full height since no buttons are inside */}
+        {currentSlide < 2 && (
+          <TouchableOpacity
+            style={tw`absolute top-0 right-0 w-40 h-full z-20`}
+            onPress={handleRightTap}
+            activeOpacity={0}
+          />
+        )}
+        
+        {/* Navigation Buttons */}
+        {currentSlide > 0 && (
+          <TouchableOpacity
+            style={tw`absolute top-24 left-3 w-8 h-8 rounded-full bg-black/30 items-center justify-center z-25`}
+            onPress={handleLeftTap}
+            activeOpacity={0.6}
           >
-            <Ionicons 
-              name={isCurrentHotelSaved ? "heart" : "heart-outline"} 
-              size={20} 
-              color={isCurrentHotelSaved ? "#FFFFFF" : "#000000"} 
-            />
+            <Ionicons name="chevron-back" size={18} color="#FFFFFF" />
           </TouchableOpacity>
-          
-          {/* View Details button with Google Maps integration */}
+        )}
+        
+        {currentSlide < 2 && (
           <TouchableOpacity
-            style={tw`flex-1 flex-row py-3 px-4 rounded-lg items-center justify-center shadow-md bg-black`}
-            onPress={(e) => {
-              e.stopPropagation();
-              handleViewDetails();
-            }}
-            activeOpacity={0.8}
+            style={tw`absolute top-24 right-3 w-8 h-8 rounded-full bg-black/30 items-center justify-center z-25`}
+            onPress={handleRightTap}
+            activeOpacity={0.6}
           >
-            <Text style={tw`text-white text-base font-bold mr-2`}>
+            <Ionicons name="chevron-forward" size={18} color="#FFFFFF" />
+          </TouchableOpacity>
+        )}
+        
+        {/* Slides */}
+        <ScrollView
+          ref={scrollViewRef}
+          horizontal
+          pagingEnabled
+          showsHorizontalScrollIndicator={false}
+          onScroll={handleScroll}
+          scrollEventThrottle={16}
+          style={tw`flex-1`}
+        >
+          <View style={{ width: CARD_WIDTH, height: CARD_HEIGHT }}>
+            <HotelOverviewSlide hotel={hotel} />
+          </View>
+          <View style={{ width: CARD_WIDTH, height: CARD_HEIGHT }}>
+            <LocationSlide hotel={hotel} />
+          </View>
+          <View style={{ width: CARD_WIDTH, height: CARD_HEIGHT }}>
+            <AmenitiesSlide hotel={hotel} />
+          </View>
+        </ScrollView>
+      </TouchableOpacity>
+      
+        {/* Enhanced Instagram-style Action Section */}
+      <View style={tw`bg-white rounded-b-2xl`}>
+        {/* Main Action Row */}
+        <View style={tw`flex-row items-center px-4 py-3 gap-3`}>
+          {/* Heart/Save Button */}
+          <TouchableOpacity
+  onPress={onSave}
+  activeOpacity={0.6}
+  style={tw`bg-gray-100 py-2.5 px-4 rounded-lg items-center justify-center`}
+>
+  <Ionicons 
+    name={isCurrentHotelSaved ? "heart" : "heart-outline"} 
+    size={28} 
+    color={isCurrentHotelSaved ? "#FF3040" : "#262626"} 
+  />
+</TouchableOpacity>
+          
+          {/* View Details Button */}
+          <TouchableOpacity
+            style={tw`flex-1 bg-gray-100 py-3 rounded-lg items-center justify-center ml-2`}
+            onPress={handleViewDetails}
+            activeOpacity={0.7}
+          >
+            <Text style={tw`text-gray-800 text-base font-medium`}>
               View Details
             </Text>
-            <Ionicons name="arrow-forward" size={16} color="white" />
           </TouchableOpacity>
         </View>
       </View>
-    </TouchableOpacity>
+    </View>
   );
 };
 

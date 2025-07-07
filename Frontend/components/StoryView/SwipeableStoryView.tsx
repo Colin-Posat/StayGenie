@@ -146,6 +146,7 @@ const SwipeableStoryView: React.FC<SwipeableStoryViewProps> = ({
     
     return (
       <View style={tw`px-5 mb-6`}>
+        <View style={tw`shadow-lg`}>
         <SwipeableHotelStoryCard
           hotel={hotel}
           onSave={() => handleSave(hotel)}
@@ -160,6 +161,7 @@ const SwipeableStoryView: React.FC<SwipeableStoryViewProps> = ({
           adults={adults}
           children={children}
         />
+      </View>
       </View>
     );
   };
