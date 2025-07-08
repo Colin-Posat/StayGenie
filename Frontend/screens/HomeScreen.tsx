@@ -1,4 +1,4 @@
-// HomeScreen.tsx - Enhanced with guest insights and review data from API
+// HomeScreen.tsx - Simplified to extract only essential data for story cards
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   View,
@@ -31,7 +31,7 @@ type FindStackParamList = {
 
 type HomeScreenNavigationProp = StackNavigationProp<FindStackParamList>;
 
-// Updated interfaces to match new API
+// Simplified interfaces - only what we need for the story cards
 interface SmartSearchResponse {
   searchParams: {
     checkin: string;
@@ -44,6 +44,8 @@ interface SmartSearchResponse {
     aiSearch: string;
     nights: number;
     currency: string;
+    minCost?: number | null;
+    maxCost?: number | null;
   };
   totalHotelsFound: number;
   hotelsWithRates: number;
@@ -54,6 +56,10 @@ interface SmartSearchResponse {
   aiRecommendationsAvailable: boolean;
   generatedAt: string;
   searchId?: string;
+  performance?: {
+    totalTimeMs: number;
+    optimized: boolean;
+  };
 }
 
 interface HotelRecommendation {
@@ -70,6 +76,9 @@ interface HotelRecommendation {
     display: string;
   };
   funFacts: string[];
+  nearbyAttractions: string[];
+  locationHighlight: string;
+  matchType: string;
   address: string;
   amenities: string[];
   description: string;
@@ -88,6 +97,11 @@ interface HotelRecommendation {
   roomTypes?: any[];
   reviewCount: number;
   guestInsights: string;
+  city: string;
+  country: string;
+  latitude: number | null;
+  longitude: number | null;
+  topAmenities: string[];
 }
 
 interface HotelWithRates {
@@ -102,16 +116,25 @@ interface HotelWithRates {
     description?: string;
     amenities?: string[];
     images?: string[];
+    main_photo?: string;
+    thumbnail?: string;
     coordinates?: {
       latitude: number;
       longitude: number;
     };
+    city?: string;
+    country?: string;
+    location?: {
+      latitude: number;
+      longitude: number;
+    };
+    rooms?: any[];
     reviewCount?: number;
     guestInsights?: string;
   };
 }
 
-// Enhanced display hotel interface with new API fields
+// Simplified display hotel interface - only essential data for story cards
 interface Hotel {
   id: number;
   name: string;
@@ -132,13 +155,25 @@ interface Hotel {
   aiMatchPercent?: number;
   pricePerNight?: any;
   roomTypes?: any[];
-  guestInsights?: string; // New field from API
+  guestInsights?: string;
+  city?: string;
+  country?: string;
+  latitude?: number | null;
+  longitude?: number | null;
+  topAmenities?: string[];
+  nearbyAttractions?: string[];
+  locationHighlight?: string;
+  matchType?: string;
+  hasAvailability?: boolean;
+  totalRooms?: number;
+  fullDescription?: string;
+  fullAddress?: string;
 }
 
 // Test mode configuration
 const TEST_MODE = false; // Set to true to enable test mode, false for normal operation
 
-// Enhanced mock hotels data with guest insights for test mode
+// Mock hotels data for test mode
 const mockHotels: Hotel[] = [
   {
     id: 1,
@@ -156,9 +191,19 @@ const mockHotels: Hotel[] = [
     features: ["Ocean view rooms", "Award-winning restaurant", "Full-service spa"],
     aiExcerpt: "Panoramic ocean views from all rooms plus award-winning seafood restaurant.",
     whyItMatches: "Perfect oceanfront location with luxury amenities you're looking for",
-    funFacts: ["Home to endangered Hawaiian monk seals", "Features a rooftop infinity pool", "Offers traditional Hawaiian luau experiences"],
+    funFacts: ["Home to endangered Hawaiian monk seals", "Features a rooftop infinity pool"],
     aiMatchPercent: 95,
-    guestInsights: "Guests rave about the stunning ocean views and exceptional spa services. Many highlight the authentic Hawaiian cultural experiences and world-class dining options."
+    guestInsights: "Guests love the stunning ocean views and exceptional spa services.",
+    city: "Wailea",
+    country: "United States",
+    latitude: 20.6916,
+    longitude: -156.4422,
+    topAmenities: ["Ocean View", "Spa Services", "Fine Dining"],
+    nearbyAttractions: ["Wailea Beach", "Shops at Wailea"],
+    locationHighlight: "Direct beachfront access with pristine white sand",
+    matchType: "perfect",
+    hasAvailability: true,
+    totalRooms: 24
   },
   {
     id: 2,
@@ -176,29 +221,19 @@ const mockHotels: Hotel[] = [
     features: ["High-speed internet", "Meeting rooms", "Executive lounge"],
     aiExcerpt: "Modern business hotel in heart of Tokyo with excellent connectivity.",
     whyItMatches: "Ideal for business travelers with modern amenities and prime location",
-    funFacts: ["Located in world's busiest pedestrian crossing", "Offers authentic Japanese breakfast", "Features traditional Japanese garden"],
+    funFacts: ["Located in world's busiest pedestrian crossing", "Offers authentic Japanese breakfast"],
     aiMatchPercent: 88,
-    guestInsights: "Business travelers praise the efficient check-in process and proximity to major corporate offices. Guests love the traditional Japanese breakfast and rooftop garden views."
-  },
-  {
-    id: 3,
-    name: "Parisian Boutique Retreat",
-    image: "https://images.unsplash.com/photo-1571896349842-33c89424de2d?auto=format&fit=crop&w=800&q=80",
-    price: 295,
-    originalPrice: 275,
-    priceComparison: "7% above average",
-    rating: 4.8,
-    reviews: 2156,
-    safetyRating: 9.5,
-    transitDistance: "5 min walk to Metro",
-    tags: ["Historic", "Art gallery", "Wine cellar"],
-    location: "Marais District, Paris",
-    features: ["Historic architecture", "Art collection", "Wine tasting"],
-    aiExcerpt: "Charming boutique hotel in historic Parisian neighborhood.",
-    whyItMatches: "Perfect blend of history and modern luxury in artistic district",
-    funFacts: ["Building dates back to 1640", "Houses works by local artists", "Secret underground wine cellar"],
-    aiMatchPercent: 92,
-    guestInsights: "Art enthusiasts love the curated gallery and historic charm. Guests frequently mention the exceptional wine cellar tours and personalized service from the boutique staff."
+    guestInsights: "Guests love the efficient check-in process and proximity to major offices.",
+    city: "Tokyo",
+    country: "Japan",
+    latitude: 35.6586,
+    longitude: 139.7003,
+    topAmenities: ["High-Speed WiFi", "Business Center", "Executive Lounge"],
+    nearbyAttractions: ["Shibuya Crossing", "Meiji Shrine"],
+    locationHighlight: "Heart of Tokyo's business and entertainment district",
+    matchType: "good",
+    hasAvailability: true,
+    totalRooms: 18
   }
 ];
 
@@ -284,8 +319,12 @@ const HomeScreen = () => {
     }
   };
 
-  // Enhanced convert recommendation to display format with guest insights
+  // Simplified convert recommendation to display format - only essential data
   const convertRecommendationToDisplayHotel = (recommendation: HotelRecommendation, index: number): Hotel => {
+    console.log('🔍 DEBUG - Raw recommendation data for', recommendation.name);
+    console.log('   funFacts:', recommendation.funFacts);
+    console.log('   nearbyAttractions:', recommendation.nearbyAttractions);
+    
     const getHotelImage = (recommendation: HotelRecommendation): string => {
       const defaultImage = "https://images.unsplash.com/photo-1564501049412-61c2a3083791?auto=format&fit=crop&w=800&q=80";
       
@@ -298,23 +337,10 @@ const HomeScreen = () => {
         }
       }
       
-      if ((recommendation as any).main_photo) {
-        const mainPhoto = (recommendation as any).main_photo;
-        if (mainPhoto && typeof mainPhoto === 'string' && mainPhoto.trim() !== '') {
-          return mainPhoto;
-        }
-      }
-      
-      if ((recommendation as any).thumbnail) {
-        const thumbnail = (recommendation as any).thumbnail;
-        if (thumbnail && typeof thumbnail === 'string' && thumbnail.trim() !== '') {
-          return thumbnail;
-        }
-      }
-      
       return defaultImage;
     };
 
+    // Calculate pricing
     let price = 200;
     let originalPrice = price * 1.15;
     let priceComparison = "Standard rate";
@@ -325,6 +351,26 @@ const HomeScreen = () => {
       priceComparison = recommendation.pricePerNight.display;
     }
 
+    // Generate realistic transit distance
+    const generateTransitDistance = (city: string, nearbyAttractions: string[]): string => {
+      if (nearbyAttractions.length > 0) {
+        const mainAttraction = nearbyAttractions[0].replace('Near ', '');
+        const distances = ['2 min walk', '5 min walk', '8 min walk', '3 min drive', '1 min walk'];
+        return `${distances[Math.floor(Math.random() * distances.length)]} to ${mainAttraction}`;
+      }
+      
+      const cityDistances: Record<string, string> = {
+        'Tokyo': '2 min walk to subway',
+        'Paris': '5 min walk to Metro',
+        'New York': '3 min walk to subway',
+        'London': '4 min walk to tube',
+        'Wailea': '3 min walk to beach'
+      };
+      
+      return cityDistances[city] || '5 min walk to main area';
+    };
+    
+
     return {
       id: index + 1,
       name: recommendation.name,
@@ -333,10 +379,10 @@ const HomeScreen = () => {
       originalPrice: Math.round(originalPrice),
       priceComparison: priceComparison,
       rating: recommendation.starRating || 4.0,
-      reviews: recommendation.reviewCount || Math.floor(Math.random() * 1000) + 100, // Use API reviewCount
+      reviews: recommendation.reviewCount || Math.floor(Math.random() * 1000) + 100,
       safetyRating: 8.5 + Math.random() * 1.5,
-      transitDistance: "Check location details",
-      tags: recommendation.amenities?.slice(0, 3) || ["Standard amenities"],
+      transitDistance: generateTransitDistance(recommendation.city, recommendation.nearbyAttractions),
+      tags: recommendation.topAmenities?.slice(0, 3) || recommendation.amenities?.slice(0, 3) || ["Standard amenities"],
       location: recommendation.address,
       features: recommendation.amenities || ["Standard features"],
       aiExcerpt: recommendation.whyItMatches,
@@ -345,11 +391,23 @@ const HomeScreen = () => {
       aiMatchPercent: recommendation.aiMatchPercent,
       pricePerNight: recommendation.pricePerNight,
       roomTypes: recommendation.roomTypes,
-      guestInsights: recommendation.guestInsights // New field from API
+      guestInsights: recommendation.guestInsights,
+      city: recommendation.city,
+      country: recommendation.country,
+      latitude: recommendation.latitude,
+      longitude: recommendation.longitude,
+      topAmenities: recommendation.topAmenities,
+      nearbyAttractions: recommendation.nearbyAttractions,
+      locationHighlight: recommendation.locationHighlight,
+      matchType: recommendation.matchType,
+      hasAvailability: recommendation.hasAvailability,
+      totalRooms: recommendation.totalRooms,
+      fullDescription: recommendation.description,
+      fullAddress: recommendation.address
     };
   };
 
-  // Enhanced convert regular hotel to display format with guest insights
+  // Simplified convert regular hotel to display format
   const convertHotelToDisplayHotel = (hotel: HotelWithRates, index: number): Hotel => {
     const getHotelImage = (hotelInfo: any): string => {
       const defaultImage = "https://images.unsplash.com/photo-1564501049412-61c2a3083791?auto=format&fit=crop&w=800&q=80";
@@ -384,6 +442,7 @@ const HomeScreen = () => {
       return defaultImage;
     };
 
+    // Calculate pricing
     let price = 200;
     if (hotel.roomTypes && hotel.roomTypes.length > 0) {
       const rates = hotel.roomTypes.flatMap(room => room.rates || []);
@@ -397,6 +456,44 @@ const HomeScreen = () => {
       }
     }
 
+    // Extract location data
+    const coordinates = hotel.hotelInfo?.coordinates || hotel.hotelInfo?.location;
+    const city = hotel.hotelInfo?.city || 'Unknown City';
+    const country = hotel.hotelInfo?.country || 'Unknown Country';
+
+    // Generate top amenities from available data
+    const getTopAmenities = (hotelInfo: any): string[] => {
+      const amenities: string[] = [];
+      
+      if (hotelInfo?.amenities && Array.isArray(hotelInfo.amenities)) {
+        const amenityNames = hotelInfo.amenities
+          .map((amenity: any) => {
+            if (typeof amenity === 'string') return amenity;
+            if (typeof amenity === 'object' && amenity.name) return amenity.name;
+            return null;
+          })
+          .filter(Boolean)
+          .slice(0, 3);
+        
+        amenities.push(...amenityNames);
+      }
+      
+      // If we don't have enough amenities, add defaults
+      const defaultAmenities = ['Wi-Fi', 'Air Conditioning', 'Private Bathroom'];
+      while (amenities.length < 3) {
+        const defaultAmenity = defaultAmenities[amenities.length];
+        if (defaultAmenity && !amenities.includes(defaultAmenity)) {
+          amenities.push(defaultAmenity);
+        } else {
+          break;
+        }
+      }
+      
+      return amenities.slice(0, 3);
+    };
+
+    const topAmenities = getTopAmenities(hotel.hotelInfo);
+
     return {
       id: index + 1,
       name: hotel.hotelInfo?.name || 'Unknown Hotel',
@@ -404,16 +501,28 @@ const HomeScreen = () => {
       price: Math.round(price),
       originalPrice: Math.round(price * 1.15),
       priceComparison: "Standard rate",
-      rating: hotel.hotelInfo?.rating || hotel.hotelInfo?.starRating || hotel.hotelInfo?.rating || 6.0,
-      reviews: hotel.hotelInfo?.reviewCount || Math.floor(Math.random() * 1000) + 100, // Use API reviewCount
+      rating: hotel.hotelInfo?.starRating || hotel.hotelInfo?.rating || 4.0,
+      reviews: hotel.hotelInfo?.reviewCount || Math.floor(Math.random() * 1000) + 100,
       safetyRating: 8.5 + Math.random() * 1.5,
       transitDistance: "Check location details",
-      tags: hotel.hotelInfo?.amenities?.slice(0, 3) || ["Standard amenities"],
+      tags: topAmenities,
       location: hotel.hotelInfo?.address || 'Location not available',
       features: hotel.hotelInfo?.amenities || ["Standard features"],
       aiExcerpt: hotel.hotelInfo?.description?.substring(0, 100) + "..." || "Great hotel choice",
       roomTypes: hotel.roomTypes,
-      guestInsights: hotel.hotelInfo?.guestInsights // New field from API
+      guestInsights: hotel.hotelInfo?.guestInsights,
+      city: city,
+      country: country,
+      latitude: coordinates?.latitude || null,
+      longitude: coordinates?.longitude || null,
+      topAmenities: topAmenities,
+      nearbyAttractions: [],
+      locationHighlight: `Located in ${city}, ${country}`,
+      matchType: 'standard',
+      hasAvailability: hotel.roomTypes && hotel.roomTypes.length > 0,
+      totalRooms: hotel.roomTypes ? hotel.roomTypes.length : 0,
+      fullDescription: hotel.hotelInfo?.description || 'No description available',
+      fullAddress: hotel.hotelInfo?.address || 'Address not available'
     };
   };
 
@@ -444,6 +553,14 @@ const HomeScreen = () => {
       });
 
       console.log('✅ Smart Search Complete!');
+      console.log('📊 API Response Summary:', {
+        totalHotelsFound: searchResponse.totalHotelsFound,
+        hotelsWithRates: searchResponse.hotelsWithRates,
+        aiRecommendationsCount: searchResponse.aiRecommendationsCount,
+        aiRecommendationsAvailable: searchResponse.aiRecommendationsAvailable,
+        performance: searchResponse.performance
+      });
+
       setSearchResults(searchResponse);
 
       let convertedHotels: Hotel[] = [];
@@ -453,6 +570,29 @@ const HomeScreen = () => {
         convertedHotels = searchResponse.recommendations.map((rec, index) => 
           convertRecommendationToDisplayHotel(rec, index)
         );
+        
+        // Log essential info for each hotel
+        console.log('🔍 Hotel Summary:');
+        searchResponse.recommendations.forEach((rec, idx) => {
+          console.log(`  ${idx + 1}. ${rec.name}:`);
+          console.log(`     📊 AI Match: ${rec.aiMatchPercent}%`);
+          console.log(`     🏷️  Match Type: ${rec.matchType || 'good'}`);
+          console.log(`     ⭐ Star Rating: ${rec.starRating}/5`);
+          console.log(`     📍 Location: ${rec.city}, ${rec.country}`);
+          console.log(`     🗺️  Coordinates: ${rec.latitude}, ${rec.longitude}`);
+          console.log(`     🏨 Top Amenities: ${rec.topAmenities?.join(', ') || 'N/A'}`);
+          console.log(`     💡 Why it matches: ${rec.whyItMatches}`);
+          console.log(`     🎯 Fun facts: ${rec.funFacts?.join(' | ') || 'N/A'}`);
+          console.log(`     📍 Near: ${rec.nearbyAttractions?.join(' | ') || 'N/A'}`);
+          console.log(`     🏛️  Location: ${rec.locationHighlight || 'N/A'}`);
+          console.log(`     💰 Price per night: ${rec.pricePerNight?.display || 'N/A'}`);
+          console.log(`     🖼️  Images: ${rec.images?.length || 0} available`);
+          if (rec.images && rec.images.length > 0) {
+            console.log(`     📸 First image: ${rec.images[0]}`);
+          }
+          console.log(`     📝 Reviews: ${rec.reviewCount} guest reviews`);
+          console.log(`     💬 Guest Insights: ${rec.guestInsights}`);
+        });
       } else {
         console.log('📋 Using Regular Hotel Results');
         const hotelsToConvert = searchResponse.hotels || searchResponse.allHotels || [];
@@ -545,31 +685,41 @@ const HomeScreen = () => {
     }
   }, []);
 
-  // Enhanced handleBookNow with guest insights
+  // Simplified handleBookNow
   const handleBookNow = useCallback((hotel: Hotel) => {
     console.log('Book now pressed for:', hotel.name);
     
     let bookingMessage = `Ready to book ${hotel.name}!\n\n`;
     
-    if (hotel.pricePerNight) {
-      bookingMessage += `Price: ${hotel.pricePerNight.display}\n`;
-    } else {
-      bookingMessage += `Price: ${hotel.price}/night\n`;
+    // Location
+    if (hotel.city && hotel.country) {
+      bookingMessage += `📍 Location: ${hotel.city}, ${hotel.country}\n`;
     }
     
+    // Pricing
+    if (hotel.pricePerNight) {
+      bookingMessage += `💰 Price: ${hotel.pricePerNight.display}\n`;
+    } else {
+      bookingMessage += `💰 Price: ${hotel.price}/night\n`;
+    }
+    
+    // AI match information
+    if (hotel.aiMatchPercent) {
+      bookingMessage += `🤖 AI Match: ${hotel.aiMatchPercent}% match\n`;
+      bookingMessage += `✨ Match Type: ${hotel.matchType || 'good'}\n`;
+    }
+    
+    bookingMessage += `\n`;
+    
+    // Trip details
     if (searchResults?.searchParams) {
       const params = searchResults.searchParams;
-      bookingMessage += `Dates: ${params.checkin} to ${params.checkout}\n`;
-      bookingMessage += `Guests: ${params.adults} adults`;
+      bookingMessage += `📅 Dates: ${params.checkin} to ${params.checkout}\n`;
+      bookingMessage += `👥 Guests: ${params.adults} adults`;
       if (params.children > 0) {
         bookingMessage += `, ${params.children} children`;
       }
-    } else {
-      bookingMessage += `Dates: ${checkInDate.toISOString().split('T')[0]} to ${checkOutDate.toISOString().split('T')[0]}\n`;
-      bookingMessage += `Guests: ${adults} adults`;
-      if (children > 0) {
-        bookingMessage += `, ${children} children`;
-      }
+      bookingMessage += `\n🌙 Nights: ${params.nights}`;
     }
     
     Alert.alert(
@@ -580,62 +730,100 @@ const HomeScreen = () => {
         { text: 'Proceed to Book', style: 'default' }
       ]
     );
-  }, [searchResults, checkInDate, checkOutDate, adults, children]);
+  }, [searchResults]);
 
-  // Enhanced handleViewDetails with guest insights
+  // Simplified handleViewDetails
   const handleViewDetails = useCallback((hotel: Hotel) => {
     console.log('View details pressed for:', hotel.name);
     
-    let detailsMessage = `Hotel Details for ${hotel.name}\n\n`;
+    let detailsMessage = `🏨 ${hotel.name}\n\n`;
     
+    // AI matching information
     if (hotel.aiMatchPercent) {
-      detailsMessage += `🤖 AI Match: ${hotel.aiMatchPercent}%\n`;
+      detailsMessage += `🤖 AI Analysis:\n`;
+      detailsMessage += `• Match Score: ${hotel.aiMatchPercent}%\n`;
+      detailsMessage += `• Match Type: ${hotel.matchType || 'good'}\n`;
+      if (hotel.whyItMatches) {
+        detailsMessage += `• Why it matches: ${hotel.whyItMatches}\n`;
+      }
+      detailsMessage += `\n`;
     }
     
-    if (hotel.whyItMatches) {
-      detailsMessage += `Why it matches: ${hotel.whyItMatches}\n\n`;
+    // Location details
+    detailsMessage += `📍 Location Details:\n`;
+    if (hotel.city && hotel.country) {
+      detailsMessage += `• City: ${hotel.city}, ${hotel.country}\n`;
+    }
+    if (hotel.fullAddress) {
+      detailsMessage += `• Address: ${hotel.fullAddress}\n`;
+    }
+    if (hotel.latitude && hotel.longitude) {
+      detailsMessage += `• Coordinates: ${hotel.latitude}, ${hotel.longitude}\n`;
+    }
+    if (hotel.locationHighlight) {
+      detailsMessage += `• Highlight: ${hotel.locationHighlight}\n`;
+    }
+    detailsMessage += `• Transit: ${hotel.transitDistance}\n\n`;
+    
+    // Nearby attractions
+    if (hotel.nearbyAttractions && hotel.nearbyAttractions.length > 0) {
+      detailsMessage += `🗺️ Nearby Attractions:\n`;
+      hotel.nearbyAttractions.forEach(attraction => {
+        detailsMessage += `• ${attraction}\n`;
+      });
+      detailsMessage += `\n`;
     }
     
-    // Add guest insights if available
+    // Rating and reviews
+    detailsMessage += `⭐ Ratings & Reviews:\n`;
+    detailsMessage += `• Star Rating: ${hotel.rating}/5\n`;
+    detailsMessage += `• Guest Reviews: ${hotel.reviews.toLocaleString()} reviews\n`;
+    detailsMessage += `• Safety Rating: ${hotel.safetyRating.toFixed(1)}/10\n\n`;
+    
+    // Guest insights
     if (hotel.guestInsights) {
-      detailsMessage += `👥 Guest Insights: ${hotel.guestInsights}\n\n`;
+      detailsMessage += `💬 Guest Insights:\n${hotel.guestInsights}\n\n`;
     }
     
+    // Top amenities
+    if (hotel.topAmenities && hotel.topAmenities.length > 0) {
+      detailsMessage += `🏨 Top Amenities:\n`;
+      hotel.topAmenities.forEach(amenity => {
+        detailsMessage += `• ${amenity}\n`;
+      });
+      detailsMessage += `\n`;
+    }
+    
+    // Fun facts
     if (hotel.funFacts && hotel.funFacts.length > 0) {
-      detailsMessage += `Fun facts:\n${hotel.funFacts.map(fact => `• ${fact}`).join('\n')}\n\n`;
+      detailsMessage += `🎉 Fun Facts:\n`;
+      hotel.funFacts.forEach(fact => {
+        detailsMessage += `• ${fact}\n`;
+      });
+      detailsMessage += `\n`;
     }
     
-    detailsMessage += `⭐ Rating: ${hotel.rating}/5 (${hotel.reviews.toLocaleString()} reviews)\n`;
-    detailsMessage += `📍 Location: ${hotel.location}\n`;
-    detailsMessage += `🚶 Transit: ${hotel.transitDistance}\n`;
-    
-    if (hotel.features && hotel.features.length > 0) {
-      detailsMessage += `\nAmenities: ${hotel.features.join(', ')}\n`;
+    // Room and availability info
+    if (hotel.hasAvailability !== undefined || hotel.totalRooms) {
+      detailsMessage += `🛏️ Accommodation:\n`;
+      if (hotel.hasAvailability !== undefined) {
+        detailsMessage += `• Availability: ${hotel.hasAvailability ? 'Available' : 'Limited'}\n`;
+      }
+      if (hotel.totalRooms) {
+        detailsMessage += `• Room Types: ${hotel.totalRooms} different options\n`;
+      }
+      detailsMessage += `\n`;
     }
     
-    if (hotel.tags && hotel.tags.length > 0) {
-      detailsMessage += `\nPerfect for: ${hotel.tags.join(', ')}\n`;
-    }
-    
+    // Pricing
+    detailsMessage += `💰 Pricing:\n`;
     if (hotel.pricePerNight) {
-      detailsMessage += `\nPrice: ${hotel.pricePerNight.display}`;
+      detailsMessage += `• Per Night: ${hotel.pricePerNight.display}\n`;
+      detailsMessage += `• Currency: ${hotel.pricePerNight.currency}\n`;
     } else {
-      detailsMessage += `\nPrice: ${hotel.price}/night`;
-    }
-    
-    if (searchResults?.searchParams) {
-      const params = searchResults.searchParams;
-      detailsMessage += `\nDates: ${params.checkin} to ${params.checkout}`;
-      detailsMessage += `\nGuests: ${params.adults} adults`;
-      if (params.children > 0) {
-        detailsMessage += `, ${params.children} children`;
-      }
-    } else {
-      detailsMessage += `\nDates: ${checkInDate.toISOString().split('T')[0]} to ${checkOutDate.toISOString().split('T')[0]}`;
-      detailsMessage += `\nGuests: ${adults} adults`;
-      if (children > 0) {
-        detailsMessage += `, ${children} children`;
-      }
+      detailsMessage += `• Per Night: ${hotel.price}\n`;
+      detailsMessage += `• Original Price: ${hotel.originalPrice}\n`;
+      detailsMessage += `• Comparison: ${hotel.priceComparison}\n`;
     }
     
     Alert.alert(
@@ -646,44 +834,70 @@ const HomeScreen = () => {
         { text: 'Book Now', style: 'default', onPress: () => handleBookNow(hotel) }
       ]
     );
-  }, [searchResults, handleBookNow, checkInDate, checkOutDate, adults, children]);
+  }, [handleBookNow]);
 
-  // Enhanced handleHotelPress with guest insights
+  // Simplified handleHotelPress - quick preview
   const handleHotelPress = useCallback((hotel: Hotel) => {
     console.log('Hotel selected:', hotel.name);
     
     let alertMessage = '';
     
+    // AI match info
     if (hotel.aiMatchPercent) {
-      alertMessage += `🤖 AI Match: ${hotel.aiMatchPercent}%\n\n`;
+      alertMessage += `🤖 AI Match: ${hotel.aiMatchPercent}% (${hotel.matchType || 'good'} match)\n\n`;
     }
     
+    // Quick location and highlights
+    if (hotel.city && hotel.country) {
+      alertMessage += `📍 ${hotel.city}, ${hotel.country}\n`;
+    }
+    
+    if (hotel.locationHighlight) {
+      alertMessage += `🎯 ${hotel.locationHighlight}\n\n`;
+    }
+    
+    // Why it matches
     if (hotel.whyItMatches) {
-      alertMessage += `Why it matches: ${hotel.whyItMatches}\n\n`;
+      alertMessage += `✨ Why it matches: ${hotel.whyItMatches}\n\n`;
     }
     
-    // Add guest insights if available
+    // Quick guest insights
     if (hotel.guestInsights) {
-      alertMessage += `👥 Guest Insights: ${hotel.guestInsights}\n\n`;
+      alertMessage += `💬 Guest Insights: ${hotel.guestInsights}\n\n`;
     }
     
-    if (hotel.funFacts && hotel.funFacts.length > 0) {
-      alertMessage += `Fun facts:\n${hotel.funFacts.map(fact => `• ${fact}`).join('\n')}\n\n`;
+    // Top nearby attractions
+    if (hotel.nearbyAttractions && hotel.nearbyAttractions.length > 0) {
+      alertMessage += `🗺️ Nearby: ${hotel.nearbyAttractions.slice(0, 2).join(', ')}\n\n`;
     }
     
+    // Top amenities
+    if (hotel.topAmenities && hotel.topAmenities.length > 0) {
+      alertMessage += `🏨 Top Amenities: ${hotel.topAmenities.join(', ')}\n\n`;
+    }
+    
+    // Pricing and basic info
     if (hotel.pricePerNight) {
-      alertMessage += `Price: ${hotel.pricePerNight.display}\n\n`;
+      alertMessage += `💰 ${hotel.pricePerNight.display}\n`;
+    } else {
+      alertMessage += `💰 ${hotel.price}/night\n`;
     }
     
-    alertMessage += `⭐ Rating: ${hotel.rating}/5 (${hotel.reviews.toLocaleString()} reviews)\n`;
-    alertMessage += `📍 Location: ${hotel.location}`;
+    alertMessage += `⭐ ${hotel.rating}/5 (${hotel.reviews.toLocaleString()} reviews)\n`;
+    
+    if (hotel.hasAvailability !== undefined) {
+      alertMessage += `🏨 ${hotel.hasAvailability ? 'Available' : 'Limited availability'}`;
+    }
     
     Alert.alert(
       hotel.name,
       alertMessage || 'Hotel details',
-      [{ text: 'OK' }]
+      [
+        { text: 'Close', style: 'cancel' },
+        { text: 'Full Details', onPress: () => handleViewDetails(hotel) }
+      ]
     );
-  }, []);
+  }, [handleViewDetails]);
 
   const handleBackPress = useCallback(() => {
     console.log('Back button pressed - returning to initial search');
@@ -728,24 +942,33 @@ const HomeScreen = () => {
           </TouchableOpacity>
         </View>
 
-{/* SEARCH RESULTS HEADER */}
-{searchQuery.trim().length > 0 && (
-  <View style={tw`bg-white px-3 py-2 rounded-lg border border-gray-200`}>
-    <Text style={tw`text-xs text-gray-500`}>
-      {TEST_MODE ? 
-        `Test results for "${searchQuery}" (${displayHotels.length} hotels)` :
-        searchResults?.aiRecommendationsAvailable 
-          ? `Results for "${searchQuery}" (${searchResults.aiRecommendationsCount} hotels)`
-          : searchResults?.hotelsWithRates 
-          ? `Results for "${searchQuery}" (${searchResults.hotelsWithRates} hotels)`
-          : `Results for "${searchQuery}"`
-      }
-    </Text>
-  </View>
-)}
+        {/* SEARCH RESULTS HEADER */}
+        {searchQuery.trim().length > 0 && (
+          <View style={tw`bg-white px-3 py-2 rounded-lg border border-gray-200`}>
+            <Text style={tw`text-xs text-gray-500`}>
+              {TEST_MODE ? 
+                `Test results for "${searchQuery}" (${displayHotels.length} hotels)` :
+                searchResults?.aiRecommendationsAvailable 
+                  ? `AI Results for "${searchQuery}" (${searchResults.aiRecommendationsCount} hotels)`
+                  : searchResults?.hotelsWithRates 
+                  ? `Results for "${searchQuery}" (${searchResults.hotelsWithRates} hotels)`
+                  : `Results for "${searchQuery}"`
+              }
+            </Text>
+            {/* Search info */}
+            {searchResults?.searchParams && (
+              <Text style={tw`text-xs text-gray-400 mt-1`}>
+                {searchResults.searchParams.cityName}, {searchResults.searchParams.countryCode.toUpperCase()} • 
+                {searchResults.searchParams.adults} adults
+                {searchResults.searchParams.children > 0 ? `, ${searchResults.searchParams.children} children` : ''} • 
+                {searchResults.searchParams.nights} nights
+              </Text>
+            )}
+          </View>
+        )}
       </View>
 
-      {/* CONTENT VIEW - Story View with Google Maps Props */}
+      {/* CONTENT VIEW - Story View */}
       <View style={tw`flex-1 bg-gray-50`}>
         <SwipeableStoryView
           hotels={displayHotels}

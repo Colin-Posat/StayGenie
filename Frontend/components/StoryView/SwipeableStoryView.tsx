@@ -60,14 +60,16 @@ const enhanceHotel = (hotel: Hotel): EnhancedHotel => {
   ];
   const mapImage = mapImages[hotel.id % mapImages.length];
 
-  // Generate nearby attractions, prioritizing fun facts from API
   const generateNearbyAttractions = (): string[] => {
-    // If we have fun facts from the API, use those as "nearby attractions"
-    if (hotel.funFacts && hotel.funFacts.length > 0) {
-      return hotel.funFacts;
+    // FIXED: Use nearbyAttractions from API data, NOT funFacts
+    if (hotel.nearbyAttractions && hotel.nearbyAttractions.length > 0) {
+      console.log(`✅ Using API nearbyAttractions for ${hotel.name}:`, hotel.nearbyAttractions);
+      return hotel.nearbyAttractions;
     }
-
-    // Fallback based on location and tags
+  
+    console.log(`⚠️ No nearbyAttractions from API for ${hotel.name}, using fallback`);
+    
+    // Fallback based on location and tags (only if no API data)
     const location = hotel.location.toLowerCase();
     
     if (location.includes('paris') || location.includes('france')) {

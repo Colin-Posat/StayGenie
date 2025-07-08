@@ -1,28 +1,24 @@
-// hotelRoutes.ts - Updated routes
+// routes/hotelRoutes.ts - UPDATED TO USE SEPARATED SMART SEARCH
 import express from 'express';
-import { searchHotels, parseAndSearchHotels } from '../controllers/hotelSearchController';
 import { 
-  searchHotelAvailability,
-  getHotelAvailability,
-  parseAndSearchAvailability,
-  smartHotelSearch // 🚀 NEW: Import the combined function
+  smartHotelSearch,           // 🚀 Now imported from separated file
+  searchHotelAvailability, 
+  getHotelAvailability, 
+  parseAndSearchAvailability 
 } from '../controllers/hotelMatchController';
-
 
 const router = express.Router();
 
-// 🚀 MAIN ENDPOINT: One-stop hotel search with AI recommendations
+// 🚀 Smart search endpoint (now using separated function)
 router.post('/smart-search', smartHotelSearch);
 
-// Hotel search endpoints (metadata only, no pricing)
-router.post('/search', searchHotels);
-router.post('/search-from-text', parseAndSearchHotels);
-
-// Hotel availability endpoints (with rates and pricing)
+// Basic availability search
 router.post('/availability', searchHotelAvailability);
-router.post('/availability-from-text', parseAndSearchAvailability);
 
-// Specific hotel availability
+// Get specific hotel availability
 router.post('/hotel-availability', getHotelAvailability);
+
+// Combined parse and search
+router.post('/parse-and-search', parseAndSearchAvailability);
 
 export default router;
