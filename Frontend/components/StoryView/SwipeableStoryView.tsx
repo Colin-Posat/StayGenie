@@ -146,7 +146,7 @@ const SwipeableStoryView: React.FC<SwipeableStoryViewProps> = ({
     
     return (
       <View style={tw`px-5 mb-6`}>
-        <View style={tw`shadow-lg`}>
+        <View style={tw`border border-black/10 shadow-md rounded-2xl`}>
         <SwipeableHotelStoryCard
           hotel={hotel}
           onSave={() => handleSave(hotel)}
@@ -190,7 +190,7 @@ const SwipeableStoryView: React.FC<SwipeableStoryViewProps> = ({
   }
 
   return (
-    <View style={tw`flex-1 bg-gray-50`}>
+    <View style={tw`flex-1 bg-gray-80`}>
       <FlatList
         data={enhancedHotels}
         renderItem={renderHotelCard}

@@ -10,6 +10,27 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY
 });
 
+interface ReviewForAI {
+  score: number;
+  headline: string;
+  pros: string;
+  cons: string;
+  type: string;
+}
+
+interface RawReview {
+  averageScore: number;
+  country: string;
+  type: string;
+  name: string;
+  date: string;
+  headline: string;
+  language: string;
+  pros: string;
+  cons: string;
+  source: string;
+}
+
 interface ParsedSearchQuery {
   checkin: string;
   checkout: string;
@@ -37,7 +58,10 @@ interface HotelInfo {
     latitude: number;
     longitude: number;
   };
+  reviewCount?: number;
+  guestInsights?: string;
 }
+
 
 interface Rate {
   retailRate?: {
@@ -297,37 +321,37 @@ export const smartHotelSearch = async (req: Request, res: Response): Promise<voi
         }
       });
 
-      // Step 6: Enrich hotels with additional data (images, etc.)
-      console.log('🔄 Enriching hotel data with detailed information...');
-      const enrichedHotels: EnrichedHotel[] = await Promise.all(
-        hotelsWithRates.map(async (rateHotel: any): Promise<EnrichedHotel> => {
-          try {
-            const metadata = hotelMetadataMap.get(rateHotel.hotelId);
-            
-            // Get detailed hotel info including images
-            const hotelDetails: EnrichedHotel | null = await getHotelDetails(rateHotel.hotelId);
-            
-            return {
-              ...rateHotel,
-              hotelInfo: {
-                ...metadata,
-                ...hotelDetails?.hotelInfo,
-                // Ensure we have image data with proper priority
-                main_photo: hotelDetails?.hotelInfo?.main_photo || metadata?.main_photo,
-                thumbnail: hotelDetails?.hotelInfo?.thumbnail || metadata?.thumbnail,
-                images: hotelDetails?.hotelInfo?.images || metadata?.images || []
-              }
-            };
-          } catch (error) {
-            console.warn(`Failed to enrich hotel ${rateHotel.hotelId}:`, error);
-            const metadata = hotelMetadataMap.get(rateHotel.hotelId);
-            return {
-              ...rateHotel,
-              hotelInfo: metadata || {}
-            };
-          }
-        })
-      );
+// Step 6: Enrich hotels with additional data (images only, reviews come later)
+console.log('🔄 Enriching hotel data with detailed information...');
+const enrichedHotels: EnrichedHotel[] = await Promise.all(
+  hotelsWithRates.map(async (rateHotel: any): Promise<EnrichedHotel> => {
+    try {
+      const metadata = hotelMetadataMap.get(rateHotel.hotelId);
+      
+      // Get detailed hotel info including images
+      const hotelDetails: EnrichedHotel | null = await getHotelDetails(rateHotel.hotelId);
+      
+      return {
+        ...rateHotel,
+        hotelInfo: {
+          ...metadata,
+          ...hotelDetails?.hotelInfo,
+          // Ensure we have image data with proper priority
+          main_photo: hotelDetails?.hotelInfo?.main_photo || metadata?.main_photo,
+          thumbnail: hotelDetails?.hotelInfo?.thumbnail || metadata?.thumbnail,
+          images: hotelDetails?.hotelInfo?.images || metadata?.images || []
+        }
+      };
+    } catch (error) {
+      console.warn(`Failed to enrich hotel ${rateHotel.hotelId}:`, error);
+      const metadata = hotelMetadataMap.get(rateHotel.hotelId);
+      return {
+        ...rateHotel,
+        hotelInfo: metadata || {}
+      };
+    }
+  })
+);
   
       console.log(`Step 4 ✅: Found rates for ${enrichedHotels.length} hotels with enriched data`);
   
@@ -569,6 +593,10 @@ Return pure JSON only with exactly 5 hotels.`;
         images: images, // Enhanced image mapping
         pricePerNight: pricePerNight,
         
+        // 🆕 Reviews and guest insights
+        reviewCount: matchingHotel.hotelInfo?.reviewCount || 0,
+        guestInsights: matchingHotel.hotelInfo?.guestInsights || "No guest insights available.",
+        
         // Additional useful data
         funFacts: aiRec.funFacts,
         matchType: (aiRec as any).matchType || 'good', // New field to indicate match quality
@@ -597,8 +625,42 @@ Return pure JSON only with exactly 5 hotels.`;
 } catch (aiError) {
   console.error('AI recommendation failed, continuing without recommendations:', aiError);
 }
+// Step 10: Get guest insights ONLY for the 5 AI-recommended hotels
+if (aiRecommendations.length > 0) {
+  console.log('Step 8: Getting guest insights for the 5 AI-recommended hotels...');
   
-      // Step 10: Calculate final response
+  for (let i = 0; i < aiRecommendations.length; i++) {
+    const hotel = aiRecommendations[i];
+    
+    try {
+      // Get guest insights (no review storage)
+      const { insights, reviewCount } = await getGuestInsights(hotel.hotelId, hotel.name);
+      
+      // Add only insights and count to the recommendation
+      aiRecommendations[i] = {
+        ...hotel,
+        reviewCount: reviewCount,
+        guestInsights: insights
+      };
+      
+      // Add delay to avoid rate limits
+      if (i < aiRecommendations.length - 1) {
+        await new Promise(resolve => setTimeout(resolve, 1000));
+      }
+      
+    } catch (error) {
+      console.warn(`Failed to get insights for ${hotel.name}:`, error);
+      aiRecommendations[i] = {
+        ...hotel,
+        reviewCount: 0,
+        guestInsights: "Guest insights are temporarily unavailable."
+      };
+    }
+  }
+  
+  console.log('Step 8 ✅: Completed guest insights for all AI-recommended hotels');
+}
+      // : Calculate final response
       // (nights already calculated above)
   
       // Final response
@@ -626,10 +688,10 @@ Return pure JSON only with exactly 5 hotels.`;
         searchId: ratesResponse.data?.searchId || null
       });
   
-      // Step 11: Log AI recommendations summary
+      // Step 11: Log AI recommendations summary (updated with reviews)
       if (aiRecommendations.length > 0) {
-        console.log('\n🤖 AI RECOMMENDATIONS SUMMARY:');
-        console.log('='.repeat(50));
+        console.log('\n🤖 AI RECOMMENDATIONS SUMMARY WITH REVIEWS:');
+        console.log('='.repeat(60));
         aiRecommendations.forEach((hotel, index) => {
           console.log(`${index + 1}. ${hotel.name}`);
           console.log(`   📊 AI Match: ${hotel.aiMatchPercent}%`);
@@ -637,17 +699,50 @@ Return pure JSON only with exactly 5 hotels.`;
           console.log(`   ⭐ Star Rating: ${hotel.starRating}/5`);
           console.log(`   💡 Why it matches: ${hotel.whyItMatches}`);
           console.log(`   🎯 Fun facts: ${hotel.funFacts.join(' | ')}`);
+          
           if (hotel.pricePerNight) {
             console.log(`   💰 Price per night: ${hotel.pricePerNight.display}`);
           }
+          
           if (hotel.images && hotel.images.length > 0) {
             console.log(`   🖼️  Images: ${hotel.images.length} available`);
             console.log(`   📸 First image: ${hotel.images[0]}`);
           }
+          
+          // 🆕 Reviews information
+          console.log(`   📝 Reviews: ${hotel.reviewCount || 0} guest reviews`);
+          if (hotel.guestInsights && hotel.guestInsights !== "No guest reviews available to provide insights.") {
+            console.log(`   💬 Guest Insights: ${hotel.guestInsights}`);
+          } else {
+            console.log(`   💬 Guest Insights: No reviews available`);
+          }
+          
+          // 🆕 Sample reviews (show first 2 if available)
+          if (hotel.reviews && hotel.reviews.length > 0) {
+            console.log(`   📋 Sample Reviews:`);
+            hotel.reviews.slice(0, 2).forEach((review: any, reviewIndex: number) => {
+              const score = review.averageScore || 'N/A';
+              const headline = review.headline || 'No headline';
+              const name = review.name || 'Anonymous';
+              const pros = review.pros ? ` | Pros: ${review.pros.substring(0, 50)}...` : '';
+              const cons = review.cons ? ` | Cons: ${review.cons.substring(0, 50)}...` : '';
+              console.log(`      ${reviewIndex + 1}. ${name} (${score}/10): "${headline}"${pros}${cons}`);
+            });
+            
+            if (hotel.reviews.length > 2) {
+              console.log(`      ... and ${hotel.reviews.length - 2} more reviews`);
+            }
+          }
+          
           console.log('');
         });
-        console.log('='.repeat(50));
-        console.log(`✅ FINAL COUNT: ${aiRecommendations.length} hotels returned (target: exactly 5)`);
+        console.log('='.repeat(60));
+        console.log(`✅ FINAL COUNT: ${aiRecommendations.length} hotels returned with reviews and insights`);
+        
+        // 🆕 Reviews summary
+        const totalReviews = aiRecommendations.reduce((sum, hotel) => sum + (hotel.reviewCount || 0), 0);
+        const hotelsWithReviews = aiRecommendations.filter(hotel => (hotel.reviewCount || 0) > 0).length;
+        console.log(`📊 REVIEWS SUMMARY: ${totalReviews} total reviews across ${hotelsWithReviews}/${aiRecommendations.length} hotels`);
       }
   
       console.log('🚀 Smart Search Complete ✅');
@@ -1003,3 +1098,167 @@ export const validateDates = (checkin: string, checkout: string) => {
   const nights = Math.ceil((checkoutDate.getTime() - checkinDate.getTime()) / (1000 * 60 * 60 * 24));
   return { valid: true, nights };
 };
+
+
+// Helper function to get guest insights directly (without storing reviews)
+const getGuestInsights = async (hotelId: string, hotelName: string): Promise<{ insights: string; reviewCount: number }> => {
+  const startTime = Date.now();
+  
+  try {
+    console.log(`🔍 [REVIEWS DEBUG] Starting review fetch for: ${hotelName} (ID: ${hotelId})`);
+    console.log(`🔍 [REVIEWS DEBUG] Request URL: https://api.liteapi.travel/v3.0/data/reviews?hotelId=${hotelId}&limit=15&timeout=4&getSentiment=false`);
+    console.log(`🔍 [REVIEWS DEBUG] API Key present: ${process.env.LITEAPI_KEY ? 'YES' : 'NO'}`);
+    console.log(`🔍 [REVIEWS DEBUG] API Key preview: ${process.env.LITEAPI_KEY?.substring(0, 10)}...`);
+    
+    const response = await axios.get('https://api.liteapi.travel/v3.0/data/reviews', {
+      params: {
+        hotelId: hotelId,
+        limit: 15, // Only need a sample for insights
+        timeout: 4,
+        getSentiment: false
+      },
+      headers: {
+        'X-API-Key': process.env.LITEAPI_KEY,
+      },
+      timeout: 10000
+    });
+
+    const requestTime = Date.now() - startTime;
+    console.log(`✅ [REVIEWS DEBUG] Response received in ${requestTime}ms`);
+    console.log(`✅ [REVIEWS DEBUG] Status: ${response.status} ${response.statusText}`);
+    console.log(`✅ [REVIEWS DEBUG] Headers:`, JSON.stringify(response.headers, null, 2));
+    console.log(`✅ [REVIEWS DEBUG] Response data structure:`, {
+      hasData: !!response.data,
+      dataKeys: response.data ? Object.keys(response.data) : [],
+      dataType: typeof response.data,
+      rawDataPreview: JSON.stringify(response.data).substring(0, 200) + '...'
+    });
+
+    if (response.status !== 200) {
+      console.error(`❌ [REVIEWS DEBUG] Non-200 status: ${response.status}`);
+      throw new Error(`LiteAPI reviews error: ${response.status}`);
+    }
+
+    const reviews: RawReview[] = response.data?.data || [];
+    const totalReviews = response.data?.total || reviews.length;
+    
+    console.log(`📊 [REVIEWS DEBUG] Reviews data:`, {
+      reviewsFound: reviews.length,
+      totalReviews: totalReviews,
+      firstReviewPreview: reviews[0] ? {
+        score: reviews[0].averageScore,
+        headline: reviews[0].headline,
+        haspros: !!reviews[0].pros,
+        hasCons: !!reviews[0].cons,
+        name: reviews[0].name
+      } : 'No reviews'
+    });
+    
+  // Instead of returning early when no reviews:
+  if (reviews.length === 0) {
+    console.log(`⚠️ [REVIEWS DEBUG] No reviews for ${hotelName} — generating synthetic insights`);
+
+    const syntheticPrompt = `No guest reviews are available for "${hotelName}". 
+Please generate exactly 2 concise, positive sentences (each ≤15 words) about what guests would typically praise about this hotel.`;
+
+    const aiStartTime = Date.now();
+    const completion = await openai.chat.completions.create({
+      model: 'gpt-4o-mini',
+      messages: [{ role: 'user', content: syntheticPrompt }],
+      temperature: 0.3,
+      max_tokens: 100,
+    });
+    const insights = completion.choices[0]?.message?.content?.trim() 
+      || "Guests love the location and friendly staff.";
+
+    console.log(`✅ [REVIEWS DEBUG] Synthetic insights generated in ${Date.now() - aiStartTime}ms: "${insights}"`);
+
+    return {
+      insights,
+      reviewCount: 0,
+    };
+  }
+
+    // Generate insights from reviews (but don't store the reviews)
+    console.log(`🤖 [REVIEWS DEBUG] Processing ${reviews.length} reviews for AI analysis...`);
+    const reviewsForAI: ReviewForAI[] = reviews.map((review: RawReview) => ({
+      score: review.averageScore,
+      headline: review.headline,
+      pros: review.pros,
+      cons: review.cons,
+      type: review.type
+    }));
+
+    console.log(`🤖 [REVIEWS DEBUG] Sample processed review:`, reviewsForAI[0]);
+
+    const prompt = `Analyze these hotel reviews for "${hotelName}" and write exactly 2 concise sentences highlighting what guests love most about this hotel. Focus on the most praised positive aspects but also common copmaints if there are any..
+
+Reviews:
+${reviewsForAI.map((review: ReviewForAI, i: number) => 
+  `${i + 1}. Score: ${review.score}/10 - "${review.headline}" 
+  Pros: ${review.pros || 'None'}
+  Cons: ${review.cons || 'None'}`
+).join('\n')}
+
+Return exactly 2 short, sentences about what guests consistently praise and one about common copmaints if there are any. Keep each sentence under 15 words.`;
+
+    console.log(`🤖 [REVIEWS DEBUG] Sending ${reviewsForAI.length} reviews to OpenAI for analysis...`);
+    const aiStartTime = Date.now();
+
+    const completion = await openai.chat.completions.create({
+      model: 'gpt-4o-mini',
+      messages: [{ role: 'user', content: prompt }],
+      temperature: 0.3,
+      max_tokens: 100, // Shorter for just 2 sentences
+    });
+
+    const aiTime = Date.now() - aiStartTime;
+    const insights = completion.choices[0]?.message?.content?.trim() || "Guest insights could not be generated.";
+    
+    console.log(`✅ [REVIEWS DEBUG] OpenAI completed in ${aiTime}ms`);
+    console.log(`✅ [REVIEWS DEBUG] Generated insights: "${insights}"`);
+    console.log(`✅ [REVIEWS DEBUG] Total process time for ${hotelName}: ${Date.now() - startTime}ms`);
+    
+    return {
+      insights: insights,
+      reviewCount: totalReviews
+    };
+    
+  } catch (error: any) {
+    const totalTime = Date.now() - startTime;
+    console.error(`❌ [REVIEWS DEBUG] Error after ${totalTime}ms for ${hotelName}:`, {
+      errorMessage: error.message,
+      errorCode: error.code,
+      isAxiosError: !!error.isAxiosError,
+      hasResponse: !!error.response,
+      responseStatus: error.response?.status,
+      responseStatusText: error.response?.statusText,
+      responseHeaders: error.response?.headers,
+      responseData: error.response?.data,
+      requestConfig: error.config ? {
+        url: error.config.url,
+        method: error.config.method,
+        params: error.config.params,
+        timeout: error.config.timeout
+      } : 'No config available'
+    });
+
+    if (error.response?.status === 429) {
+      console.warn(`⚠️ [REVIEWS DEBUG] Rate limit hit for ${hotelName}. Rate limit headers:`, {
+        limit: error.response?.headers['x-ratelimit-limit'],
+        remaining: error.response?.headers['x-ratelimit-remaining'],
+        reset: error.response?.headers['x-ratelimit-reset'],
+        resetTime: error.response?.headers['x-ratelimit-reset'] ? 
+          new Date(parseInt(error.response.headers['x-ratelimit-reset']) * 1000).toISOString() : 'Unknown'
+      });
+    } else {
+      console.error(`❌ [REVIEWS DEBUG] Non-rate-limit error for ${hotelName}:`, error.message);
+    }
+    
+    return {
+      insights: "Guest insights are temporarily unavailable.",
+      reviewCount: 0
+    };
+  }
+};
+

@@ -1,7 +1,9 @@
 {
   "dependencies": {
+    "@react-native-voice/voice": "^3.2.4",
     "amadeus": "^11.0.0",
     "dotenv": "^17.0.0",
+    "expo-av": "^15.1.7",
     "express": "^5.1.0",
     "openai": "^5.8.2"
   }

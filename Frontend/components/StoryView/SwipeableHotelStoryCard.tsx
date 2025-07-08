@@ -1,4 +1,4 @@
-// SwipeableHotelStoryCard.tsx - Enhanced with sleek Instagram-style bottom section
+// SwipeableHotelStoryCard.tsx - Enhanced with guest insights and review data from API
 import React, { useState, useRef, useEffect } from 'react';
 import {
   View,
@@ -48,6 +48,7 @@ interface Hotel {
       total: string;
     };
   };
+  guestInsights?: string; // New field from API
 }
 
 interface EnhancedHotel extends Hotel {
@@ -71,7 +72,83 @@ interface SwipeableHotelStoryCardProps {
   children?: number;
 }
 
-// Generate AI insights based on hotel characteristics - now uses API data if available
+// Animated Heart Button Component
+interface AnimatedHeartButtonProps {
+  isLiked: boolean;
+  onPress: () => void;
+  size?: number;
+}
+
+const AnimatedHeartButton: React.FC<AnimatedHeartButtonProps> = ({ isLiked, onPress, size = 28 }) => {
+  const scaleAnim = useRef(new Animated.Value(1)).current;
+  const bounceAnim = useRef(new Animated.Value(1)).current;
+
+  const animateHeart = () => {
+    // Heart scale animation
+    Animated.sequence([
+      Animated.timing(scaleAnim, {
+        toValue: 1.4,
+        duration: 150,
+        useNativeDriver: true,
+      }),
+      Animated.timing(scaleAnim, {
+        toValue: 1,
+        duration: 150,
+        useNativeDriver: true,
+      }),
+    ]).start();
+
+    // Bounce animation for the button
+    Animated.sequence([
+      Animated.timing(bounceAnim, {
+        toValue: 0.9,
+        duration: 100,
+        useNativeDriver: true,
+      }),
+      Animated.timing(bounceAnim, {
+        toValue: 1,
+        duration: 100,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  };
+
+  const handlePress = () => {
+    animateHeart();
+    onPress();
+  };
+
+  return (
+    <View style={tw`relative`}>
+      {/* Main Button */}
+      <Animated.View
+        style={{
+          transform: [{ scale: bounceAnim }],
+        }}
+      >
+        <TouchableOpacity
+          onPress={handlePress}
+          activeOpacity={0.6}
+          style={tw`border border-black/10 bg-gray-100 py-2.5 px-4 rounded-lg items-center justify-center`}
+        >
+          <Animated.View
+            style={{
+              transform: [{ scale: scaleAnim }],
+            }}
+          >
+            <Ionicons
+              name={isLiked ? "heart" : "heart-outline"}
+              size={size}
+              color={isLiked ? "#FF3040" : "#262626"}
+            />
+          </Animated.View>
+        </TouchableOpacity>
+      </Animated.View>
+    </View>
+  );
+};
+
+// Enhanced AI insights generator - now uses API data including guest insights
 const generateAIInsight = (hotel: Hotel): string => {
   // Use API-provided AI insight first
   if (hotel.whyItMatches) {
@@ -95,6 +172,28 @@ const generateAIInsight = (hotel: Hotel): string => {
     return "Cultural hub location perfect for art lovers and creative experiences";
   } else {
     return "Great value option with solid amenities and convenient location";
+  }
+};
+
+// Enhanced review summary generator using API guest insights
+const generateReviewSummary = (hotel: Hotel): string => {
+  // Use API-provided guest insights first
+  if (hotel.guestInsights) {
+    return hotel.guestInsights;
+  }
+
+  // Fallback to rating-based summaries
+  const rating = hotel.rating;
+  const reviewCount = hotel.reviews;
+  
+  if (rating >= 4.5) {
+    return "Guests consistently praise the exceptional service, prime location, and outstanding amenities. Many highlight the comfortable rooms and friendly staff.";
+  } else if (rating >= 4.0) {
+    return "Travelers appreciate the good value, convenient location, and solid amenities. Most guests would recommend this hotel to others.";
+  } else if (rating >= 3.5) {
+    return "Mixed reviews with guests enjoying the location and basic amenities. Some mention areas for improvement in service and facilities.";
+  } else {
+    return "Budget-friendly option with basic amenities. Guests appreciate the affordable rates and convenient location.";
   }
 };
 
@@ -201,6 +300,25 @@ const StoryProgressBar: React.FC<StoryProgressBarProps> = ({
   );
 };
 
+// Hotel Title Component for top left
+const HotelTitleOverlay: React.FC<{ hotel: EnhancedHotel }> = ({ hotel }) => {
+  return (
+    <View style={tw`absolute top-14 left-4 right-16 z-15`}>
+      <View style={tw`bg-black/30 px-2.5 py-1.5 rounded-lg self-start`}>
+        <Text 
+          style={[
+            tw`text-white text-sm font-semibold`,
+            { textShadowColor: 'rgba(0, 0, 0, 0.8)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 2 }
+          ]}
+          numberOfLines={2}
+        >
+          {hotel.name}
+        </Text>
+      </View>
+    </View>
+  );
+};
+
 // Slide 1: Hotel Overview with panning effect - now uses API data
 const HotelOverviewSlide: React.FC<{ hotel: EnhancedHotel }> = ({ hotel }) => {
   const aiInsight = generateAIInsight(hotel); // Uses API data when available
@@ -293,48 +411,53 @@ const HotelOverviewSlide: React.FC<{ hotel: EnhancedHotel }> = ({ hotel }) => {
       {/* Subtle gradient overlay */}
       <View style={tw`absolute bottom-0 left-0 right-0 h-52 bg-gradient-to-t from-black/70 to-transparent z-1`} />
       
-      {/* Hotel Information - Bottom Overlay */}
-      <View style={tw`absolute bottom-6 left-4 right-4 z-10`}>
-        {/* Hotel Name */}
-        <View style={tw`mb-3`}>
-          <Text style={[
-            tw`text-2xl font-bold text-white mb-3`, 
-            { textShadowColor: 'rgba(0, 0, 0, 0.8)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 3 }
-          ]}>
+      {/* Hotel Title and Location - Top Left */}
+      <View style={tw`absolute top-10 left-4 z-10`}>
+        <View style={tw`bg-black/30 border border-white/20 px-2.5 py-1.5 rounded-lg self-start`}>
+          <Text 
+            style={[
+              tw`text-white text-sm font-semibold`,
+              { textShadowColor: 'rgba(0, 0, 0, 0.8)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 2 }
+            ]}
+            numberOfLines={2}
+          >
             {hotel.name}
           </Text>
         </View>
         
-        {/* AI Match Insight - Uses API data */}
-        <View style={tw`bg-black/50 p-3 rounded-lg border border-white/20 mb-4`}>
-          <View style={tw`flex-row items-center mb-1.5`}>
-            <Ionicons name="sparkles" size={14} color="#FFD700" />
-            <Text style={tw`text-yellow-400 text-xs font-semibold ml-1`}>
-              {hotel.aiMatchPercent ? `AI Match ${hotel.aiMatchPercent}%` : 'AI Match'}
+        {/* Location under hotel name */}
+        <View style={tw`flex-row items-center mt-1.5`}>
+          <View style={tw`bg-black/30 border border-white/20 px-2 py-1 rounded-md flex-row items-center`}>
+            <Ionicons name="location" size={12} color="#FFFFFF" />
+            <Text style={[
+              tw`text-white text-xs font-medium ml-1`,
+              { textShadowColor: 'rgba(0, 0, 0, 0.8)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 2 }
+            ]}>
+              {hotel.location}
             </Text>
           </View>
-          <Text style={tw`text-white text-sm leading-5`}>
-            {aiInsight}
-          </Text>
         </View>
+      </View>
 
-        {/* Price and Reviews - Anchored at bottom */}
-        <View style={tw`flex-row items-center gap-3`}>
+      {/* Hotel Information - Bottom Overlay */}
+      <View style={tw`absolute bottom-6 left-4 right-4 z-10`}>
+        {/* Price and Reviews - Top row */}
+        <View style={tw`flex-row items-end gap-2 mb-2.5`}>
           {/* Price */}
-          <View style={tw`bg-black/60 px-4 py-2 rounded-lg`}>
+          <View style={tw`bg-black/60 border border-white/20 px-3 py-1.5 rounded-lg`}>
             <View style={tw`flex-row items-baseline`}>
-              <Text style={tw`text-2xl font-bold text-white`}>
+              <Text style={tw`text-xl font-bold text-white`}>
                 {getDisplayPrice()}
               </Text>
-              <Text style={tw`text-white/80 text-sm ml-1`}>/night</Text>
+              <Text style={tw`text-white/80 text-xs ml-1`}>/night</Text>
             </View>
           </View>
           
-          {/* Reviews */}
-          <View style={tw`bg-black/60 px-3 py-2 rounded-lg`}>
+          {/* Reviews - Enhanced with proper review count formatting */}
+          <View style={tw`bg-black/60 border border-white/20 px-3 py-1.5 rounded-lg`}>
             <View style={tw`flex-row items-center`}>
-              <Ionicons name="star" size={14} color="#FFB800" />
-              <Text style={tw`text-white text-sm font-semibold ml-1`}>
+              <Ionicons name="star" size={12} color="#FFB800" />
+              <Text style={tw`text-white text-xs font-semibold ml-1`}>
                 {hotel.rating}
               </Text>
               <Text style={tw`text-white/80 text-xs ml-1`}>
@@ -343,12 +466,25 @@ const HotelOverviewSlide: React.FC<{ hotel: EnhancedHotel }> = ({ hotel }) => {
             </View>
           </View>
         </View>
+
+        {/* AI Match Insight - Uses API data */}
+        <View style={tw`bg-black/50 p-2.5 rounded-lg border border-white/20`}>
+          <View style={tw`flex-row items-center mb-1`}>
+            <Ionicons name="sparkles" size={12} color="#FFD700" />
+            <Text style={tw`text-yellow-400 text-xs font-semibold ml-1`}>
+              {hotel.aiMatchPercent ? `AI Match ${hotel.aiMatchPercent}%` : 'AI Match'}
+            </Text>
+          </View>
+          <Text style={tw`text-white text-xs leading-4`}>
+            {aiInsight}
+          </Text>
+        </View>
       </View>
     </View>
   );
 };
 
-// Slide 2: Location - enhanced with API data
+// Updated LocationSlide component with matching overlay styling
 const LocationSlide: React.FC<{ hotel: EnhancedHotel }> = ({ hotel }) => {
   const panAnimation = useRef(new Animated.Value(0)).current;
   const scaleAnimation = useRef(new Animated.Value(1.2)).current;
@@ -431,50 +567,35 @@ const LocationSlide: React.FC<{ hotel: EnhancedHotel }> = ({ hotel }) => {
       
       {/* Location Information */}
       <View style={tw`absolute bottom-6 left-4 right-4 z-10`}>
-        {/* Location Header */}
-        <View style={tw`mb-3`}>
-          <View style={tw`flex-row items-center mb-2`}>
-            <Ionicons name="location" size={16} color="#FF6B6B" />
-            <Text style={tw`text-red-400 text-sm font-semibold ml-1`}>
-              {hotel.location}
-            </Text>
+        {/* Nearby Attractions - matching first slide's bg-black/60 style */}
+        <View style={tw`bg-black/30 p-2.5 rounded-lg border border-white/20 mb-2.5`}>
+          <View style={tw`flex-row items-center mb-1`}>
+            <Ionicons name="location" size={12} color="#4ECDC4" />
+            <Text style={tw`text-cyan-400 text-xs font-semibold ml-1`}>Nearby</Text>
           </View>
-          <Text style={[
-            tw`text-2xl font-bold text-white`, 
-            { textShadowColor: 'rgba(0, 0, 0, 0.8)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 3 }
-          ]}>
-            Location
-          </Text>
+          {hotel.nearbyAttractions.slice(0, 2).map((attraction, index) => (
+            <Text key={index} style={tw`text-white text-xs leading-4 ${index === 0 ? '' : 'mt-1'}`}>
+              • {attraction}
+            </Text>
+          ))}
         </View>
         
-        {/* Transit Distance */}
-        <View style={tw`flex-row items-center bg-black/40 px-3 py-2 rounded-lg mb-3`}>
-          <Ionicons name="walk" size={16} color="#4ECDC4" />
-          <Text style={tw`text-white text-sm font-medium ml-2`}>
-            <Text style={tw`font-bold`}>{hotel.transitDistance}</Text> to transit
-          </Text>
-        </View>
-        
-        {/* Fun Facts - Uses API data if available */}
+        {/* Location Highlight - matching first slide's bg-black/50 style */}
         {hotel.funFacts && hotel.funFacts.length > 0 ? (
-          <View style={tw`bg-black/50 p-3 rounded-lg border border-white/20`}>
-            <Text style={tw`text-white text-sm font-semibold mb-2`}>Fun Facts</Text>
-            {hotel.funFacts.slice(0, 3).map((fact, index) => (
-              <View key={index} style={tw`flex-row items-start mb-1`}>
-                <View style={tw`w-1 h-1 rounded-full bg-yellow-400 mr-2 mt-2`} />
-                <Text style={tw`text-white/90 text-sm flex-1`}>{fact}</Text>
-              </View>
-            ))}
+          <View style={tw`bg-black/30 p-2.5 border border-white/20 rounded-lg `}>
+            <View style={tw`flex-row items-center mb-1`}>
+              <Ionicons name="star" size={12} color="#FFD700" />
+              <Text style={tw`text-yellow-400 text-xs font-semibold ml-1`}>Location Highlight</Text>
+            </View>
+            <Text style={tw`text-white text-xs leading-4`}>{hotel.funFacts[0]}</Text>
           </View>
         ) : (
-          <View style={tw`bg-black/50 p-3 rounded-lg border border-white/20`}>
-            <Text style={tw`text-white text-sm font-semibold mb-2`}>Nearby</Text>
-            {hotel.nearbyAttractions.slice(0, 3).map((attraction, index) => (
-              <View key={index} style={tw`flex-row items-center mb-1`}>
-                <View style={tw`w-1 h-1 rounded-full bg-white/60 mr-2`} />
-                <Text style={tw`text-white/90 text-sm`}>{attraction}</Text>
-              </View>
-            ))}
+          <View style={tw`bg-black/30 p-2.5 rounded-lg border border-white/20 border border-white/20`}>
+            <View style={tw`flex-row items-center mb-1`}>
+              <Ionicons name="star" size={12} color="#FFD700" />
+              <Text style={tw`text-yellow-400 text-xs font-semibold ml-1`}>Area Highlight</Text>
+            </View>
+            <Text style={tw`text-white text-xs leading-4`}>Prime location with easy access to local attractions and dining</Text>
           </View>
         )}
       </View>
@@ -482,7 +603,7 @@ const LocationSlide: React.FC<{ hotel: EnhancedHotel }> = ({ hotel }) => {
   );
 };
 
-// Slide 3: Amenities & Features - enhanced with API data
+// Enhanced Amenities & Reviews slide - now uses API guest insights
 const AmenitiesSlide: React.FC<{ hotel: EnhancedHotel }> = ({ hotel }) => {
   const panAnimation = useRef(new Animated.Value(0)).current;
   const scaleAnimation = useRef(new Animated.Value(1.2)).current;
@@ -563,53 +684,37 @@ const AmenitiesSlide: React.FC<{ hotel: EnhancedHotel }> = ({ hotel }) => {
       {/* Subtle gradient overlay */}
       <View style={tw`absolute bottom-0 left-0 right-0 h-52 bg-gradient-to-t from-black/70 to-transparent z-1`} />
       
-      {/* Amenities Information */}
+      {/* Content Information */}
       <View style={tw`absolute bottom-6 left-4 right-4 z-10`}>
-        {/* Amenities Header */}
-        <View style={tw`mb-3`}>
-          <View style={tw`flex-row items-center mb-2`}>
-            <Ionicons name="checkmark-circle" size={16} color="#00C851" />
-            <Text style={tw`text-green-400 text-sm font-semibold ml-1`}>
-              Included
+        {/* Top Amenities - Small section like second slide */}
+        <View style={tw`bg-black/50 p-2.5 rounded-lg border border-white/20 mb-2.5`}>
+          <View style={tw`flex-row flex-wrap gap-1.5`}>
+            {hotel.features.slice(0, 3).map((feature, index) => (
+              <Text key={index} style={tw`text-white text-xs leading-4`}>
+                • {feature}
+              </Text>
+            ))}
+          </View>
+        </View>
+        
+        {/* Enhanced Reviews Section - Uses API guest insights */}
+        <View style={tw`bg-black/50 p-2.5 rounded-lg border border-white/20`}>
+          <View style={tw`flex-row items-center mb-1`}>
+            <Ionicons name="star" size={12} color="#FFD700" />
+            <Text style={tw`text-yellow-400 text-xs font-semibold ml-1`}>
+              Guest Insights ({hotel.reviews.toLocaleString()} reviews)
             </Text>
           </View>
-          <Text style={[
-            tw`text-2xl font-bold text-white`, 
-            { textShadowColor: 'rgba(0, 0, 0, 0.8)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 3 }
-          ]}>
-            Amenities
+          <Text style={tw`text-white text-xs leading-4`}>
+            {generateReviewSummary(hotel)}
           </Text>
-        </View>
-        
-        {/* Features Grid */}
-        <View style={tw`bg-black/50 p-3 rounded-lg border border-white/20 mb-3`}>
-          <View style={tw`flex-row flex-wrap gap-2`}>
-            {hotel.features.map((feature, index) => (
-              <View key={index} style={tw`flex-row items-center bg-white/20 px-2.5 py-1.5 rounded-lg`}>
-                <Ionicons name="checkmark" size={12} color="#00C851" />
-                <Text style={tw`text-white text-xs font-medium ml-1`}>{feature}</Text>
-              </View>
-            ))}
-          </View>
-        </View>
-        
-        {/* Tags - What it's perfect for */}
-        <View style={tw`bg-black/50 p-3 rounded-lg border border-white/20`}>
-          <Text style={tw`text-white text-sm font-semibold mb-2`}>Perfect For</Text>
-          <View style={tw`flex-row flex-wrap gap-1.5`}>
-            {hotel.tags.map((tag, index) => (
-              <View key={index} style={tw`bg-white/20 px-2.5 py-1 rounded-lg`}>
-                <Text style={tw`text-white text-xs font-medium`}>{tag}</Text>
-              </View>
-            ))}
-          </View>
         </View>
       </View>
     </View>
   );
 };
 
-// Main Swipeable Hotel Story Card Component - now with enhanced Instagram-style bottom
+// Main Swipeable Hotel Story Card Component - now with enhanced guest insights
 const SwipeableHotelStoryCard: React.FC<SwipeableHotelStoryCardProps> = ({ 
   hotel, 
   onSave, 
@@ -743,14 +848,6 @@ const SwipeableHotelStoryCard: React.FC<SwipeableHotelStoryCardProps> = ({
     onHotelPress();
   };
 
-  // Get display price for bottom section
-  const getDisplayPrice = () => {
-    if (hotel.pricePerNight) {
-      return `$${hotel.pricePerNight.min}`;
-    }
-    return `$${hotel.price}`;
-  };
-
   return (
     <View style={tw`bg-white rounded-2xl overflow-hidden shadow-lg`}>
       {/* Hotel Card */}
@@ -830,26 +927,20 @@ const SwipeableHotelStoryCard: React.FC<SwipeableHotelStoryCardProps> = ({
         </ScrollView>
       </TouchableOpacity>
       
-        {/* Enhanced Instagram-style Action Section */}
+      {/* Simplified Instagram-style Action Section with Animated Heart Button */}
       <View style={tw`bg-white rounded-b-2xl`}>
         {/* Main Action Row */}
         <View style={tw`flex-row items-center px-4 py-3 gap-3`}>
-          {/* Heart/Save Button */}
-          <TouchableOpacity
-  onPress={onSave}
-  activeOpacity={0.6}
-  style={tw`bg-gray-100 py-2.5 px-4 rounded-lg items-center justify-center`}
->
-  <Ionicons 
-    name={isCurrentHotelSaved ? "heart" : "heart-outline"} 
-    size={28} 
-    color={isCurrentHotelSaved ? "#FF3040" : "#262626"} 
-  />
-</TouchableOpacity>
+          {/* Animated Heart/Save Button */}
+          <AnimatedHeartButton
+            isLiked={isCurrentHotelSaved}
+            onPress={onSave}
+            size={28}
+          />
           
           {/* View Details Button */}
           <TouchableOpacity
-            style={tw`flex-1 bg-gray-100 py-3 rounded-lg items-center justify-center ml-2`}
+            style={tw`border border-black/10 flex-1 bg-gray-100 py-3 rounded-lg items-center justify-center ml-2`}
             onPress={handleViewDetails}
             activeOpacity={0.7}
           >

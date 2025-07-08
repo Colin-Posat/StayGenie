@@ -1,4 +1,4 @@
-// HomeScreen.tsx - Sleek dark theme version with same functionality
+// HomeScreen.tsx - Enhanced with guest insights and review data from API
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   View,
@@ -86,6 +86,8 @@ interface HotelRecommendation {
   totalRooms: number;
   hasAvailability: boolean;
   roomTypes?: any[];
+  reviewCount: number;
+  guestInsights: string;
 }
 
 interface HotelWithRates {
@@ -104,10 +106,12 @@ interface HotelWithRates {
       latitude: number;
       longitude: number;
     };
+    reviewCount?: number;
+    guestInsights?: string;
   };
 }
 
-// Display hotel interface (keeping for compatibility)
+// Enhanced display hotel interface with new API fields
 interface Hotel {
   id: number;
   name: string;
@@ -128,12 +132,13 @@ interface Hotel {
   aiMatchPercent?: number;
   pricePerNight?: any;
   roomTypes?: any[];
+  guestInsights?: string; // New field from API
 }
 
 // Test mode configuration
 const TEST_MODE = false; // Set to true to enable test mode, false for normal operation
 
-// Mock hotels data for test mode
+// Enhanced mock hotels data with guest insights for test mode
 const mockHotels: Hotel[] = [
   {
     id: 1,
@@ -152,7 +157,8 @@ const mockHotels: Hotel[] = [
     aiExcerpt: "Panoramic ocean views from all rooms plus award-winning seafood restaurant.",
     whyItMatches: "Perfect oceanfront location with luxury amenities you're looking for",
     funFacts: ["Home to endangered Hawaiian monk seals", "Features a rooftop infinity pool", "Offers traditional Hawaiian luau experiences"],
-    aiMatchPercent: 95
+    aiMatchPercent: 95,
+    guestInsights: "Guests rave about the stunning ocean views and exceptional spa services. Many highlight the authentic Hawaiian cultural experiences and world-class dining options."
   },
   {
     id: 2,
@@ -171,7 +177,8 @@ const mockHotels: Hotel[] = [
     aiExcerpt: "Modern business hotel in heart of Tokyo with excellent connectivity.",
     whyItMatches: "Ideal for business travelers with modern amenities and prime location",
     funFacts: ["Located in world's busiest pedestrian crossing", "Offers authentic Japanese breakfast", "Features traditional Japanese garden"],
-    aiMatchPercent: 88
+    aiMatchPercent: 88,
+    guestInsights: "Business travelers praise the efficient check-in process and proximity to major corporate offices. Guests love the traditional Japanese breakfast and rooftop garden views."
   },
   {
     id: 3,
@@ -190,7 +197,8 @@ const mockHotels: Hotel[] = [
     aiExcerpt: "Charming boutique hotel in historic Parisian neighborhood.",
     whyItMatches: "Perfect blend of history and modern luxury in artistic district",
     funFacts: ["Building dates back to 1640", "Houses works by local artists", "Secret underground wine cellar"],
-    aiMatchPercent: 92
+    aiMatchPercent: 92,
+    guestInsights: "Art enthusiasts love the curated gallery and historic charm. Guests frequently mention the exceptional wine cellar tours and personalized service from the boutique staff."
   }
 ];
 
@@ -276,7 +284,7 @@ const HomeScreen = () => {
     }
   };
 
-  // Convert recommendation to display format
+  // Enhanced convert recommendation to display format with guest insights
   const convertRecommendationToDisplayHotel = (recommendation: HotelRecommendation, index: number): Hotel => {
     const getHotelImage = (recommendation: HotelRecommendation): string => {
       const defaultImage = "https://images.unsplash.com/photo-1564501049412-61c2a3083791?auto=format&fit=crop&w=800&q=80";
@@ -325,7 +333,7 @@ const HomeScreen = () => {
       originalPrice: Math.round(originalPrice),
       priceComparison: priceComparison,
       rating: recommendation.starRating || 4.0,
-      reviews: Math.floor(Math.random() * 1000) + 100,
+      reviews: recommendation.reviewCount || Math.floor(Math.random() * 1000) + 100, // Use API reviewCount
       safetyRating: 8.5 + Math.random() * 1.5,
       transitDistance: "Check location details",
       tags: recommendation.amenities?.slice(0, 3) || ["Standard amenities"],
@@ -336,11 +344,12 @@ const HomeScreen = () => {
       funFacts: recommendation.funFacts,
       aiMatchPercent: recommendation.aiMatchPercent,
       pricePerNight: recommendation.pricePerNight,
-      roomTypes: recommendation.roomTypes
+      roomTypes: recommendation.roomTypes,
+      guestInsights: recommendation.guestInsights // New field from API
     };
   };
 
-  // Convert regular hotel to display format (fallback)
+  // Enhanced convert regular hotel to display format with guest insights
   const convertHotelToDisplayHotel = (hotel: HotelWithRates, index: number): Hotel => {
     const getHotelImage = (hotelInfo: any): string => {
       const defaultImage = "https://images.unsplash.com/photo-1564501049412-61c2a3083791?auto=format&fit=crop&w=800&q=80";
@@ -396,14 +405,15 @@ const HomeScreen = () => {
       originalPrice: Math.round(price * 1.15),
       priceComparison: "Standard rate",
       rating: hotel.hotelInfo?.rating || hotel.hotelInfo?.starRating || hotel.hotelInfo?.rating || 6.0,
-      reviews: Math.floor(Math.random() * 1000) + 100,
+      reviews: hotel.hotelInfo?.reviewCount || Math.floor(Math.random() * 1000) + 100, // Use API reviewCount
       safetyRating: 8.5 + Math.random() * 1.5,
       transitDistance: "Check location details",
       tags: hotel.hotelInfo?.amenities?.slice(0, 3) || ["Standard amenities"],
       location: hotel.hotelInfo?.address || 'Location not available',
       features: hotel.hotelInfo?.amenities || ["Standard features"],
       aiExcerpt: hotel.hotelInfo?.description?.substring(0, 100) + "..." || "Great hotel choice",
-      roomTypes: hotel.roomTypes
+      roomTypes: hotel.roomTypes,
+      guestInsights: hotel.hotelInfo?.guestInsights // New field from API
     };
   };
 
@@ -535,7 +545,7 @@ const HomeScreen = () => {
     }
   }, []);
 
-  // Define handleBookNow first
+  // Enhanced handleBookNow with guest insights
   const handleBookNow = useCallback((hotel: Hotel) => {
     console.log('Book now pressed for:', hotel.name);
     
@@ -572,6 +582,7 @@ const HomeScreen = () => {
     );
   }, [searchResults, checkInDate, checkOutDate, adults, children]);
 
+  // Enhanced handleViewDetails with guest insights
   const handleViewDetails = useCallback((hotel: Hotel) => {
     console.log('View details pressed for:', hotel.name);
     
@@ -585,11 +596,16 @@ const HomeScreen = () => {
       detailsMessage += `Why it matches: ${hotel.whyItMatches}\n\n`;
     }
     
+    // Add guest insights if available
+    if (hotel.guestInsights) {
+      detailsMessage += `👥 Guest Insights: ${hotel.guestInsights}\n\n`;
+    }
+    
     if (hotel.funFacts && hotel.funFacts.length > 0) {
       detailsMessage += `Fun facts:\n${hotel.funFacts.map(fact => `• ${fact}`).join('\n')}\n\n`;
     }
     
-    detailsMessage += `⭐ Rating: ${hotel.rating}/5 (${hotel.reviews} reviews)\n`;
+    detailsMessage += `⭐ Rating: ${hotel.rating}/5 (${hotel.reviews.toLocaleString()} reviews)\n`;
     detailsMessage += `📍 Location: ${hotel.location}\n`;
     detailsMessage += `🚶 Transit: ${hotel.transitDistance}\n`;
     
@@ -632,6 +648,7 @@ const HomeScreen = () => {
     );
   }, [searchResults, handleBookNow, checkInDate, checkOutDate, adults, children]);
 
+  // Enhanced handleHotelPress with guest insights
   const handleHotelPress = useCallback((hotel: Hotel) => {
     console.log('Hotel selected:', hotel.name);
     
@@ -645,6 +662,11 @@ const HomeScreen = () => {
       alertMessage += `Why it matches: ${hotel.whyItMatches}\n\n`;
     }
     
+    // Add guest insights if available
+    if (hotel.guestInsights) {
+      alertMessage += `👥 Guest Insights: ${hotel.guestInsights}\n\n`;
+    }
+    
     if (hotel.funFacts && hotel.funFacts.length > 0) {
       alertMessage += `Fun facts:\n${hotel.funFacts.map(fact => `• ${fact}`).join('\n')}\n\n`;
     }
@@ -653,7 +675,7 @@ const HomeScreen = () => {
       alertMessage += `Price: ${hotel.pricePerNight.display}\n\n`;
     }
     
-    alertMessage += `⭐ Rating: ${hotel.rating}/5\n`;
+    alertMessage += `⭐ Rating: ${hotel.rating}/5 (${hotel.reviews.toLocaleString()} reviews)\n`;
     alertMessage += `📍 Location: ${hotel.location}`;
     
     Alert.alert(
@@ -676,15 +698,6 @@ const HomeScreen = () => {
   return (
     <SafeAreaView style={tw`flex-1 bg-gray-50`}>
       <StatusBar barStyle="dark-content" backgroundColor="#F9FAFB" />
-
-      {/* TEST MODE INDICATOR */}
-      {TEST_MODE && (
-        <View style={tw`bg-orange-100 px-4 py-2 border-b border-orange-200`}>
-          <Text style={tw`text-orange-800 text-sm font-medium text-center`}>
-            🧪 TEST MODE ACTIVE - Using mock data
-          </Text>
-        </View>
-      )}
 
       {/* SLEEK HEADER */}
       <View style={tw`px-5 pt-3 pb-4 bg-gray-50`}>
@@ -710,7 +723,7 @@ const HomeScreen = () => {
               color="#FFFFFF"
             />
             <Text style={tw`text-base font-bold text-white`}>
-              Refine Search with AI
+              Refine Search
             </Text>
           </TouchableOpacity>
         </View>
