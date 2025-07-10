@@ -1,4 +1,4 @@
-// SwipeableStoryView.tsx - Updated with enhanced pricing structure
+// SwipeableStoryView.tsx - Updated with optimized backend data structure
 import React, { useState } from 'react';
 import {
   View,
@@ -23,18 +23,19 @@ interface SwipeableStoryViewProps {
   checkOutDate?: Date;
   adults?: number;
   children?: number;
+  // NEW: Track insights loading state
+  isInsightsLoading?: boolean;
 }
 
-// Enhanced function to preserve API data while adding story card requirements
+// UPDATED: Enhanced function to preserve optimized backend data while adding story card requirements
 const enhanceHotel = (hotel: Hotel): EnhancedHotel => {
-  // Generate multiple images for story slides, using API data when available
+  // UPDATED: Generate multiple images for story slides, preserving API data
   const generateImages = (baseImage: string): string[] => {
-    // If we have a good base image, create variations
-    if (baseImage && (baseImage.includes('unsplash.com') || baseImage.includes('http'))) {
-      // Try to create variations of the same image
+    // If we have a good base image from the optimized backend, create variations
+    if (baseImage && (baseImage.includes('unsplash.com') || baseImage.includes('http') || baseImage.startsWith('//'))) {
       const baseUrl = baseImage.split('?')[0];
       return [
-        baseImage, // Main hotel image (from API)
+        baseImage, // Main hotel image (from optimized backend)
         `${baseUrl}?auto=format&fit=crop&w=800&q=80&crop=entropy`, // Different crop for location
         `${baseUrl}?auto=format&fit=crop&w=800&q=80&crop=faces`, // Different crop for amenities
       ];
@@ -50,59 +51,138 @@ const enhanceHotel = (hotel: Hotel): EnhancedHotel => {
     return fallbackImages;
   };
 
-  // Generate map image for location slide
-  const mapImages = [
-    "https://images.unsplash.com/photo-1524661135-423995f22d0b?auto=format&fit=crop&w=800&q=80",
-    "https://images.unsplash.com/photo-1519302959554-a75be0afc82a?auto=format&fit=crop&w=800&q=80",
-    "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?auto=format&fit=crop&w=800&q=80",
-    "https://images.unsplash.com/photo-1606041008023-472dfb5e530f?auto=format&fit=crop&w=800&q=80",
-    "https://images.unsplash.com/photo-1578662996442-48f60103fc96?auto=format&fit=crop&w=800&q=80",
-  ];
-  const mapImage = mapImages[hotel.id % mapImages.length];
+  // UPDATED: Generate map image for location slide based on optimized backend location data
+  const generateMapImage = (): string => {
+    // Use location-specific map images when possible
+    const city = hotel.city?.toLowerCase() || '';
+    const country = hotel.country?.toLowerCase() || '';
+    const location = hotel.location?.toLowerCase() || '';
+    
+    // Location-specific map images
+    if (city.includes('paris') || country.includes('france')) {
+      return "https://images.unsplash.com/photo-1502602898536-47ad22581b52?auto=format&fit=crop&w=800&q=80"; // Paris map view
+    } else if (city.includes('tokyo') || country.includes('japan')) {
+      return "https://images.unsplash.com/photo-1540959733332-eab4deabeeaf?auto=format&fit=crop&w=800&q=80"; // Tokyo map view
+    } else if (city.includes('new york') || location.includes('manhattan')) {
+      return "https://images.unsplash.com/photo-1496588152823-86ff7695e68f?auto=format&fit=crop&w=800&q=80"; // NYC map view
+    } else if (city.includes('london') || country.includes('uk')) {
+      return "https://images.unsplash.com/photo-1513635269975-59663e0ac1ad?auto=format&fit=crop&w=800&q=80"; // London map view
+    } else if (city.includes('maui') || city.includes('hawaii')) {
+      return "https://images.unsplash.com/photo-1606041008023-472dfb5e530f?auto=format&fit=crop&w=800&q=80"; // Hawaii map view
+    } else if (location.includes('beach') || location.includes('coastal')) {
+      return "https://images.unsplash.com/photo-1578662996442-48f60103fc96?auto=format&fit=crop&w=800&q=80"; // Coastal map
+    } else if (location.includes('mountain') || location.includes('resort')) {
+      return "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?auto=format&fit=crop&w=800&q=80"; // Mountain resort map
+    }
+    
+    // Generic city map fallbacks
+    const mapImages = [
+      "https://images.unsplash.com/photo-1524661135-423995f22d0b?auto=format&fit=crop&w=800&q=80", // Generic city map
+      "https://images.unsplash.com/photo-1519302959554-a75be0afc82a?auto=format&fit=crop&w=800&q=80", // Urban planning view
+      "https://images.unsplash.com/photo-1506905925346-21bda4d32df4?auto=format&fit=crop&w=800&q=80", // Aerial city view
+    ];
+    
+    return mapImages[hotel.id % mapImages.length];
+  };
 
+  // UPDATED: Preserve nearbyAttractions from optimized backend, with intelligent fallbacks
   const generateNearbyAttractions = (): string[] => {
-    // FIXED: Use nearbyAttractions from API data, NOT funFacts
+    // Priority 1: Use nearbyAttractions from optimized backend API
     if (hotel.nearbyAttractions && hotel.nearbyAttractions.length > 0) {
-      console.log(`✅ Using API nearbyAttractions for ${hotel.name}:`, hotel.nearbyAttractions);
+      console.log(`✅ Using optimized backend nearbyAttractions for ${hotel.name}:`, hotel.nearbyAttractions);
       return hotel.nearbyAttractions;
     }
   
-    console.log(`⚠️ No nearbyAttractions from API for ${hotel.name}, using fallback`);
+    console.log(`⚠️ No nearbyAttractions from optimized backend for ${hotel.name}, generating intelligent fallback`);
     
-    // Fallback based on location and tags (only if no API data)
-    const location = hotel.location.toLowerCase();
+    // Priority 2: Generate based on city and country from optimized backend
+    const city = hotel.city?.toLowerCase() || '';
+    const country = hotel.country?.toLowerCase() || '';
+    const location = hotel.location?.toLowerCase() || '';
     
-    if (location.includes('paris') || location.includes('france')) {
+    if (city.includes('paris') || country.includes('france')) {
       return ["Eiffel Tower - 10 min", "Louvre Museum - 15 min", "Notre-Dame Cathedral - 8 min"];
-    } else if (location.includes('tokyo') || location.includes('japan')) {
+    } else if (city.includes('tokyo') || country.includes('japan')) {
       return ["Tokyo Tower - 12 min", "Sensoji Temple - 18 min", "Shibuya Crossing - 5 min"];
-    } else if (location.includes('maui') || location.includes('hawaii')) {
+    } else if (city.includes('new york') || location.includes('manhattan')) {
+      return ["Central Park - 8 min", "Times Square - 12 min", "Empire State Building - 15 min"];
+    } else if (city.includes('london') || country.includes('uk')) {
+      return ["Big Ben - 10 min", "Tower Bridge - 15 min", "British Museum - 12 min"];
+    } else if (city.includes('maui') || city.includes('hawaii')) {
       return ["Haleakala National Park - 30 min", "Road to Hana - 45 min", "Molokini Crater - 20 min"];
-    } else if (location.includes('downtown')) {
+    } else if (city.includes('san francisco') || city.includes('sf')) {
+      return ["Golden Gate Bridge - 20 min", "Fisherman's Wharf - 15 min", "Alcatraz Island - 25 min"];
+    } else if (city.includes('los angeles') || city.includes('la')) {
+      return ["Hollywood Walk of Fame - 18 min", "Santa Monica Pier - 25 min", "Griffith Observatory - 22 min"];
+    } else if (city.includes('miami')) {
+      return ["South Beach - 8 min", "Art Deco District - 10 min", "Wynwood Walls - 15 min"];
+    }
+    
+    // Priority 3: Generate based on location characteristics and topAmenities
+    if (location.includes('downtown') || location.includes('city center')) {
       return ["Business District - 2 min", "Theater District - 4 min", "Shopping Center - 6 min"];
-    } else if (location.includes('arts')) {
+    } else if (location.includes('arts') || location.includes('cultural')) {
       return ["Art Museum - 2 min", "Gallery District - 3 min", "Cultural Center - 5 min"];
     } else if (location.includes('riverside') || location.includes('waterfront')) {
-      return ["Waterfront - 1 min", "Marina - 3 min", "River Walk - 2 min"];
-    } else if (hotel.tags.some(tag => tag.toLowerCase().includes('beach'))) {
-      return ["Beach Access - 2 min", "Beach Club - 5 min", "Water Sports - 3 min"];
-    } else if (hotel.tags.some(tag => tag.toLowerCase().includes('business'))) {
+      return ["Waterfront Promenade - 1 min", "Marina District - 3 min", "River Walk - 2 min"];
+    } else if (hotel.topAmenities?.some(amenity => amenity.toLowerCase().includes('beach'))) {
+      return ["Beach Access - 2 min", "Beach Club - 5 min", "Water Sports Center - 3 min"];
+    } else if (hotel.topAmenities?.some(amenity => amenity.toLowerCase().includes('business'))) {
       return ["Convention Center - 5 min", "Business District - 3 min", "Airport Shuttle - 10 min"];
-    } else {
-      // Generic fallback
-      return ["City Center - 5 min", "Shopping Mall - 8 min", "Restaurant District - 3 min"];
+    } else if (hotel.topAmenities?.some(amenity => amenity.toLowerCase().includes('spa'))) {
+      return ["Wellness Center - 2 min", "Yoga Studio - 4 min", "Meditation Garden - 3 min"];
     }
+    
+    // Priority 4: Use location highlight to generate attractions
+    if (hotel.locationHighlight) {
+      const highlight = hotel.locationHighlight.toLowerCase();
+      if (highlight.includes('historic')) {
+        return ["Historic District - 3 min", "Heritage Museum - 5 min", "Old Town Square - 4 min"];
+      } else if (highlight.includes('shopping')) {
+        return ["Shopping Mall - 2 min", "Boutique District - 4 min", "Local Market - 3 min"];
+      } else if (highlight.includes('dining')) {
+        return ["Restaurant Row - 2 min", "Food Market - 4 min", "Rooftop Bars - 5 min"];
+      }
+    }
+    
+    // Final fallback: Generic city attractions
+    return ["City Center - 5 min", "Shopping District - 8 min", "Restaurant Quarter - 3 min"];
   };
 
-  return {
-    ...hotel,
+  // UPDATED: Ensure we preserve all optimized backend data while enhancing for story view
+  const enhancedHotel: EnhancedHotel = {
+    ...hotel, // Preserve ALL optimized backend data
     images: generateImages(hotel.image),
-    mapImage,
-    nearbyAttractions: generateNearbyAttractions(),
+    mapImage: generateMapImage(),
+    nearbyAttractions: hotel.nearbyAttractions || generateNearbyAttractions(), // Preserve API data or generate fallback
   };
+
+  // Log the enhancement for debugging
+  console.log(`🎨 Enhanced hotel ${hotel.name}:`, {
+    originalNearbyAttractions: hotel.nearbyAttractions,
+    finalNearbyAttractions: enhancedHotel.nearbyAttractions,
+    locationData: {
+      city: hotel.city,
+      country: hotel.country,
+      coordinates: hotel.latitude && hotel.longitude ? `${hotel.latitude}, ${hotel.longitude}` : 'None',
+      locationHighlight: hotel.locationHighlight,
+    },
+    aiData: {
+      matchPercent: hotel.aiMatchPercent,
+      matchType: hotel.matchType,
+      whyItMatches: hotel.whyItMatches ? hotel.whyItMatches.substring(0, 50) + '...' : 'None',
+    },
+    pricingData: {
+      hasEnhancedPricing: !!hotel.pricePerNight,
+      provider: hotel.pricePerNight?.provider || 'None',
+      isSupplierRate: hotel.pricePerNight?.isSupplierPrice || false,
+    }
+  });
+
+  return enhancedHotel;
 };
 
-// Main SwipeableStoryView Component
+// UPDATED: Main SwipeableStoryView Component with optimized backend integration
 const SwipeableStoryView: React.FC<SwipeableStoryViewProps> = ({ 
   hotels = [], 
   onHotelPress, 
@@ -111,11 +191,12 @@ const SwipeableStoryView: React.FC<SwipeableStoryViewProps> = ({
   checkInDate,
   checkOutDate,
   adults = 2,
-  children = 0
+  children = 0,
+  isInsightsLoading = false
 }) => {
   const [savedHotels, setSavedHotels] = useState<Set<number>>(new Set());
 
-  // Enhance hotels with additional data while preserving API data
+  // UPDATED: Enhance hotels with additional data while preserving optimized backend data
   const enhancedHotels = hotels.map(enhanceHotel);
 
   const handleSave = (hotel: Hotel) => {
@@ -126,7 +207,7 @@ const SwipeableStoryView: React.FC<SwipeableStoryViewProps> = ({
         console.log(`💔 Removed hotel from saved: ${hotel.name}`);
       } else {
         newSet.add(hotel.id);
-        console.log(`❤️ Saved hotel: ${hotel.name}`);
+        console.log(`❤️ Saved hotel: ${hotel.name} (AI Match: ${hotel.aiMatchPercent}%)`);
       }
       return newSet;
     });
@@ -135,11 +216,18 @@ const SwipeableStoryView: React.FC<SwipeableStoryViewProps> = ({
 
   const handleViewDetails = (hotel: Hotel) => {
     console.log(`🗺️ View details for: ${hotel.name}`);
+    if (hotel.latitude && hotel.longitude) {
+      console.log(`📍 Opening map with coordinates: ${hotel.latitude}, ${hotel.longitude}`);
+    } else {
+      console.log(`📍 Opening map with location: ${hotel.city || hotel.location}`);
+    }
     onViewDetails?.(hotel);
   };
 
   const handleHotelPress = (hotel: Hotel) => {
     console.log(`🏨 Hotel pressed: ${hotel.name}`);
+    console.log(`🤖 AI Match: ${hotel.aiMatchPercent}% (${hotel.matchType || 'standard'})`);
+    console.log(`💰 Pricing: ${hotel.pricePerNight?.display || `$${hotel.price}/night`}`);
     onHotelPress?.(hotel);
   };
 
@@ -149,21 +237,22 @@ const SwipeableStoryView: React.FC<SwipeableStoryViewProps> = ({
     return (
       <View style={tw`px-5 mb-6`}>
         <View style={tw`border border-black/10 shadow-md rounded-2xl`}>
-        <SwipeableHotelStoryCard
-          hotel={hotel}
-          onSave={() => handleSave(hotel)}
-          onViewDetails={() => handleViewDetails(hotel)}
-          onHotelPress={() => handleHotelPress(hotel)}
-          isCurrentHotelSaved={isCurrentHotelSaved}
-          index={index}
-          totalCount={enhancedHotels.length}
-          // Pass through Google Maps props
-          checkInDate={checkInDate}
-          checkOutDate={checkOutDate}
-          adults={adults}
-          children={children}
-        />
-      </View>
+          <SwipeableHotelStoryCard
+            hotel={hotel}
+            onSave={() => handleSave(hotel)}
+            onViewDetails={() => handleViewDetails(hotel)}
+            onHotelPress={() => handleHotelPress(hotel)}
+            isCurrentHotelSaved={isCurrentHotelSaved}
+            index={index}
+            totalCount={enhancedHotels.length}
+            // Pass through Google Maps and insights props
+            checkInDate={checkInDate}
+            checkOutDate={checkOutDate}
+            adults={adults}
+            children={children}
+            isInsightsLoading={isInsightsLoading}
+          />
+        </View>
       </View>
     );
   };
@@ -174,7 +263,7 @@ const SwipeableStoryView: React.FC<SwipeableStoryViewProps> = ({
     index,
   });
 
-  // Empty state
+  // UPDATED: Enhanced empty state with optimized backend context
   if (enhancedHotels.length === 0) {
     return (
       <View style={tw`flex-1 bg-gray-50 justify-center items-center px-10`}>
@@ -184,15 +273,37 @@ const SwipeableStoryView: React.FC<SwipeableStoryViewProps> = ({
         <Text style={tw`text-3xl font-bold text-gray-800 mb-2 text-center`}>
           No Hotels Found
         </Text>
-        <Text style={tw`text-base text-gray-500 text-center leading-6`}>
+        <Text style={tw`text-base text-gray-500 text-center leading-6 mb-4`}>
           Try adjusting your search criteria or dates to find available hotels.
+        </Text>
+        <Text style={tw`text-sm text-gray-400 text-center leading-5`}>
+          Our AI-powered search will find the perfect match for your preferences.
         </Text>
       </View>
     );
   }
 
+  // UPDATED: Display insights loading indicator at the top of the list
   return (
-    <View style={tw`flex-1 bg-gray-80`}>
+    <View style={tw`flex-1 bg-gray-50`}>
+      {/* Global insights loading indicator */}
+      {isInsightsLoading && (
+        <View style={tw`mx-5 mt-2 mb-1 p-3 bg-blue-50 rounded-lg border border-blue-200`}>
+          <View style={tw`flex-row items-center`}>
+            <View style={tw`w-4 h-4 rounded-full border-2 border-blue-500 border-t-transparent animate-spin mr-3`} />
+            <View style={tw`flex-1`}>
+              <Text style={tw`text-blue-700 text-sm font-medium`}>
+                Enhancing your results with AI insights
+              </Text>
+              <Text style={tw`text-blue-600 text-xs mt-0.5`}>
+                Loading detailed guest sentiment analysis...
+              </Text>
+            </View>
+            <Ionicons name="sparkles" size={16} color="#3B82F6" />
+          </View>
+        </View>
+      )}
+
       <FlatList
         data={enhancedHotels}
         renderItem={renderHotelCard}
@@ -205,6 +316,8 @@ const SwipeableStoryView: React.FC<SwipeableStoryViewProps> = ({
         windowSize={5}
         initialNumToRender={2}
         scrollEventThrottle={16}
+        // UPDATED: Enhanced list performance for optimized backend data
+        extraData={`${isInsightsLoading}-${savedHotels.size}`}
       />
     </View>
   );

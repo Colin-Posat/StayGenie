@@ -1,16 +1,25 @@
-// routes/hotelRoutes.ts - UPDATED TO USE SEPARATED SMART SEARCH
+// routes/hotelRoutes.ts - UPDATED TO INCLUDE AI SUGGESTIONS AND SENTIMENT ROUTES
 import express from 'express';
-import { 
-  smartHotelSearch,           // 🚀 Now imported from separated file
-  searchHotelAvailability, 
-  getHotelAvailability, 
-  parseAndSearchAvailability 
+import {
+   smartHotelSearch,           // 🚀 Import the optimized version
+  searchHotelAvailability,
+  getHotelAvailability,
+  parseAndSearchAvailability
 } from '../controllers/hotelMatchController';
+
+// Import sentiment routes
+import hotelSentimentRoutes from './hotelSentimentRoutes';
+
+// Import AI suggestions controller
+import { generateSuggestions } from '../controllers/aiSuggestionsController';
 
 const router = express.Router();
 
-// 🚀 Smart search endpoint (now using separated function)
-router.post('/smart-search', smartHotelSearch);
+// 🚀 Smart search endpoint (optimized version)
+router.post('/search', smartHotelSearch);
+
+// 🤖 AI suggestions endpoint
+router.post('/ai-suggestions', generateSuggestions);
 
 // Basic availability search
 router.post('/availability', searchHotelAvailability);
@@ -20,5 +29,8 @@ router.post('/hotel-availability', getHotelAvailability);
 
 // Combined parse and search
 router.post('/parse-and-search', parseAndSearchAvailability);
+
+// 🎭 Add sentiment polling routes
+router.use('/', hotelSentimentRoutes);  // This adds /sentiment/:searchId routes
 
 export default router;

@@ -1,4 +1,4 @@
-// SwipeableHotelStoryCard.tsx - Updated with enhanced pricing structure
+// SwipeableHotelStoryCard.tsx - Updated with optimized backend data structure
 import React, { useState, useRef, useEffect } from 'react';
 import {
   View,
@@ -18,25 +18,7 @@ const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 const CARD_WIDTH = screenWidth - 40;
 const CARD_HEIGHT = screenHeight * 0.55;
 
-// Updated interfaces to match the enhanced API data structure
-interface SentimentCategory {
-  name: string;
-  rating: number;
-  description: string;
-}
-
-interface SentimentAnalysis {
-  cons: string[];
-  pros: string[];
-  categories: SentimentCategory[];
-}
-
-interface HotelSentimentData {
-  sentiment_analysis: SentimentAnalysis;
-  sentiment_updated_at: string;
-}
-
-// UPDATED: Enhanced Hotel interface with new pricing structure
+// UPDATED: Interface to match optimized backend structure
 interface Hotel {
   id: number;
   name: string;
@@ -51,12 +33,15 @@ interface Hotel {
   tags: string[];
   location: string;
   features: string[];
+  
+  // AI-powered fields from optimized backend
   aiExcerpt?: string;
   whyItMatches?: string;
   funFacts?: string[];
   aiMatchPercent?: number;
+  matchType?: string;
   
-  // UPDATED: Enhanced pricing structure to match HomeScreen
+  // Enhanced pricing structure from optimized backend
   pricePerNight?: {
     amount: number;
     totalAmount: number;
@@ -66,17 +51,7 @@ interface Hotel {
     isSupplierPrice: boolean;
   };
   
-  // NEW: Additional pricing fields
-  suggestedPrice?: {
-    amount: number;
-    currency: string;
-    display: string;
-  };
-  priceProvider?: string | null;
-  
-  roomTypes?: any[];
-  guestInsights?: string;
-  // NEW ENHANCED FIELDS FROM API
+  // Location and amenity data from optimized backend
   city?: string;
   country?: string;
   latitude?: number | null;
@@ -84,15 +59,18 @@ interface Hotel {
   topAmenities?: string[];
   nearbyAttractions?: string[];
   locationHighlight?: string;
-  matchType?: string;
   hasAvailability?: boolean;
   totalRooms?: number;
-  sentimentData?: HotelSentimentData | null;
-  sentimentPros?: string[];
-  sentimentCons?: string[];
-  topSentimentCategories?: SentimentCategory[];
   fullDescription?: string;
   fullAddress?: string;
+  
+  // Guest insights and sentiment (may be loading initially)
+  guestInsights?: string;
+  sentimentPros?: string[];
+  sentimentCons?: string[];
+  
+  // Room availability
+  roomTypes?: any[];
 }
 
 interface EnhancedHotel extends Hotel {
@@ -112,6 +90,7 @@ interface SwipeableHotelStoryCardProps {
   checkOutDate?: Date;
   adults?: number;
   children?: number;
+  isInsightsLoading?: boolean; // NEW: Track if sentiment insights are still loading
 }
 
 // Animated Heart Button Component
@@ -180,7 +159,6 @@ const AnimatedHeartButton: React.FC<AnimatedHeartButtonProps> = ({ isLiked, onPr
 };
 
 const getRatingColor = (rating: number): string => {
-  // Normalize rating from 0-10 scale to 0-1 scale
   const normalizedRating = Math.max(0, Math.min(10, rating)) / 10;
   
   if (normalizedRating >= 0.8) return "#10B981"; // Green (8-10)
@@ -190,51 +168,63 @@ const getRatingColor = (rating: number): string => {
   return "#EF4444"; // Red (0-2)
 };
 
-// Enhanced AI insights using API data
+// UPDATED: Enhanced AI insights using optimized backend data
 const generateAIInsight = (hotel: Hotel): string => {
-  // Use API-provided AI insight first
+  // Priority 1: Use API-provided AI match explanation
   if (hotel.whyItMatches) {
     return hotel.whyItMatches;
   }
   
+  // Priority 2: Use AI excerpt
   if (hotel.aiExcerpt) {
     return hotel.aiExcerpt;
   }
 
-  // Use location highlight if available
+  // Priority 3: Use location highlight from optimized backend
   if (hotel.locationHighlight) {
     return hotel.locationHighlight;
   }
 
-  // Use full description excerpt
+  // Priority 4: Use description excerpt
   if (hotel.fullDescription) {
     return hotel.fullDescription.length > 120 
       ? hotel.fullDescription.substring(0, 120) + "..."
       : hotel.fullDescription;
   }
 
-  // Fallback based on match type
-  const matchType = hotel.matchType;
-  if (matchType === 'perfect') {
-    return "Exceptional match with all your preferences and premium amenities";
-  } else if (matchType === 'excellent') {
-    return "Outstanding choice with great location and top-rated features";
-  } else if (matchType === 'good') {
-    return "Solid option with good value and convenient location";
+  // Priority 5: Generate based on match type and AI match percentage
+  if (hotel.aiMatchPercent && hotel.matchType) {
+    const percentage = hotel.aiMatchPercent;
+    const type = hotel.matchType;
+    
+    if (percentage >= 90) {
+      return `Perfect ${type} match with exceptional amenities and ideal location for your preferences`;
+    } else if (percentage >= 80) {
+      return `Excellent ${type} match featuring premium facilities and great connectivity`;
+    } else if (percentage >= 70) {
+      return `Strong ${type} match with quality amenities and convenient location`;
+    } else {
+      return `Good ${type} match offering solid value and essential amenities`;
+    }
   }
 
   // Final fallback
-  return "Great hotel choice with quality amenities and service";
+  return "Quality hotel choice with excellent amenities and service";
 };
 
-// Enhanced review summary using API guest insights and sentiment data
-const generateReviewSummary = (hotel: Hotel): string => {
-  // Use API-provided guest insights first
-  if (hotel.guestInsights) {
+// UPDATED: Enhanced review summary using optimized backend guest insights
+const generateReviewSummary = (hotel: Hotel, isInsightsLoading: boolean = false): string => {
+  // Show loading state for guest insights
+  if (isInsightsLoading && (!hotel.guestInsights || hotel.guestInsights.includes('Loading'))) {
+    return "🔄 Loading detailed guest insights...";
+  }
+
+  // Priority 1: Use optimized backend guest insights
+  if (hotel.guestInsights && !hotel.guestInsights.includes('Loading')) {
     return hotel.guestInsights;
   }
 
-  // Use sentiment data if available
+  // Priority 2: Use sentiment analysis data
   if (hotel.sentimentPros && hotel.sentimentPros.length > 0) {
     const topPros = hotel.sentimentPros.slice(0, 2).join(' and ');
     let summary = `Guests particularly love the ${topPros}.`;
@@ -246,17 +236,18 @@ const generateReviewSummary = (hotel: Hotel): string => {
     return summary;
   }
 
-  // Fallback to rating-based summaries
+  // Priority 3: Generate based on rating and match type
   const rating = hotel.rating;
+  const matchType = hotel.matchType || 'standard';
   
   if (rating >= 4.5) {
-    return "Guests consistently praise the exceptional service, prime location, and outstanding amenities. Many highlight the comfortable rooms and friendly staff.";
+    return `Guests consistently praise the exceptional service and ${matchType === 'perfect' ? 'premium' : 'quality'} amenities. Many highlight the comfortable accommodations and prime location.`;
   } else if (rating >= 4.0) {
-    return "Travelers appreciate the good value, convenient location, and solid amenities. Most guests would recommend this hotel to others.";
+    return `Travelers appreciate the solid value and convenient location. Most guests highlight the ${hotel.topAmenities?.slice(0, 2).join(' and ') || 'good amenities'}.`;
   } else if (rating >= 3.5) {
-    return "Mixed reviews with guests enjoying the location and basic amenities. Some mention areas for improvement in service and facilities.";
+    return `Mixed reviews with guests enjoying the location and basic amenities. Many appreciate the value for money and accessible location.`;
   } else {
-    return "Budget-friendly option with basic amenities. Guests appreciate the affordable rates and convenient location.";
+    return `Budget-friendly option with essential amenities. Guests appreciate the affordable rates and convenient access to local attractions.`;
   }
 };
 
@@ -352,8 +343,11 @@ const StoryProgressBar: React.FC<StoryProgressBarProps> = ({
   );
 };
 
-// Slide 1: Hotel Overview with enhanced API data
-const HotelOverviewSlide: React.FC<{ hotel: EnhancedHotel }> = ({ hotel }) => {
+// UPDATED: Hotel Overview slide with optimized backend data
+const HotelOverviewSlide: React.FC<{ hotel: EnhancedHotel; isInsightsLoading?: boolean }> = ({ 
+  hotel, 
+  isInsightsLoading = false 
+}) => {
   const aiInsight = generateAIInsight(hotel);
   const panAnimation = useRef(new Animated.Value(0)).current;
   const scaleAnimation = useRef(new Animated.Value(1.2)).current;
@@ -408,32 +402,16 @@ const HotelOverviewSlide: React.FC<{ hotel: EnhancedHotel }> = ({ hotel }) => {
     outputRange: [-8, 8],
   });
 
-  // UPDATED: Enhanced display price logic with new pricing structure
+  // UPDATED: Enhanced price display using optimized backend pricing
   const getDisplayPrice = () => {
-    // Use suggested price if available
-    if (hotel.suggestedPrice) {
-      return `${hotel.suggestedPrice.currency} ${hotel.suggestedPrice.amount}`;
-    }
-    // Fall back to pricePerNight
     if (hotel.pricePerNight) {
       return `${hotel.pricePerNight.currency} ${hotel.pricePerNight.amount}`;
     }
-    // Final fallback
     return `$${hotel.price}`;
   };
 
-  // UPDATED: Enhanced provider display
-  const getPriceProvider = () => {
-    if (hotel.priceProvider) {
-      return hotel.priceProvider;
-    }
-    if (hotel.pricePerNight?.provider) {
-      return hotel.pricePerNight.provider;
-    }
-    return '/night';
-  };
 
-  // Get location display - use enhanced location data
+  // UPDATED: Location display using optimized backend location data
   const getLocationDisplay = () => {
     if (hotel.city && hotel.country) {
       return `${hotel.city}, ${hotel.country}`;
@@ -500,7 +478,7 @@ const HotelOverviewSlide: React.FC<{ hotel: EnhancedHotel }> = ({ hotel }) => {
       <View style={tw`absolute bottom-6 left-4 right-4 z-10`}>
         {/* UPDATED: Enhanced Price and Reviews with provider info */}
         <View style={tw`flex-row items-end gap-2 mb-2.5`}>
-          <View style={tw`bg-black/60 border border-white/20 px-3 py-1.5 rounded-lg`}>
+          <View style={tw`bg-black/50 border border-white/20 px-3 py-1.5 rounded-lg`}>
             <View style={tw`flex-row items-baseline`}>
               <Text style={tw`text-xl font-bold text-white`}>
                 {getDisplayPrice()}
@@ -509,11 +487,9 @@ const HotelOverviewSlide: React.FC<{ hotel: EnhancedHotel }> = ({ hotel }) => {
                 /night
               </Text>
             </View>
-            {/* NEW: Show provider info if available */}
-
           </View>
           
-          <View style={tw`bg-black/60 border border-white/20 px-3 py-1.5 rounded-lg`}>
+          <View style={tw`bg-black/50 border border-white/20 px-3 py-1.5 rounded-lg`}>
             <View style={tw`flex-row items-center`}>
               <Ionicons name="checkmark-circle" size={12} color={getRatingColor(hotel.rating)} />
               <Text style={tw`text-white text-xs font-semibold ml-1`}>
@@ -526,12 +502,19 @@ const HotelOverviewSlide: React.FC<{ hotel: EnhancedHotel }> = ({ hotel }) => {
           </View>
         </View>
 
-        {/* Enhanced AI Match Insight */}
+        {/* UPDATED: Enhanced AI Match Insight with loading awareness */}
         <View style={tw`bg-black/50 p-2.5 rounded-lg border border-white/20`}>
           <View style={tw`flex-row items-center mb-1`}>
-            <Ionicons name="sparkles" size={12} color="#FFD700" />
+            <Ionicons 
+              name={isInsightsLoading ? "sync" : "sparkles"} 
+              size={12} 
+              color="#FFD700" 
+            />
             <Text style={tw`text-yellow-400 text-xs font-semibold ml-1`}>
-              {hotel.aiMatchPercent ? `AI Match ${hotel.aiMatchPercent}%` : 'AI Insight'}
+              {hotel.aiMatchPercent 
+                ? `AI Match ${hotel.aiMatchPercent}%`
+                : 'AI Insight'
+              }
             </Text>
           </View>
           <Text style={tw`text-white text-xs leading-4`}>
@@ -543,7 +526,7 @@ const HotelOverviewSlide: React.FC<{ hotel: EnhancedHotel }> = ({ hotel }) => {
   );
 };
 
-// Enhanced LocationSlide with API location data
+// UPDATED: Enhanced Location slide with optimized backend location data
 const LocationSlide: React.FC<{ hotel: EnhancedHotel }> = ({ hotel }) => {
   const panAnimation = useRef(new Animated.Value(0)).current;
   const scaleAnimation = useRef(new Animated.Value(1.2)).current;
@@ -623,17 +606,29 @@ const LocationSlide: React.FC<{ hotel: EnhancedHotel }> = ({ hotel }) => {
       
       <View style={tw`absolute bottom-0 left-0 right-0 h-52 bg-gradient-to-t from-black/70 to-transparent z-1`} />
       
-      {/* Enhanced Location Information */}
+      {/* UPDATED: Enhanced Location Information using optimized backend data */}
       <View style={tw`absolute bottom-6 left-4 right-4 z-10`}>
+        {/* Coordinates display (if available) */}
+        {hotel.latitude && hotel.longitude && (
+          <View style={tw`bg-black/50 p-2.5 rounded-lg border border-white/20 mb-2.5`}>
+            <View style={tw`flex-row items-center mb-1`}>
+              <Ionicons name="navigate" size={12} color="#60A5FA" />
+              <Text style={tw`text-blue-400 text-xs font-semibold ml-1`}>Exact Location</Text>
+            </View>
+            <Text style={tw`text-white text-xs leading-4`}>
+              {hotel.latitude.toFixed(6)}, {hotel.longitude.toFixed(6)}
+            </Text>
+          </View>
+        )}
 
-        {/* Nearby Attractions using API data */}
+        {/* UPDATED: Nearby Attractions using optimized backend data */}
         {hotel.nearbyAttractions && hotel.nearbyAttractions.length > 0 && (
-          <View style={tw`bg-black/30 p-2.5 rounded-lg border border-white/20 mb-2.5`}>
+          <View style={tw`bg-black/50 p-2.5 rounded-lg border border-white/20 mb-2.5`}>
             <View style={tw`flex-row items-center mb-1`}>
               <Ionicons name="location" size={12} color="#4ECDC4" />
               <Text style={tw`text-cyan-400 text-xs font-semibold ml-1`}>Nearby Attractions</Text>
             </View>
-            {hotel.nearbyAttractions.slice(0, 2).map((attraction, index) => (
+            {hotel.nearbyAttractions.slice(0, 3).map((attraction, index) => (
               <Text key={index} style={tw`text-white text-xs leading-4 ${index === 0 ? '' : 'mt-1'}`}>
                 • {attraction}
               </Text>
@@ -641,8 +636,8 @@ const LocationSlide: React.FC<{ hotel: EnhancedHotel }> = ({ hotel }) => {
           </View>
         )}
         
-        {/* Location Highlight using API data */}
-        <View style={tw`bg-black/30 p-2.5 border border-white/20 rounded-lg`}>
+        {/* UPDATED: Location Highlight using optimized backend data */}
+        <View style={tw`bg-black/50 p-2.5 border border-white/20 rounded-lg`}>
           <View style={tw`flex-row items-center mb-1`}>
             <Ionicons name="star" size={12} color="#FFD700" />
             <Text style={tw`text-yellow-400 text-xs font-semibold ml-1`}>Location Highlight</Text>
@@ -650,16 +645,20 @@ const LocationSlide: React.FC<{ hotel: EnhancedHotel }> = ({ hotel }) => {
           <Text style={tw`text-white text-xs leading-4`}>
             {hotel.locationHighlight || 
              (hotel.funFacts && hotel.funFacts[0]) || 
-             "Prime location with easy access to local attractions and dining"}
+             `Prime location in ${hotel.city || 'the city'} with easy access to attractions and dining`}
           </Text>
         </View>
+
       </View>
     </View>
   );
 };
 
-// Enhanced Amenities & Reviews slide with API sentiment data
-const AmenitiesSlide: React.FC<{ hotel: EnhancedHotel }> = ({ hotel }) => {
+// UPDATED: Enhanced Amenities & Reviews slide with optimized backend sentiment data
+const AmenitiesSlide: React.FC<{ hotel: EnhancedHotel; isInsightsLoading?: boolean }> = ({ 
+  hotel, 
+  isInsightsLoading = false 
+}) => {
   const panAnimation = useRef(new Animated.Value(0)).current;
   const scaleAnimation = useRef(new Animated.Value(1.2)).current;
 
@@ -738,10 +737,10 @@ const AmenitiesSlide: React.FC<{ hotel: EnhancedHotel }> = ({ hotel }) => {
       
       <View style={tw`absolute bottom-0 left-0 right-0 h-52 bg-gradient-to-t from-black/70 to-transparent z-1`} />
       
-      {/* Enhanced Content Information */}
+      {/* UPDATED: Enhanced Content Information using optimized backend data */}
       <View style={tw`absolute bottom-6 left-4 right-4 z-10`}>
 
-        {/* Enhanced Sentiment Analysis */}
+        {/* UPDATED: Enhanced Sentiment Analysis from optimized backend */}
         {hotel.sentimentPros && hotel.sentimentPros.length > 0 && (
           <View style={tw`bg-black/50 p-2.5 rounded-lg border border-white/20 mb-2.5`}>
             <View style={tw`flex-row items-center mb-1`}>
@@ -756,31 +755,41 @@ const AmenitiesSlide: React.FC<{ hotel: EnhancedHotel }> = ({ hotel }) => {
           </View>
         )}
 
-        {/* Sentiment Categories */}
-        {hotel.topSentimentCategories && hotel.topSentimentCategories.length > 0 && (
-          <View style={tw`bg-black/50 p-2.5 rounded-lg border border-white/20 mb-2.5`}>
+
+        {/* Fun Facts from optimized backend */}
+        {hotel.funFacts && hotel.funFacts.length > 0 && (
+          <View style={tw`bg-black/50 p-2.5 rounded-lg border border-white/20 mt-2.5`}>
             <View style={tw`flex-row items-center mb-1`}>
-              <Ionicons name="analytics" size={12} color="#8B5CF6" />
-              <Text style={tw`text-purple-400 text-xs font-semibold ml-1`}>Top Rated Aspects</Text>
+              <Ionicons name="bulb" size={12} color="#F59E0B" />
+              <Text style={tw`text-amber-400 text-xs font-semibold ml-1`}>Fun Facts</Text>
             </View>
-            {hotel.topSentimentCategories.slice(0, 2).map((category, index) => (
+            {hotel.funFacts.slice(0, 2).map((fact, index) => (
               <Text key={index} style={tw`text-white text-xs leading-4 ${index === 0 ? '' : 'mt-1'}`}>
-                • {category.name}: {category.rating}/10
+                • {fact}
               </Text>
             ))}
           </View>
         )}
         
-        {/* Guest Insights using API data */}
+        {/* UPDATED: Guest Insights using optimized backend data with loading state */}
         <View style={tw`bg-black/50 p-2.5 rounded-lg border border-white/20`}>
           <View style={tw`flex-row items-center mb-1`}>
-            <Ionicons name="people" size={12} color="#FFD700" />
+            <Ionicons 
+              name={isInsightsLoading ? "sync" : "people"} 
+              size={12} 
+              color="#FFD700" 
+            />
             <Text style={tw`text-yellow-400 text-xs font-semibold ml-1`}>
               Guest Insights
             </Text>
+            {isInsightsLoading && (
+              <View style={tw`ml-2`}>
+                <Text style={tw`text-white/60 text-xs`}>Loading...</Text>
+              </View>
+            )}
           </View>
           <Text style={tw`text-white text-xs leading-4`}>
-            {generateReviewSummary(hotel)}
+            {generateReviewSummary(hotel, isInsightsLoading)}
           </Text>
         </View>
       </View>
@@ -788,7 +797,7 @@ const AmenitiesSlide: React.FC<{ hotel: EnhancedHotel }> = ({ hotel }) => {
   );
 };
 
-// Main component with enhanced Google Maps integration
+// UPDATED: Main component with enhanced Google Maps integration using optimized backend coordinates
 const SwipeableHotelStoryCard: React.FC<SwipeableHotelStoryCardProps> = ({ 
   hotel, 
   onSave, 
@@ -800,7 +809,8 @@ const SwipeableHotelStoryCard: React.FC<SwipeableHotelStoryCardProps> = ({
   checkInDate,
   checkOutDate,
   adults = 2,
-  children = 0
+  children = 0,
+  isInsightsLoading = false
 }) => {
   const [currentSlide, setCurrentSlide] = useState(0);
   const scrollViewRef = useRef<ScrollView>(null);
@@ -817,19 +827,23 @@ const SwipeableHotelStoryCard: React.FC<SwipeableHotelStoryCardProps> = ({
     }
   }, [hotel.id]);
 
-  // Enhanced Google Maps link generation with coordinates
+  // UPDATED: Enhanced Google Maps link generation with optimized backend coordinates
   const generateGoogleMapsLink = (hotel: Hotel, checkin?: Date, checkout?: Date, adults: number = 2, children: number = 0): string => {
     let query = '';
     
-    // Use coordinates if available for more precise location
+    // Priority 1: Use optimized backend coordinates if available
     if (hotel.latitude && hotel.longitude) {
       query = `${hotel.latitude},${hotel.longitude}`;
+      console.log(`📍 Using optimized backend coordinates: ${hotel.latitude}, ${hotel.longitude}`);
     } else {
-      // Fallback to name and location
+      // Priority 2: Use enhanced location data from optimized backend
       const locationText = hotel.city && hotel.country 
         ? `${hotel.name} ${hotel.city} ${hotel.country}`
+        : hotel.fullAddress 
+        ? `${hotel.name} ${hotel.fullAddress}`
         : `${hotel.name} ${hotel.location}`;
       query = encodeURIComponent(locationText);
+      console.log(`📍 Using location text: ${locationText}`);
     }
     
     let url = `https://www.google.com/maps/search/?api=1&query=${query}`;
@@ -849,7 +863,7 @@ const SwipeableHotelStoryCard: React.FC<SwipeableHotelStoryCardProps> = ({
     return url;
   };
 
-  // Enhanced View Details handler with Google Maps integration
+  // UPDATED: Enhanced View Details handler with optimized backend location data
   const handleViewDetails = async () => {
     try {
       const mapsLink = generateGoogleMapsLink(
@@ -861,11 +875,6 @@ const SwipeableHotelStoryCard: React.FC<SwipeableHotelStoryCardProps> = ({
       );
 
       console.log(`🗺️ Opening Google Maps for: ${hotel.name}`);
-      if (hotel.latitude && hotel.longitude) {
-        console.log(`📍 Coordinates: ${hotel.latitude}, ${hotel.longitude}`);
-      } else {
-        console.log(`📍 Location: ${hotel.location}`);
-      }
       console.log(`🔗 Maps URL: ${mapsLink}`);
 
       const canOpen = await Linking.canOpenURL(mapsLink);
@@ -873,10 +882,12 @@ const SwipeableHotelStoryCard: React.FC<SwipeableHotelStoryCardProps> = ({
       if (canOpen) {
         await Linking.openURL(mapsLink);
       } else {
-        // Enhanced fallback with coordinates
+        // Enhanced fallback with optimized backend data
         let fallbackQuery = '';
         if (hotel.latitude && hotel.longitude) {
           fallbackQuery = `${hotel.latitude},${hotel.longitude}`;
+        } else if (hotel.city && hotel.country) {
+          fallbackQuery = encodeURIComponent(`${hotel.name} ${hotel.city} ${hotel.country}`);
         } else {
           fallbackQuery = encodeURIComponent(`${hotel.name} ${hotel.location}`);
         }
@@ -990,7 +1001,7 @@ const SwipeableHotelStoryCard: React.FC<SwipeableHotelStoryCardProps> = ({
           </TouchableOpacity>
         )}
         
-        {/* Slides */}
+        {/* UPDATED: Slides with enhanced data and loading awareness */}
         <ScrollView
           ref={scrollViewRef}
           horizontal
@@ -1001,19 +1012,31 @@ const SwipeableHotelStoryCard: React.FC<SwipeableHotelStoryCardProps> = ({
           style={tw`flex-1`}
         >
           <View style={{ width: CARD_WIDTH, height: CARD_HEIGHT }}>
-            <HotelOverviewSlide hotel={hotel} />
+            <HotelOverviewSlide hotel={hotel} isInsightsLoading={isInsightsLoading} />
           </View>
           <View style={{ width: CARD_WIDTH, height: CARD_HEIGHT }}>
             <LocationSlide hotel={hotel} />
           </View>
           <View style={{ width: CARD_WIDTH, height: CARD_HEIGHT }}>
-            <AmenitiesSlide hotel={hotel} />
+            <AmenitiesSlide hotel={hotel} isInsightsLoading={isInsightsLoading} />
           </View>
         </ScrollView>
       </TouchableOpacity>
       
-      {/* Action Section */}
+      {/* UPDATED: Action Section with insights loading indicator */}
       <View style={tw`bg-white rounded-b-2xl`}>
+        {/* Insights Loading Indicator */}
+        {isInsightsLoading && (
+          <View style={tw`px-4 py-2 bg-blue-50 border-b border-blue-100`}>
+            <View style={tw`flex-row items-center`}>
+              <Ionicons name="sync" size={14} color="#3B82F6" />
+              <Text style={tw`text-blue-600 text-xs font-medium ml-2`}>
+                Loading enhanced guest insights...
+              </Text>
+            </View>
+          </View>
+        )}
+        
         {/* Main Action Row */}
         <View style={tw`flex-row items-center px-4 py-3 gap-3`}>
           {/* Animated Heart/Save Button */}
@@ -1023,15 +1046,18 @@ const SwipeableHotelStoryCard: React.FC<SwipeableHotelStoryCardProps> = ({
             size={28}
           />
           
-          {/* View Details Button */}
+          {/* View Details Button with enhanced wording */}
           <TouchableOpacity
             style={tw`border border-black/10 flex-1 bg-gray-100 py-3 rounded-lg items-center justify-center ml-2`}
             onPress={handleViewDetails}
             activeOpacity={0.7}
           >
-            <Text style={tw`text-gray-800 text-base font-medium`}>
-              View Details
-            </Text>
+            <View style={tw`flex-row items-center`}>
+              <Ionicons name="map" size={16} color="#374151" />
+              <Text style={tw`text-gray-800 text-base font-medium ml-2`}>
+                View Details
+              </Text>
+            </View>
           </TouchableOpacity>
         </View>
       </View>
@@ -1040,4 +1066,4 @@ const SwipeableHotelStoryCard: React.FC<SwipeableHotelStoryCardProps> = ({
 };
 
 export default SwipeableHotelStoryCard;
-export type { Hotel, EnhancedHotel, SwipeableHotelStoryCardProps, SentimentCategory, SentimentAnalysis, HotelSentimentData };
+export type { Hotel, EnhancedHotel, SwipeableHotelStoryCardProps };
