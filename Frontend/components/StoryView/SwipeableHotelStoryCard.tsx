@@ -1,4 +1,4 @@
-// SwipeableHotelStoryCard.tsx - Enhanced with ALL API data fields
+// SwipeableHotelStoryCard.tsx - Updated with enhanced pricing structure
 import React, { useState, useRef, useEffect } from 'react';
 import {
   View,
@@ -36,6 +36,7 @@ interface HotelSentimentData {
   sentiment_updated_at: string;
 }
 
+// UPDATED: Enhanced Hotel interface with new pricing structure
 interface Hotel {
   id: number;
   name: string;
@@ -54,12 +55,25 @@ interface Hotel {
   whyItMatches?: string;
   funFacts?: string[];
   aiMatchPercent?: number;
+  
+  // UPDATED: Enhanced pricing structure to match HomeScreen
   pricePerNight?: {
-    min: number;
-    max: number;
+    amount: number;
+    totalAmount: number;
+    currency: string;
+    display: string;
+    provider: string | null;
+    isSupplierPrice: boolean;
+  };
+  
+  // NEW: Additional pricing fields
+  suggestedPrice?: {
+    amount: number;
     currency: string;
     display: string;
   };
+  priceProvider?: string | null;
+  
   roomTypes?: any[];
   guestInsights?: string;
   // NEW ENHANCED FIELDS FROM API
@@ -164,6 +178,7 @@ const AnimatedHeartButton: React.FC<AnimatedHeartButtonProps> = ({ isLiked, onPr
     </View>
   );
 };
+
 const getRatingColor = (rating: number): string => {
   // Normalize rating from 0-10 scale to 0-1 scale
   const normalizedRating = Math.max(0, Math.min(10, rating)) / 10;
@@ -393,12 +408,29 @@ const HotelOverviewSlide: React.FC<{ hotel: EnhancedHotel }> = ({ hotel }) => {
     outputRange: [-8, 8],
   });
 
-  // Get display price
+  // UPDATED: Enhanced display price logic with new pricing structure
   const getDisplayPrice = () => {
-    if (hotel.pricePerNight) {
-      return `$${hotel.pricePerNight.min}`;
+    // Use suggested price if available
+    if (hotel.suggestedPrice) {
+      return `${hotel.suggestedPrice.currency} ${hotel.suggestedPrice.amount}`;
     }
+    // Fall back to pricePerNight
+    if (hotel.pricePerNight) {
+      return `${hotel.pricePerNight.currency} ${hotel.pricePerNight.amount}`;
+    }
+    // Final fallback
     return `$${hotel.price}`;
+  };
+
+  // UPDATED: Enhanced provider display
+  const getPriceProvider = () => {
+    if (hotel.priceProvider) {
+      return hotel.priceProvider;
+    }
+    if (hotel.pricePerNight?.provider) {
+      return hotel.pricePerNight.provider;
+    }
+    return '/night';
   };
 
   // Get location display - use enhanced location data
@@ -439,7 +471,7 @@ const HotelOverviewSlide: React.FC<{ hotel: EnhancedHotel }> = ({ hotel }) => {
       
       {/* Hotel Title and Location */}
       <View style={tw`absolute top-10 left-4 z-10`}>
-      <View style={[tw`bg-black/30 border border-white/20 px-2.5 py-1.5 rounded-lg`, { maxWidth: screenWidth * 0.6 }]}>
+        <View style={[tw`bg-black/30 border border-white/20 px-2.5 py-1.5 rounded-lg`, { maxWidth: screenWidth * 0.6 }]}>
           <Text 
             style={[
               tw`text-white text-sm font-semibold`,
@@ -466,7 +498,7 @@ const HotelOverviewSlide: React.FC<{ hotel: EnhancedHotel }> = ({ hotel }) => {
 
       {/* Hotel Information - Bottom Overlay */}
       <View style={tw`absolute bottom-6 left-4 right-4 z-10`}>
-        {/* Price and Reviews */}
+        {/* UPDATED: Enhanced Price and Reviews with provider info */}
         <View style={tw`flex-row items-end gap-2 mb-2.5`}>
           <View style={tw`bg-black/60 border border-white/20 px-3 py-1.5 rounded-lg`}>
             <View style={tw`flex-row items-baseline`}>
@@ -474,14 +506,16 @@ const HotelOverviewSlide: React.FC<{ hotel: EnhancedHotel }> = ({ hotel }) => {
                 {getDisplayPrice()}
               </Text>
               <Text style={tw`text-white/80 text-xs ml-1`}>
-                {hotel.pricePerNight?.currency || '/night'}
+                /night
               </Text>
             </View>
+            {/* NEW: Show provider info if available */}
+
           </View>
           
           <View style={tw`bg-black/60 border border-white/20 px-3 py-1.5 rounded-lg`}>
             <View style={tw`flex-row items-center`}>
-            <Ionicons name="checkmark-circle" size={12} color={getRatingColor(hotel.rating)} />
+              <Ionicons name="checkmark-circle" size={12} color={getRatingColor(hotel.rating)} />
               <Text style={tw`text-white text-xs font-semibold ml-1`}>
                 {hotel.rating.toFixed(1)}
               </Text>
@@ -593,19 +627,20 @@ const LocationSlide: React.FC<{ hotel: EnhancedHotel }> = ({ hotel }) => {
       <View style={tw`absolute bottom-6 left-4 right-4 z-10`}>
 
         {/* Nearby Attractions using API data */}
-{hotel.nearbyAttractions && hotel.nearbyAttractions.length > 0 && (
- <View style={tw`bg-black/30 p-2.5 rounded-lg border border-white/20 mb-2.5`}>
-   <View style={tw`flex-row items-center mb-1`}>
-     <Ionicons name="location" size={12} color="#4ECDC4" />
-     <Text style={tw`text-cyan-400 text-xs font-semibold ml-1`}>Nearby Attractions</Text>
-   </View>
-   {hotel.nearbyAttractions.slice(0, 2).map((attraction, index) => (
-     <Text key={index} style={tw`text-white text-xs leading-4 ${index === 0 ? '' : 'mt-1'}`}>
-       • {attraction}
-     </Text>
-   ))}
- </View>
-)}
+        {hotel.nearbyAttractions && hotel.nearbyAttractions.length > 0 && (
+          <View style={tw`bg-black/30 p-2.5 rounded-lg border border-white/20 mb-2.5`}>
+            <View style={tw`flex-row items-center mb-1`}>
+              <Ionicons name="location" size={12} color="#4ECDC4" />
+              <Text style={tw`text-cyan-400 text-xs font-semibold ml-1`}>Nearby Attractions</Text>
+            </View>
+            {hotel.nearbyAttractions.slice(0, 2).map((attraction, index) => (
+              <Text key={index} style={tw`text-white text-xs leading-4 ${index === 0 ? '' : 'mt-1'}`}>
+                • {attraction}
+              </Text>
+            ))}
+          </View>
+        )}
+        
         {/* Location Highlight using API data */}
         <View style={tw`bg-black/30 p-2.5 border border-white/20 rounded-lg`}>
           <View style={tw`flex-row items-center mb-1`}>
@@ -999,8 +1034,6 @@ const SwipeableHotelStoryCard: React.FC<SwipeableHotelStoryCardProps> = ({
             </Text>
           </TouchableOpacity>
         </View>
-
-
       </View>
     </View>
   );

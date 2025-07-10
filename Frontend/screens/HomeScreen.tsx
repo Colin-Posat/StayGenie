@@ -1,4 +1,4 @@
-// HomeScreen.tsx - Simplified to extract only essential data for story cards
+// HomeScreen.tsx - Updated to handle enhanced pricing with suggested prices and providers
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   View,
@@ -31,7 +31,7 @@ type FindStackParamList = {
 
 type HomeScreenNavigationProp = StackNavigationProp<FindStackParamList>;
 
-// Simplified interfaces - only what we need for the story cards
+// UPDATED: Enhanced interfaces for new pricing structure
 interface SmartSearchResponse {
   searchParams: {
     checkin: string;
@@ -69,12 +69,25 @@ interface HotelRecommendation {
   whyItMatches: string;
   starRating: number;
   images: string[];
+  
+  // UPDATED: Enhanced pricing structure
   pricePerNight?: {
-    min: number;
-    max: number;
+    amount: number;
+    totalAmount: number;
+    currency: string;
+    display: string;
+    provider: string | null;
+    isSupplierPrice: boolean;
+  };
+  
+  // NEW: Suggested price and provider fields
+  suggestedPrice?: {
+    amount: number;
     currency: string;
     display: string;
   };
+  priceProvider?: string | null;
+  
   funFacts: string[];
   nearbyAttractions: string[];
   locationHighlight: string;
@@ -134,7 +147,6 @@ interface HotelWithRates {
   };
 }
 
-// Simplified display hotel interface - only essential data for story cards
 interface Hotel {
   id: number;
   name: string;
@@ -153,7 +165,25 @@ interface Hotel {
   whyItMatches?: string;
   funFacts?: string[];
   aiMatchPercent?: number;
-  pricePerNight?: any;
+  
+  // UPDATED: Enhanced pricing structure to match HomeScreen
+  pricePerNight?: {
+    amount: number;
+    totalAmount: number;
+    currency: string;
+    display: string;
+    provider: string | null;
+    isSupplierPrice: boolean;
+  };
+  
+  // NEW: Additional pricing fields
+  suggestedPrice?: {
+    amount: number;
+    currency: string;
+    display: string;
+  };
+  priceProvider?: string | null;
+  
   roomTypes?: any[];
   guestInsights?: string;
   city?: string;
@@ -169,11 +199,10 @@ interface Hotel {
   fullDescription?: string;
   fullAddress?: string;
 }
-
 // Test mode configuration
 const TEST_MODE = false; // Set to true to enable test mode, false for normal operation
 
-// Mock hotels data for test mode
+// Updated mock hotels data with new pricing structure
 const mockHotels: Hotel[] = [
   {
     id: 1,
@@ -203,7 +232,22 @@ const mockHotels: Hotel[] = [
     locationHighlight: "Direct beachfront access with pristine white sand",
     matchType: "perfect",
     hasAvailability: true,
-    totalRooms: 24
+    totalRooms: 24,
+    // NEW: Enhanced pricing data
+    suggestedPrice: {
+      amount: 265,
+      currency: "USD",
+      display: "265"
+    },
+    priceProvider: "Booking.com",
+    pricePerNight: {
+      amount: 265,
+      totalAmount: 530,
+      currency: "USD",
+      display: "265/night",
+      provider: "Booking.com",
+      isSupplierPrice: true
+    }
   },
   {
     id: 2,
@@ -233,7 +277,22 @@ const mockHotels: Hotel[] = [
     locationHighlight: "Heart of Tokyo's business and entertainment district",
     matchType: "good",
     hasAvailability: true,
-    totalRooms: 18
+    totalRooms: 18,
+    // NEW: Enhanced pricing data
+    suggestedPrice: {
+      amount: 175,
+      currency: "USD",
+      display: "175"
+    },
+    priceProvider: "Expedia",
+    pricePerNight: {
+      amount: 175,
+      totalAmount: 350,
+      currency: "USD",
+      display: "175/night",
+      provider: "Expedia",
+      isSupplierPrice: true
+    }
   }
 ];
 
@@ -319,11 +378,14 @@ const HomeScreen = () => {
     }
   };
 
-  // Simplified convert recommendation to display format - only essential data
+  // UPDATED: Enhanced convert recommendation to display format with new pricing
   const convertRecommendationToDisplayHotel = (recommendation: HotelRecommendation, index: number): Hotel => {
     console.log('🔍 DEBUG - Raw recommendation data for', recommendation.name);
     console.log('   funFacts:', recommendation.funFacts);
     console.log('   nearbyAttractions:', recommendation.nearbyAttractions);
+    console.log('   pricePerNight:', recommendation.pricePerNight);
+    console.log('   suggestedPrice:', recommendation.suggestedPrice);
+    console.log('   priceProvider:', recommendation.priceProvider);
     
     const getHotelImage = (recommendation: HotelRecommendation): string => {
       const defaultImage = "https://images.unsplash.com/photo-1564501049412-61c2a3083791?auto=format&fit=crop&w=800&q=80";
@@ -340,15 +402,33 @@ const HomeScreen = () => {
       return defaultImage;
     };
 
-    // Calculate pricing
+    // UPDATED: Enhanced pricing calculation with provider support
     let price = 200;
     let originalPrice = price * 1.15;
     let priceComparison = "Standard rate";
 
-    if (recommendation.pricePerNight) {
-      price = recommendation.pricePerNight.min;
+    // Use suggested price if available, otherwise fall back to pricePerNight
+    if (recommendation.suggestedPrice) {
+      price = recommendation.suggestedPrice.amount;
+      originalPrice = Math.round(price * 1.15);
+      
+      if (recommendation.priceProvider) {
+        priceComparison = `via ${recommendation.priceProvider}`;
+      } else {
+        priceComparison = "Suggested rate";
+      }
+    } else if (recommendation.pricePerNight) {
+      price = recommendation.pricePerNight.amount;
       originalPrice = Math.round(price * 1.15);
       priceComparison = recommendation.pricePerNight.display;
+      
+      if (recommendation.pricePerNight.provider) {
+        priceComparison += ` (${recommendation.pricePerNight.provider})`;
+      }
+    } else if (recommendation.priceRange) {
+      price = recommendation.priceRange.min;
+      originalPrice = Math.round(price * 1.15);
+      priceComparison = recommendation.priceRange.display;
     }
 
     // Generate realistic transit distance
@@ -369,7 +449,6 @@ const HomeScreen = () => {
       
       return cityDistances[city] || '5 min walk to main area';
     };
-    
 
     return {
       id: index + 1,
@@ -389,7 +468,12 @@ const HomeScreen = () => {
       whyItMatches: recommendation.whyItMatches,
       funFacts: recommendation.funFacts,
       aiMatchPercent: recommendation.aiMatchPercent,
+      
+      // UPDATED: Pass through enhanced pricing data
       pricePerNight: recommendation.pricePerNight,
+      suggestedPrice: recommendation.suggestedPrice,
+      priceProvider: recommendation.priceProvider,
+      
       roomTypes: recommendation.roomTypes,
       guestInsights: recommendation.guestInsights,
       city: recommendation.city,
@@ -535,7 +619,7 @@ const HomeScreen = () => {
       console.log('🧪 TEST MODE: Skipping API call, using mock data');
       Alert.alert(
         'Test Mode Active',
-        'You\'re viewing mock hotel data. Set TEST_MODE to false to use real API calls.',
+        'You\'re viewing mock hotel data with enhanced pricing. Set TEST_MODE to false to use real API calls.',
         [{ text: 'Got it!' }]
       );
       return;
@@ -571,8 +655,8 @@ const HomeScreen = () => {
           convertRecommendationToDisplayHotel(rec, index)
         );
         
-        // Log essential info for each hotel
-        console.log('🔍 Hotel Summary:');
+        // UPDATED: Enhanced logging with pricing info
+        console.log('🔍 Hotel Summary with Enhanced Pricing:');
         searchResponse.recommendations.forEach((rec, idx) => {
           console.log(`  ${idx + 1}. ${rec.name}:`);
           console.log(`     📊 AI Match: ${rec.aiMatchPercent}%`);
@@ -585,7 +669,21 @@ const HomeScreen = () => {
           console.log(`     🎯 Fun facts: ${rec.funFacts?.join(' | ') || 'N/A'}`);
           console.log(`     📍 Near: ${rec.nearbyAttractions?.join(' | ') || 'N/A'}`);
           console.log(`     🏛️  Location: ${rec.locationHighlight || 'N/A'}`);
-          console.log(`     💰 Price per night: ${rec.pricePerNight?.display || 'N/A'}`);
+          
+          // UPDATED: Enhanced price logging with provider info
+          if (rec.suggestedPrice && rec.priceProvider) {
+            console.log(`     💰 Suggested Price: ${rec.suggestedPrice.currency} ${rec.suggestedPrice.amount}/night (including taxes + fees)`);
+            console.log(`     🏷️  Price Provider: ${rec.priceProvider} (Best rate)`);
+          } else if (rec.pricePerNight) {
+            console.log(`     💰 Price per night: ${rec.pricePerNight.display} (including taxes + fees)`);
+            if (rec.pricePerNight.provider) {
+              console.log(`     🏷️  Price source: ${rec.pricePerNight.provider}`);
+            }
+            if (rec.pricePerNight.isSupplierPrice) {
+              console.log(`     ✅ Supplier rate available`);
+            }
+          }
+          
           console.log(`     🖼️  Images: ${rec.images?.length || 0} available`);
           if (rec.images && rec.images.length > 0) {
             console.log(`     📸 First image: ${rec.images[0]}`);
@@ -622,7 +720,7 @@ const HomeScreen = () => {
         : 'Search Complete! 🏨';
         
       const alertMessage = searchResponse.aiRecommendationsAvailable
-        ? `Found ${searchResponse.aiRecommendationsCount} personalized AI recommendations!`
+        ? `Found ${searchResponse.aiRecommendationsCount} personalized AI recommendations with enhanced pricing!`
         : `Found ${convertedHotels.length} available hotels for your search.`;
 
       Alert.alert(alertTitle, alertMessage, [{ text: 'View Results' }]);
@@ -685,7 +783,7 @@ const HomeScreen = () => {
     }
   }, []);
 
-  // Simplified handleBookNow
+  // UPDATED: Enhanced handleBookNow with provider information
   const handleBookNow = useCallback((hotel: Hotel) => {
     console.log('Book now pressed for:', hotel.name);
     
@@ -696,9 +794,18 @@ const HomeScreen = () => {
       bookingMessage += `📍 Location: ${hotel.city}, ${hotel.country}\n`;
     }
     
-    // Pricing
-    if (hotel.pricePerNight) {
+    // UPDATED: Enhanced pricing display with provider info
+    if (hotel.suggestedPrice && hotel.priceProvider) {
+      bookingMessage += `💰 Best Price: ${hotel.suggestedPrice.currency} ${hotel.suggestedPrice.amount}/night\n`;
+      bookingMessage += `🏷️  Provider: ${hotel.priceProvider} (Suggested rate)\n`;
+    } else if (hotel.pricePerNight) {
       bookingMessage += `💰 Price: ${hotel.pricePerNight.display}\n`;
+      if (hotel.pricePerNight.provider) {
+        bookingMessage += `🏷️  Provider: ${hotel.pricePerNight.provider}\n`;
+      }
+      if (hotel.pricePerNight.isSupplierPrice) {
+        bookingMessage += `✅ Supplier rate (best available)\n`;
+      }
     } else {
       bookingMessage += `💰 Price: ${hotel.price}/night\n`;
     }
@@ -719,7 +826,26 @@ const HomeScreen = () => {
       if (params.children > 0) {
         bookingMessage += `, ${params.children} children`;
       }
-      bookingMessage += `\n🌙 Nights: ${params.nights}`;
+      bookingMessage += `\n🌙 Nights: ${params.nights}\n`;
+      
+      // UPDATED: Calculate total cost with provider info
+      const nightsCount = params.nights;
+      let totalCost = hotel.price * nightsCount;
+      
+      if (hotel.suggestedPrice) {
+        totalCost = hotel.suggestedPrice.amount * nightsCount;
+        bookingMessage += `💵 Total Cost: ${hotel.suggestedPrice.currency} ${totalCost}`;
+        if (hotel.priceProvider) {
+          bookingMessage += ` (via ${hotel.priceProvider})`;
+        }
+      } else if (hotel.pricePerNight && hotel.pricePerNight.totalAmount) {
+        bookingMessage += `💵 Total Cost: ${hotel.pricePerNight.currency} ${hotel.pricePerNight.totalAmount}`;
+        if (hotel.pricePerNight.provider) {
+          bookingMessage += ` (via ${hotel.pricePerNight.provider})`;
+        }
+      } else {
+        bookingMessage += `💵 Total Cost: ${totalCost}`;
+      }
     }
     
     Alert.alert(
@@ -732,7 +858,7 @@ const HomeScreen = () => {
     );
   }, [searchResults]);
 
-  // Simplified handleViewDetails
+  // UPDATED: Enhanced handleViewDetails with provider information
   const handleViewDetails = useCallback((hotel: Hotel) => {
     console.log('View details pressed for:', hotel.name);
     
@@ -815,11 +941,26 @@ const HomeScreen = () => {
       detailsMessage += `\n`;
     }
     
-    // Pricing
-    detailsMessage += `💰 Pricing:\n`;
-    if (hotel.pricePerNight) {
+    // UPDATED: Enhanced pricing section with provider information
+    detailsMessage += `💰 Pricing Information:\n`;
+    if (hotel.suggestedPrice && hotel.priceProvider) {
+      detailsMessage += `• Best Rate: ${hotel.suggestedPrice.currency} ${hotel.suggestedPrice.amount}/night\n`;
+      detailsMessage += `• Provider: ${hotel.priceProvider} (Suggested selling price)\n`;
+      detailsMessage += `• Rate Type: Supplier rate (best available)\n`;
+    } else if (hotel.pricePerNight) {
       detailsMessage += `• Per Night: ${hotel.pricePerNight.display}\n`;
       detailsMessage += `• Currency: ${hotel.pricePerNight.currency}\n`;
+      if (hotel.pricePerNight.provider) {
+        detailsMessage += `• Provider: ${hotel.pricePerNight.provider}\n`;
+      }
+      if (hotel.pricePerNight.isSupplierPrice) {
+        detailsMessage += `• Rate Type: Supplier rate\n`;
+      } else {
+        detailsMessage += `• Rate Type: Retail rate\n`;
+      }
+      if (hotel.pricePerNight.totalAmount) {
+        detailsMessage += `• Total Stay Cost: ${hotel.pricePerNight.currency} ${hotel.pricePerNight.totalAmount}\n`;
+      }
     } else {
       detailsMessage += `• Per Night: ${hotel.price}\n`;
       detailsMessage += `• Original Price: ${hotel.originalPrice}\n`;
@@ -836,7 +977,7 @@ const HomeScreen = () => {
     );
   }, [handleBookNow]);
 
-  // Simplified handleHotelPress - quick preview
+  // UPDATED: Enhanced handleHotelPress with pricing information
   const handleHotelPress = useCallback((hotel: Hotel) => {
     console.log('Hotel selected:', hotel.name);
     
@@ -876,9 +1017,19 @@ const HomeScreen = () => {
       alertMessage += `🏨 Top Amenities: ${hotel.topAmenities.join(', ')}\n\n`;
     }
     
-    // Pricing and basic info
-    if (hotel.pricePerNight) {
-      alertMessage += `💰 ${hotel.pricePerNight.display}\n`;
+    // UPDATED: Enhanced pricing display
+    if (hotel.suggestedPrice && hotel.priceProvider) {
+      alertMessage += `💰 ${hotel.suggestedPrice.currency} ${hotel.suggestedPrice.amount}/night (via ${hotel.priceProvider})\n`;
+      alertMessage += `🏷️  Best rate available\n`;
+    } else if (hotel.pricePerNight) {
+      alertMessage += `💰 ${hotel.pricePerNight.display}`;
+      if (hotel.pricePerNight.provider) {
+        alertMessage += ` (via ${hotel.pricePerNight.provider})`;
+      }
+      alertMessage += `\n`;
+      if (hotel.pricePerNight.isSupplierPrice) {
+        alertMessage += `🏷️  Supplier rate\n`;
+      }
     } else {
       alertMessage += `💰 ${hotel.price}/night\n`;
     }
@@ -947,7 +1098,7 @@ const HomeScreen = () => {
           <View style={tw`bg-white px-3 py-2 rounded-lg border border-gray-200`}>
             <Text style={tw`text-xs text-gray-500`}>
               {TEST_MODE ? 
-                `Test results for "${searchQuery}" (${displayHotels.length} hotels)` :
+                `Test results for "${searchQuery}" (${displayHotels.length} hotels with enhanced pricing)` :
                 searchResults?.aiRecommendationsAvailable 
                   ? `AI Results for "${searchQuery}" (${searchResults.aiRecommendationsCount} hotels)`
                   : searchResults?.hotelsWithRates 
@@ -955,17 +1106,18 @@ const HomeScreen = () => {
                   : `Results for "${searchQuery}"`
               }
             </Text>
-            {/* Search info */}
+            {/* Search info with dates */}
             {searchResults?.searchParams && (
               <Text style={tw`text-xs text-gray-400 mt-1`}>
                 {searchResults.searchParams.cityName}, {searchResults.searchParams.countryCode.toUpperCase()} • 
+                {new Date(searchResults.searchParams.checkin).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - {new Date(searchResults.searchParams.checkout).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} • 
                 {searchResults.searchParams.adults} adults
-                {searchResults.searchParams.children > 0 ? `, ${searchResults.searchParams.children} children` : ''} • 
-                {searchResults.searchParams.nights} nights
+                {searchResults.searchParams.children > 0 ? `, ${searchResults.searchParams.children} children` : ''}
               </Text>
             )}
           </View>
         )}
+        
       </View>
 
       {/* CONTENT VIEW - Story View */}

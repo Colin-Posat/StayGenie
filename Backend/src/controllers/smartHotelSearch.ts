@@ -70,13 +70,28 @@ interface HotelInfo {
 }
 
 interface Rate {
-  retailRate?: {
-    total?: Array<{
-      amount: number;
-      currency: string;
-    }>;
-  };
-}
+    retailRate?: {
+      total?: Array<{
+        amount: number;
+        currency: string;
+      }>;
+      suggestedSellingPrice?: Array<{
+        amount: number;
+        currency: string;
+        source: string;
+      }>;
+      initialPrice?: Array<{
+        amount: number;
+        currency: string;
+      }>;
+      taxesAndFees?: Array<{
+        included: boolean;
+        description: string;
+        amount: number;
+        currency: string;
+      }>;
+    };
+  }
 
 interface RoomType {
   rates?: Rate[];
@@ -196,107 +211,154 @@ const getTop3Amenities = (hotelInfo: any): string[] => {
   return amenities.slice(0, 3);
 };
 
-// OPTIMIZATION 3: Optimized price calculation with caching
 const calculatePriceInfo = (hotel: HotelWithRates, nights: number) => {
-  const cacheKey = `${hotel.hotelId}_${nights}_${JSON.stringify(hotel.roomTypes)}`;
-  
-  if (priceCalculationCache.has(cacheKey)) {
-    return priceCalculationCache.get(cacheKey);
-  }
-
-  let priceRange = null;
-  let pricePerNightInfo = 'Price not available';
-
-  if (hotel.roomTypes && hotel.roomTypes.length > 0) {
-    const prices = hotel.roomTypes
-      .flatMap(room => room.rates || [])
-      .map(rate => rate.retailRate?.total?.[0]?.amount)
-      .filter(price => price != null);
+    const cacheKey = `${hotel.hotelId}_${nights}_${JSON.stringify(hotel.roomTypes)}`;
     
-    if (prices.length > 0) {
-      const minPrice = Math.min(...prices);
-      const maxPrice = Math.max(...prices);
-      const currency = hotel.roomTypes[0].rates?.[0]?.retailRate?.total?.[0]?.currency || 'USD';
+    if (priceCalculationCache.has(cacheKey)) {
+      return priceCalculationCache.get(cacheKey);
+    }
+  
+    let priceRange = null;
+    let pricePerNightInfo = 'Price not available';
+    let suggestedPrice = null;
+    let priceProvider = null;
+  
+    if (hotel.roomTypes && hotel.roomTypes.length > 0) {
+      // Extract both retail rates and suggested selling prices
+      const priceData = hotel.roomTypes
+        .flatMap(room => room.rates || [])
+        .map(rate => ({
+          retailPrice: rate.retailRate?.total?.[0]?.amount,
+          suggestedPrice: rate.retailRate?.suggestedSellingPrice?.[0]?.amount,
+          provider: rate.retailRate?.suggestedSellingPrice?.[0]?.source,
+          currency: rate.retailRate?.total?.[0]?.currency || 'USD'
+        }))
+        .filter(data => data.retailPrice != null && data.retailPrice !== undefined);
       
-      priceRange = {
-        min: minPrice,
-        max: maxPrice,
-        currency: currency,
-        display: minPrice === maxPrice ? `${minPrice}` : `${minPrice} - ${maxPrice}`
-      };
+      if (priceData.length > 0) {
+        // Get retail price range
+        const retailPrices = priceData
+  .map(data => data.retailPrice)
+  .filter((price): price is number => price !== undefined);
 
-      if (nights > 0) {
-        const pricePerNight = {
-          min: Math.round(minPrice / nights),
-          max: Math.round(maxPrice / nights),
+if (retailPrices.length > 0) {
+  const minRetailPrice = Math.min(...retailPrices);
+  const maxRetailPrice = Math.max(...retailPrices);
+        const currency = priceData[0].currency;
+
+        
+        priceRange = {
+          min: minRetailPrice,
+          max: maxRetailPrice,
           currency: currency,
-          display: minPrice === maxPrice 
-            ? `${Math.round(minPrice / nights)}/night`
-            : `${Math.round(minPrice / nights)} - ${Math.round(maxPrice / nights)}/night`
+          display: minRetailPrice === maxRetailPrice ? `${minRetailPrice}` : `${minRetailPrice} - ${maxRetailPrice}`
         };
-        pricePerNightInfo = pricePerNight.display;
+  
+        // Get suggested selling price (use first available) - FIXED: Divide by nights
+        const suggestedPriceData = priceData.find(data => 
+            data.suggestedPrice !== undefined && 
+            data.suggestedPrice !== null && 
+            data.provider !== undefined && 
+            data.provider !== null
+          );
+        if (suggestedPriceData && nights > 0 && 
+            suggestedPriceData.suggestedPrice !== undefined && 
+            suggestedPriceData.suggestedPrice !== null) {
+          // FIXED: Divide suggested price by nights to get per-night rate
+          const pricePerNight = Math.round(suggestedPriceData.suggestedPrice / nights);
+          suggestedPrice = {
+            amount: pricePerNight, // Now this is per night, not total
+            currency: currency,
+            display: `${pricePerNight}`,
+            totalAmount: suggestedPriceData.suggestedPrice // Keep original total for reference
+          };
+          priceProvider = suggestedPriceData.provider;
+        }
+  
+        // Calculate per night info using suggested price if available, otherwise retail price
+        if (nights > 0) {
+            const basePrice = suggestedPrice ? suggestedPrice.amount : minRetailPrice;
+            if (basePrice !== undefined) {
+              // FIXED: For suggested price, use the already calculated per-night amount
+              // For retail price, divide by nights
+              const pricePerNight = suggestedPrice ? suggestedPrice.amount : Math.round(basePrice / nights);
+              pricePerNightInfo = `${pricePerNight}/night`;
+            }
+          }
+        }
       }
     }
-  }
-
-  const result = { priceRange, pricePerNightInfo };
-  priceCalculationCache.set(cacheKey, result);
-  return result;
-};
-
-// Enhanced createHotelSummaryForAI function
-const createHotelSummaryForAI = (hotel: HotelWithRates, index: number, nights: number): HotelSummaryForAI => {
-  const hotelInfo = hotel.hotelInfo;
   
-  if (!hotelInfo) {
+    const result = { 
+      priceRange, 
+      pricePerNightInfo, 
+      suggestedPrice, 
+      priceProvider 
+    };
+    priceCalculationCache.set(cacheKey, result);
+    return result;
+  };
+
+
+  const createHotelSummaryForAI = (hotel: HotelWithRates, index: number, nights: number): HotelSummaryForAI => {
+    const hotelInfo = hotel.hotelInfo;
+    
+    if (!hotelInfo) {
+      return {
+        index: index + 1,
+        hotelId: hotel.hotelId,
+        name: hotel.hotelId || 'Unknown Hotel',
+        location: 'Location not available',
+        description: 'No description available',
+        pricePerNight: 'Price not available',
+        city: 'Unknown City',
+        country: 'Unknown Country',
+        latitude: null,
+        longitude: null,
+        topAmenities: ['Wi-Fi', 'Air Conditioning', 'Private Bathroom'],
+        starRating: 0,
+        reviewCount: 0
+      };
+    }
+  
+    const { pricePerNightInfo, suggestedPrice, priceProvider } = calculatePriceInfo(hotel, nights);
+    
+    // Extract location data
+    const city = hotelInfo?.city || 'Unknown City';
+    const country = hotelInfo?.country || 'Unknown Country';
+    const latitude = hotelInfo?.location?.latitude || hotelInfo?.coordinates?.latitude || null;
+    const longitude = hotelInfo?.location?.longitude || hotelInfo?.coordinates?.longitude || null;
+    const topAmenities = getTop3Amenities(hotelInfo);
+    const starRating = hotelInfo?.starRating || hotelInfo?.rating || 0;
+    const reviewCount = hotelInfo?.reviewCount || 0;
+  
+    const shortDescription = hotelInfo.description 
+      ? hotelInfo.description.substring(0, 50).trim() + '...'
+      : 'No description available';
+  
+    // UPDATED: Include provider info in display if available
+    let displayPrice = pricePerNightInfo;
+    if (suggestedPrice && priceProvider) {
+      displayPrice = `${pricePerNightInfo} (via ${priceProvider})`;
+    }
+  
     return {
       index: index + 1,
       hotelId: hotel.hotelId,
-      name: hotel.hotelId || 'Unknown Hotel',
-      location: 'Location not available',
-      description: 'No description available',
-      pricePerNight: 'Price not available',
-      city: 'Unknown City',
-      country: 'Unknown Country',
-      latitude: null,
-      longitude: null,
-      topAmenities: ['Wi-Fi', 'Air Conditioning', 'Private Bathroom'],
-      starRating: 0,
-      reviewCount: 0
+      name: hotelInfo.name || 'Unknown Hotel',
+      location: hotelInfo.address || 'Location not available',
+      description: shortDescription,
+      pricePerNight: displayPrice,
+      city: city,
+      country: country,
+      latitude: latitude,
+      longitude: longitude,
+      topAmenities: topAmenities,
+      starRating: starRating,
+      reviewCount: reviewCount
     };
-  }
-
-  const { pricePerNightInfo } = calculatePriceInfo(hotel, nights);
-  
-  // Extract location data
-  const city = hotelInfo?.city || 'Unknown City';
-  const country = hotelInfo?.country || 'Unknown Country';
-  const latitude = hotelInfo?.location?.latitude || hotelInfo?.coordinates?.latitude || null;
-  const longitude = hotelInfo?.location?.longitude || hotelInfo?.coordinates?.longitude || null;
-  const topAmenities = getTop3Amenities(hotelInfo);
-  const starRating = hotelInfo?.starRating || hotelInfo?.rating || 0;
-  const reviewCount = hotelInfo?.reviewCount || 0;
-
-  const shortDescription = hotelInfo.description 
-    ? hotelInfo.description.substring(0, 50).trim() + '...'
-    : 'No description available';
-
-  return {
-    index: index + 1,
-    hotelId: hotel.hotelId,
-    name: hotelInfo.name || 'Unknown Hotel',
-    location: hotelInfo.address || 'Location not available',
-    description: shortDescription,
-    pricePerNight: pricePerNightInfo,
-    city: city,
-    country: country,
-    latitude: latitude,
-    longitude: longitude,
-    topAmenities: topAmenities,
-    starRating: starRating,
-    reviewCount: reviewCount
   };
-};
+  
 
 // OPTIMIZATION 4: Cached hotel details
 const getHotelDetails = async (hotelId: string): Promise<EnrichedHotel | null> => {
@@ -391,7 +453,7 @@ NEGATIVE FEEDBACK: ${consText}
 Requirements:
 - Write exactly 2 sentences
 - First sentence: "Guests love [3-4 main positives from the list]" (focus on the best aspects)
-- Second sentence: "The main concern mentioned is [single most common negative]"
+- Second sentence: "The main concern mentioned is [single most common negative do not say limited parking]"
 - Use natural, varied language (avoid repetitive phrases)
 - Keep each sentence under 25 words
 - Emphasize the positives while acknowledging just one common concern
@@ -404,7 +466,7 @@ Example format: "Guests love the spacious rooms, attentive staff, and excellent 
         messages: [
           {
             role: 'system',
-            content: 'You are a hotel review analyst. Create guest insights that emphasize positive aspects while mentioning only one main concern. Keep it balanced but positive-leaning.'
+            content: 'You are a hotel review analyst. Create guest insights that emphasize positive aspects while mentioning only one main concern do not say limited parking. Keep it balanced but positive-leaning.'
           },
           { role: 'user', content: prompt }
         ],
@@ -509,7 +571,7 @@ export const smartHotelSearch = async (req: Request, res: Response): Promise<voi
           countryCode: parsedQuery.countryCode,
           cityName: parsedQuery.cityName,
           language: 'en',
-          limit: 30
+          limit: 100
         },
         timeout: 12000
       }),
@@ -806,85 +868,97 @@ KEY INSTRUCTIONS:
         // Log the percentages for debugging
         console.log('🔢 AI Match Percentages:', rawRecommendations.map(rec => `${rec.hotelName}: ${rec.aiMatchPercent}%`));
         
-        // Match AI recommendations with full hotel data
         aiRecommendations = rawRecommendations.map(aiRec => {
-          const matchingHotel = enrichedHotels.find(hotel => 
-            hotel.hotelInfo && hotel.hotelInfo.name === aiRec.hotelName
-          );
-
-          if (!matchingHotel) {
-            console.warn(`Warning: Could not find hotel "${aiRec.hotelName}" in original data`);
-            return null;
-          }
-
-          const { priceRange, pricePerNightInfo } = calculatePriceInfo(matchingHotel, nights);
+            const matchingHotel = enrichedHotels.find(hotel => 
+              hotel.hotelInfo && hotel.hotelInfo.name === aiRec.hotelName
+            );
           
-          // Extract location data
-          const city = matchingHotel.hotelInfo?.city || 'Unknown City';
-          const country = matchingHotel.hotelInfo?.country || 'Unknown Country';
-          const latitude = matchingHotel.hotelInfo?.location?.latitude || matchingHotel.hotelInfo?.coordinates?.latitude || null;
-          const longitude = matchingHotel.hotelInfo?.location?.longitude || matchingHotel.hotelInfo?.coordinates?.longitude || null;
-          const topAmenities = getTop3Amenities(matchingHotel.hotelInfo);
+            if (!matchingHotel) {
+              console.warn(`Warning: Could not find hotel "${aiRec.hotelName}" in original data`);
+              return null;
+            }
           
-          let pricePerNight = null;
-          if (priceRange && nights > 0) {
-            pricePerNight = {
-              min: Math.round(priceRange.min / nights),
-              max: Math.round(priceRange.max / nights),
-              currency: priceRange.currency,
-              display: priceRange.min === priceRange.max 
-                ? `${Math.round(priceRange.min / nights)}/night`
-                : `${Math.round(priceRange.min / nights)} - ${Math.round(priceRange.max / nights)}/night`
-            };
-          }
-
-          const images: string[] = [];
-          
-          if (matchingHotel.hotelInfo?.main_photo) {
-            images.push(matchingHotel.hotelInfo.main_photo);
-          }
-          
-          if (!matchingHotel.hotelInfo?.main_photo && matchingHotel.hotelInfo?.thumbnail) {
-            images.push(matchingHotel.hotelInfo.thumbnail);
-          }
-          
-          if (matchingHotel.hotelInfo?.images && Array.isArray(matchingHotel.hotelInfo.images)) {
-            images.push(...matchingHotel.hotelInfo.images);
-          }
-
-          return {
-            hotelId: matchingHotel.hotelId,
-            name: matchingHotel.hotelInfo?.name || 'Unknown Hotel',
-            aiMatchPercent: aiRec.aiMatchPercent,
-            whyItMatches: aiRec.whyItMatches,
-            starRating: matchingHotel.hotelInfo?.starRating || matchingHotel.hotelInfo?.rating || 0,
-            images: images,
-            pricePerNight: pricePerNight,
-            reviewCount: matchingHotel.hotelInfo?.reviewCount || 0,
-            guestInsights: matchingHotel.hotelInfo?.guestInsights || "No guest insights available.",
-            funFacts: aiRec.funFacts,
-            nearbyAttractions: aiRec.nearbyAttractions || [],
-            locationHighlight: aiRec.locationHighlight || "Great location",
-            matchType: (aiRec as any).matchType || 'good',
-            address: matchingHotel.hotelInfo?.address || 'Address not available',
-            amenities: matchingHotel.hotelInfo?.amenities || [],
-            description: matchingHotel.hotelInfo?.description || 'No description available',
-            coordinates: matchingHotel.hotelInfo?.coordinates || null,
-            priceRange: priceRange,
-            totalRooms: matchingHotel.roomTypes ? matchingHotel.roomTypes.length : 0,
-            hasAvailability: matchingHotel.roomTypes && matchingHotel.roomTypes.length > 0,
-            roomTypes: matchingHotel.roomTypes,
-            originalHotelData: matchingHotel,
+            const { priceRange, pricePerNightInfo, suggestedPrice, priceProvider } = calculatePriceInfo(matchingHotel, nights);
             
-            // NEW ENHANCED DATA
-            city: city,
-            country: country,
-            latitude: latitude,
-            longitude: longitude,
-            topAmenities: topAmenities,
-            sentimentData: null // Will be populated in next step
-          };
-        }).filter(Boolean);
+            // Extract location data
+            const city = matchingHotel.hotelInfo?.city || 'Unknown City';
+            const country = matchingHotel.hotelInfo?.country || 'Unknown Country';
+            const latitude = matchingHotel.hotelInfo?.location?.latitude || matchingHotel.hotelInfo?.coordinates?.latitude || null;
+            const longitude = matchingHotel.hotelInfo?.location?.longitude || matchingHotel.hotelInfo?.coordinates?.longitude || null;
+            const topAmenities = getTop3Amenities(matchingHotel.hotelInfo);
+            
+            // UPDATED: Calculate price per night using suggested price if available
+            let pricePerNight = null;
+            if (suggestedPrice && nights > 0) {
+              pricePerNight = {
+                amount: suggestedPrice.amount, // This is now already per-night from calculatePriceInfo
+                totalAmount: suggestedPrice.totalAmount, // Use the stored total amount
+                currency: suggestedPrice.currency,
+                display: `${suggestedPrice.amount}/night`, // Use per-night amount
+                provider: priceProvider,
+                isSupplierPrice: true
+              };
+            } else if (priceRange && nights > 0) {
+              // Fallback to retail price if no suggested price available
+              pricePerNight = {
+                amount: Math.round(priceRange.min / nights),
+                totalAmount: priceRange.min,
+                currency: priceRange.currency,
+                display: `${Math.round(priceRange.min / nights)}/night`,
+                provider: null,
+                isSupplierPrice: false
+              };
+            }
+          
+            const images: string[] = [];
+            
+            if (matchingHotel.hotelInfo?.main_photo) {
+              images.push(matchingHotel.hotelInfo.main_photo);
+            }
+            
+            if (!matchingHotel.hotelInfo?.main_photo && matchingHotel.hotelInfo?.thumbnail) {
+              images.push(matchingHotel.hotelInfo.thumbnail);
+            }
+            
+            if (matchingHotel.hotelInfo?.images && Array.isArray(matchingHotel.hotelInfo.images)) {
+              images.push(...matchingHotel.hotelInfo.images);
+            }
+          
+            return {
+              hotelId: matchingHotel.hotelId,
+              name: matchingHotel.hotelInfo?.name || 'Unknown Hotel',
+              aiMatchPercent: aiRec.aiMatchPercent,
+              whyItMatches: aiRec.whyItMatches,
+              starRating: matchingHotel.hotelInfo?.starRating || matchingHotel.hotelInfo?.rating || 0,
+              images: images,
+              pricePerNight: pricePerNight,
+              reviewCount: matchingHotel.hotelInfo?.reviewCount || 0,
+              guestInsights: matchingHotel.hotelInfo?.guestInsights || "No guest insights available.",
+              funFacts: aiRec.funFacts,
+              nearbyAttractions: aiRec.nearbyAttractions || [],
+              locationHighlight: aiRec.locationHighlight || "Great location",
+              matchType: (aiRec as any).matchType || 'good',
+              address: matchingHotel.hotelInfo?.address || 'Address not available',
+              amenities: matchingHotel.hotelInfo?.amenities || [],
+              description: matchingHotel.hotelInfo?.description || 'No description available',
+              coordinates: matchingHotel.hotelInfo?.coordinates || null,
+              priceRange: priceRange,
+              totalRooms: matchingHotel.roomTypes ? matchingHotel.roomTypes.length : 0,
+              hasAvailability: matchingHotel.roomTypes && matchingHotel.roomTypes.length > 0,
+              roomTypes: matchingHotel.roomTypes,
+              originalHotelData: matchingHotel,
+              
+              // UPDATED: Include suggested price and provider information
+              suggestedPrice: suggestedPrice,
+              priceProvider: priceProvider,
+              city: city,
+              country: country,
+              latitude: latitude,
+              longitude: longitude,
+              topAmenities: topAmenities,
+              sentimentData: null // Will be populated in next step
+            };
+          }).filter(Boolean);
 
         console.log(`Step 6 ✅: AI selected ${aiRecommendations.length} hotels`);
         
@@ -972,52 +1046,72 @@ KEY INSTRUCTIONS:
       }
     });
 
-    // Step 9: Log AI recommendations summary with all new data
     if (aiRecommendations.length > 0) {
-      console.log('\n🤖 AI RECOMMENDATIONS SUMMARY WITH SENTIMENT ANALYSIS:');
-      console.log('='.repeat(70));
-      aiRecommendations.forEach((hotel, index) => {
-        console.log(`${index + 1}. ${hotel.name}`);
-        console.log(`   📊 AI Match: ${hotel.aiMatchPercent}%`);
-        console.log(`   🏷️  Match Type: ${hotel.matchType || 'good'}`);
-        console.log(`   ⭐ Star Rating: ${hotel.starRating}/5`);
-        console.log(`   📍 Location: ${hotel.city}, ${hotel.country}`);
-        console.log(`   🗺️  Coordinates: ${hotel.latitude}, ${hotel.longitude}`);
-        console.log(`   🏨 Top Amenities: ${hotel.topAmenities.join(', ')}`);
-        console.log(`   💡 Why it matches: ${hotel.whyItMatches}`);
-        console.log(`   🎯 Fun facts: ${hotel.funFacts.join(' | ')}`);
-        console.log(`   📍 Near: ${hotel.nearbyAttractions.join(' | ')}`);
-        console.log(`   🏛️  Location: ${hotel.locationHighlight}`);
-        
-        if (hotel.pricePerNight) {
-          console.log(`   💰 Price per night: ${hotel.pricePerNight.display}`);
-        }
-        
-        if (hotel.images && hotel.images.length > 0) {
-          console.log(`   🖼️  Images: ${hotel.images.length} available`);
-          console.log(`   📸 First image: ${hotel.images[0]}`);
-        }
-        
-        // Sentiment and reviews information
-        console.log(`   📝 Reviews: ${hotel.reviewCount || 0} guest reviews`);
-        console.log(`   💬 Guest Insights: ${hotel.guestInsights}`);
-        
-        if (hotel.sentimentData?.sentimentAnalysis) {
-          const sentiment = hotel.sentimentData.sentimentAnalysis;
-          console.log(`   👍 Top Pros: ${sentiment.pros.slice(0, 3).join(', ')}`);
-          console.log(`   👎 Top Cons: ${sentiment.cons.slice(0, 3).join(', ')}`);
+        console.log('\n🤖 AI RECOMMENDATIONS SUMMARY WITH PRICING INFO:');
+        console.log('='.repeat(70));
+        aiRecommendations.forEach((hotel, index) => {
+          console.log(`${index + 1}. ${hotel.name}`);
+          console.log(`   📊 AI Match: ${hotel.aiMatchPercent}%`);
+          console.log(`   🏷️  Match Type: ${hotel.matchType || 'good'}`);
+          console.log(`   ⭐ Star Rating: ${hotel.starRating}/5`);
+          console.log(`   📍 Location: ${hotel.city}, ${hotel.country}`);
+          console.log(`   🗺️  Coordinates: ${hotel.latitude}, ${hotel.longitude}`);
+          console.log(`   🏨 Top Amenities: ${hotel.topAmenities.join(', ')}`);
+          console.log(`   💡 Why it matches: ${hotel.whyItMatches}`);
+          console.log(`   🎯 Fun facts: ${hotel.funFacts.join(' | ')}`);
+          console.log(`   📍 Near: ${hotel.nearbyAttractions.join(' | ')}`);
+          console.log(`   🏛️  Location: ${hotel.locationHighlight}`);
           
-          // Log top sentiment categories
-          const topCategories = sentiment.categories
-            .sort((a: SentimentCategory, b: SentimentCategory) => b.rating - a.rating)
-            .slice(0, 3);
-          console.log(`   📊 Top Categories: ${topCategories.map((cat: SentimentCategory) => `${cat.name} (${cat.rating}/10)`).join(', ')}`);
-        }
+          // UPDATED: Enhanced price logging with provider info
+          if (hotel.pricePerNight) {
+            console.log(`   💰 Price per night: ${hotel.pricePerNight.display}`);
+            if (hotel.priceProvider) {
+              console.log(`   🏷️  Price source: ${hotel.priceProvider} (suggested selling price)`);
+            } else {
+              console.log(`   🏷️  Price source: Retail rate`);
+            }
+            if (hotel.suggestedPrice) {
+              console.log(`   💡 Total suggested price: ${hotel.suggestedPrice.currency} ${hotel.suggestedPrice.amount}`);
+            }
+          }
+          
+          if (hotel.images && hotel.images.length > 0) {
+            console.log(`   🖼️  Images: ${hotel.images.length} available`);
+            console.log(`   📸 First image: ${hotel.images[0]}`);
+          }
+          
+          // Sentiment and reviews information
+          console.log(`   📝 Reviews: ${hotel.reviewCount || 0} guest reviews`);
+          console.log(`   💬 Guest Insights: ${hotel.guestInsights}`);
+          
+          if (hotel.sentimentData?.sentimentAnalysis) {
+            const sentiment = hotel.sentimentData.sentimentAnalysis;
+            console.log(`   👍 Top Pros: ${sentiment.pros.slice(0, 3).join(', ')}`);
+            console.log(`   👎 Top Cons: ${sentiment.cons.slice(0, 3).join(', ')}`);
+            
+            // Log top sentiment categories
+            const topCategories = sentiment.categories
+              .sort((a: SentimentCategory, b: SentimentCategory) => b.rating - a.rating)
+              .slice(0, 3);
+            console.log(`   📊 Top Categories: ${topCategories.map((cat: SentimentCategory) => `${cat.name} (${cat.rating}/10)`).join(', ')}`);
+          }
+          
+          console.log('');
+        });
         
-        console.log('');
-      });
-      console.log('='.repeat(70));
-      console.log(`✅ FINAL COUNT: ${aiRecommendations.length} hotels returned with sentiment analysis in ${totalTime}ms`);
+        // UPDATED: Enhanced summary with pricing provider statistics
+        const hotelsWithSuggestedPrice = aiRecommendations.filter(hotel => hotel.suggestedPrice && hotel.priceProvider).length;
+        const providers = aiRecommendations
+          .filter(hotel => hotel.priceProvider)
+          .map(hotel => hotel.priceProvider);
+        const uniqueProviders = [...new Set(providers)];
+        
+        console.log('='.repeat(70));
+        console.log(`✅ PRICING SUMMARY: ${hotelsWithSuggestedPrice}/${aiRecommendations.length} hotels have suggested selling prices`);
+        if (uniqueProviders.length > 0) {
+          console.log(`🏷️  Price providers: ${uniqueProviders.join(', ')}`);
+        }
+        console.log(`✅ FINAL COUNT: ${aiRecommendations.length} hotels returned with enhanced pricing in ${totalTime}ms`);
       
       // Enhanced summary with sentiment data
       const totalReviews = aiRecommendations.reduce((sum, hotel) => sum + (hotel.reviewCount || 0), 0);

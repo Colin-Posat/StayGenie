@@ -1,4 +1,4 @@
-// SwipeableStoryView.tsx - Updated with Google Maps props and API data preservation
+// SwipeableStoryView.tsx - Updated with enhanced pricing structure
 import React, { useState } from 'react';
 import {
   View,
