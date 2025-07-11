@@ -61,10 +61,10 @@ Other Rules:
   "checkout": "${formattedCheckout}"
 - IMPORTANT: Always return the ISO-2 country code in "countryCode" field (e.g., FR, GB, US, DE, IT, ES, etc.)
 - IMPORTANT: Always return the full city name in "cityName" field (e.g., Paris, London, New York)
-- For language, infer from the location (e.g., FR → "fr", GB → "en", ES → "es", DE → "de", IT → "it") or default to "en"
+- For language, default to "en"
 - Put ALL other search criteria in "aiSearch": hotel preferences, amenities, style, business/leisure, AND budget descriptors
 - If they provide only a country, choose a city in that would have hotels that meet the users preferences if no preferences are given choose a major city in that country
-- If no location is provided, infer one from their preferences
+- If no location is provided, infer one from their preferences. Make sure this location really matches the users preferences it should be a city that is a hot spot for wha tthe user is requesting
 - If number of people is not specified, default to 2 adults and 0 children
 - Only return the JSON. No explanation or extra formatting.
 

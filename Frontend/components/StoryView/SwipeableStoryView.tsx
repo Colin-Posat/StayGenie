@@ -1,4 +1,4 @@
-// SwipeableStoryView.tsx - Updated with optimized backend data structure
+// SwipeableStoryView.tsx - Updated to work with new FavoritesCache system
 import React, { useState } from 'react';
 import {
   View,
@@ -17,7 +17,7 @@ interface SwipeableStoryViewProps {
   hotels: Hotel[];
   onHotelPress?: (hotel: Hotel) => void;
   onViewDetails?: (hotel: Hotel) => void;
-  onSave?: (hotel: Hotel) => void;
+  onSave?: (hotel: Hotel) => void; // Optional - for backward compatibility, now handled by cache
   // Additional props for Google Maps integration
   checkInDate?: Date;
   checkOutDate?: Date;
@@ -182,35 +182,28 @@ const enhanceHotel = (hotel: Hotel): EnhancedHotel => {
   return enhancedHotel;
 };
 
-// UPDATED: Main SwipeableStoryView Component with optimized backend integration
+// UPDATED: Main SwipeableStoryView Component with FavoritesCache integration
 const SwipeableStoryView: React.FC<SwipeableStoryViewProps> = ({ 
   hotels = [], 
   onHotelPress, 
   onViewDetails, 
-  onSave,
+  onSave, // Optional - kept for backward compatibility
   checkInDate,
   checkOutDate,
   adults = 2,
   children = 0,
   isInsightsLoading = false
 }) => {
-  const [savedHotels, setSavedHotels] = useState<Set<number>>(new Set());
+  // REMOVED: savedHotels state since it's now handled by FavoritesCache internally
 
   // UPDATED: Enhance hotels with additional data while preserving optimized backend data
   const enhancedHotels = hotels.map(enhanceHotel);
 
+  // UPDATED: Handle save - now just triggers optional callback for backward compatibility
   const handleSave = (hotel: Hotel) => {
-    setSavedHotels(prev => {
-      const newSet = new Set(prev);
-      if (newSet.has(hotel.id)) {
-        newSet.delete(hotel.id);
-        console.log(`💔 Removed hotel from saved: ${hotel.name}`);
-      } else {
-        newSet.add(hotel.id);
-        console.log(`❤️ Saved hotel: ${hotel.name} (AI Match: ${hotel.aiMatchPercent}%)`);
-      }
-      return newSet;
-    });
+    // The SwipeableHotelStoryCard now handles favorites internally via FavoritesCache
+    // This callback is just for backward compatibility
+    console.log(`💾 Save callback triggered for: ${hotel.name}`);
     onSave?.(hotel);
   };
 
@@ -231,18 +224,16 @@ const SwipeableStoryView: React.FC<SwipeableStoryViewProps> = ({
     onHotelPress?.(hotel);
   };
 
+  // UPDATED: Simplified render function without isCurrentHotelSaved prop
   const renderHotelCard = ({ item: hotel, index }: { item: EnhancedHotel; index: number }) => {
-    const isCurrentHotelSaved = savedHotels.has(hotel.id);
-    
     return (
       <View style={tw`px-5 mb-6`}>
         <View style={tw`border border-black/10 shadow-md rounded-2xl`}>
           <SwipeableHotelStoryCard
             hotel={hotel}
-            onSave={() => handleSave(hotel)}
+            onSave={() => handleSave(hotel)} // Optional callback
             onViewDetails={() => handleViewDetails(hotel)}
             onHotelPress={() => handleHotelPress(hotel)}
-            isCurrentHotelSaved={isCurrentHotelSaved}
             index={index}
             totalCount={enhancedHotels.length}
             // Pass through Google Maps and insights props
@@ -316,8 +307,8 @@ const SwipeableStoryView: React.FC<SwipeableStoryViewProps> = ({
         windowSize={5}
         initialNumToRender={2}
         scrollEventThrottle={16}
-        // UPDATED: Enhanced list performance for optimized backend data
-        extraData={`${isInsightsLoading}-${savedHotels.size}`}
+        // UPDATED: Simplified extraData since we no longer track savedHotels state
+        extraData={isInsightsLoading}
       />
     </View>
   );

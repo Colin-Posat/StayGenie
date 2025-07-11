@@ -529,68 +529,156 @@ export const smartHotelSearch = async (req: Request, res: Response): Promise<voi
       return;
     }
 
-    // STEP 3: Fetch rates for all hotels
-    console.log('Step 3: Fetching rates...');
-    const ratesStart = Date.now();
-    
-    const hotelIds = hotels.map((hotel: any) => 
-      hotel.id || hotel.hotelId || hotel.hotel_id || hotel.code
-    ).filter(Boolean);
-    
-    const ratesRequestBody = {
-      checkin: parsedQuery.checkin,
-      checkout: parsedQuery.checkout,
-      currency: 'USD',
-      guestNationality: 'US',
-      occupancies: [
-        {
-          adults: parsedQuery.adults || 2,
-          children: parsedQuery.children ? Array(parsedQuery.children).fill(10) : []
-        }
-      ],
-      timeout: 10,
-      hotelIds: hotelIds
-    };
+// Replace the rates fetching and processing section (around lines 580-590) with this:
 
-    const ratesResponse = await liteApiInstance.post('/hotels/rates', ratesRequestBody, {
-      timeout: 20000
-    });
+// STEP 3: Fetch rates for all hotels
+console.log('Step 3: Fetching rates...');
+const ratesStart = Date.now();
 
-    const hotelsWithRates = ratesResponse.data?.data || ratesResponse.data || [];
-    console.log(`Step 3 ✅: Fetched rates in ${Date.now() - ratesStart}ms`);
+const hotelIds = hotels.map((hotel: any) => 
+  hotel.id || hotel.hotelId || hotel.hotel_id || hotel.code
+).filter(Boolean);
 
-    if (hotelsWithRates.length === 0) {
-      res.status(404).json({
-        error: 'No available hotels',
-        message: 'Hotels found but no availability for your dates',
-        searchParams: parsedQuery
-      });
-      return;
+const ratesRequestBody = {
+  checkin: parsedQuery.checkin,
+  checkout: parsedQuery.checkout,
+  currency: 'USD',
+  guestNationality: 'US',
+  occupancies: [
+    {
+      adults: parsedQuery.adults || 2,
+      children: parsedQuery.children ? Array(parsedQuery.children).fill(10) : []
     }
+  ],
+  timeout: 10,
+  hotelIds: hotelIds
+};
 
-    // STEP 4: Create metadata map and immediately build AI summaries
-    console.log('Step 4: Building AI summaries...');
-    const summaryStart = Date.now();
-    
-    const hotelMetadataMap = new Map<string, any>();
-    hotels.forEach((hotel: any) => {
-      const id = hotel.id || hotel.hotelId || hotel.hotel_id || hotel.code;
-      if (id) {
-        hotelMetadataMap.set(id, hotel);
+const ratesResponse = await liteApiInstance.post('/hotels/rates', ratesRequestBody, {
+  timeout: 20000
+});
+
+// FIX: Properly handle different response structures
+let hotelsWithRates = ratesResponse.data?.data || ratesResponse.data || [];
+
+// CRITICAL FIX: Ensure hotelsWithRates is always an array
+if (!Array.isArray(hotelsWithRates)) {
+  console.warn('⚠️  API returned non-array response:', typeof hotelsWithRates);
+  
+  // Handle different possible response structures
+  if (hotelsWithRates && typeof hotelsWithRates === 'object') {
+    // Check if it's an object with a data property that's an array
+    if (Array.isArray(hotelsWithRates.hotels)) {
+      hotelsWithRates = hotelsWithRates.hotels;
+    } else if (Array.isArray(hotelsWithRates.data)) {
+      hotelsWithRates = hotelsWithRates.data;
+    } else if (Array.isArray(hotelsWithRates.results)) {
+      hotelsWithRates = hotelsWithRates.results;
+    } else {
+      // If it's a single hotel object, wrap it in an array
+      hotelsWithRates = [hotelsWithRates];
+    }
+  } else {
+    // Fallback to empty array
+    hotelsWithRates = [];
+  }
+}
+
+console.log(`Step 3 ✅: Fetched rates in ${Date.now() - ratesStart}ms`);
+console.log(`📊 Hotels with rates: ${hotelsWithRates.length} (type: ${Array.isArray(hotelsWithRates) ? 'array' : typeof hotelsWithRates})`);
+
+if (hotelsWithRates.length === 0) {
+  res.status(404).json({
+    error: 'No available hotels',
+    message: 'Hotels found but no availability for your dates',
+    searchParams: parsedQuery,
+    debug: {
+      originalResponse: ratesResponse.data,
+      responseType: typeof ratesResponse.data,
+      isArray: Array.isArray(ratesResponse.data)
+    }
+  });
+  return;
+}
+
+// STEP 4: Create metadata map and immediately build AI summaries
+console.log('Step 4: Building AI summaries...');
+const summaryStart = Date.now();
+
+const hotelMetadataMap = new Map<string, any>();
+hotels.forEach((hotel: any) => {
+  const id = hotel.id || hotel.hotelId || hotel.hotel_id || hotel.code;
+  if (id) {
+    hotelMetadataMap.set(id, hotel);
+  }
+});
+
+// OPTIMIZED: Build summaries directly from basic data (no enrichment yet)
+// ADDITIONAL FIX: Add extra validation for hotelsWithRates.map
+const hotelSummariesForAI: HotelSummaryForAI[] = [];
+
+try {
+  if (Array.isArray(hotelsWithRates) && hotelsWithRates.length > 0) {
+    hotelsWithRates.forEach((rateHotel: any, index: number) => {
+      try {
+        // Validate that rateHotel has required structure
+        if (!rateHotel || typeof rateHotel !== 'object') {
+          console.warn(`⚠️  Invalid hotel data at index ${index}:`, rateHotel);
+          return;
+        }
+
+        const hotelId = rateHotel.hotelId || rateHotel.id || rateHotel.hotel_id;
+        if (!hotelId) {
+          console.warn(`⚠️  Missing hotel ID at index ${index}`);
+          return;
+        }
+
+        const metadata = hotelMetadataMap.get(hotelId);
+        const basicHotel: HotelWithRates = {
+          ...rateHotel,
+          hotelId: hotelId, // Ensure hotelId is set
+          hotelInfo: metadata || {}
+        };
+        
+        const summary = createOptimizedHotelSummaryForAI(basicHotel, index, nights);
+        hotelSummariesForAI.push(summary);
+      } catch (innerError) {
+        console.warn(`⚠️  Error processing hotel at index ${index}:`, innerError);
       }
     });
+  } else {
+    throw new Error(`hotelsWithRates is not a valid array: ${typeof hotelsWithRates}, length: ${hotelsWithRates?.length}`);
+  }
+} catch (summaryError) {
+  console.error('❌ Error building hotel summaries:', summaryError);
+  res.status(500).json({
+    error: 'Failed to process hotel data',
+    message: 'Error building hotel summaries for AI processing',
+    debug: {
+      hotelsWithRatesType: typeof hotelsWithRates,
+      hotelsWithRatesLength: hotelsWithRates?.length,
+      isArray: Array.isArray(hotelsWithRates),
+      sampleData: hotelsWithRates?.slice ? hotelsWithRates.slice(0, 2) : hotelsWithRates
+    }
+  });
+  return;
+}
 
-    // OPTIMIZED: Build summaries directly from basic data (no enrichment yet)
-    const hotelSummariesForAI: HotelSummaryForAI[] = hotelsWithRates.map((rateHotel: any, index: number) => {
-      const metadata = hotelMetadataMap.get(rateHotel.hotelId);
-      const basicHotel: HotelWithRates = {
-        ...rateHotel,
-        hotelInfo: metadata || {}
-      };
-      return createOptimizedHotelSummaryForAI(basicHotel, index, nights);
-    });
+if (hotelSummariesForAI.length === 0) {
+  res.status(404).json({
+    error: 'No processable hotels',
+    message: 'Found hotels but could not process any for AI recommendations',
+    searchParams: parsedQuery,
+    debug: {
+      originalHotelsCount: hotels.length,
+      hotelsWithRatesCount: hotelsWithRates.length,
+      hotelsWithRatesType: typeof hotelsWithRates
+    }
+  });
+  return;
+}
 
-    console.log(`Step 4 ✅: Built ${hotelSummariesForAI.length} summaries in ${Date.now() - summaryStart}ms`);
+console.log(`Step 4 ✅: Built ${hotelSummariesForAI.length} summaries in ${Date.now() - summaryStart}ms`);
 
     // STEP 5: Get AI recommendations with optimized prompt
     console.log('Step 5: Getting AI recommendations...');

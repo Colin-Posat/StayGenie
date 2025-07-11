@@ -1,4 +1,4 @@
-// SwipeableHotelStoryCard.tsx - Updated with optimized backend data structure
+// SwipeableHotelStoryCard.tsx - Updated with FavoritesCache integration
 import React, { useState, useRef, useEffect } from 'react';
 import {
   View,
@@ -13,6 +13,8 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import tw from 'twrnc';
+import FavoritesCache from '../../utils/FavoritesCache'; // Import the cache
+import { formatLocationDisplay, getCountryName } from '../../utils/countryMapping';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 const CARD_WIDTH = screenWidth - 40;
@@ -80,29 +82,44 @@ interface EnhancedHotel extends Hotel {
 
 interface SwipeableHotelStoryCardProps {
   hotel: EnhancedHotel;
-  onSave: () => void;
+  onSave?: () => void; // Made optional since we'll handle internally
   onViewDetails: () => void;
   onHotelPress: () => void;
-  isCurrentHotelSaved: boolean;
   index: number;
   totalCount: number;
   checkInDate?: Date;
   checkOutDate?: Date;
   adults?: number;
   children?: number;
-  isInsightsLoading?: boolean; // NEW: Track if sentiment insights are still loading
+  isInsightsLoading?: boolean;
 }
 
-// Animated Heart Button Component
+// UPDATED: Animated Heart Button Component with cache integration
 interface AnimatedHeartButtonProps {
-  isLiked: boolean;
-  onPress: () => void;
+  hotel: EnhancedHotel;
   size?: number;
 }
 
-const AnimatedHeartButton: React.FC<AnimatedHeartButtonProps> = ({ isLiked, onPress, size = 28 }) => {
+const AnimatedHeartButton: React.FC<AnimatedHeartButtonProps> = ({ hotel, size = 28 }) => {
+  const [isLiked, setIsLiked] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const scaleAnim = useRef(new Animated.Value(1)).current;
   const bounceAnim = useRef(new Animated.Value(1)).current;
+  const favoritesCache = FavoritesCache.getInstance();
+
+  // Check if hotel is already favorited on mount
+  useEffect(() => {
+    const checkFavoriteStatus = async () => {
+      try {
+        const isFavorited = await favoritesCache.isFavorited(hotel.id);
+        setIsLiked(isFavorited);
+      } catch (error) {
+        console.error('Error checking favorite status:', error);
+      }
+    };
+
+    checkFavoriteStatus();
+  }, [hotel.id, favoritesCache]);
 
   const animateHeart = () => {
     Animated.sequence([
@@ -132,9 +149,31 @@ const AnimatedHeartButton: React.FC<AnimatedHeartButtonProps> = ({ isLiked, onPr
     ]).start();
   };
 
-  const handlePress = () => {
+  const handlePress = async () => {
+    if (isLoading) return;
+    
+    setIsLoading(true);
     animateHeart();
-    onPress();
+    
+    try {
+      // Toggle favorite status in cache
+      const newStatus = await favoritesCache.toggleFavorite(hotel);
+      setIsLiked(newStatus);
+      
+      // Show feedback to user
+      if (newStatus) {
+        console.log(`❤️ Added "${hotel.name}" to favorites`);
+        // Could show a toast notification here
+      } else {
+        console.log(`💔 Removed "${hotel.name}" from favorites`);
+        // Could show a toast notification here
+      }
+    } catch (error) {
+      console.error('Error toggling favorite:', error);
+      Alert.alert('Error', 'Failed to update favorites. Please try again.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -143,14 +182,26 @@ const AnimatedHeartButton: React.FC<AnimatedHeartButtonProps> = ({ isLiked, onPr
         <TouchableOpacity
           onPress={handlePress}
           activeOpacity={0.6}
-          style={tw`border border-black/10 bg-gray-100 py-2.5 px-4 rounded-lg items-center justify-center`}
+          disabled={isLoading}
+          style={[
+            tw`border border-black/10 bg-gray-100 py-2.5 px-4 rounded-lg items-center justify-center`,
+            isLoading && tw`opacity-60`
+          ]}
         >
           <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
-            <Ionicons
-              name={isLiked ? "heart" : "heart-outline"}
-              size={size}
-              color={isLiked ? "#FF3040" : "#262626"}
-            />
+            {isLoading ? (
+              <Ionicons
+                name="sync"
+                size={size}
+                color="#666666"
+              />
+            ) : (
+              <Ionicons
+                name={isLiked ? "heart" : "heart-outline"}
+                size={size}
+                color={isLiked ? "#FF3040" : "#262626"}
+              />
+            )}
           </Animated.View>
         </TouchableOpacity>
       </Animated.View>
@@ -407,14 +458,14 @@ const HotelOverviewSlide: React.FC<{ hotel: EnhancedHotel; isInsightsLoading?: b
     if (hotel.pricePerNight) {
       return `${hotel.pricePerNight.currency} ${hotel.pricePerNight.amount}`;
     }
-    return `$${hotel.price}`;
+    return `${hotel.price}`;
   };
 
 
   // UPDATED: Location display using optimized backend location data
   const getLocationDisplay = () => {
     if (hotel.city && hotel.country) {
-      return `${hotel.city}, ${hotel.country}`;
+      return formatLocationDisplay(hotel.city, hotel.country);
     }
     if (hotel.fullAddress) {
       return hotel.fullAddress;
@@ -797,13 +848,12 @@ const AmenitiesSlide: React.FC<{ hotel: EnhancedHotel; isInsightsLoading?: boole
   );
 };
 
-// UPDATED: Main component with enhanced Google Maps integration using optimized backend coordinates
+// UPDATED: Main component with enhanced Google Maps integration and removed isCurrentHotelSaved prop
 const SwipeableHotelStoryCard: React.FC<SwipeableHotelStoryCardProps> = ({ 
   hotel, 
-  onSave, 
+  onSave, // Optional, for backward compatibility
   onViewDetails, 
   onHotelPress,
-  isCurrentHotelSaved,
   index,
   totalCount,
   checkInDate,
@@ -944,6 +994,15 @@ const SwipeableHotelStoryCard: React.FC<SwipeableHotelStoryCardProps> = ({
     onHotelPress();
   };
 
+  // UPDATED: Handle save action with optional callback for backward compatibility
+  const handleSave = () => {
+    // The AnimatedHeartButton now handles the cache internally
+    // This is just for backward compatibility
+    if (onSave) {
+      onSave();
+    }
+  };
+
   return (
     <View style={tw`bg-white rounded-2xl overflow-hidden shadow-lg`}>
       {/* Hotel Card */}
@@ -1023,7 +1082,7 @@ const SwipeableHotelStoryCard: React.FC<SwipeableHotelStoryCardProps> = ({
         </ScrollView>
       </TouchableOpacity>
       
-      {/* UPDATED: Action Section with insights loading indicator */}
+      {/* UPDATED: Action Section with self-contained heart button */}
       <View style={tw`bg-white rounded-b-2xl`}>
         {/* Insights Loading Indicator */}
         {isInsightsLoading && (
@@ -1039,10 +1098,9 @@ const SwipeableHotelStoryCard: React.FC<SwipeableHotelStoryCardProps> = ({
         
         {/* Main Action Row */}
         <View style={tw`flex-row items-center px-4 py-3 gap-3`}>
-          {/* Animated Heart/Save Button */}
+          {/* UPDATED: Self-contained Animated Heart/Save Button */}
           <AnimatedHeartButton
-            isLiked={isCurrentHotelSaved}
-            onPress={onSave}
+            hotel={hotel}
             size={28}
           />
           

@@ -64,6 +64,18 @@ class CacheService {
     }
   }
 
+  async ping(): Promise<string> {
+    try {
+      if (!this.isConnected) {
+        await this.connect();
+      }
+      return await this.client.ping();
+    } catch (error) {
+      console.warn('Cache ping error:', error);
+      throw error;
+    }
+  }
+
   async get<T>(key: string): Promise<T | null> {
     try {
       if (!this.isConnected) {
@@ -237,6 +249,34 @@ class CacheService {
     return this.set(`search:${searchId}`, results, 60 * 60);
   }
 
+  // Method for background enrichment updates
+  async getSearchEnrichment(searchId: string): Promise<Record<string, any> | null> {
+    return this.get(`enrichment:${searchId}`);
+  }
+
+  async setSearchEnrichment(searchId: string, enrichmentData: Record<string, any>): Promise<boolean> {
+    // 1 hour TTL for enrichment data
+    return this.set(`enrichment:${searchId}`, enrichmentData, 60 * 60);
+  }
+
+  async updateSearchEnrichment(searchId: string, enrichmentData: Record<string, any>): Promise<boolean> {
+    try {
+      // Validate enrichmentData is a plain object
+      if (typeof enrichmentData !== 'object' || enrichmentData === null || enrichmentData instanceof Map) {
+        console.error(`Invalid enrichment data type for ${searchId}:`, typeof enrichmentData);
+        return false;
+      }
+
+      console.log(`✅ Updating search enrichment for ${searchId} with ${Object.keys(enrichmentData).length} hotels`);
+      return this.setSearchEnrichment(searchId, enrichmentData);
+      
+    } catch (error) {
+      console.error(`Failed to update search enrichment for ${searchId}:`, error);
+      return false;
+    }
+  }
+
+  // Legacy method for backwards compatibility
   async updateSearchInsights(searchId: string, insights: Record<string, any>): Promise<boolean> {
     try {
       const existingResults = await this.getSearchResults(searchId);
