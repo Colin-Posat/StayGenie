@@ -11,6 +11,74 @@ interface CacheConfig {
   db?: number;
 }
 
+// Helper function to safely serialize data
+function safeJsonStringify(obj: any): string {
+  const seen = new WeakSet();
+  
+  return JSON.stringify(obj, (key, value) => {
+    // Handle circular references
+    if (typeof value === 'object' && value !== null) {
+      if (seen.has(value)) {
+        return '[Circular Reference]';
+      }
+      seen.add(value);
+    }
+    
+    // Handle functions
+    if (typeof value === 'function') {
+      return '[Function]';
+    }
+    
+    // Handle undefined values
+    if (value === undefined) {
+      return null;
+    }
+    
+    // Handle symbols
+    if (typeof value === 'symbol') {
+      return value.toString();
+    }
+    
+    // Handle BigInt
+    if (typeof value === 'bigint') {
+      return value.toString();
+    }
+    
+    return value;
+  });
+}
+
+// Helper function to clean object for caching
+function cleanObjectForCache(obj: any): any {
+  if (obj === null || obj === undefined) {
+    return obj;
+  }
+  
+  if (typeof obj !== 'object') {
+    return obj;
+  }
+  
+  if (Array.isArray(obj)) {
+    return obj.map(item => cleanObjectForCache(item));
+  }
+  
+  const cleaned: any = {};
+  for (const [key, value] of Object.entries(obj)) {
+    if (typeof value === 'function') {
+      // Skip functions
+      continue;
+    }
+    
+    if (typeof value === 'object' && value !== null) {
+      cleaned[key] = cleanObjectForCache(value);
+    } else {
+      cleaned[key] = value;
+    }
+  }
+  
+  return cleaned;
+}
+
 class CacheService {
   private client: RedisClientType;
   private isConnected: boolean = false;
@@ -43,15 +111,32 @@ class CacheService {
       console.log('Redis client connected');
       this.isConnected = true;
     });
+
+    this.client.on('end', () => {
+      console.log('Redis client disconnected');
+      this.isConnected = false;
+    });
+
+    this.client.on('reconnecting', () => {
+      console.log('Redis client reconnecting');
+      this.isConnected = false;
+    });
   }
 
   async connect(): Promise<void> {
+    // Check if client is already connected
+    if (this.client.isOpen) {
+      this.isConnected = true;
+      return;
+    }
+
     if (!this.isConnected) {
       try {
         await this.client.connect();
         this.isConnected = true;
       } catch (error) {
         console.error('Failed to connect to Redis:', error);
+        this.isConnected = false;
         throw error;
       }
     }
@@ -66,19 +151,21 @@ class CacheService {
 
   async ping(): Promise<string> {
     try {
-      if (!this.isConnected) {
+      // Check if client is ready first
+      if (!this.client.isReady) {
         await this.connect();
       }
       return await this.client.ping();
     } catch (error) {
       console.warn('Cache ping error:', error);
+      this.isConnected = false;
       throw error;
     }
   }
 
   async get<T>(key: string): Promise<T | null> {
     try {
-      if (!this.isConnected) {
+      if (!this.client.isReady) {
         await this.connect();
       }
       
@@ -86,17 +173,36 @@ class CacheService {
       return value ? JSON.parse(value) : null;
     } catch (error) {
       console.warn(`Cache get error for key ${key}:`, error);
+      this.isConnected = false;
       return null;
     }
   }
 
   async set<T>(key: string, value: T, ttlSeconds?: number): Promise<boolean> {
     try {
-      if (!this.isConnected) {
+      if (!this.client.isReady) {
         await this.connect();
       }
 
-      const serialized = JSON.stringify(value);
+      // Clean the object before serialization
+      const cleanedValue = cleanObjectForCache(value);
+      
+      // Try to serialize - this will throw if there are still issues
+      let serialized: string;
+      try {
+        serialized = safeJsonStringify(cleanedValue);
+      } catch (serializationError) {
+        console.error(`Failed to serialize value for key ${key}:`, serializationError);
+        console.error('Value type:', typeof value);
+        console.error('Value preview:', JSON.stringify(value, null, 2).substring(0, 500));
+        return false;
+      }
+      
+      // Validate serialized string
+      if (typeof serialized !== 'string') {
+        console.error(`Serialization returned non-string for key ${key}:`, typeof serialized);
+        return false;
+      }
       
       if (ttlSeconds) {
         await this.client.setEx(key, ttlSeconds, serialized);
@@ -107,13 +213,21 @@ class CacheService {
       return true;
     } catch (error) {
       console.warn(`Cache set error for key ${key}:`, error);
+      console.error('Error details:', {
+        errorType: error instanceof Error ? error.constructor.name : typeof error,
+        errorMessage: error instanceof Error ? error.message : String(error),
+        valueType: typeof value,
+        keyType: typeof key,
+        ttlType: typeof ttlSeconds
+      });
+      this.isConnected = false;
       return false;
     }
   }
 
   async del(key: string): Promise<boolean> {
     try {
-      if (!this.isConnected) {
+      if (!this.client.isReady) {
         await this.connect();
       }
       
@@ -121,13 +235,14 @@ class CacheService {
       return result > 0;
     } catch (error) {
       console.warn(`Cache delete error for key ${key}:`, error);
+      this.isConnected = false;
       return false;
     }
   }
 
   async exists(key: string): Promise<boolean> {
     try {
-      if (!this.isConnected) {
+      if (!this.client.isReady) {
         await this.connect();
       }
       
@@ -135,59 +250,87 @@ class CacheService {
       return result > 0;
     } catch (error) {
       console.warn(`Cache exists error for key ${key}:`, error);
+      this.isConnected = false;
       return false;
     }
   }
 
   async mget<T>(keys: string[]): Promise<(T | null)[]> {
     try {
-      if (!this.isConnected) {
+      if (!this.client.isReady) {
         await this.connect();
       }
       
       if (keys.length === 0) return [];
       
       const values = await this.client.mGet(keys);
-      return values.map(value => value ? JSON.parse(value) : null);
+      return values.map(value => {
+        try {
+          return value ? JSON.parse(value) : null;
+        } catch (parseError) {
+          console.warn(`Failed to parse cached value for key in mget:`, parseError);
+          return null;
+        }
+      });
     } catch (error) {
       console.warn(`Cache mget error for keys ${keys.join(', ')}:`, error);
+      this.isConnected = false;
       return keys.map(() => null);
     }
   }
 
   async mset<T>(keyValuePairs: Array<{ key: string; value: T; ttl?: number }>): Promise<boolean> {
     try {
-      if (!this.isConnected) {
+      if (!this.client.isReady) {
         await this.connect();
       }
       
       if (keyValuePairs.length === 0) return true;
 
+      // Clean and serialize all values first
+      const cleanedPairs = keyValuePairs.map(item => ({
+        ...item,
+        value: cleanObjectForCache(item.value)
+      }));
+
       // For items with TTL, we need to set them individually
-      const withTtl = keyValuePairs.filter(item => item.ttl);
-      const withoutTtl = keyValuePairs.filter(item => !item.ttl);
+      const withTtl = cleanedPairs.filter(item => item.ttl);
+      const withoutTtl = cleanedPairs.filter(item => !item.ttl);
 
       // Set items without TTL in batch
       if (withoutTtl.length > 0) {
         const msetArgs: string[] = [];
-        withoutTtl.forEach(item => {
-          msetArgs.push(item.key, JSON.stringify(item.value));
-        });
+        for (const item of withoutTtl) {
+          try {
+            const serialized = safeJsonStringify(item.value);
+            msetArgs.push(item.key, serialized);
+          } catch (serializationError) {
+            console.error(`Failed to serialize value for key ${item.key} in mset:`, serializationError);
+            return false;
+          }
+        }
         await this.client.mSet(msetArgs);
       }
 
       // Set items with TTL individually
       if (withTtl.length > 0) {
-        await Promise.all(
-          withTtl.map(item => 
-            this.client.setEx(item.key, item.ttl!, JSON.stringify(item.value))
-          )
-        );
+        const ttlPromises = withTtl.map(item => {
+          try {
+            const serialized = safeJsonStringify(item.value);
+            return this.client.setEx(item.key, item.ttl!, serialized);
+          } catch (serializationError) {
+            console.error(`Failed to serialize value for key ${item.key} in mset with TTL:`, serializationError);
+            throw serializationError;
+          }
+        });
+        
+        await Promise.all(ttlPromises);
       }
 
       return true;
     } catch (error) {
       console.warn('Cache mset error:', error);
+      this.isConnected = false;
       return false;
     }
   }

@@ -7,9 +7,6 @@ import {
   parseAndSearchAvailability
 } from '../controllers/hotelMatchController';
 
-// Import sentiment routes
-import hotelSentimentRoutes from './hotelSentimentRoutes';
-
 // Import AI suggestions controller
 import { generateSuggestions } from '../controllers/aiSuggestionsController';
 
@@ -30,7 +27,5 @@ router.post('/hotel-availability', getHotelAvailability);
 // Combined parse and search
 router.post('/parse-and-search', parseAndSearchAvailability);
 
-// 🎭 Add sentiment polling routes
-router.use('/', hotelSentimentRoutes);  // This adds /sentiment/:searchId routes
 
 export default router;
