@@ -1,0 +1,122 @@
+ // testPrompts.ts - 100 diverse hotel search prompts for comprehensive performance testing
+export const testPrompts: string[] = [
+  // Business Travel (1-10)
+  "I need a hotel in New York City for December 15-18, 2024. Business trip, need good WiFi and meeting rooms. Budget up to $300/night.",
+  "Find me a luxury hotel in Tokyo for January 5-10, 2025. Corporate travel, need concierge service and fitness center.",
+  "Looking for a 4-star hotel in London near financial district for March 20-25, 2025. Need business center and airport shuttle.",
+  "Business hotel in Singapore for February 12-15, 2025. Close to CBD, need excellent internet and conference facilities.",
+  "Hotel in Dubai for April 8-12, 2025. Business travel, prefer modern amenities and spa. Budget $250-400/night.",
+  "Executive accommodation in Frankfurt for January 22-26, 2025. Financial district, express check-in, business lounge access.",
+  "Corporate hotel in Seoul for March 8-12, 2025. Gangnam area, high-speed internet, meeting rooms, translation services.",
+  "Business stay in Hong Kong for February 18-22, 2025. Central district, harbor views, fitness center, 24/7 room service.",
+  "Professional hotel in Zurich for April 15-19, 2025. Banking district, quiet rooms, business amenities, airport transfer.",
+  "Company retreat in Sydney for May 10-14, 2025. CBD location, conference facilities, team dinner options, harbour proximity.",
+
+  // Family Vacations (11-20)
+  "Family vacation in Orlando for June 15-22, 2025. Need connecting rooms for 4 people, close to Disney World. Budget under $200/night.",
+  "Beach resort in Cancun for July 10-17, 2025. Family with 2 kids, need pool and kids club. All-inclusive preferred.",
+  "Hotel in Paris for August 5-12, 2025. Family of 4, need spacious rooms and central location. Budget $150-250/night.",
+  "Family trip to San Francisco for September 18-25, 2025. Need 2 adults, 2 children accommodation near attractions.",
+  "Resort in Hawaii for October 12-19, 2025. Family vacation, beach access essential, kids activities important.",
+  "Family hotel in Rome for June 8-15, 2025. Near Colosseum, family rooms, kid-friendly restaurant, safe neighborhood.",
+  "Beach vacation in Costa Rica for July 20-30, 2025. Eco-resort, wildlife tours, swimming pool, family adventure activities.",
+  "Mountain lodge in Colorado for August 12-19, 2025. Family skiing, kids programs, heated pool, mountain views.",
+  "Family cruise hotel in Barcelona for September 5-8, 2025. Pre-cruise stay, port proximity, family suite, early breakfast.",
+  "Disney hotel in Anaheim for October 25-30, 2025. Walking distance to Disneyland, character dining, theme park packages.",
+
+  // Romantic Getaways (21-30)
+  "Romantic weekend in Venice for Valentine's Day 2025. February 14-16. Luxury hotel with canal views and spa.",
+  "Anniversary trip to Santorini for May 20-27, 2025. Adults only, infinity pool, sunset views essential.",
+  "Honeymoon in Bali for September 5-15, 2025. Private villa or luxury resort, spa, romantic dining options.",
+  "Couples retreat in Napa Valley for June 8-11, 2025. Wine country hotel with vineyard views and fine dining.",
+  "Romantic escape to Prague for April 15-20, 2025. Historic hotel in old town, castle views preferred.",
+  "Intimate getaway in Tuscany for May 12-19, 2025. Countryside villa, wine tastings, couples massage, cooking classes.",
+  "Romantic Paris for March 14-18, 2025. Boutique hotel, Eiffel Tower views, champagne breakfast, evening Seine cruise.",
+  "Secluded retreat in Seychelles for July 15-25, 2025. Private beach, overwater bungalow, snorkeling, sunset dinners.",
+  "Cozy cabin in Aspen for February 10-15, 2025. Fireplace, mountain views, couples spa, fine dining, ski access.",
+  "Romantic Ireland for June 18-25, 2025. Castle hotel, countryside views, whiskey tastings, traditional music.",
+
+  // Budget Travel (31-40)
+  "Cheap hotel in Bangkok for March 10-20, 2025. Backpacker budget under $50/night, clean and safe location.",
+  "Budget accommodation in Berlin for May 12-18, 2025. Hostel or budget hotel under $80/night, good location.",
+  "Affordable hotel in Lisbon for July 5-12, 2025. Under $100/night, central location, good reviews.",
+  "Budget stay in Prague for August 15-22, 2025. Clean hotel under $70/night, near public transport.",
+  "Cheap accommodation in Budapest for September 8-15, 2025. Under $60/night, safe area, basic amenities.",
+  "Backpacker hostel in Amsterdam for April 20-25, 2025. Under $40/night, social atmosphere, bike rental.",
+  "Budget guesthouse in Chiang Mai for January 15-25, 2025. Under $30/night, local area, cooking facilities.",
+  "Affordable inn in Edinburgh for June 12-18, 2025. Under $90/night, Old Town, walking distance to castle.",
+  "Economic hotel in Warsaw for September 3-10, 2025. Under $60/night, historic district, metro access.",
+  "Budget B&B in Dublin for May 8-14, 2025. Under $80/night, Irish breakfast, Temple Bar proximity.",
+
+  // Luxury Travel (41-50)
+  "Ultra-luxury hotel in Monaco for Formula 1 weekend May 25-28, 2025. Money no object, harbor views essential.",
+  "5-star resort in Maldives for December 20-30, 2024. Overwater villa, private butler, world-class spa.",
+  "Luxury hotel in St. Moritz for ski season February 15-22, 2025. Slope access, Michelin dining, exclusive spa.",
+  "Premium resort in Aspen for March 8-15, 2025. Ski-in/ski-out, luxury amenities, concierge service.",
+  "Exclusive hotel in French Riviera for June 12-19, 2025. Private beach, yacht access, luxury shopping nearby.",
+  "Palace hotel in Vienna for April 8-12, 2025. Imperial suite, classical concerts, fine dining, royal treatment.",
+  "Luxury safari lodge in Kenya for August 10-20, 2025. Private game drives, champagne sundowners, luxury tents.",
+  "Premium ryokan in Kyoto for March 25-30, 2025. Traditional luxury, kaiseki dining, private onsen, garden views.",
+  "Opulent hotel in Istanbul for May 15-20, 2025. Bosphorus views, Turkish bath, rooftop dining, historic luxury.",
+  "Exclusive resort in Fiji for September 20-30, 2025. Private island, overwater spa, yacht excursions, world-class dining.",
+
+  // Adventure Travel (51-60)
+  "Hotel near Machu Picchu for trekking trip April 20-25, 2025. Need mountain views and hiking access.",
+  "Safari lodge in Kenya for August 10-20, 2025. Wildlife viewing, authentic experience, comfortable accommodation.",
+  "Hotel in Queenstown for adventure sports October 5-12, 2025. Near bungee jumping and skydiving centers.",
+  "Mountain lodge in Patagonia for January 15-25, 2025. Hiking access, spectacular views, cozy atmosphere.",
+  "Hotel in Iceland for Northern Lights viewing February 20-28, 2025. Aurora tours, hot springs nearby.",
+  "Adventure resort in Nepal for April 10-20, 2025. Everest base camp access, mountain guides, equipment rental.",
+  "Eco-lodge in Amazon rainforest for July 8-18, 2025. Wildlife tours, canopy walks, indigenous cultural experiences.",
+  "Desert camp in Morocco for March 15-22, 2025. Camel trekking, star gazing, traditional Berber experiences.",
+  "Volcano hotel in Guatemala for June 5-12, 2025. Volcano hiking, hot springs, coffee plantation tours.",
+  "Arctic hotel in Norway for January 12-20, 2025. Dog sledding, ice hotel experience, midnight sun tours.",
+
+  // City Breaks (61-70)
+  "Weekend in Amsterdam for April 25-28, 2025. Canal-side hotel, walking distance to museums and nightlife.",
+  "City break in Barcelona for May 15-19, 2025. Gothic Quarter preferred, need balcony and city views.",
+  "Hotel in Rome for September 12-18, 2025. Near Colosseum and Vatican, authentic Italian experience.",
+  "Weekend in Edinburgh for August 3-6, 2025. During festival season, central location essential.",
+  "City hotel in Vienna for October 20-24, 2025. Historic district, classical music venues nearby.",
+  "Urban stay in Melbourne for November 8-12, 2025. Laneways culture, coffee scene, art galleries proximity.",
+  "Metropolitan hotel in Mexico City for February 15-20, 2025. Historic center, museum district, rooftop views.",
+  "Downtown hotel in Montreal for June 22-26, 2025. Old Port area, jazz clubs, French Quarter atmosphere.",
+  "City center accommodation in Stockholm for July 18-23, 2025. Gamla Stan, Nobel Museum, archipelago tours.",
+  "Historic hotel in Krakow for September 15-20, 2025. Main Square, Wawel Castle views, traditional Polish cuisine.",
+
+  // Wellness & Spa (71-80)
+  "Wellness retreat in Tuscany for June 20-27, 2025. Spa treatments, yoga classes, healthy cuisine focus.",
+  "Thermal spa hotel in Iceland for March 12-18, 2025. Natural hot springs, Nordic spa experience.",
+  "Ayurveda resort in India for November 10-20, 2025. Authentic treatments, meditation, detox programs.",
+  "Spa resort in Baden-Baden for April 18-23, 2025. Traditional German spa, thermal baths, wellness programs.",
+  "Wellness hotel in Switzerland for July 15-22, 2025. Alpine setting, spa treatments, hiking access.",
+  "Holistic retreat in Sedona for May 5-12, 2025. Energy vortexes, meditation, spiritual healing, red rock views.",
+  "Detox resort in Thailand for January 20-30, 2025. Juice cleanses, yoga, meditation, beach location.",
+  "Medical spa in Czech Republic for August 8-15, 2025. Karlovy Vary, thermal springs, health treatments.",
+  "Wellness sanctuary in Costa Rica for October 15-25, 2025. Rainforest setting, nature therapy, organic cuisine.",
+  "Mindfulness retreat in Bhutan for April 12-22, 2025. Buddhist monasteries, meditation, Himalayan views.",
+
+  // Beach Destinations (81-90)
+  "Beachfront resort in Barbados for February 10-20, 2025. All-inclusive, water sports, coral reef snorkeling.",
+  "Beach hotel in Costa Rica for March 15-25, 2025. Eco-friendly, surf lessons, wildlife watching.",
+  "Seaside resort in Greece for June 18-28, 2025. Private beach, infinity pool, traditional Greek cuisine.",
+  "Beach accommodation in Thailand for January 20-30, 2025. Phi Phi Islands, crystal clear water, diving.",
+  "Coastal hotel in Portugal for September 5-15, 2025. Atlantic views, seafood restaurants, golf course.",
+  "Tropical resort in Jamaica for December 15-25, 2024. Reggae culture, jerk cuisine, Blue Mountain coffee tours.",
+  "Island resort in Philippines for February 8-18, 2025. White sand beaches, diving, island hopping.",
+  "Beachside villa in Mexico for April 10-20, 2025. Pacific coast, fishing, whale watching, local markets.",
+  "Oceanfront hotel in Hawaii for July 5-15, 2025. Waikiki Beach, volcano tours, traditional luau.",
+  "Seaside retreat in Croatia for August 20-30, 2025. Adriatic coast, ancient towns, sailing excursions.",
+
+  // Special Occasions & Events (91-100)
+  "Hotel in Munich for Oktoberfest September 16-22, 2025. Walking distance to festival grounds.",
+  "Accommodation in Rio for Carnival February 28 - March 5, 2025. Copacabana area, samba schools access.",
+  "Hotel in Edinburgh for Fringe Festival August 8-18, 2025. Royal Mile location, theater district.",
+  "New Year's Eve in Times Square December 30, 2024 - January 2, 2025. NYC hotel with ball drop views.",
+  "Christmas market hotel in Vienna December 20-26, 2024. Traditional markets, mulled wine, festive atmosphere.",
+  "50th birthday celebration in Napa Valley for wine lover October 8-15, 2025. Luxury vineyard resort, private tastings.",
+  "Wedding venue hotel in Santorini for June 15-20, 2025. Cliff-top ceremony, sunset reception, bridal suite.",
+  "Graduation trip to London for theatre lover May 20-25, 2025. West End shows, luxury hotel, cultural experiences.",
+  "Retirement celebration in Scotland for golf enthusiast July 10-17, 2025. Golf resort, whiskey tours, castle visits.",
+  "Anniversary dinner in Paris for food lovers March 10-13, 2025. Michelin-starred restaurants, cooking classes, market tours."
+];
