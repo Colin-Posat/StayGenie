@@ -1,5 +1,5 @@
 import { Request, Response } from 'express';
-import { OpenAI } from 'openai';
+import OpenAI from 'openai';
 import dotenv from 'dotenv';
 
 dotenv.config();
@@ -11,6 +11,13 @@ const openai = new OpenAI({
 export const parseSearchQuery = async (req: Request, res: Response) => {
   try {
     const { userInput } = req.body;
+
+    if (!userInput) {
+      return res.status(400).json({ error: 'userInput is required' });
+    }
+
+    console.log('🔍 Parsing user query:', userInput);
+    const parseStartTime = Date.now();
 
     // Compute default check-in/check-out dates: one month from today, for 3 nights
     const today = new Date();
@@ -64,7 +71,7 @@ Other Rules:
 - For language, default to "en"
 - Put ALL other search criteria in "aiSearch": hotel preferences, amenities, style, business/leisure, AND budget descriptors
 - If they provide only a country, choose a city in that would have hotels that meet the users preferences if no preferences are given choose a major city in that country
-- If no location is provided, infer one from their preferences. Make sure this location really matches the users preferences it should be a city that is a hot spot for wha tthe user is requesting
+- If no location is provided, infer one from their preferences. Make sure this location really matches the users preferences it should be a city that is a hot spot for what the user is requesting
 - If number of people is not specified, default to 2 adults and 0 children
 - Only return the JSON. No explanation or extra formatting.
 
@@ -72,11 +79,14 @@ User input: "${userInput}"
 `;
 
     const completion = await openai.chat.completions.create({
-      model: 'gpt-4o-mini',
+      model: 'gpt-4.1-nano',
       messages: [{ role: 'user', content: prompt }],
+      temperature: 0.3,
+      max_tokens: 1000,
     });
 
     const content = completion.choices[0]?.message?.content || '{}';
+    console.log('🤖 OpenAI response:', content);
 
     // Parse the returned JSON
     const parsed = JSON.parse(content);
@@ -88,11 +98,14 @@ User input: "${userInput}"
     if (parsed.maxCost !== null && typeof parsed.maxCost !== 'number') {
       parsed.maxCost = null;
     }
+
+    const parseTime = Date.now() - parseStartTime;
+    console.log(`✅ Query parsed in ${parseTime}ms:`, parsed);
     
     res.json(parsed);
 
   } catch (error) {
-    console.error('Error parsing user input:', error);
+    console.error('❌ Error parsing user input:', error);
     res.status(500).json({ error: 'Failed to parse input into structured query.' });
   }
 };

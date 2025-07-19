@@ -137,7 +137,7 @@ interface OptimizedSearchResponse {
       name: 'Grand Plaza Hotel',
       aiMatchPercent: 92,
       whyItMatches: 'Perfect downtown location with excellent amenities and high ratings',
-      starRating: 4.5,
+      starRating: 8.5,
       images: ['https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=800&q=80'],
       pricePerNight: {
         amount: 245,
@@ -170,7 +170,7 @@ interface OptimizedSearchResponse {
       name: 'Ocean Breeze Resort',
       aiMatchPercent: 88,
       whyItMatches: 'Beautiful beachfront location with stunning ocean views and resort amenities',
-      starRating: 4.3,
+      starRating: 8.3,
       images: ['https://images.unsplash.com/photo-1571896349842-33c89424de2d?auto=format&fit=crop&w=800&q=80'],
       pricePerNight: {
         amount: 185,
@@ -203,7 +203,7 @@ interface OptimizedSearchResponse {
       name: 'Boutique Urban Suites',
       aiMatchPercent: 85,
       whyItMatches: 'Stylish boutique hotel in trendy neighborhood with modern amenities',
-      starRating: 4.1,
+      starRating: 8.1,
       images: ['https://images.unsplash.com/photo-1611892440504-42a792e24d32?auto=format&fit=crop&w=800&q=80'],
       pricePerNight: {
         amount: 165,
@@ -236,7 +236,7 @@ interface OptimizedSearchResponse {
       name: 'Mountain View Lodge',
       aiMatchPercent: 90,
       whyItMatches: 'Scenic mountain location perfect for nature lovers with outdoor activities',
-      starRating: 4.4,
+      starRating: 8.4,
       images: ['https://images.unsplash.com/photo-1520250497591-112f2f40a3f4?auto=format&fit=crop&w=800&q=80'],
       pricePerNight: {
         amount: 195,
@@ -269,7 +269,7 @@ interface OptimizedSearchResponse {
       name: 'Business Comfort Inn',
       aiMatchPercent: 79,
       whyItMatches: 'Reliable business hotel with essential amenities and convenient location',
-      starRating: 3.9,
+      starRating: 8.9,
       images: ['https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?auto=format&fit=crop&w=800&q=80'],
       pricePerNight: {
         amount: 125,

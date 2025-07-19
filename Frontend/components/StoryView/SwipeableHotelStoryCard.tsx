@@ -35,6 +35,7 @@ interface Hotel {
   tags: string[];
   location: string;
   features: string[];
+  images?: string[];
   
   // AI-powered fields from optimized backend
   aiExcerpt?: string;
@@ -559,9 +560,9 @@ const HotelOverviewSlide: React.FC<{ hotel: EnhancedHotel; isInsightsLoading?: b
             <Ionicons 
               name={isInsightsLoading ? "sync" : "sparkles"} 
               size={12} 
-              color="#FFD700" 
+              color="#1df9ff" 
             />
-            <Text style={tw`text-yellow-400 text-xs font-semibold ml-1`}>
+            <Text style={tw`text-white text-xs font-semibold ml-1`}>
               {hotel.aiMatchPercent 
                 ? `AI Match ${hotel.aiMatchPercent}%`
                 : 'AI Insight'
@@ -632,10 +633,24 @@ const LocationSlide: React.FC<{ hotel: EnhancedHotel }> = ({ hotel }) => {
     outputRange: [6, -6],
   });
 
+  // UPDATED: Use images array for second slide background
+  const getLocationImage = () => {
+    // Try to use the second image from the images array
+    if (hotel.images && hotel.images.length > 1) {
+      return hotel.images[1];
+    }
+    // Fallback to mapImage if available
+    if (hotel.mapImage) {
+      return hotel.mapImage;
+    }
+    // Final fallback to first image
+    return hotel.images && hotel.images.length > 0 ? hotel.images[0] : hotel.image;
+  };
+
   return (
     <View style={tw`flex-1 relative overflow-hidden`}>
       <Animated.Image 
-        source={{ uri: hotel.mapImage }} 
+        source={{ uri: getLocationImage() }} 
         style={[
           {
             position: 'absolute',
@@ -676,8 +691,8 @@ const LocationSlide: React.FC<{ hotel: EnhancedHotel }> = ({ hotel }) => {
         {hotel.nearbyAttractions && hotel.nearbyAttractions.length > 0 && (
           <View style={tw`bg-black/50 p-2.5 rounded-lg border border-white/20 mb-2.5`}>
             <View style={tw`flex-row items-center mb-1`}>
-              <Ionicons name="location" size={12} color="#4ECDC4" />
-              <Text style={tw`text-cyan-400 text-xs font-semibold ml-1`}>Nearby Attractions</Text>
+              <Ionicons name="location" size={12} color="#1df9ff" />
+              <Text style={tw`text-white text-xs font-semibold ml-1`}>Nearby Attractions</Text>
             </View>
             {hotel.nearbyAttractions.slice(0, 3).map((attraction, index) => (
               <Text key={index} style={tw`text-white text-xs leading-4 ${index === 0 ? '' : 'mt-1'}`}>
@@ -690,8 +705,8 @@ const LocationSlide: React.FC<{ hotel: EnhancedHotel }> = ({ hotel }) => {
         {/* UPDATED: Location Highlight using optimized backend data */}
         <View style={tw`bg-black/50 p-2.5 border border-white/20 rounded-lg`}>
           <View style={tw`flex-row items-center mb-1`}>
-            <Ionicons name="star" size={12} color="#FFD700" />
-            <Text style={tw`text-yellow-400 text-xs font-semibold ml-1`}>Location Highlight</Text>
+            <Ionicons name="star" size={12} color="#1df9ff" />
+            <Text style={tw`text-white text-xs font-semibold ml-1`}>Location Highlight</Text>
           </View>
           <Text style={tw`text-white text-xs leading-4`}>
             {hotel.locationHighlight || 
@@ -763,10 +778,24 @@ const AmenitiesSlide: React.FC<{ hotel: EnhancedHotel; isInsightsLoading?: boole
     outputRange: [12, -12],
   });
 
+  // UPDATED: Use images array for third slide background
+  const getAmenitiesImage = () => {
+    // Try to use the third image from the images array
+    if (hotel.images && hotel.images.length > 2) {
+      return hotel.images[2];
+    }
+    // Fallback to second image if third doesn't exist
+    if (hotel.images && hotel.images.length > 1) {
+      return hotel.images[1];
+    }
+    // Final fallback to first image
+    return hotel.images && hotel.images.length > 0 ? hotel.images[0] : hotel.image;
+  };
+
   return (
     <View style={tw`flex-1 relative overflow-hidden`}>
       <Animated.Image 
-        source={{ uri: hotel.images[2] }} 
+        source={{ uri: getAmenitiesImage() }} 
         style={[
           {
             position: 'absolute',
@@ -806,13 +835,12 @@ const AmenitiesSlide: React.FC<{ hotel: EnhancedHotel; isInsightsLoading?: boole
           </View>
         )}
 
-
         {/* Fun Facts from optimized backend */}
         {hotel.funFacts && hotel.funFacts.length > 0 && (
           <View style={tw`bg-black/50 p-2.5 rounded-lg border border-white/20 mt-2.5`}>
             <View style={tw`flex-row items-center mb-1`}>
-              <Ionicons name="bulb" size={12} color="#F59E0B" />
-              <Text style={tw`text-amber-400 text-xs font-semibold ml-1`}>Fun Facts</Text>
+              <Ionicons name="bulb" size={12} color="#1df9ff" />
+              <Text style={tw`text-white text-xs font-semibold ml-1`}>Fun Facts</Text>
             </View>
             {hotel.funFacts.slice(0, 2).map((fact, index) => (
               <Text key={index} style={tw`text-white text-xs leading-4 ${index === 0 ? '' : 'mt-1'}`}>
@@ -828,9 +856,9 @@ const AmenitiesSlide: React.FC<{ hotel: EnhancedHotel; isInsightsLoading?: boole
             <Ionicons 
               name={isInsightsLoading ? "sync" : "people"} 
               size={12} 
-              color="#FFD700" 
+              color="#1df9ff" 
             />
-            <Text style={tw`text-yellow-400 text-xs font-semibold ml-1`}>
+            <Text style={tw`text-white text-xs font-semibold ml-1`}>
               Guest Insights
             </Text>
             {isInsightsLoading && (

@@ -1,0 +1,166 @@
+
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Performance Distribution Analysis</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        .chart-container { width: 100%; height: 400px; margin: 20px 0; }
+        .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin: 20px 0; }
+        .stat-box { background: #f5f5f5; padding: 15px; border-radius: 8px; }
+        .stat-value { font-size: 24px; font-weight: bold; color: #2563eb; }
+        .stat-label { font-size: 14px; color: #666; }
+    </style>
+</head>
+<body>
+    <h1>🏨 Hotel Search Performance Distribution Analysis</h1>
+    
+    <div class="stats-grid">
+        <div class="stat-box">
+            <div class="stat-value">16564ms</div>
+            <div class="stat-label">Average Response Time</div>
+        </div>
+        <div class="stat-box">
+            <div class="stat-value">16472ms</div>
+            <div class="stat-label">Median Response Time</div>
+        </div>
+        <div class="stat-box">
+            <div class="stat-value">3090ms</div>
+            <div class="stat-label">Standard Deviation</div>
+        </div>
+        <div class="stat-box">
+            <div class="stat-value">91.0%</div>
+            <div class="stat-label">Success Rate</div>
+        </div>
+    </div>
+
+    <div class="chart-container">
+        <canvas id="distributionChart"></canvas>
+    </div>
+
+    <div class="chart-container">
+        <canvas id="percentileChart"></canvas>
+    </div>
+
+    <script>
+        // Distribution Chart with Bell Curve
+        const ctx1 = document.getElementById('distributionChart').getContext('2d');
+        new Chart(ctx1, {
+            type: 'bar',
+            data: {
+                labels: ["10502-11170ms","11170-11837ms","11837-12504ms","12504-13171ms","13171-13839ms","13839-14506ms","14506-15173ms","15173-15840ms","15840-16508ms","16508-17175ms","17175-17842ms","17842-18510ms","18510-19177ms","19177-19844ms","19844-20511ms","20511-21179ms","21179-21846ms","21846-22513ms","22513-23180ms","23180-23848ms"],
+                datasets: [{
+                    label: 'Frequency',
+                    data: [4,0,2,7,7,8,6,7,5,7,8,5,6,4,1,6,4,1,2,1],
+                    backgroundColor: 'rgba(37, 99, 235, 0.6)',
+                    borderColor: 'rgba(37, 99, 235, 1)',
+                    borderWidth: 1,
+                    yAxisID: 'y'
+                }, {
+                    label: 'Normal Distribution',
+                    data: [1.1445948144895832,1.244639761687508,1.3509068985920143,1.4635144657982937,1.582553756058176,1.708086161234435,1.8401402659949306,1.9787090258099267,2.123747068688267,2.2751681614987507,2.4328428826114967,2.5965965429051407,2.766207396871019,2.94140518456541,3.1218700434857936,3.3072318270581627,3.4970698633143638,3.6909131835179108,3.888241245986073,4.088485175190941,4.29102953045348,4.495214612237891,4.700339307287541,4.905664466710953,5.110416803730351,5.313793290260251,5.514966023911931,5.713087529549266,5.907296452285089,6.0967235919372165,6.2804982225917225,6.457754635174345,6.627638835929259,6.789315329556982,6.941973912567444,7.084836400241864,7.217163209533065,7.338259720313984,7.4474823386339075,7.544244188065192,7.628020358802201,7.698352648868814,7.754853737539413,7.797210737798898,7.825188082258042,7.838629705282991,7.837460493057518,7.821686982727434,7.7913973015223945,7.746760346648271,7.688024216628077,7.615513914475647,7.529628352451928,7.430836697024502,7.31967410088177,7.1967368763123964,7.062677170832186,6.918197211525497,6.764043189088063,6.600998855954494,6.429878915129617,6.251522277405054,6.066785264537038,5.8765348347183215,5.681641904344597,5.4829748367218,5.281393164069947,5.077741604050545,4.872844426189617,4.667500217108802,4.462477086538931,4.258508348808414,4.0562887070027545,3.8564709594162228,3.6596632403871188,3.4664268002468788,3.2772743220325187,3.0926687659133667,2.9130227260574286,2.7386982789866434,2.570007297406693,2.4072121990948285,2.2505270967214908,2.1001193114881596,1.9561112111901808,1.818582331750453,1.6875717403989534,1.563080598460928,1.445074882123756,1.333488220528132,1.228224812017954,1.1291623813235951,1.0361551427799311,0.9490367373270189,0.8676231139401098,0.7917153292196851,0.7211022420776532,0.6555630837202332,0.5948698863950901,0.538789757586666,0.48708698946286283],
+                    type: 'line',
+                    borderColor: 'rgba(239, 68, 68, 1)',
+                    backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                    fill: false,
+                    tension: 0.4,
+                    yAxisID: 'y1'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    title: {
+                        display: true,
+                        text: 'Response Time Distribution with Bell Curve'
+                    }
+                },
+                scales: {
+                    y: {
+                        type: 'linear',
+                        display: true,
+                        position: 'left',
+                        title: {
+                            display: true,
+                            text: 'Frequency'
+                        }
+                    },
+                    y1: {
+                        type: 'linear',
+                        display: true,
+                        position: 'right',
+                        title: {
+                            display: true,
+                            text: 'Normal Distribution'
+                        },
+                        grid: {
+                            drawOnChartArea: false,
+                        },
+                    }
+                }
+            }
+        });
+
+        // Percentile Chart
+        const ctx2 = document.getElementById('percentileChart').getContext('2d');
+        new Chart(ctx2, {
+            type: 'bar',
+            data: {
+                labels: ['P10', 'P25', 'P50 (Median)', 'P75', 'P90', 'P95', 'P99'],
+                datasets: [{
+                    label: 'Response Time (ms)',
+                    data: [
+                        12859.26412498951,
+                        14254.145041942596,
+                        16471.897833108902,
+                        18658.29262548685,
+                        21071.997124910355,
+                        21516.763041973114,
+                        22877.045649731153
+                    ],
+                    backgroundColor: [
+                        'rgba(34, 197, 94, 0.6)',
+                        'rgba(59, 130, 246, 0.6)',
+                        'rgba(99, 102, 241, 0.6)',
+                        'rgba(168, 85, 247, 0.6)',
+                        'rgba(236, 72, 153, 0.6)',
+                        'rgba(239, 68, 68, 0.6)',
+                        'rgba(220, 38, 38, 0.6)'
+                    ],
+                    borderColor: [
+                        'rgba(34, 197, 94, 1)',
+                        'rgba(59, 130, 246, 1)',
+                        'rgba(99, 102, 241, 1)',
+                        'rgba(168, 85, 247, 1)',
+                        'rgba(236, 72, 153, 1)',
+                        'rgba(239, 68, 68, 1)',
+                        'rgba(220, 38, 38, 1)'
+                    ],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    title: {
+                        display: true,
+                        text: 'Response Time Percentiles'
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: 'Response Time (ms)'
+                        }
+                    }
+                }
+            }
+        });
+    </script>
+</body>
+</html>

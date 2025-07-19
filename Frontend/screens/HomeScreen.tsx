@@ -111,6 +111,7 @@ interface HotelRecommendation {
   latitude: number | null;
   longitude: number | null;
   topAmenities: string[];
+  
 }
 
 // AI Suggestions interface
@@ -153,6 +154,7 @@ interface Hotel {
   whyItMatches?: string;
   funFacts?: string[];
   aiMatchPercent?: number;
+  images?: string[];
   
   pricePerNight?: {
     amount: number;
@@ -511,7 +513,8 @@ const HomeScreen = () => {
     return {
       id: index + 1,
       name: recommendation.name,
-      image: getHotelImage(recommendation),
+      image: getHotelImage(recommendation), // First image for main display
+      images: recommendation.images || [],
       price: Math.round(price),
       originalPrice: Math.round(originalPrice),
       priceComparison: priceComparison,
@@ -1043,9 +1046,9 @@ const HomeScreen = () => {
             <Ionicons
               name="sparkles"
               size={18}
-              color="#FFFFFF"
+              color="#1df9ff"
             />
-            <Text style={tw`text-base font-bold text-white`}>
+            <Text style={[tw`text-base font-bold text-white`]}>
               Refine Search
             </Text>
           </TouchableOpacity>
