@@ -1,4 +1,4 @@
-// SwipeableStoryView.tsx - Updated to work with new FavoritesCache system
+// SwipeableStoryView.tsx - Updated for Two-Stage API system
 import React, { useState } from 'react';
 import {
   View,
@@ -23,12 +23,15 @@ interface SwipeableStoryViewProps {
   checkOutDate?: Date;
   adults?: number;
   children?: number;
-  // NEW: Track insights loading state
+  // NEW: Track insights loading state for two-stage API
   isInsightsLoading?: boolean;
+  // NEW: Additional state tracking for better UX
+  stage1Complete?: boolean;
+  stage2Complete?: boolean;
+  searchMode?: 'test' | 'two-stage' | 'legacy';
 }
 
 // UPDATED: Enhanced function to preserve optimized backend data while adding story card requirements
-// FIXED: Enhanced function to preserve optimized backend data while adding story card requirements
 const enhanceHotel = (hotel: Hotel): EnhancedHotel => {
   // UPDATED: Generate multiple images for story slides, preserving API data
   const generateImages = (hotel: Hotel): string[] => {
@@ -94,18 +97,46 @@ const enhanceHotel = (hotel: Hotel): EnhancedHotel => {
     return fallbackImages;
   };
 
-  // ... rest of the enhanceHotel function remains the same ...
+  // NEW: Detect if hotel has loading placeholders (Stage 1 data)
+  const hasLoadingPlaceholders = (hotel: Hotel): boolean => {
+    return (
+      (hotel.whyItMatches?.includes('progress') ?? false) ||
+      (hotel.whyItMatches?.includes('loading') ?? false) ||
+      (hotel.guestInsights?.includes('Loading') ?? false) ||
+      (hotel.locationHighlight?.includes('Analyzing') ?? false) ||
+      (hotel.nearbyAttractions?.some(attr => attr.includes('Loading')) ?? false) ||
+      (hotel.funFacts?.some(fact => fact.includes('Loading')) ?? false)
+    );
+  };
+
+  // NEW: Get data stage for better debugging
+  const getDataStage = (hotel: Hotel): 'stage1' | 'stage2' | 'complete' => {
+    if (hasLoadingPlaceholders(hotel)) {
+      return 'stage1';
+    } else if (hotel.whyItMatches && hotel.guestInsights && !hotel.guestInsights.includes('Loading')) {
+      return 'complete';
+    } else {
+      return 'stage2';
+    }
+  };
 
   // UPDATED: Ensure we preserve all optimized backend data while enhancing for story view
   const enhancedHotel: EnhancedHotel = {
     ...hotel, // Preserve ALL optimized backend data
-    images: generateImages(hotel), // Pass the whole hotel object instead of just hotel.image
-    mapImage: "https://maps.googleapis.com/maps/api/staticmap?center=",
-    nearbyAttractions: hotel.nearbyAttractions || ["No nearby attractions available"],
+    images: generateImages(hotel),
+    mapImage: hotel.latitude && hotel.longitude 
+      ? `https://maps.googleapis.com/maps/api/staticmap?center=${hotel.latitude},${hotel.longitude}&zoom=15&size=400x200&markers=color:red%7C${hotel.latitude},${hotel.longitude}&key=YOUR_API_KEY`
+      : "https://maps.googleapis.com/maps/api/staticmap?center=",
+    nearbyAttractions: hotel.nearbyAttractions && hotel.nearbyAttractions.length > 0 
+      ? hotel.nearbyAttractions 
+      : ["Exploring nearby attractions..."],
   };
 
-  // Enhanced logging for debugging
-  console.log(`🎨 Enhanced hotel ${hotel.name}:`, {
+  // Enhanced logging for debugging two-stage API
+  const dataStage = getDataStage(hotel);
+  console.log(`🎨 Enhanced hotel ${hotel.name} (${dataStage}):`, {
+    dataStage: dataStage,
+    hasLoadingPlaceholders: hasLoadingPlaceholders(hotel),
     originalImages: hotel.images?.length || 0,
     finalImages: enhancedHotel.images.length,
     imagesSample: enhancedHotel.images[0]?.substring(0, 50) + '...',
@@ -121,6 +152,7 @@ const enhanceHotel = (hotel: Hotel): EnhancedHotel => {
       matchPercent: hotel.aiMatchPercent,
       matchType: hotel.matchType,
       whyItMatches: hotel.whyItMatches ? hotel.whyItMatches.substring(0, 50) + '...' : 'None',
+      guestInsights: hotel.guestInsights ? hotel.guestInsights.substring(0, 50) + '...' : 'None',
     },
     pricingData: {
       hasEnhancedPricing: !!hotel.pricePerNight,
@@ -132,7 +164,23 @@ const enhanceHotel = (hotel: Hotel): EnhancedHotel => {
   return enhancedHotel;
 };
 
-// UPDATED: Main SwipeableStoryView Component with FavoritesCache integration
+// NEW: Get insights loading status for individual hotels
+const getHotelInsightsStatus = (hotel: Hotel): 'loading' | 'partial' | 'complete' => {
+  const hasLoadingGuestInsights = hotel.guestInsights?.includes('Loading') ?? false;
+  const hasLoadingWhyItMatches = (hotel.whyItMatches?.includes('progress') ?? false) || (hotel.whyItMatches?.includes('loading') ?? false);
+  const hasLoadingLocationHighlight = hotel.locationHighlight?.includes('Analyzing') ?? false;
+  const hasLoadingAttractions = hotel.nearbyAttractions?.some(attr => attr.includes('Loading')) ?? false;
+  
+  if (hasLoadingGuestInsights || hasLoadingWhyItMatches) {
+    return 'loading';
+  } else if (hasLoadingLocationHighlight || hasLoadingAttractions) {
+    return 'partial';
+  } else {
+    return 'complete';
+  }
+};
+
+// UPDATED: Main SwipeableStoryView Component with two-stage API support
 const SwipeableStoryView: React.FC<SwipeableStoryViewProps> = ({ 
   hotels = [], 
   onHotelPress, 
@@ -142,12 +190,28 @@ const SwipeableStoryView: React.FC<SwipeableStoryViewProps> = ({
   checkOutDate,
   adults = 2,
   children = 0,
-  isInsightsLoading = false
+  isInsightsLoading = false,
+  stage1Complete = false,
+  stage2Complete = false,
+  searchMode = 'two-stage'
 }) => {
-  // REMOVED: savedHotels state since it's now handled by FavoritesCache internally
-
   // UPDATED: Enhance hotels with additional data while preserving optimized backend data
   const enhancedHotels = hotels.map(enhanceHotel);
+
+  // NEW: Calculate insights completion status
+  const getInsightsStats = () => {
+    if (hotels.length === 0) return { complete: 0, loading: 0, partial: 0 };
+    
+    const stats = { complete: 0, loading: 0, partial: 0 };
+    hotels.forEach(hotel => {
+      const status = getHotelInsightsStatus(hotel);
+      stats[status]++;
+    });
+    
+    return stats;
+  };
+
+  const insightsStats = getInsightsStats();
 
   // UPDATED: Handle save - now just triggers optional callback for backward compatibility
   const handleSave = (hotel: Hotel) => {
@@ -171,27 +235,32 @@ const SwipeableStoryView: React.FC<SwipeableStoryViewProps> = ({
     console.log(`🏨 Hotel pressed: ${hotel.name}`);
     console.log(`🤖 AI Match: ${hotel.aiMatchPercent}% (${hotel.matchType || 'standard'})`);
     console.log(`💰 Pricing: ${hotel.pricePerNight?.display || `$${hotel.price}/night`}`);
+    console.log(`📊 Insights Status: ${getHotelInsightsStatus(hotel)}`);
     onHotelPress?.(hotel);
   };
 
-  // UPDATED: Simplified render function without isCurrentHotelSaved prop
+  // UPDATED: Enhanced render function with insights status
   const renderHotelCard = ({ item: hotel, index }: { item: EnhancedHotel; index: number }) => {
+    const insightsStatus = getHotelInsightsStatus(hotel);
+    
     return (
       <View style={tw`px-5 mb-6`}>
         <View style={tw`border border-black/10 shadow-md rounded-2xl`}>
           <SwipeableHotelStoryCard
             hotel={hotel}
-            onSave={() => handleSave(hotel)} // Optional callback
+            onSave={() => handleSave(hotel)}
             onViewDetails={() => handleViewDetails(hotel)}
             onHotelPress={() => handleHotelPress(hotel)}
             index={index}
             totalCount={enhancedHotels.length}
-            // Pass through Google Maps and insights props
             checkInDate={checkInDate}
             checkOutDate={checkOutDate}
             adults={adults}
             children={children}
-            isInsightsLoading={isInsightsLoading}
+            // NEW: Pass individual hotel insights status
+            isInsightsLoading={insightsStatus === 'loading'}
+            insightsStatus={insightsStatus}
+            searchMode={searchMode}
           />
         </View>
       </View>
@@ -204,7 +273,7 @@ const SwipeableStoryView: React.FC<SwipeableStoryViewProps> = ({
     index,
   });
 
-  // UPDATED: Enhanced empty state with optimized backend context
+  // UPDATED: Enhanced empty state with two-stage API context
   if (enhancedHotels.length === 0) {
     return (
       <View style={tw`flex-1 bg-gray-50 justify-center items-center px-10`}>
@@ -218,30 +287,116 @@ const SwipeableStoryView: React.FC<SwipeableStoryViewProps> = ({
           Try adjusting your search criteria or dates to find available hotels.
         </Text>
         <Text style={tw`text-sm text-gray-400 text-center leading-5`}>
-          Our AI-powered search will find the perfect match for your preferences.
+          {searchMode === 'test' 
+            ? 'Test mode - No test data available for this search.'
+            : searchMode === 'two-stage' 
+              ? 'Our two-stage AI-powered search will find the perfect match for your preferences.'
+              : 'Our AI-powered search will find the perfect match for your preferences.'
+          }
         </Text>
       </View>
     );
   }
 
-  // UPDATED: Display insights loading indicator at the top of the list
+  // NEW: Get appropriate loading message based on search mode and stage
+  const getLoadingMessage = () => {
+    if (searchMode === 'test') {
+      return {
+        title: 'Loading test insights',
+        subtitle: 'Processing test data...'
+      };
+    } else if (searchMode === 'two-stage') {
+      if (!stage1Complete) {
+        return {
+          title: 'Finding hotels with AI matching',
+          subtitle: 'Stage 1: Llama is analyzing your preferences...'
+        };
+      } else if (!stage2Complete) {
+        return {
+          title: 'Enhancing results with AI insights',
+          subtitle: 'Stage 2: GPT-4o is generating detailed content...'
+        };
+      } else {
+        return {
+          title: 'Final insights loading',
+          subtitle: 'Adding sentiment analysis and guest insights...'
+        };
+      }
+    } else {
+      return {
+        title: 'Enhancing your results with AI insights',
+        subtitle: 'Loading detailed guest sentiment analysis...'
+      };
+    }
+  };
+
+  const loadingMessage = getLoadingMessage();
+
+  // UPDATED: Enhanced insights loading indicator for two-stage API
   return (
     <View style={tw`flex-1 bg-gray-50`}>
-      {/* Global insights loading indicator */}
+      {/* Enhanced global insights loading indicator */}
       {isInsightsLoading && (
-        <View style={tw`mx-5 mt-2 mb-1 p-3 bg-blue-50 rounded-lg border border-blue-200`}>
+        <View style={tw`mx-5 mt-2 mb-1 p-3 ${
+          searchMode === 'test' ? 'bg-orange-50 border-orange-200' : 'bg-blue-50 border-blue-200'
+        } rounded-lg border`}>
           <View style={tw`flex-row items-center`}>
-            <View style={tw`w-4 h-4 rounded-full border-2 border-blue-500 border-t-transparent animate-spin mr-3`} />
+            <View style={tw`w-4 h-4 rounded-full border-2 ${
+              searchMode === 'test' ? 'border-orange-500 border-t-transparent' : 'border-blue-500 border-t-transparent'
+            } animate-spin mr-3`} />
             <View style={tw`flex-1`}>
-              <Text style={tw`text-blue-700 text-sm font-medium`}>
-                Enhancing your results with AI insights
+              <Text style={tw`${
+                searchMode === 'test' ? 'text-orange-700' : 'text-blue-700'
+              } text-sm font-medium`}>
+                {loadingMessage.title}
               </Text>
-              <Text style={tw`text-blue-600 text-xs mt-0.5`}>
-                Loading detailed guest sentiment analysis...
+              <Text style={tw`${
+                searchMode === 'test' ? 'text-orange-600' : 'text-blue-600'
+              } text-xs mt-0.5`}>
+                {loadingMessage.subtitle}
               </Text>
+              
+              {/* NEW: Progress indicator for two-stage */}
+              {searchMode === 'two-stage' && insightsStats.complete > 0 && (
+                <Text style={tw`text-blue-500 text-xs mt-1`}>
+                  {insightsStats.complete}/{hotels.length} hotels enhanced
+                </Text>
+              )}
             </View>
-            <Ionicons name="sparkles" size={16} color="#3B82F6" />
+            <Ionicons 
+              name={searchMode === 'test' ? "flask" : "sparkles"} 
+              size={16} 
+              color={searchMode === 'test' ? "#EA580C" : "#3B82F6"} 
+            />
           </View>
+          
+          {/* NEW: Stage indicators for two-stage mode */}
+          {searchMode === 'two-stage' && (
+            <View style={tw`flex-row items-center mt-2 pt-2 border-t border-blue-200`}>
+              <View style={tw`flex-row items-center mr-4`}>
+                <Ionicons 
+                  name={stage1Complete ? "checkmark-circle" : "time"} 
+                  size={14} 
+                  color={stage1Complete ? "#10B981" : "#6B7280"} 
+                />
+                <Text style={tw`text-xs ml-1 ${stage1Complete ? 'text-green-600' : 'text-gray-500'}`}>
+                  Stage 1
+                </Text>
+              </View>
+              <View style={tw`flex-row items-center`}>
+                <Ionicons 
+                  name={stage2Complete ? "checkmark-circle" : isInsightsLoading ? "sync" : "time"} 
+                  size={14} 
+                  color={stage2Complete ? "#10B981" : isInsightsLoading ? "#3B82F6" : "#6B7280"} 
+                />
+                <Text style={tw`text-xs ml-1 ${
+                  stage2Complete ? 'text-green-600' : isInsightsLoading ? 'text-blue-600' : 'text-gray-500'
+                }`}>
+                  Stage 2
+                </Text>
+              </View>
+            </View>
+          )}
         </View>
       )}
 
@@ -257,8 +412,8 @@ const SwipeableStoryView: React.FC<SwipeableStoryViewProps> = ({
         windowSize={5}
         initialNumToRender={2}
         scrollEventThrottle={16}
-        // UPDATED: Simplified extraData since we no longer track savedHotels state
-        extraData={isInsightsLoading}
+        // UPDATED: Enhanced extraData for two-stage API
+        extraData={`${isInsightsLoading}-${stage1Complete}-${stage2Complete}-${insightsStats.complete}`}
       />
     </View>
   );

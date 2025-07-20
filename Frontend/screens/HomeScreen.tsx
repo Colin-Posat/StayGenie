@@ -1,4 +1,4 @@
-// HomeScreen.tsx - Updated with Test Mode functionality
+// HomeScreen.tsx - Updated with Two-Stage API functionality
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   View,
@@ -37,7 +37,112 @@ type FindStackParamList = {
 
 type HomeScreenNavigationProp = StackNavigationProp<FindStackParamList>;
 
-// UPDATED: Enhanced interfaces for optimized backend response
+// NEW: Two-stage API response interfaces
+interface Stage1SearchResponse {
+  searchParams: {
+    checkin: string;
+    checkout: string;
+    countryCode: string;
+    cityName: string;
+    language: string;
+    adults: number;
+    children: number;
+    aiSearch: string;
+    nights: number;
+    currency: string;
+    minCost?: number | null;
+    maxCost?: number | null;
+  };
+  hotels: Stage1Hotel[];
+  matchedHotelsCount: number;
+  searchId: string;
+  aiMatchingCompleted: boolean;
+  performance: {
+    totalTimeMs: number;
+    stepBreakdown: any[];
+    bottlenecks: any[];
+  };
+  totalHotelsFound: number;
+  hotelsWithRates: number;
+  generatedAt: string;
+}
+
+interface Stage1Hotel {
+  hotelId: string;
+  name: string;
+  aiMatchPercent: number;
+  starRating: number;
+  images: string[];
+  pricePerNight: {
+    amount: number;
+    totalAmount: number;
+    currency: string;
+    display: string;
+    provider: string | null;
+    isSupplierPrice: boolean;
+  } | null;
+  reviewCount: number;
+  address: string;
+  amenities: string[];
+  description: string;
+  coordinates: any;
+  priceRange?: {
+    min: number;
+    max: number;
+    currency: string;
+    display: string;
+  };
+  totalRooms: number;
+  hasAvailability: boolean;
+  roomTypes?: any[];
+  city: string;
+  country: string;
+  latitude: number | null;
+  longitude: number | null;
+  topAmenities: string[];
+  // Contains summarized info for Stage 2
+  summarizedInfo: {
+    name: string;
+    description: string;
+    amenities: string[];
+    starRating: number;
+    reviewCount: number;
+    pricePerNight: string;
+    location: string;
+    city: string;
+    country: string;
+  };
+}
+
+interface Stage2InsightsResponse {
+  insightsId: string;
+  processedHotels: number;
+  recommendations: AIRecommendation[];
+  aiModels: {
+    content: string;
+    insights: string;
+  };
+  generatedAt: string;
+  performance: {
+    totalTimeMs: number;
+    stepBreakdown: any[];
+    bottlenecks: any[];
+  };
+}
+
+interface AIRecommendation {
+  hotelId: string;
+  hotelName: string;
+  aiMatchPercent: number;
+  whyItMatches: string;
+  funFacts: string[];
+  nearbyAttractions: string[];
+  locationHighlight: string;
+  guestInsights: string;
+  sentimentData: any;
+}
+
+// Legacy interface for backward compatibility
 interface OptimizedSearchResponse {
   searchParams: {
     checkin: string;
@@ -111,7 +216,6 @@ interface HotelRecommendation {
   latitude: number | null;
   longitude: number | null;
   topAmenities: string[];
-  
 }
 
 // AI Suggestions interface
@@ -121,19 +225,6 @@ interface AISuggestion {
   category?: string;
   reasoning?: string;
   priority?: string;
-}
-
-interface SentimentResponse {
-  searchId: string;
-  insights: {
-    [hotelId: string]: {
-      guestInsights: string;
-      sentimentData: any;
-      reviewCount: number;
-    };
-  };
-  insightsPending: boolean;
-  completedAt?: string;
 }
 
 interface Hotel {
@@ -163,7 +254,7 @@ interface Hotel {
     display: string;
     provider: string | null;
     isSupplierPrice: boolean;
-  };
+  } | null;
   
   roomTypes?: any[];
   guestInsights?: string;
@@ -193,9 +284,15 @@ const HomeScreen = () => {
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearching, setIsSearching] = useState(false);
   const [isInsightsLoading, setIsInsightsLoading] = useState(false);
-  const [searchResults, setSearchResults] = useState<OptimizedSearchResponse | null>(null);
+  
+  // NEW: Two-stage search state
+  const [stage1Results, setStage1Results] = useState<Stage1SearchResponse | null>(null);
+  const [stage2Results, setStage2Results] = useState<Stage2InsightsResponse | null>(null);
   const [displayHotels, setDisplayHotels] = useState<Hotel[]>([]);
   const [currentSearchId, setCurrentSearchId] = useState<string | null>(null);
+  
+  // Legacy state for backward compatibility
+  const [searchResults, setSearchResults] = useState<OptimizedSearchResponse | null>(null);
   
   // AI Suggestions state
   const [aiSuggestions, setAiSuggestions] = useState<AISuggestion[]>([]);
@@ -382,79 +479,226 @@ const HomeScreen = () => {
     }));
   }, []);
 
-  // Sentiment polling function (production only)
-  const startSentimentPolling = useCallback(async (searchId: string) => {
-    if (TEST_MODE) {
-      console.log('🧪 TEST MODE: Skipping sentiment polling');
-      return;
-    }
-
-    console.log('🎭 Starting sentiment polling for searchId:', searchId);
-    setIsInsightsLoading(true);
+  // NEW: Convert Stage 1 hotel to display format (basic info with loading placeholders)
+  const convertStage1HotelToDisplay = (hotel: Stage1Hotel, index: number): Hotel => {
+    console.log('🔍 Converting Stage 1 hotel (basic data):', hotel.name);
     
-    const pollSentiment = async () => {
-      try {
-        console.log('🔄 Polling sentiment data...');
-        const sentimentData: SentimentResponse = await makeRequest(`/api/hotels/sentiment/${searchId}`);
-        
-        if (!sentimentData.insightsPending) {
-          console.log('✅ Sentiment insights ready!');
-          
-          setDisplayHotels(prevHotels => 
-            prevHotels.map(hotel => {
-              const hotelInsights = sentimentData.insights[hotel.id.toString()];
-              if (hotelInsights) {
-                return {
-                  ...hotel,
-                  guestInsights: hotelInsights.guestInsights,
-                  reviews: hotelInsights.reviewCount || hotel.reviews
-                };
-              }
-              return hotel;
-            })
-          );
-          
-          if (sentimentPollingRef.current) {
-            clearInterval(sentimentPollingRef.current);
-            sentimentPollingRef.current = null;
+    const getHotelImage = (hotel: Stage1Hotel): string => {
+      const defaultImage = "https://images.unsplash.com/photo-1564501049412-61c2a3083791?auto=format&fit=crop&w=800&q=80";
+      
+      if (hotel.images && hotel.images.length > 0) {
+        const firstImage = hotel.images[0];
+        if (firstImage && typeof firstImage === 'string' && firstImage.trim() !== '') {
+          if (firstImage.startsWith('http://') || firstImage.startsWith('https://') || firstImage.startsWith('//')) {
+            return firstImage;
           }
-          if (pollingTimeoutRef.current) {
-            clearTimeout(pollingTimeoutRef.current);
-            pollingTimeoutRef.current = null;
-          }
-          
-          setIsInsightsLoading(false);
-          
-          Alert.alert(
-            'Insights Ready! ✨',
-            'Guest insights and sentiment analysis have been updated.',
-            [{ text: 'Great!' }]
-          );
-        } else {
-          console.log('⏳ Insights still pending...');
         }
-      } catch (error) {
-        console.error('❌ Sentiment polling error:', error);
       }
+      
+      return defaultImage;
     };
 
-    sentimentPollingRef.current = setInterval(pollSentiment, 2000);
-    
-    pollingTimeoutRef.current = setTimeout(() => {
-      if (sentimentPollingRef.current) {
-        clearInterval(sentimentPollingRef.current);
-        sentimentPollingRef.current = null;
+    let price = 200;
+    let originalPrice = price * 1.15;
+    let priceComparison = "Standard rate";
+
+    if (hotel.pricePerNight) {
+      price = hotel.pricePerNight.amount;
+      originalPrice = Math.round(price * 1.15);
+      priceComparison = hotel.pricePerNight.display;
+      
+      if (hotel.pricePerNight.provider) {
+        priceComparison += ` (${hotel.pricePerNight.provider})`;
       }
+    } else if (hotel.priceRange) {
+      price = hotel.priceRange.min;
+      originalPrice = Math.round(price * 1.15);
+      priceComparison = hotel.priceRange.display;
+    }
+
+    const generateTransitDistance = (city: string, topAmenities: string[]): string => {
+      const cityDistances: Record<string, string> = {
+        'Tokyo': '2 min walk to subway',
+        'Paris': '5 min walk to Metro',
+        'New York': '3 min walk to subway',
+        'London': '4 min walk to tube',
+        'Miami': '3 min walk to beach',
+        'Los Angeles': '5 min walk to metro',
+        'Vail': '2 min walk to ski lift',
+        'Chicago': '4 min walk to L train'
+      };
+      
+      return cityDistances[city] || '5 min walk to main area';
+    };
+
+    return {
+      id: index + 1,
+      name: hotel.name,
+      image: getHotelImage(hotel),
+      images: hotel.images || [],
+      price: Math.round(price),
+      originalPrice: Math.round(originalPrice),
+      priceComparison: priceComparison,
+      rating: hotel.starRating || 4.0,
+      reviews: hotel.reviewCount || Math.floor(Math.random() * 1000) + 100,
+      safetyRating: 8.5 + Math.random() * 1.5,
+      transitDistance: generateTransitDistance(hotel.city, hotel.topAmenities),
+      tags: hotel.topAmenities?.slice(0, 3) || hotel.amenities?.slice(0, 3) || ["Standard amenities"],
+      location: hotel.address,
+      features: hotel.amenities || ["Standard features"],
+      
+      // Stage 1: Show loading placeholders for AI content
+      aiExcerpt: "🔄 AI is analyzing this hotel for you...", 
+      whyItMatches: "🔄 AI match analysis in progress...", 
+      funFacts: ["🔄 Loading interesting facts..."], 
+      guestInsights: "🔄 Loading guest insights...", 
+      nearbyAttractions: ["🔄 Finding nearby attractions..."], 
+      locationHighlight: "🔄 Analyzing location advantages...", 
+      
+      // Basic data available immediately
+      aiMatchPercent: hotel.aiMatchPercent,
+      pricePerNight: hotel.pricePerNight,
+      roomTypes: hotel.roomTypes,
+      city: hotel.city,
+      country: hotel.country,
+      latitude: hotel.latitude,
+      longitude: hotel.longitude,
+      topAmenities: hotel.topAmenities,
+      matchType: "analyzing", // Will be updated in Stage 2
+      hasAvailability: hotel.hasAvailability,
+      totalRooms: hotel.totalRooms,
+      fullDescription: hotel.description,
+      fullAddress: hotel.address
+    };
+  };
+
+  // NEW: Update hotels with Stage 2 AI insights
+  const updateHotelsWithInsights = (stage2Results: Stage2InsightsResponse) => {
+    console.log('🎨 Updating hotels with AI insights...');
+    
+    setDisplayHotels(prevHotels => 
+      prevHotels.map(hotel => {
+        const aiRecommendation = stage2Results.recommendations.find(
+          rec => rec.hotelId === hotel.id.toString() || rec.hotelName === hotel.name
+        );
+        
+        if (aiRecommendation) {
+          console.log(`✨ Updating ${hotel.name} with AI insights`);
+          return {
+            ...hotel,
+            aiExcerpt: aiRecommendation.whyItMatches,
+            whyItMatches: aiRecommendation.whyItMatches,
+            funFacts: aiRecommendation.funFacts || hotel.funFacts,
+            guestInsights: aiRecommendation.guestInsights,
+            nearbyAttractions: aiRecommendation.nearbyAttractions,
+            locationHighlight: aiRecommendation.locationHighlight,
+            matchType: aiRecommendation.aiMatchPercent >= 85 ? 'excellent' : 
+                      aiRecommendation.aiMatchPercent >= 75 ? 'great' : 'good'
+          };
+        }
+        
+        return hotel;
+      })
+    );
+  };
+
+  // NEW: Execute Stage 2 - AI Insights
+  const executeStage2Insights = async (stage1Data: Stage1SearchResponse, userQuery?: string) => {
+    try {
+      console.log('🧠 Starting Stage 2: AI Insights Generation...');
+      setIsInsightsLoading(true);
+
+      // NEW: Send only the absolute minimum data to avoid payload size issues
+      const minimalHotels = stage1Data.hotels.map(hotel => ({
+        hotelId: hotel.hotelId,
+        name: hotel.summarizedInfo.name,
+        aiMatchPercent: hotel.aiMatchPercent,
+        summarizedInfo: {
+          name: hotel.summarizedInfo.name,
+          description: hotel.summarizedInfo.description.substring(0, 100) + '...', // Further reduce
+          amenities: hotel.summarizedInfo.amenities.slice(0, 2), // Only top 2 amenities
+          starRating: hotel.summarizedInfo.starRating,
+          reviewCount: hotel.summarizedInfo.reviewCount,
+          pricePerNight: hotel.summarizedInfo.pricePerNight,
+          location: hotel.summarizedInfo.location.substring(0, 50), // Truncate location
+          city: hotel.summarizedInfo.city,
+          country: hotel.summarizedInfo.country
+        }
+      }));
+
+      const originalSize = JSON.stringify(stage1Data.hotels).length;
+      const compressedSize = JSON.stringify(minimalHotels).length;
+      const compressionRatio = ((originalSize - compressedSize) / originalSize * 100).toFixed(1);
+
+      console.log(`📦 Payload compression: ${originalSize} → ${compressedSize} bytes (${compressionRatio}% reduction)`);
+      console.log(`🚀 Sending ${minimalHotels.length} ultra-lightweight hotel objects to Stage 2`);
+
+      const stage2Response: Stage2InsightsResponse = await makeRequest('/api/hotels/ai-insights', {
+        hotels: minimalHotels,
+        userQuery: userQuery,
+        nights: stage1Data.searchParams.nights
+      });
+
+      console.log('✅ Stage 2 Complete - AI insights generated!');
+      console.log(`🎨 Generated insights for ${stage2Response.processedHotels} hotels`);
+      console.log(`🤖 AI Models: ${stage2Response.aiModels.content} + ${stage2Response.aiModels.insights}`);
+
+      setStage2Results(stage2Response);
+      
+      // Update hotels with AI insights
+      updateHotelsWithInsights(stage2Response);
+
+      // Show subtle completion notification instead of alert
+      console.log('🎉 Stage 2 insights applied to displayed hotels');
+      
+      // Optional: Could add a toast notification here instead of alert
+      // Toast.show({
+      //   type: 'success',
+      //   text1: 'AI Insights Ready! ✨',
+      //   text2: `Enhanced insights now available for all hotels`,
+      //   visibilityTime: 3000
+      // });
+
+    } catch (error: any) {
+      console.error('❌ Stage 2 failed:', error);
+      
+      // Check if it's a payload size error
+      if (error.message.includes('too large') || error.message.includes('PayloadTooLargeError')) {
+        console.error('💥 Payload too large error - even compressed data exceeded server limits');
+        console.error('🔧 Consider implementing hotel ID-only approach with server-side data retrieval');
+        Alert.alert(
+          'Data Processing Issue',
+          'The search results are too large to enhance with AI insights. Using basic recommendations.',
+          [{ text: 'OK' }]
+        );
+      }
+      
+      // Provide fallback insights
+      setDisplayHotels(prevHotels => 
+        prevHotels.map(hotel => ({
+          ...hotel,
+          aiExcerpt: "Great choice with excellent amenities and location",
+          whyItMatches: "Excellent choice with great amenities and location", 
+          funFacts: ["Modern facilities", "Excellent guest reviews"],
+          guestInsights: "Guests appreciate the comfortable accommodations and convenient location.",
+          nearbyAttractions: [`${hotel.city} center`, "Local landmarks"],
+          locationHighlight: "Prime location"
+        }))
+      );
+      
+      Alert.alert(
+        'AI Insights Unavailable',
+        'Using fallback insights. Hotel data is still accurate.',
+        [{ text: 'OK' }]
+      );
+    } finally {
       setIsInsightsLoading(false);
-      console.log('⏰ Sentiment polling timeout - stopping');
-    }, 30000);
+    }
+  };
 
-    pollSentiment();
-  }, []);
-
-  // Convert recommendation to display format
+  // Convert recommendation to display format (legacy compatibility)
   const convertRecommendationToDisplayHotel = (recommendation: HotelRecommendation, index: number): Hotel => {
-    console.log('🔍 Converting recommendation:', recommendation.name);
+    console.log('🔍 Converting legacy recommendation:', recommendation.name);
     
     const getHotelImage = (recommendation: HotelRecommendation): string => {
       const defaultImage = "https://images.unsplash.com/photo-1564501049412-61c2a3083791?auto=format&fit=crop&w=800&q=80";
@@ -513,7 +757,7 @@ const HomeScreen = () => {
     return {
       id: index + 1,
       name: recommendation.name,
-      image: getHotelImage(recommendation), // First image for main display
+      image: getHotelImage(recommendation),
       images: recommendation.images || [],
       price: Math.round(price),
       originalPrice: Math.round(originalPrice),
@@ -608,13 +852,116 @@ const HomeScreen = () => {
     }
   };
 
-  // PRODUCTION: Main search execution with AI suggestions pre-loading
-  const executeOptimizedSearch = async (userInput: string) => {
+  // NEW: Two-stage optimized search
+  const executeTwoStageOptimizedSearch = async (userInput: string) => {
     if (!userInput.trim()) return;
 
     try {
       console.log('\n' + '='.repeat(80));
-      console.log('🚀 Starting Optimized Hotel Search...');
+      console.log('🚀 Starting Two-Stage Optimized Hotel Search...');
+      console.log('📝 User Input:', userInput);
+      
+      setIsSearching(true);
+
+      // Create search context for AI suggestions
+      const searchContext = {
+        dates: {
+          checkin: checkInDate.toISOString().split('T')[0],
+          checkout: checkOutDate.toISOString().split('T')[0],
+        },
+        guests: {
+          adults: adults,
+          children: children,
+        }
+      };
+
+      // START AI SUGGESTIONS PRE-LOADING IN PARALLEL with Stage 1
+      console.log('🤖 Starting parallel AI suggestions pre-loading...');
+      const aiSuggestionsPromise = preloadAiSuggestions(userInput, searchContext);
+
+      // STAGE 1: Hotel Search + Llama Matching
+      console.log('🏨 Stage 1: Starting hotel search and Llama matching...');
+      const stage1Response: Stage1SearchResponse = await makeRequest('/api/hotels/search-and-match', {
+        userInput: userInput
+      });
+
+      console.log('✅ Stage 1 Complete - Basic hotel data ready!');
+      console.log('📊 Stage 1 Performance:', stage1Response.performance);
+      console.log('🎯 Matched Hotels:', stage1Response.matchedHotelsCount);
+      console.log('🔍 Search ID:', stage1Response.searchId);
+
+      setStage1Results(stage1Response);
+      setCurrentSearchId(stage1Response.searchId);
+
+      // IMMEDIATELY Convert Stage 1 hotels to display format and show them
+      const basicHotels: Hotel[] = stage1Response.hotels.map((hotel: Stage1Hotel, index: number) => 
+        convertStage1HotelToDisplay(hotel, index)
+      );
+      
+      // Show hotels immediately after Stage 1
+      setDisplayHotels(basicHotels);
+      setIsSearching(false); // Stop the main loading screen
+
+      // Update dates and guest info from search response
+      if (stage1Response.searchParams.checkin) {
+        setCheckInDate(new Date(stage1Response.searchParams.checkin));
+      }
+      if (stage1Response.searchParams.checkout) {
+        setCheckOutDate(new Date(stage1Response.searchParams.checkout));
+      }
+      if (stage1Response.searchParams.adults) {
+        setAdults(stage1Response.searchParams.adults);
+      }
+      if (stage1Response.searchParams.children) {
+        setChildren(stage1Response.searchParams.children);
+      }
+
+      // Show Stage 1 results immediately
+      const performanceText = `⚡ Fast search (${stage1Response.performance.totalTimeMs}ms)`;
+      Alert.alert(
+        'Hotels Found! 🎯', 
+        `Found ${stage1Response.matchedHotelsCount} AI-matched hotels.\n\n${performanceText}\n\n🧠 Now enhancing with AI insights...`,
+        [{ text: 'View Hotels' }]
+      );
+
+      // STAGE 2: AI Insights Generation (in background after showing hotels)
+      console.log('🧠 Stage 2: Starting AI insights generation in background...');
+      
+      // Wait for AI suggestions to complete (if not already done)
+      await aiSuggestionsPromise;
+      console.log('🤖 AI suggestions pre-loading completed!');
+
+      // Execute Stage 2 insights in background
+      await executeStage2Insights(stage1Response, userInput);
+
+    } catch (error: any) {
+      console.error('💥 Two-stage search failed:', error);
+      
+      let errorMessage = 'Please try again with a different query. ';
+      
+      if (error.message.includes('timeout')) {
+        errorMessage += 'The request timed out - try a more specific search.';
+      } else if (error.message.includes('No hotels found')) {
+        errorMessage += 'No hotels found for your criteria - try different dates or location.';
+      } else if (error.message.includes('ECONNREFUSED')) {
+        errorMessage += 'Make sure your backend server is running on localhost:3003.';
+      } else {
+        errorMessage += `Error: ${error.message}`;
+      }
+      
+      Alert.alert('Search Failed', errorMessage, [{ text: 'OK' }]);
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  // PRODUCTION: Legacy single-stage search (for backward compatibility)
+  const executeLegacySearch = async (userInput: string) => {
+    if (!userInput.trim()) return;
+
+    try {
+      console.log('\n' + '='.repeat(80));
+      console.log('🚀 Starting Legacy Hotel Search...');
       console.log('📝 User Input:', userInput);
       
       setIsSearching(true);
@@ -643,7 +990,7 @@ const HomeScreen = () => {
       // Wait for hotel search to complete (AI suggestions continue in background)
       const searchResponse: OptimizedSearchResponse = await searchPromise;
 
-      console.log('✅ Optimized Search Complete!');
+      console.log('✅ Legacy Search Complete!');
       console.log('📊 Performance:', searchResponse.performance);
       console.log('🎭 Insights Pending:', searchResponse.insightsPending);
       console.log('🔍 Search ID:', searchResponse.searchId);
@@ -683,10 +1030,10 @@ const HomeScreen = () => {
         [{ text: 'View Results' }]
       );
 
-      // Start sentiment polling if insights are pending
+      // Start sentiment polling if insights are pending (legacy behavior)
       if (searchResponse.insightsPending && searchResponse.searchId) {
-        console.log('🎭 Starting sentiment polling...');
-        startSentimentPolling(searchResponse.searchId);
+        console.log('🎭 Starting legacy sentiment polling...');
+        // Add legacy sentiment polling logic here if needed
       }
 
       // Wait for AI suggestions to complete (if not already done)
@@ -694,7 +1041,7 @@ const HomeScreen = () => {
       console.log('🤖 AI suggestions pre-loading completed!');
 
     } catch (error: any) {
-      console.error('💥 Optimized search failed:', error);
+      console.error('💥 Legacy search failed:', error);
       
       let errorMessage = 'Please try again with a different query. ';
       
@@ -714,12 +1061,18 @@ const HomeScreen = () => {
     }
   };
 
-  // MAIN SEARCH FUNCTION - routes to test or production
+  // MAIN SEARCH FUNCTION - routes to test, two-stage, or legacy
   const executeSearch = async (userInput: string) => {
     if (TEST_MODE) {
       await executeTestSearch(userInput);
     } else {
-      await executeOptimizedSearch(userInput);
+      // Try two-stage approach first, fallback to legacy if needed
+      try {
+        await executeTwoStageOptimizedSearch(userInput);
+      } catch (error: any) {
+        console.warn('⚠️ Two-stage search failed, falling back to legacy...', error);
+        await executeLegacySearch(userInput);
+      }
     }
   };
 
@@ -790,16 +1143,18 @@ const HomeScreen = () => {
     
     bookingMessage += `\n`;
     
-    if (searchResults?.searchParams) {
-      const params = searchResults.searchParams;
-      bookingMessage += `📅 Dates: ${params.checkin} to ${params.checkout}\n`;
-      bookingMessage += `👥 Guests: ${params.adults} adults`;
-      if (params.children > 0) {
-        bookingMessage += `, ${params.children} children`;
+    // Use Stage 1 results if available, otherwise fallback to legacy
+    const searchParams = stage1Results?.searchParams || searchResults?.searchParams;
+    
+    if (searchParams) {
+      bookingMessage += `📅 Dates: ${searchParams.checkin} to ${searchParams.checkout}\n`;
+      bookingMessage += `👥 Guests: ${searchParams.adults} adults`;
+      if (searchParams.children > 0) {
+        bookingMessage += `, ${searchParams.children} children`;
       }
-      bookingMessage += `\n🌙 Nights: ${params.nights}\n`;
+      bookingMessage += `\n🌙 Nights: ${searchParams.nights}\n`;
       
-      const nightsCount = params.nights;
+      const nightsCount = searchParams.nights;
       let totalCost = hotel.price * nightsCount;
       
       if (hotel.pricePerNight && hotel.pricePerNight.totalAmount) {
@@ -820,7 +1175,7 @@ const HomeScreen = () => {
         { text: TEST_MODE ? 'Test Book' : 'Proceed to Book', style: 'default' }
       ]
     );
-  }, [searchResults]);
+  }, [stage1Results, searchResults]);
 
   // Enhanced handleViewDetails
   const handleViewDetails = useCallback((hotel: Hotel) => {
@@ -836,7 +1191,7 @@ const HomeScreen = () => {
       detailsMessage += `🤖 AI Analysis:\n`;
       detailsMessage += `• Match Score: ${hotel.aiMatchPercent}%\n`;
       detailsMessage += `• Match Type: ${hotel.matchType || 'good'}\n`;
-      if (hotel.whyItMatches) {
+      if (hotel.whyItMatches && !hotel.whyItMatches.includes('progress')) {
         detailsMessage += `• Why it matches: ${hotel.whyItMatches}\n`;
       }
       detailsMessage += `\n`;
@@ -852,12 +1207,12 @@ const HomeScreen = () => {
     if (hotel.latitude && hotel.longitude) {
       detailsMessage += `• Coordinates: ${hotel.latitude}, ${hotel.longitude}\n`;
     }
-    if (hotel.locationHighlight) {
+    if (hotel.locationHighlight && !hotel.locationHighlight.includes('Analyzing')) {
       detailsMessage += `• Highlight: ${hotel.locationHighlight}\n`;
     }
     detailsMessage += `• Transit: ${hotel.transitDistance}\n\n`;
     
-    if (hotel.nearbyAttractions && hotel.nearbyAttractions.length > 0) {
+    if (hotel.nearbyAttractions && hotel.nearbyAttractions.length > 0 && !hotel.nearbyAttractions[0].includes('Loading')) {
       detailsMessage += `🗺️ Nearby Attractions:\n`;
       hotel.nearbyAttractions.forEach(attraction => {
         detailsMessage += `• ${attraction}\n`;
@@ -871,8 +1226,8 @@ const HomeScreen = () => {
     detailsMessage += `• Safety Rating: ${hotel.safetyRating.toFixed(1)}/10\n\n`;
     
     if (isInsightsLoading && hotel.guestInsights?.includes('Loading')) {
-      detailsMessage += `💬 Guest Insights:\n🔄 Loading detailed insights...\n\n`;
-    } else if (hotel.guestInsights) {
+      detailsMessage += `💬 Guest Insights:\n🔄 Generating AI insights...\n\n`;
+    } else if (hotel.guestInsights && !hotel.guestInsights.includes('Loading')) {
       detailsMessage += `💬 Guest Insights:\n${hotel.guestInsights}\n\n`;
     }
     
@@ -884,7 +1239,7 @@ const HomeScreen = () => {
       detailsMessage += `\n`;
     }
     
-    if (hotel.funFacts && hotel.funFacts.length > 0) {
+    if (hotel.funFacts && hotel.funFacts.length > 0 && !hotel.funFacts[0].includes('Loading')) {
       detailsMessage += `🎉 Fun Facts:\n`;
       hotel.funFacts.forEach(fact => {
         detailsMessage += `• ${fact}\n`;
@@ -952,21 +1307,21 @@ const HomeScreen = () => {
       alertMessage += `📍 ${hotel.city}, ${hotel.country}\n`;
     }
     
-    if (hotel.locationHighlight) {
+    if (hotel.locationHighlight && !hotel.locationHighlight.includes('Analyzing')) {
       alertMessage += `🎯 ${hotel.locationHighlight}\n\n`;
     }
     
-    if (hotel.whyItMatches) {
+    if (hotel.whyItMatches && !hotel.whyItMatches.includes('progress')) {
       alertMessage += `✨ Why it matches: ${hotel.whyItMatches}\n\n`;
     }
     
     if (isInsightsLoading && hotel.guestInsights?.includes('Loading')) {
-      alertMessage += `💬 Guest Insights: 🔄 Loading...\n\n`;
-    } else if (hotel.guestInsights) {
+      alertMessage += `💬 Guest Insights: 🔄 Generating...\n\n`;
+    } else if (hotel.guestInsights && !hotel.guestInsights.includes('Loading')) {
       alertMessage += `💬 Guest Insights: ${hotel.guestInsights}\n\n`;
     }
     
-    if (hotel.nearbyAttractions && hotel.nearbyAttractions.length > 0) {
+    if (hotel.nearbyAttractions && hotel.nearbyAttractions.length > 0 && !hotel.nearbyAttractions[0].includes('Loading')) {
       alertMessage += `🗺️ Nearby: ${hotel.nearbyAttractions.slice(0, 2).join(', ')}\n\n`;
     }
     
@@ -1054,43 +1409,52 @@ const HomeScreen = () => {
           </TouchableOpacity>
         </View>
 
-
         {/* SEARCH RESULTS HEADER WITH PERFORMANCE INDICATORS */}
         {searchQuery.trim().length > 0 && (
           <View style={tw`bg-white px-3 py-2 rounded-lg border border-gray-200`}>
             <View style={tw`flex-row items-center justify-between`}>
               <Text style={tw`text-xs text-gray-500 flex-1`}>
-                {searchResults?.aiRecommendationsCount 
-                  ? `${TEST_MODE ? 'Test' : 'AI'} Results for "${searchQuery}" (${searchResults.aiRecommendationsCount} hotels)`
-                  : `Results for "${searchQuery}"`
+                {stage1Results?.matchedHotelsCount 
+                  ? `${TEST_MODE ? 'Test' : 'AI'} Results for "${searchQuery}" (${stage1Results.matchedHotelsCount} hotels)`
+                  : searchResults?.aiRecommendationsCount 
+                    ? `${TEST_MODE ? 'Test' : 'AI'} Results for "${searchQuery}" (${searchResults.aiRecommendationsCount} hotels)`
+                    : `Results for "${searchQuery}"`
                 }
               </Text>
               
               {/* Performance indicator */}
-              {searchResults?.performance && (
+              {(stage1Results?.performance || searchResults?.performance) && (
                 <View style={tw`flex-row items-center ml-2`}>
                   <Ionicons 
-                    name={TEST_MODE ? "flask" : (searchResults.performance.optimized ? "flash" : "time")} 
+                    name={TEST_MODE ? "flask" : "flash"} 
                     size={12} 
-                    color={TEST_MODE ? "#EA580C" : (searchResults.performance.optimized ? "#10B981" : "#F59E0B")} 
+                    color={TEST_MODE ? "#EA580C" : "#10B981"} 
                   />
                   <Text style={tw`text-xs ml-1 ${
-                    TEST_MODE ? 'text-orange-600' : (searchResults.performance.optimized ? 'text-green-600' : 'text-amber-600')
+                    TEST_MODE ? 'text-orange-600' : 'text-green-600'
                   }`}>
-                    {searchResults.performance.totalTimeMs}ms
+                    {stage1Results?.performance?.totalTimeMs || searchResults?.performance?.totalTimeMs}ms
                   </Text>
+                  {stage2Results && (
+                    <>
+                      <Text style={tw`text-xs text-gray-400 ml-1`}>+</Text>
+                      <Text style={tw`text-xs ml-1 text-blue-600`}>
+                        {stage2Results.performance.totalTimeMs}ms
+                      </Text>
+                    </>
+                  )}
                 </View>
               )}
             </View>
             
             {/* Search info with dates and insights loading indicator */}
-            {searchResults?.searchParams && (
+            {(stage1Results?.searchParams || searchResults?.searchParams) && (
               <View style={tw`flex-row items-center justify-between mt-1`}>
                 <Text style={tw`text-xs text-gray-400`}>
-                  {searchResults.searchParams.cityName}, {searchResults.searchParams.countryCode.toUpperCase()} • 
-                  {new Date(searchResults.searchParams.checkin).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - {new Date(searchResults.searchParams.checkout).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} • 
-                  {searchResults.searchParams.adults} adults
-                  {searchResults.searchParams.children > 0 ? `, ${searchResults.searchParams.children} children` : ''}
+                  {(stage1Results?.searchParams || searchResults?.searchParams)!.cityName}, {(stage1Results?.searchParams || searchResults?.searchParams)!.countryCode.toUpperCase()} • 
+                  {new Date((stage1Results?.searchParams || searchResults?.searchParams)!.checkin).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - {new Date((stage1Results?.searchParams || searchResults?.searchParams)!.checkout).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} • 
+                  {(stage1Results?.searchParams || searchResults?.searchParams)!.adults} adults
+                  {((stage1Results?.searchParams || searchResults?.searchParams)!.children || 0) > 0 ? `, ${(stage1Results?.searchParams || searchResults?.searchParams)!.children} children` : ''}
                 </Text>
                 
                 {/* Combined loading indicators */}
@@ -1115,6 +1479,24 @@ const HomeScreen = () => {
                     </View>
                   )}
                   
+                  {/* Stage completion indicators */}
+                  {stage1Results && !TEST_MODE && (
+                    <View style={tw`flex-row items-center`}>
+                      <Ionicons name="checkmark-circle" size={12} color="#10B981" />
+                      <Text style={tw`text-xs text-green-600 ml-1`}>
+                        Stage 1
+                      </Text>
+                    </View>
+                  )}
+                  
+                  {stage2Results && !TEST_MODE && (
+                    <View style={tw`flex-row items-center`}>
+                      <Ionicons name="checkmark-circle" size={12} color="#3B82F6" />
+                      <Text style={tw`text-xs text-blue-600 ml-1`}>
+                        Stage 2
+                      </Text>
+                    </View>
+                  )}
                 </View>
               </View>
             )}
@@ -1133,6 +1515,11 @@ const HomeScreen = () => {
           checkOutDate={checkOutDate}
           adults={adults}
           children={children}
+          // NEW: Two-stage API props
+          isInsightsLoading={isInsightsLoading}
+          stage1Complete={!!stage1Results}
+          stage2Complete={!!stage2Results}
+          searchMode={TEST_MODE ? 'test' : stage1Results ? 'two-stage' : 'legacy'}
         />
       </View>
 
@@ -1155,11 +1542,11 @@ const HomeScreen = () => {
             adults: adults,
             children: children,
           },
-          ...(searchResults?.searchParams && {
+          ...((stage1Results?.searchParams || searchResults?.searchParams) && {
             budget: {
-              min: searchResults.searchParams.minCost,
-              max: searchResults.searchParams.maxCost,
-              currency: searchResults.searchParams.currency,
+              min: (stage1Results?.searchParams || searchResults?.searchParams)!.minCost,
+              max: (stage1Results?.searchParams || searchResults?.searchParams)!.maxCost,
+              currency: (stage1Results?.searchParams || searchResults?.searchParams)!.currency,
             }
           })
         }}
