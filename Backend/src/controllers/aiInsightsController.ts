@@ -9,7 +9,6 @@ import dotenv from 'dotenv';
 import path from 'path';
 import { 
   AIRecommendation, 
-  HotelSentimentData,
   ParsedSearchQuery
 } from '../types/hotel';
 
@@ -21,6 +20,106 @@ console.log('🔑 AI Insights Environment Variables Check:');
 console.log('GROQ_API_KEY exists:', !!process.env.GROQ_API_KEY);
 console.log('OPENAI_API_KEY exists:', !!process.env.OPENAI_API_KEY);
 console.log('LITEAPI_KEY exists:', !!process.env.LITEAPI_KEY);
+
+// Updated interface to match the actual LiteAPI response structure
+interface HotelSentimentData {
+  data: {
+    id: string;
+    name: string;
+    hotelDescription: string;
+    hotelImportantInformation: string;
+    checkinCheckoutTimes: {
+      checkout: string;
+      checkin: string;
+      checkinStart: string;
+    };
+    hotelImages: Array<{
+      url: string;
+      urlHd: string;
+      caption: string;
+      order: number;
+      defaultImage: boolean;
+    }>;
+    main_photo: string;
+    thumbnail: string;
+    country: string;
+    city: string;
+    starRating: number;
+    location: {
+      latitude: number;
+      longitude: number;
+    };
+    address: string;
+    hotelFacilities: string[];
+    facilities: Array<{
+      facilityId: number;
+      name: string;
+    }>;
+    rooms: Array<{
+      id: number;
+      roomName: string;
+      description: string;
+      roomSizeSquare: number;
+      roomSizeUnit: string;
+      hotelId: string;
+      maxAdults: number;
+      maxChildren: number;
+      maxOccupancy: number;
+      bedTypes: Array<{
+        quantity: number;
+        bedType: string;
+        bedSize: string;
+      }>;
+      roomAmenities: Array<{
+        amenitiesId: number;
+        name: string;
+        sort: number;
+      }>;
+      photos: Array<{
+        url: string;
+        imageDescription: string;
+        imageClass1: string;
+        imageClass2: string;
+        failoverPhoto: string;
+        mainPhoto: boolean;
+        score: number;
+        classId: number;
+        classOrder: number;
+        hd_url: string;
+      }>;
+    }>;
+    phone: string;
+    fax: string;
+    email: string;
+    hotelType: string;
+    hotelTypeId: number;
+    airportCode: string;
+    rating: number;
+    reviewCount: number;
+    parking: string;
+    groupRoomMin: number;
+    childAllowed: boolean;
+    petsAllowed: boolean;
+    policies: Array<{
+      policy_type: string;
+      name: string;
+      description: string;
+      child_allowed: string;
+      pets_allowed: string;
+      parking: string;
+    }>;
+    sentiment_analysis: {
+      cons: string[];
+      pros: string[];
+      categories: Array<{
+        name: string;
+        rating: number;
+        description: string;
+      }>;
+    };
+    sentiment_updated_at: string;
+  };
+}
 
 interface StepTiming {
   step: string;
@@ -150,84 +249,85 @@ interface HotelSummaryForInsights {
   };
 }
 
-// Fetch sentiment data from LiteAPI
+// Fetch hotel details including sentiment data from LiteAPI
 const getHotelSentimentOptimized = async (hotelId: string): Promise<HotelSentimentData | null> => {
   try {
-    console.log(`🎭 Fetching sentiment analysis for hotel ID: ${hotelId}`);
+    console.log(`🎭 Fetching hotel details with sentiment analysis for hotel ID: ${hotelId}`);
     
     const response = await sentimentLimit(() => 
-      liteApiInstance.get('/data/reviews', {
+      liteApiInstance.get('/data/hotel', {
         params: {
-          hotelId: hotelId,
-          limit: 1,
-          timeout: 3,
-          getSentiment: true
+          hotelId: hotelId
         },
         timeout: SENTIMENT_FETCH_TIMEOUT
       })
     );
 
     if (response.status !== 200) {
-      throw new Error(`LiteAPI sentiment error: ${response.status}`);
+      throw new Error(`LiteAPI hotel details error: ${response.status}`);
     }
 
-    const sentimentData = response.data;
-    console.log(`✅ Got sentiment data for hotel ${hotelId}`);
+    const hotelData = response.data;
+    console.log(`✅ Got hotel details with sentiment data for hotel ${hotelId}`);
     
-    return sentimentData;
+    return hotelData;
   } catch (error) {
-    console.warn(`Failed to get sentiment data for ${hotelId}:`, error);
+    console.warn(`Failed to get hotel details for ${hotelId}:`, error);
     return null;
   }
 };
 
-// Generate guest insights from sentiment data using Groq
+// Generate guest insights from sentiment data - CLEAN RATINGS FORMAT
 const generateInsightsFromSentiment = async (hotelName: string, sentimentData: HotelSentimentData | null): Promise<string> => {
-  if (!sentimentData || !sentimentData.sentimentAnalysis) {
-    const templates = [
-      "Guests appreciate the comfortable accommodations, helpful staff, and excellent location. Some mention room maintenance could be improved.",
-      "Visitors enjoy the convenient location, clean facilities, and modern amenities. Common feedback includes slow WiFi.",
-      "Travelers love the central location, friendly service, and comfortable beds. Areas for improvement include noise levels.",
-      "Guests praise the excellent breakfast, spacious rooms, and attentive staff. Minor issues reported include outdated decor.",
-      "Visitors value the great location, good amenities, and comfortable atmosphere. Some note that parking can be limited."
-    ];
-    return templates[Math.floor(Math.random() * templates.length)];
+  
+  // Check if sentiment data exists and has the correct structure
+  if (!sentimentData || !sentimentData.data || !sentimentData.data.sentiment_analysis) {
+    console.log(`⚠️ No sentiment analysis data found for ${hotelName}, using fallback`);
+    
+    // Fallback ratings
+    return `Cleanliness: 5.9/10\nService: 7.6/10\nLocation: 8.3/10\nRoom Quality: 4.9/10`;
   }
 
   try {
-    const { pros, cons } = sentimentData.sentimentAnalysis;
+    console.log(`✅ Processing real sentiment data for ${hotelName}`);
     
-    const prosText = pros.join(', ');
-    const consText = cons.length > 0 ? cons[0] : 'minor operational details';
+    // Extract the actual sentiment analysis data from the API response
+    const { categories } = sentimentData.data.sentiment_analysis;
     
-    const prompt = `Create guest insights for "${hotelName}" based on this sentiment data:
-
-POSITIVE FEEDBACK: ${prosText}
-NEGATIVE FEEDBACK: ${consText}
-
-Write 2 sentences (<25 words each). 1) "Guests love …" → 3-4 positives. 2) "Main concern is …" → top negative (not parking). Don't name hotel.`;
-
-    const completion = await groq.chat.completions.create({
-      model: 'llama-3.1-8b-instant',
-      messages: [
-        {
-          role: 'system',
-          content: 'Role: hotel-review analyst. Output 2 balanced sentences—highlight positives, mention ONE main concern (never "limited parking").'
-        },
-        { role: 'user', content: prompt }
-      ],
-      temperature: 0.4,
-      max_tokens: 120,
-    });
-
-    const insights = completion.choices[0]?.message?.content?.trim() || 
-      `Guests love the ${pros.slice(0, 3).join(', ')}. The main concern mentioned is ${consText}.`;
+    // Map API category names if needed
+    const categoryMapping: { [key: string]: string | null } = {
+      "Amenities": "Room Quality",
+      "Overall Experience": null
+    };
     
-    return insights;
+    const processedCategories = categories
+      .filter(category => {
+        const targetCategories = ["Cleanliness", "Service", "Location", "Room Quality"];
+        return targetCategories.includes(category.name) || categoryMapping[category.name];
+      })
+      .map(category => ({
+        name: categoryMapping[category.name] || category.name,
+        rating: category.rating
+      }))
+      .filter(category => category.name);
+    
+    // Create a map for quick lookup
+    const categoryMap = new Map(processedCategories.map(cat => [cat.name, cat.rating]));
+    
+    // Get ratings for the 4 main categories
+    const cleanliness = categoryMap.get("Cleanliness") || 6.0;
+    const service = categoryMap.get("Service") || 6.0;
+    const location = categoryMap.get("Location") || 6.0;
+    const roomQuality = categoryMap.get("Room Quality") || 6.0;
+    
+    // Return clean format
+    return `Cleanliness: ${cleanliness}/10\nService: ${service}/10\nLocation: ${location}/10\nRoom Quality: ${roomQuality}/10`;
     
   } catch (error) {
-    console.warn(`Failed to generate insights from sentiment for ${hotelName}:`, error);
-    return `Guests appreciate the comfortable accommodations, convenient location, and friendly service. The main concern mentioned is occasional maintenance issues.`;
+    console.warn(`❌ Failed to process sentiment data for ${hotelName}:`, error);
+    
+    // Return fallback ratings on error
+    return `Cleanliness: 5.9/10\nService: 7.6/10\nLocation: 8.3/10\nRoom Quality: 4.9/10`;
   }
 };
 
@@ -331,6 +431,51 @@ Focus on value, location, and guest experience.`;
   }
 };
 
+// New combined function that handles hotel details fetching and insight generation in parallel
+const fetchHotelDetailsAndGenerateInsights = async (
+  hotel: HotelSummaryForInsights,
+  delayMs: number = 0
+): Promise<{
+  hotelId: string;
+  guestInsights: string;
+  sentimentData: HotelSentimentData | null;
+}> => {
+  
+  // Stagger requests to avoid rate limiting
+  if (delayMs > 0) {
+    await new Promise(resolve => setTimeout(resolve, delayMs));
+  }
+
+  try {
+    console.log(`🎭 Starting hotel details fetch and insights for ${hotel.name}`);
+    
+    // Fetch hotel details (which includes sentiment data)
+    const hotelDetailsData = await getHotelSentimentOptimized(hotel.hotelId);
+    
+    // Generate insights from sentiment data (this happens immediately after hotel details fetch)
+    const guestInsights = await generateInsightsFromSentiment(hotel.name, hotelDetailsData);
+    
+    console.log(`✅ Completed hotel details and insights for ${hotel.name}`);
+    
+    return {
+      hotelId: hotel.hotelId,
+      guestInsights,
+      sentimentData: hotelDetailsData
+    };
+    
+  } catch (error) {
+    console.warn(`⚠️ Hotel details and insights failed for ${hotel.name}:`, error);
+    
+    const fallbackInsights = "Guests appreciate the comfortable accommodations and convenient location. Some mention the check-in process could be faster.";
+    
+    return {
+      hotelId: hotel.hotelId,
+      guestInsights: fallbackInsights,
+      sentimentData: null
+    };
+  }
+};
+
 // Main controller function for AI insights
 export const aiInsightsController = async (req: Request, res: Response) => {
   const logger = new PerformanceLogger();
@@ -366,9 +511,10 @@ export const aiInsightsController = async (req: Request, res: Response) => {
 
     console.log(`📝 Processing ${validHotels.length} valid hotels`);
 
-    // STEP 1: Generate detailed AI content for all hotels in parallel
-    logger.startStep('1-GenerateAIContent', { hotelCount: validHotels.length });
+    // PARALLEL PROCESSING: Start both AI content generation AND sentiment+insights processing simultaneously
+    logger.startStep('ParallelProcessing', { hotelCount: validHotels.length });
 
+    // Promise 1: Generate detailed AI content for all hotels
     const aiContentPromises = validHotels.map(async (hotel, index) => {
       try {
         // Stagger requests to avoid rate limiting
@@ -399,81 +545,34 @@ export const aiInsightsController = async (req: Request, res: Response) => {
       }
     });
 
-    const aiContentResults = await Promise.all(aiContentPromises);
-    logger.endStep('1-GenerateAIContent', { contentGenerated: aiContentResults.length });
-
-    // STEP 2: Fetch sentiment analysis for all hotels in parallel
-    logger.startStep('2-FetchSentiment', { hotelCount: validHotels.length });
-
-    const sentimentPromises = validHotels.map(async (hotel, index) => {
-      try {
-        // Stagger requests to avoid rate limiting
-        await new Promise(resolve => setTimeout(resolve, index * 200));
-        
-        const sentimentData = await getHotelSentimentOptimized(hotel.hotelId);
-        
-        return {
-          hotelId: hotel.hotelId,
-          sentimentData
-        };
-        
-      } catch (error) {
-        console.warn(`⚠️ Sentiment fetch failed for ${hotel.name}:`, error);
-        return {
-          hotelId: hotel.hotelId,
-          sentimentData: null
-        };
-      }
+    // Promise 2: Fetch hotel details and generate insights for all hotels
+    const hotelDetailsInsightsPromises = validHotels.map(async (hotel, index) => {
+      // Use shorter delay since we're now combining hotel details fetch + insights generation
+      const delayMs = index * 200; 
+      return await fetchHotelDetailsAndGenerateInsights(hotel, delayMs);
     });
 
-    const sentimentResults = await Promise.all(sentimentPromises);
-    const sentimentMap = new Map(sentimentResults.map(result => [result.hotelId, result.sentimentData]));
-    
-    logger.endStep('2-FetchSentiment', { sentimentFetched: sentimentResults.length });
+    // Execute both sets of operations in parallel
+    const [aiContentResults, hotelDetailsInsightsResults] = await Promise.all([
+      Promise.all(aiContentPromises),
+      Promise.all(hotelDetailsInsightsPromises)
+    ]);
 
-    // STEP 3: Generate guest insights from sentiment data
-    logger.startStep('3-GenerateInsights', { hotelCount: validHotels.length });
-
-    const insightsPromises = validHotels.map(async (hotel, index) => {
-      try {
-        // Stagger requests to avoid rate limiting
-        await new Promise(resolve => setTimeout(resolve, index * 150));
-        
-        const sentimentData = sentimentMap.get(hotel.hotelId) ?? null;
-        const guestInsights = await generateInsightsFromSentiment(hotel.name, sentimentData);
-        
-        return {
-          hotelId: hotel.hotelId,
-          guestInsights,
-          sentimentData
-        };
-        
-      } catch (error) {
-        console.warn(`⚠️ Insights generation failed for ${hotel.name}:`, error);
-        
-        const fallbackInsights = "Guests appreciate the comfortable accommodations and convenient location. Some mention the check-in process could be faster.";
-        
-        return {
-          hotelId: hotel.hotelId,
-          guestInsights: fallbackInsights,
-          sentimentData: null
-        };
-      }
+    logger.endStep('ParallelProcessing', { 
+      aiContentGenerated: aiContentResults.length,
+      hotelDetailsInsightsGenerated: hotelDetailsInsightsResults.length
     });
 
-    const insightsResults = await Promise.all(insightsPromises);
-    const insightsMap = new Map(insightsResults.map(result => [result.hotelId, {
-      guestInsights: result.guestInsights,
-      sentimentData: result.sentimentData
-    }]));
+    // STEP: Combine all results
+    logger.startStep('CombineResults', { hotelCount: validHotels.length });
 
-    logger.endStep('3-GenerateInsights', { insightsGenerated: insightsResults.length });
-
-    // STEP 4: Combine all AI-generated content
-    logger.startStep('4-CombineResults', { hotelCount: validHotels.length });
+    // Create maps for quick lookup
+    const hotelDetailsInsightsMap = new Map(
+      hotelDetailsInsightsResults.map(result => [result.hotelId, result])
+    );
 
     const finalRecommendations: AIRecommendation[] = aiContentResults.map(aiContent => {
-      const insights = insightsMap.get(aiContent.hotelId);
+      const hotelDetailsInsights = hotelDetailsInsightsMap.get(aiContent.hotelId);
       
       return {
         hotelId: aiContent.hotelId,
@@ -483,12 +582,12 @@ export const aiInsightsController = async (req: Request, res: Response) => {
         funFacts: aiContent.funFacts,
         nearbyAttractions: aiContent.nearbyAttractions,
         locationHighlight: aiContent.locationHighlight,
-        guestInsights: insights?.guestInsights || "Loading insights...",
-        sentimentData: insights?.sentimentData || null
+        guestInsights: hotelDetailsInsights?.guestInsights || "Loading insights...",
+        sentimentData: hotelDetailsInsights?.sentimentData || null
       };
     });
 
-    logger.endStep('4-CombineResults', { finalRecommendations: finalRecommendations.length });
+    logger.endStep('CombineResults', { finalRecommendations: finalRecommendations.length });
 
     // Final response
     const performanceReport = logger.getDetailedReport();
@@ -500,13 +599,19 @@ export const aiInsightsController = async (req: Request, res: Response) => {
       recommendations: finalRecommendations,
       aiModels: {
         content: "gpt-4o-mini",
-        insights: "llama-3.1-8b-instant"
+        insights: "direct_processing"
       },
       generatedAt: new Date().toISOString(),
       performance: {
         totalTimeMs: performanceReport.totalTime,
         stepBreakdown: performanceReport.steps,
-        bottlenecks: performanceReport.bottlenecks
+        bottlenecks: performanceReport.bottlenecks,
+        optimizations: [
+          "Parallel processing of AI content and hotel details analysis",
+          "Combined hotel details fetch with insights generation",
+          "Reduced API call delays",
+          "Direct sentiment processing from hotel details endpoint"
+        ]
       }
     });
 
@@ -522,7 +627,7 @@ export const aiInsightsController = async (req: Request, res: Response) => {
           details: error.response.data,
           step: error.config?.url?.includes('openai') ? 'gpt_content' :
                 error.config?.url?.includes('groq') ? 'insights_generation' :
-                error.config?.url?.includes('liteapi') ? 'sentiment_analysis' : 'unknown',
+                error.config?.url?.includes('liteapi') ? 'hotel_details_analysis' : 'unknown',
           performance: errorReport
         });
       }

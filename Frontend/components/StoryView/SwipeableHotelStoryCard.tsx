@@ -783,7 +783,7 @@ const LocationSlide: React.FC<{ hotel: EnhancedHotel; insightsStatus?: string }>
   );
 };
 
-// UPDATED: Enhanced Amenities & Reviews slide with two-stage API sentiment data
+// UPDATED: Enhanced Amenities & Reviews slide with clean rating grid format
 const AmenitiesSlide: React.FC<{ 
   hotel: EnhancedHotel; 
   insightsStatus?: string;
@@ -844,17 +844,72 @@ const AmenitiesSlide: React.FC<{
     outputRange: [12, -12],
   });
 
+  // Parse guest insights to extract ratings
+  const parseRatings = (guestInsights?: string) => {
+    const defaultRatings = {
+      cleanliness: 6.0,
+      service: 6.0,
+      location: 6.0,
+      roomQuality: 6.0
+    };
+
+    if (!guestInsights || insightsStatus === 'loading') {
+      return defaultRatings;
+    }
+
+    try {
+      // Parse the clean format from the API
+      const lines = guestInsights.split('\n');
+      const ratings = { ...defaultRatings };
+
+      lines.forEach(line => {
+        if (line.includes('Cleanliness:')) {
+          const match = line.match(/(\d+\.?\d*)/);
+          if (match) ratings.cleanliness = parseFloat(match[1]);
+        } else if (line.includes('Service:')) {
+          const match = line.match(/(\d+\.?\d*)/);
+          if (match) ratings.service = parseFloat(match[1]);
+        } else if (line.includes('Location:')) {
+          const match = line.match(/(\d+\.?\d*)/);
+          if (match) ratings.location = parseFloat(match[1]);
+        } else if (line.includes('Room Quality:')) {
+          const match = line.match(/(\d+\.?\d*)/);
+          if (match) ratings.roomQuality = parseFloat(match[1]);
+        }
+      });
+
+      return ratings;
+    } catch (error) {
+      console.warn('Failed to parse ratings:', error);
+      return defaultRatings;
+    }
+  };
+
+  const ratings = parseRatings(hotel.guestInsights);
+
+  // Get rating color based on score using cyan shades
+  const getRatingColor = (rating: number): string => {
+    if (rating >= 8.0) return "#06B6D4"; // Cyan-500 - Excellent
+    if (rating >= 7.0) return "#22D3EE"; // Cyan-400 - Very Good  
+    if (rating >= 6.0) return "#67E8F9"; // Cyan-300 - Good
+    if (rating >= 5.0) return "#A5F3FC"; // Cyan-200 - Average
+    if (rating >= 4.0) return "#CFFAFE"; // Cyan-100 - Below Average
+    return "#E0F7FA"; // Very light cyan - Poor
+  };
+
+  // Get rating text color for contrast with cyan shades
+  const getRatingTextColor = (rating: number): string => {
+    return "#FFFFFF"; // Always white text
+  };
+
   // UPDATED: Use images array for third slide background
   const getAmenitiesImage = () => {
-    // Try to use the third image from the images array
     if (hotel.images && hotel.images.length > 2) {
       return hotel.images[2];
     }
-    // Fallback to second image if third doesn't exist
     if (hotel.images && hotel.images.length > 1) {
       return hotel.images[1];
     }
-    // Final fallback to first image
     return hotel.images && hotel.images.length > 0 ? hotel.images[0] : hotel.image;
   };
 
@@ -883,66 +938,149 @@ const AmenitiesSlide: React.FC<{
       
       <View style={tw`absolute bottom-0 left-0 right-0 h-52 bg-gradient-to-t from-black/70 to-transparent z-1`} />
       
-      {/* UPDATED: Enhanced Content Information using two-stage API data */}
+      {/* Guest Ratings Grid */}
       <View style={tw`absolute bottom-6 left-4 right-4 z-10`}>
-
-        {/* UPDATED: Enhanced Sentiment Analysis from two-stage API */}
-        {hotel.sentimentPros && hotel.sentimentPros.length > 0 && (
-          <View style={tw`bg-black/50 p-2.5 rounded-lg border border-white/20 mb-2.5`}>
-            <View style={tw`flex-row items-center mb-1`}>
-              <Ionicons name="thumbs-up" size={12} color="#10B981" />
-              <Text style={tw`text-green-400 text-xs font-semibold ml-1`}>What Guests Love</Text>
-            </View>
-            {hotel.sentimentPros.slice(0, 2).map((pro, index) => (
-              <Text key={index} style={tw`text-white text-xs leading-4 ${index === 0 ? '' : 'mt-1'}`}>
-                • {pro}
-              </Text>
-            ))}
-          </View>
-        )}
-
-        {/* UPDATED: Fun Facts from two-stage API with loading state */}
-        {hotel.funFacts && hotel.funFacts.length > 0 && (
-          <View style={tw`bg-black/50 p-2.5 rounded-lg border border-white/20 mt-2.5`}>
-            <View style={tw`flex-row items-center mb-1`}>
-              <Ionicons 
-                name={insightsStatus === 'loading' && hotel.funFacts.some(fact => fact.includes('Loading')) ? "sync" : "bulb"} 
-                size={12} 
-                color="#1df9ff" 
-              />
-              <Text style={tw`text-white text-xs font-semibold ml-1`}>Fun Facts</Text>
-              {insightsStatus === 'loading' && hotel.funFacts.some(fact => fact.includes('Loading')) && (
-                <Text style={tw`text-white/60 text-xs ml-2`}>Loading...</Text>
-              )}
-            </View>
-            {hotel.funFacts.slice(0, 2).map((fact, index) => (
-              <Text key={index} style={tw`text-white text-xs leading-4 ${index === 0 ? '' : 'mt-1'}`}>
-                • {fact.includes('Loading') ? '🔄 Generating fun facts...' : fact}
-              </Text>
-            ))}
-          </View>
-        )}
         
-        {/* UPDATED: Guest Insights using two-stage API data with comprehensive loading state */}
-        <View style={tw`bg-black/50 p-2.5 rounded-lg border border-white/20`}>
+        {/* Fun Facts Header */}
+        <View style={tw`bg-black/50 p-2.5 rounded-lg border border-white/20 mb-3`}>
           <View style={tw`flex-row items-center mb-1`}>
             <Ionicons 
-              name={insightsStatus === 'loading' ? "sync" : "people"} 
+              name={insightsStatus === 'loading' && hotel.funFacts?.some(fact => fact.includes('Loading')) ? "sync" : "bulb"} 
               size={12} 
               color="#1df9ff" 
             />
             <Text style={tw`text-white text-xs font-semibold ml-1`}>
-              Guest Insights
+              Fun Facts
             </Text>
-            {insightsStatus === 'loading' && (
+            {insightsStatus === 'loading' && hotel.funFacts?.some(fact => fact.includes('Loading')) && (
               <View style={tw`ml-2`}>
-                <Text style={tw`text-white/60 text-xs`}>Analyzing...</Text>
+                <Text style={tw`text-white/60 text-xs`}>Loading...</Text>
               </View>
             )}
           </View>
-          <Text style={tw`text-white text-xs leading-4`}>
-            {generateReviewSummary(hotel, insightsStatus)}
-          </Text>
+          {hotel.funFacts && hotel.funFacts.length > 0 ? (
+            hotel.funFacts.slice(0, 2).map((fact, index) => (
+              <Text key={index} style={tw`text-white text-xs leading-4 ${index === 0 ? '' : 'mt-1'}`}>
+                • {fact.includes('Loading') ? '🔄 Generating fun facts...' : fact}
+              </Text>
+            ))
+          ) : (
+            <Text style={tw`text-white text-xs leading-4`}>
+              {insightsStatus === 'loading' 
+                ? '🔄 Discovering interesting facts about this hotel...'
+                : 'Modern amenities and excellent guest services'
+              }
+            </Text>
+          )}
+        </View>
+
+        {/* 2x2 Ratings Grid - Compact with Labels to the Right */}
+        <View style={tw`gap-1`}>
+          {/* Top Row */}
+          <View style={tw`flex-row gap-1`}>
+            {/* Cleanliness - Top Left */}
+            <View style={tw`flex-1 bg-black/50 border border-white/20 rounded-md p-1.5 flex-row items-center`}>
+              <View 
+                style={[
+                  tw`w-7 h-7 rounded-full items-center justify-center`,
+                  { backgroundColor: getRatingColor(ratings.cleanliness) }
+                ]}
+              >
+                <Text 
+                  style={[
+                    tw`text-xs font-bold`,
+                    { 
+                      color: getRatingTextColor(ratings.cleanliness),
+                      textShadowColor: '#000000',
+                      textShadowOffset: { width: 0.5, height: 0.5 },
+                      textShadowRadius: 1
+                    }
+                  ]}
+                >
+                  {insightsStatus === 'loading' ? '-' : ratings.cleanliness.toFixed(1)}
+                </Text>
+              </View>
+              <Text style={tw`text-white text-xs font-medium ml-1.5`}>Cleanliness</Text>
+            </View>
+
+            {/* Service - Top Right */}
+            <View style={tw`flex-1 bg-black/50 border border-white/20 rounded-md p-1.5 flex-row items-center`}>
+              <View 
+                style={[
+                  tw`w-7 h-7 rounded-full items-center justify-center`,
+                  { backgroundColor: getRatingColor(ratings.service) }
+                ]}
+              >
+                <Text 
+                  style={[
+                    tw`text-xs font-bold`,
+                    { 
+                      color: getRatingTextColor(ratings.service),
+                      textShadowColor: '#000000',
+                      textShadowOffset: { width: 0.5, height: 0.5 },
+                      textShadowRadius: 1
+                    }
+                  ]}
+                >
+                  {insightsStatus === 'loading' ? '-' : ratings.service.toFixed(1)}
+                </Text>
+              </View>
+              <Text style={tw`text-white text-xs font-medium ml-1.5`}>Service</Text>
+            </View>
+          </View>
+
+          {/* Bottom Row */}
+          <View style={tw`flex-row gap-1`}>
+            {/* Location - Bottom Left */}
+            <View style={tw`flex-1 bg-black/50 border border-white/20 rounded-md p-1.5 flex-row items-center`}>
+              <View 
+                style={[
+                  tw`w-7 h-7 rounded-full items-center justify-center`,
+                  { backgroundColor: getRatingColor(ratings.location) }
+                ]}
+              >
+                <Text 
+                  style={[
+                    tw`text-xs font-bold`,
+                    { 
+                      color: getRatingTextColor(ratings.location),
+                      textShadowColor: '#000000',
+                      textShadowOffset: { width: 0.5, height: 0.5 },
+                      textShadowRadius: 1
+                    }
+                  ]}
+                >
+                  {insightsStatus === 'loading' ? '-' : ratings.location.toFixed(1)}
+                </Text>
+              </View>
+              <Text style={tw`text-white text-xs font-medium ml-1.5`}>Location</Text>
+            </View>
+
+            {/* Room Quality - Bottom Right */}
+            <View style={tw`flex-1 bg-black/50 border border-white/20 rounded-md p-1.5 flex-row items-center`}>
+              <View 
+                style={[
+                  tw`w-7 h-7 rounded-full items-center justify-center`,
+                  { backgroundColor: getRatingColor(ratings.roomQuality) }
+                ]}
+              >
+                <Text 
+                  style={[
+                    tw`text-xs font-bold`,
+                    { 
+                      color: getRatingTextColor(ratings.roomQuality),
+                      textShadowColor: '#000000',
+                      textShadowOffset: { width: 0.5, height: 0.5 },
+                      textShadowRadius: 1
+                    }
+                  ]}
+                >
+                  {insightsStatus === 'loading' ? '-' : ratings.roomQuality.toFixed(1)}
+                </Text>
+              </View>
+              <Text style={tw`text-white text-xs font-medium ml-1.5`}>Rooms</Text>
+            </View>
+          </View>
         </View>
       </View>
     </View>
