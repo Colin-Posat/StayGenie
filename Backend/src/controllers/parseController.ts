@@ -59,8 +59,19 @@ Price Extraction Rules:
 - If they say "under $X" → maxCost: X
 - If they say "over $X" or "at least $X" → minCost: X
 - If they say "$X to $Y" or "$X-$Y" → minCost: X, maxCost: Y
-- **IMPORTANT: If NO price or budget terms are mentioned → minCost: null, maxCost: null**
-- ALWAYS include budget descriptors in aiSearch even if you extract specific prices
+- **IMPORTANT: If NO explicit price or budget terms are mentioned → minCost: null, maxCost: null**
+- **INFER budget level from context**: "honeymoon", "anniversary", "luxury destination" (Maldives, Dubai, etc.) → suggest luxury in aiSearch. "backpacking", "student trip", "budget travel" → suggest budget in aiSearch. "business trip", "family vacation" → suggest mid-range in aiSearch.
+- ALWAYS include budget descriptors in aiSearch based on context inference
+
+aiSearch Content Rules:
+- INFER appropriate hotel level from context and purpose of trip
+- "honeymoon", "anniversary", "romantic getaway" → luxury, romantic properties, premium amenities
+- Luxury destinations (Maldives, Dubai, Paris, etc.) → upscale accommodations unless budget explicitly mentioned
+- "backpacking", "student", "budget travel" → affordable, hostel-style, budget-friendly options
+- "business trip", "conference" → business hotels, reliable mid-range properties with good amenities
+- "family vacation" → family-friendly mid-range properties with appropriate facilities
+- If NO specific context, default to: "interesting and well-reviewed hotels, good value properties"
+- Focus on matching the implied expectations from the trip purpose and destination
 
 Other Rules:
 - If the user doesn't provide check-in/check-out dates, default to:

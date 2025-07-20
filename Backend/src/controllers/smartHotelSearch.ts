@@ -177,6 +177,67 @@ const getTop3Amenities = (hotelInfo: any): string[] => {
   return amenities.slice(0, 3);
 };
 
+// Helper function to extract images from hotelImages array
+const extractHotelImages = (hotelInfo: any): string[] => {
+  const images: string[] = [];
+  
+  // Check if hotelImages is directly available
+  let hotelImagesArray = hotelInfo?.hotelImages;
+  
+  // If not found, check if it's nested under 'data'
+  if (!hotelImagesArray && hotelInfo?.data?.hotelImages) {
+    hotelImagesArray = hotelInfo.data.hotelImages;
+    console.log(`📍 Found hotelImages in data property`);
+  }
+  
+  if (hotelImagesArray && Array.isArray(hotelImagesArray)) {
+    console.log(`📸 Processing ${hotelImagesArray.length} hotel images`);
+    
+    // Get first 5 images from hotelImages array
+    const imageUrls = hotelImagesArray
+      .slice(0, 5) // Take first 5 images
+      .map((imageObj: any, index: number) => {
+        // Prefer HD URL if available, otherwise use regular URL
+        const url = imageObj.urlHd || imageObj.url;
+        console.log(`  Image ${index + 1}: ${url} (HD: ${!!imageObj.urlHd})`);
+        return url;
+      })
+      .filter(Boolean); // Remove any null/undefined URLs
+        
+    images.push(...imageUrls);
+    console.log(`📸 Successfully extracted ${images.length} images for hotel`);
+  } else {
+    console.log(`⚠️  No valid hotelImages array found`);
+  }
+    
+  // Fallback: check for old structure (main_photo, thumbnail, images)
+  if (images.length === 0) {
+    console.log(`🔄 Trying fallback image sources...`);
+    
+    // Check both direct and nested data
+    const mainPhoto = hotelInfo?.main_photo || hotelInfo?.data?.main_photo;
+    const thumbnail = hotelInfo?.thumbnail || hotelInfo?.data?.thumbnail;
+    const oldImages = hotelInfo?.images || hotelInfo?.data?.images;
+    
+    if (mainPhoto) {
+      images.push(mainPhoto);
+      console.log(`📸 Added main_photo: ${mainPhoto}`);
+    }
+    if (!mainPhoto && thumbnail) {
+      images.push(thumbnail);
+      console.log(`📸 Added thumbnail: ${thumbnail}`);
+    }
+    if (oldImages && Array.isArray(oldImages)) {
+      const oldImageUrls = oldImages.slice(0, 5);
+      images.push(...oldImageUrls);
+      console.log(`📸 Added ${oldImageUrls.length} images from old structure`);
+    }
+  }
+    
+  console.log(`✅ Final images array:`, images);
+  return images;
+};
+
 const calculatePriceInfo = (hotel: HotelWithRates, nights: number) => {
   let priceRange = null;
   let pricePerNightInfo = 'Price not available';
@@ -308,9 +369,9 @@ const getHotelDetailsOptimized = async (hotelId: string): Promise<Record<string,
     console.log(`🏨 Fetching detailed info for hotel ID: ${hotelId}`);
     
     const response = await detailLimit(() => 
-      liteApiInstance.get(`/hotels/${hotelId}`, {
-        timeout: DETAIL_FETCH_TIMEOUT
-      })
+      liteApiInstance.get('/data/hotel', {
+  params: { hotelId: hotelId }
+})
     );
 
     if (response.status !== 200) {
@@ -949,7 +1010,7 @@ export const smartHotelSearchController = async (req: Request, res: Response) =>
         };
       }
     
-      const images: string[] = [];
+      const images = extractHotelImages(enrichedDetail);
       if (fullHotelInfo?.main_photo) {
         images.push(fullHotelInfo.main_photo);
       }
