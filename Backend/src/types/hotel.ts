@@ -1,4 +1,4 @@
-// Hotel search types and interfaces
+// Hotel search types and interfaces - UPDATED
 export interface SentimentCategory {
   name: string;
   rating: number;
@@ -31,30 +31,67 @@ export interface ParsedSearchQuery {
   maxCost?: number | null; 
 }
 
+// UPDATED: Extended HotelInfo interface to match actual API response
 export interface HotelInfo {
+  // Basic hotel identifiers
   id?: string;
   name?: string;
   address?: string;
+  
+  // Rating fields - API uses different names
   rating?: number;
   starRating?: number;
+  stars?: number;  // ← ADDED: API uses "stars": 3
+  
+  // Description fields - API uses different names
   description?: string;
-  amenities?: string[];
-  images?: string[];
-  main_photo?: string;
-  thumbnail?: string;
+  hotelDescription?: string;  // ← ADDED: API uses "hotelDescription"
+  
+  // Location data - API provides coordinates at top level
+  latitude?: number;
+  longitude?: number;  
+  city?: string;
+  country?: string;
+  zip?: string;        // ← ADDED: API provides zip codes
+  
+  // Nested coordinate structures (fallback)
   coordinates?: {
     latitude: number;
     longitude: number;
   };
-  city?: string;
-  country?: string;
   location?: {
     latitude: number;
     longitude: number;
   };
+  
+  // Images and media
+  images?: string[];
+  main_photo?: string;   // ← API provides this
+  thumbnail?: string;    // ← API provides this
+  
+  // Amenities and facilities
+  amenities?: string[];
+  facilityIds?: number[];  // ← ADDED: API provides facility IDs
+  
+  // Hotel classification
+  hotelTypeId?: number;    // ← ADDED: API provides hotel type
+  chainId?: number;        // ← ADDED: API provides chain info
+  chain?: string;          // ← ADDED: API provides chain name
+  
+  // Currency and pricing context
+  currency?: string;       // ← ADDED: API provides "EUR", "USD", etc.
+  
+  // Additional fields
   rooms?: Array<Record<string, unknown>>;
   reviewCount?: number;
   guestInsights?: string;
+  
+  // Detailed descriptions (API provides these)
+  HeadLine?: string;       // ← ADDED: API provides headline
+  Rooms?: string;          // ← ADDED: API provides room descriptions
+  Dining?: string;         // ← ADDED: API provides dining info
+  business_amenities?: string;  // ← ADDED: API provides business amenities
+  Attractions?: string;    // ← ADDED: API provides attraction info
 }
 
 export interface Rate {
@@ -154,4 +191,4 @@ export interface HotelRecommendation {
   longitude: number | null;
   topAmenities: string[];
   sentimentData: HotelSentimentData | null;
-} 
+}

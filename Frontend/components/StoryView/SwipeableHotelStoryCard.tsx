@@ -437,7 +437,7 @@ const HotelOverviewSlide: React.FC<{
 }) => {
   const aiInsight = generateAIInsight(hotel, insightsStatus);
   const panAnimation = useRef(new Animated.Value(0)).current;
-  const scaleAnimation = useRef(new Animated.Value(1.2)).current;
+  const scaleAnimation = useRef(new Animated.Value(1.05)).current; // REDUCED from 1.2 to 1.05
 
   useEffect(() => {
     const panningAnimation = Animated.loop(
@@ -458,12 +458,12 @@ const HotelOverviewSlide: React.FC<{
     const scalingAnimation = Animated.loop(
       Animated.sequence([
         Animated.timing(scaleAnimation, {
-          toValue: 1.3,
+          toValue: 1.1, // REDUCED from 1.3 to 1.1
           duration: 10000,
           useNativeDriver: true,
         }),
         Animated.timing(scaleAnimation, {
-          toValue: 1.2,
+          toValue: 1.05, // REDUCED from 1.2 to 1.05
           duration: 10000,
           useNativeDriver: true,
         }),
@@ -479,14 +479,15 @@ const HotelOverviewSlide: React.FC<{
     };
   }, [panAnimation, scaleAnimation]);
 
+  // REDUCED pan movement for more image visibility
   const translateX = panAnimation.interpolate({
     inputRange: [0, 1],
-    outputRange: [-15, 15],
+    outputRange: [-8, 8], // REDUCED from [-15, 15] to [-8, 8]
   });
 
   const translateY = panAnimation.interpolate({
     inputRange: [0, 1],
-    outputRange: [-8, 8],
+    outputRange: [-4, 4], // REDUCED from [-8, 8] to [-4, 4]
   });
 
   // UPDATED: Enhanced price display using two-stage API pricing
@@ -515,10 +516,10 @@ const HotelOverviewSlide: React.FC<{
         style={[
           {
             position: 'absolute',
-            width: '120%',
-            height: '120%',
-            left: '-10%',
-            top: '-10%',
+            width: '100%', // REDUCED from '120%' to '110%'
+            height: '100%', // REDUCED from '120%' to '110%'
+            left: '-5%', // REDUCED from '-10%' to '-5%'
+            top: '-5%', // REDUCED from '-10%' to '-5%'
           },
           {
             transform: [
@@ -621,97 +622,41 @@ const HotelOverviewSlide: React.FC<{
 };
 
 // UPDATED: Enhanced Location slide with two-stage API location data
+// UPDATED: Enhanced Location slide with two-stage API location data - NO KEN BURNS EFFECT
 const LocationSlide: React.FC<{ hotel: EnhancedHotel; insightsStatus?: string }> = ({ 
   hotel, 
   insightsStatus = 'complete' 
 }) => {
-  const panAnimation = useRef(new Animated.Value(0)).current;
-  const scaleAnimation = useRef(new Animated.Value(1.2)).current;
-
-  useEffect(() => {
-    const panningAnimation = Animated.loop(
-      Animated.sequence([
-        Animated.timing(panAnimation, {
-          toValue: 1,
-          duration: 12000,
-          useNativeDriver: true,
-        }),
-        Animated.timing(panAnimation, {
-          toValue: 0,
-          duration: 12000,
-          useNativeDriver: true,
-        }),
-      ])
-    );
-
-    const scalingAnimation = Animated.loop(
-      Animated.sequence([
-        Animated.timing(scaleAnimation, {
-          toValue: 1.28,
-          duration: 15000,
-          useNativeDriver: true,
-        }),
-        Animated.timing(scaleAnimation, {
-          toValue: 1.2,
-          duration: 15000,
-          useNativeDriver: true,
-        }),
-      ])
-    );
-
-    panningAnimation.start();
-    scalingAnimation.start();
-
-    return () => {
-      panningAnimation.stop();
-      scalingAnimation.stop();
-    };
-  }, [panAnimation, scaleAnimation]);
-
-  const translateX = panAnimation.interpolate({
-    inputRange: [0, 1],
-    outputRange: [12, -12],
-  });
-
-  const translateY = panAnimation.interpolate({
-    inputRange: [0, 1],
-    outputRange: [6, -6],
-  });
+  // REMOVED: All animation references and effects for static image display
 
   // UPDATED: Use images array for second slide background
   const getLocationImage = () => {
-    // Try to use the second image from the images array
+    if (hotel.latitude && hotel.longitude) {
+      const zoom = 13;
+      const width = 600;
+      const height = 400;
+      return `https://maps.locationiq.com/v3/staticmap?key=pk.79c544ae745ee83f91a7523c99939210&center=${hotel.latitude},${hotel.longitude}&zoom=${zoom}&size=${width}x${height}&markers=icon:large-red-cutout|${hotel.latitude},${hotel.longitude}`;
+    }
+
+    // Fallbacks if coordinates are missing
     if (hotel.images && hotel.images.length > 1) {
       return hotel.images[1];
     }
-    // Fallback to mapImage if available
-    if (hotel.mapImage) {
-      return hotel.mapImage;
-    }
-    // Final fallback to first image
-    return hotel.images && hotel.images.length > 0 ? hotel.images[0] : hotel.image;
+    return hotel.images?.[0] || hotel.image;
   };
 
   return (
     <View style={tw`flex-1 relative overflow-hidden`}>
-      <Animated.Image 
+      {/* UPDATED: Static image with full coverage and no animations */}
+      <Image 
         source={{ uri: getLocationImage() }} 
-        style={[
-          {
-            position: 'absolute',
-            width: '120%',
-            height: '120%',
-            left: '-10%',
-            top: '-10%',
-          },
-          {
-            transform: [
-              { translateX },
-              { translateY },
-              { scale: scaleAnimation }
-            ],
-          }
-        ]} 
+        style={{
+          position: 'absolute',
+          width: '100%',
+          height: '100%',
+          top: 0,
+          left: 0,
+        }}
         resizeMode="cover"
       />
       
@@ -719,18 +664,6 @@ const LocationSlide: React.FC<{ hotel: EnhancedHotel; insightsStatus?: string }>
       
       {/* UPDATED: Enhanced Location Information using two-stage API data */}
       <View style={tw`absolute bottom-6 left-4 right-4 z-10`}>
-        {/* Coordinates display (if available) */}
-        {hotel.latitude && hotel.longitude && (
-          <View style={tw`bg-black/50 p-2.5 rounded-lg border border-white/20 mb-2.5`}>
-            <View style={tw`flex-row items-center mb-1`}>
-              <Ionicons name="navigate" size={12} color="#60A5FA" />
-              <Text style={tw`text-blue-400 text-xs font-semibold ml-1`}>Exact Location</Text>
-            </View>
-            <Text style={tw`text-white text-xs leading-4`}>
-              {hotel.latitude.toFixed(6)}, {hotel.longitude.toFixed(6)}
-            </Text>
-          </View>
-        )}
 
         {/* UPDATED: Nearby Attractions using two-stage API data with loading state */}
         {hotel.nearbyAttractions && hotel.nearbyAttractions.length > 0 && (
@@ -920,8 +853,8 @@ const AmenitiesSlide: React.FC<{
         style={[
           {
             position: 'absolute',
-            width: '120%',
-            height: '120%',
+            width: '100%',
+            height: '100%',
             left: '-10%',
             top: '-10%',
           },
@@ -1122,13 +1055,7 @@ const SwipeableHotelStoryCard: React.FC<SwipeableHotelStoryCardProps> = ({
   // UPDATED: Enhanced Google Maps link generation with two-stage API coordinates
   const generateGoogleMapsLink = (hotel: Hotel, checkin?: Date, checkout?: Date, adults: number = 2, children: number = 0): string => {
     let query = '';
-    
-    // Priority 1: Use two-stage API coordinates if available
-    if (hotel.latitude && hotel.longitude) {
-      query = `${hotel.latitude},${hotel.longitude}`;
-      console.log(`📍 Using two-stage API coordinates: ${hotel.latitude}, ${hotel.longitude}`);
-    } else {
-      // Priority 2: Use enhanced location data from two-stage API
+
       const locationText = hotel.city && hotel.country 
         ? `${hotel.name} ${hotel.city} ${hotel.country}`
         : hotel.fullAddress 
@@ -1136,7 +1063,7 @@ const SwipeableHotelStoryCard: React.FC<SwipeableHotelStoryCardProps> = ({
         : `${hotel.name} ${hotel.location}`;
       query = encodeURIComponent(locationText);
       console.log(`📍 Using location text: ${locationText}`);
-    }
+    
     
     let url = `https://www.google.com/maps/search/?api=1&query=${query}`;
     

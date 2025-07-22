@@ -300,16 +300,26 @@ const createOptimizedHotelSummaryForAI = (hotel: HotelWithRates, index: number, 
   
   const city = hotelInfo?.city || 'Unknown City';
   const country = hotelInfo?.country || 'Unknown Country';
-  const latitude = hotelInfo?.location?.latitude || hotelInfo?.coordinates?.latitude || null;
-  const longitude = hotelInfo?.location?.longitude || hotelInfo?.coordinates?.longitude || null;
+  
+  // FIX: Check top level first, then nested paths
+  const latitude = hotelInfo?.latitude || 
+                   hotelInfo?.location?.latitude || 
+                   hotelInfo?.coordinates?.latitude || 
+                   null;
+  const longitude = hotelInfo?.longitude || 
+                    hotelInfo?.location?.longitude || 
+                    hotelInfo?.coordinates?.longitude || 
+                    null;
+  
   const topAmenities = getTop3Amenities(hotelInfo);
-  const starRating = hotelInfo?.starRating || hotelInfo?.rating || 0;
+  const starRating = hotelInfo?.starRating || hotelInfo?.stars || hotelInfo?.rating || 0; // Also check 'stars'
   const reviewCount = hotelInfo?.reviewCount || 0;
 
   // Truncate description to 100 chars for faster token processing
-  const shortDescription = hotelInfo.description 
-    ? hotelInfo.description.substring(0, 100).trim() + '...'
+  const shortDescription = hotelInfo.hotelDescription || hotelInfo.description 
+    ? (hotelInfo.hotelDescription || hotelInfo.description)!.substring(0, 100).trim() + '...'
     : 'No description available';
+
 
   let displayPrice = pricePerNightInfo;
   if (suggestedPrice && priceProvider) {
@@ -525,13 +535,13 @@ const createHotelSummaryForInsights = (hotel: HotelWithRates, hotelInfo: any, ni
   return {
     hotelId: hotel.hotelId,
     name: hotelInfo?.name || 'Unknown Hotel',
-    starRating: hotelInfo?.starRating || hotelInfo?.rating || 0,
+    starRating: hotelInfo?.starRating || hotelInfo?.stars || hotelInfo?.rating || 0,
     images: images.slice(0, 5), // Limit to 5 images
     pricePerNight: pricePerNight,
     reviewCount: fakeReviewCount,
     address: hotelInfo?.address || 'Address not available',
     amenities: hotelInfo?.amenities || [],
-    description: hotelInfo?.description || 'No description available',
+    description: hotelInfo?.hotelDescription || hotelInfo?.description || 'No description available',
     coordinates: hotelInfo?.coordinates || null,
     priceRange: priceRange,
     totalRooms: hotel.roomTypes ? hotel.roomTypes.length : 0,
@@ -541,8 +551,15 @@ const createHotelSummaryForInsights = (hotel: HotelWithRates, hotelInfo: any, ni
     priceProvider: priceProvider,
     city: hotelInfo?.city || 'Unknown City',
     country: hotelInfo?.country || 'Unknown Country',
-    latitude: hotelInfo?.location?.latitude || hotelInfo?.coordinates?.latitude || null,
-    longitude: hotelInfo?.location?.longitude || hotelInfo?.coordinates?.longitude || null,
+    // FIX: Check top level first, then nested paths
+    latitude: hotelInfo?.latitude || 
+              hotelInfo?.location?.latitude || 
+              hotelInfo?.coordinates?.latitude || 
+              null,
+    longitude: hotelInfo?.longitude || 
+               hotelInfo?.location?.longitude || 
+               hotelInfo?.coordinates?.longitude || 
+               null,
     topAmenities: topAmenities
   };
 };
@@ -593,6 +610,8 @@ export const hotelSearchAndMatchController = async (req: Request, res: Response)
     });
 
     const hotels = hotelsSearchResponse.data?.data || hotelsSearchResponse.data;
+
+    
     logger.endStep('2-FetchHotels', { hotelCount: hotels?.length || 0 });
 
     if (!hotels || !Array.isArray(hotels) || hotels.length === 0) {
