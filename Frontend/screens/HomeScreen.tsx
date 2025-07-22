@@ -548,12 +548,12 @@ const HomeScreen = () => {
       features: hotel.amenities || ["Standard features"],
       
       // Stage 1: Show loading placeholders for AI content
-      aiExcerpt: "🔄 AI is analyzing this hotel for you...", 
-      whyItMatches: "🔄 AI match analysis in progress...", 
-      funFacts: ["🔄 Loading interesting facts..."], 
-      guestInsights: "🔄 Loading guest insights...", 
-      nearbyAttractions: ["🔄 Finding nearby attractions..."], 
-      locationHighlight: "🔄 Analyzing location advantages...", 
+      aiExcerpt: "AI is analyzing this hotel for you...", 
+      whyItMatches: "AI match analysis in progress...", 
+      funFacts: ["Loading interesting facts..."], 
+      guestInsights: "Loading guest insights...", 
+      nearbyAttractions: ["Finding nearby attractions..."], 
+      locationHighlight: "Analyzing location advantages...", 
       
       // Basic data available immediately
       aiMatchPercent: hotel.aiMatchPercent,
@@ -1226,7 +1226,7 @@ const HomeScreen = () => {
     detailsMessage += `• Safety Rating: ${hotel.safetyRating.toFixed(1)}/10\n\n`;
     
     if (isInsightsLoading && hotel.guestInsights?.includes('Loading')) {
-      detailsMessage += `💬 Guest Insights:\n🔄 Generating AI insights...\n\n`;
+      detailsMessage += `💬 Guest Insights:\nGenerating AI insights...\n\n`;
     } else if (hotel.guestInsights && !hotel.guestInsights.includes('Loading')) {
       detailsMessage += `💬 Guest Insights:\n${hotel.guestInsights}\n\n`;
     }
@@ -1316,7 +1316,7 @@ const HomeScreen = () => {
     }
     
     if (isInsightsLoading && hotel.guestInsights?.includes('Loading')) {
-      alertMessage += `💬 Guest Insights: 🔄 Generating...\n\n`;
+      alertMessage += `💬 Guest Insights: Generating...\n\n`;
     } else if (hotel.guestInsights && !hotel.guestInsights.includes('Loading')) {
       alertMessage += `💬 Guest Insights: ${hotel.guestInsights}\n\n`;
     }

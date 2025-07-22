@@ -259,7 +259,7 @@ const FavoritesScreen = () => {
   // Enhanced load favorites with sorting
   const loadFavorites = useCallback(async () => {
     try {
-      console.log('🔄 Loading favorites...');
+      console.log('Loading favorites...');
       setIsLoading(true);
       setError(null);
       
@@ -294,7 +294,7 @@ const FavoritesScreen = () => {
 
   // Enhanced refresh with haptic feedback
   const handleRefresh = useCallback(async () => {
-    console.log('🔄 Refreshing favorites...');
+    console.log('Refreshing favorites...');
     setIsRefreshing(true);
     await loadFavorites();
     setIsRefreshing(false);
@@ -318,7 +318,7 @@ const FavoritesScreen = () => {
     const sortedFavorites = sortFavorites(favorites, nextSort);
     setFavorites(sortedFavorites);
     
-    console.log(`🔄 Sorted by: ${nextSort}`);
+    console.log(`Sorted by: ${nextSort}`);
   }, [sortBy, favorites, sortFavorites]);
 
   // Enhanced remove with confirmation

@@ -239,7 +239,7 @@ const isStage1Data = (hotel: Hotel): boolean => {
 const generateAIInsight = (hotel: Hotel, insightsStatus?: string): string => {
   // Show loading state for Stage 1 data
   if (insightsStatus === 'loading' || isStage1Data(hotel)) {
-    return "🔄 AI is analyzing this hotel to match your preferences...";
+    return "AI is analyzing this hotel...";
   }
   
   // Priority 1: Use API-provided AI match explanation (Stage 2)
@@ -293,7 +293,7 @@ const generateAIInsight = (hotel: Hotel, insightsStatus?: string): string => {
 const generateReviewSummary = (hotel: Hotel, insightsStatus?: string): string => {
   // Show loading state for insights
   if (insightsStatus === 'loading' || (hotel.guestInsights && hotel.guestInsights.includes('Loading'))) {
-    return "🔄 Loading detailed guest sentiment analysis...";
+    return "Loading detailed guest sentiment analysis...";
   }
 
   // Priority 1: Use two-stage API guest insights
@@ -706,7 +706,7 @@ const LocationSlide: React.FC<{ hotel: EnhancedHotel; insightsStatus?: string }>
               : (hotel.funFacts && hotel.funFacts[0] && !hotel.funFacts[0].includes('Loading')) 
                 ? hotel.funFacts[0]
                 : insightsStatus === 'loading'
-                  ? "🔄 Analyzing location advantages..."
+                  ? "Analyzing location advantages..."
                   : `Prime location in ${hotel.city || 'the city'} with easy access to attractions and dining`
             }
           </Text>
@@ -894,13 +894,13 @@ const AmenitiesSlide: React.FC<{
           {hotel.funFacts && hotel.funFacts.length > 0 ? (
             hotel.funFacts.slice(0, 2).map((fact, index) => (
               <Text key={index} style={tw`text-white text-xs leading-4 ${index === 0 ? '' : 'mt-1'}`}>
-                • {fact.includes('Loading') ? '🔄 Generating fun facts...' : fact}
+                • {fact.includes('Loading') ? 'Generating fun facts...' : fact}
               </Text>
             ))
           ) : (
             <Text style={tw`text-white text-xs leading-4`}>
               {insightsStatus === 'loading' 
-                ? '🔄 Discovering interesting facts about this hotel...'
+                ? 'Discovering interesting facts about this hotel...'
                 : 'Modern amenities and excellent guest services'
               }
             </Text>
@@ -1263,30 +1263,6 @@ const SwipeableHotelStoryCard: React.FC<SwipeableHotelStoryCardProps> = ({
       
       {/* UPDATED: Action Section with two-stage API status indicators */}
       <View style={tw`bg-white rounded-b-2xl`}>
-        {/* NEW: Enhanced Insights Loading Indicator for two-stage API */}
-        {(isInsightsLoading || insightsStatus === 'loading') && (
-          <View style={tw`px-4 py-2 ${
-            searchMode === 'test' ? 'bg-orange-50 border-b border-orange-100' : 'bg-blue-50 border-b border-blue-100'
-          }`}>
-            <View style={tw`flex-row items-center`}>
-              <Ionicons 
-                name={searchMode === 'test' ? "flask" : "sync"} 
-                size={14} 
-                color={searchMode === 'test' ? "#EA580C" : "#3B82F6"} 
-              />
-              <Text style={tw`${
-                searchMode === 'test' ? 'text-orange-600' : 'text-blue-600'
-              } text-xs font-medium ml-2`}>
-                {searchMode === 'test' 
-                  ? 'Test mode - Loading test insights...'
-                  : insightsStatus === 'loading'
-                    ? 'Stage 2: Generating AI insights and sentiment analysis...'
-                    : 'Loading enhanced guest insights...'
-                }
-              </Text>
-            </View>
-          </View>
-        )}
         
         {/* NEW: Partial insights indicator */}
         {insightsStatus === 'partial' && !isInsightsLoading && (

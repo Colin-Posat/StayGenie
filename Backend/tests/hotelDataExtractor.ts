@@ -239,7 +239,7 @@ const enrichHotelsWithDetails = async (basicHotels: HotelBasicInfo[]): Promise<H
   
   for (let i = 0; i < basicHotels.length; i += batchSize) {
     const batch = basicHotels.slice(i, i + batchSize);
-    console.log(`🔄 Processing batch ${Math.floor(i / batchSize) + 1}/${Math.ceil(basicHotels.length / batchSize)} (${batch.length} hotels)...`);
+    console.log(`Processing batch ${Math.floor(i / batchSize) + 1}/${Math.ceil(basicHotels.length / batchSize)} (${batch.length} hotels)...`);
     
     const detailPromises = batch.map(hotel => fetchHotelDetails(hotel.id));
     const details = await Promise.all(detailPromises);

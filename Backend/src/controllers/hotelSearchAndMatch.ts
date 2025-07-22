@@ -477,7 +477,7 @@ ${budgetGuidance}Rank by location, amenities, value. Use exact names from list.`
   
   // Merge and rank all results
   const allMatches = [...batch1Results, ...batch2Results];
-  console.log(`🔄 Llama found ${allMatches.length} total matches`);
+  console.log(`Llama found ${allMatches.length} total matches`);
   
   // Sort by AI match percentage and take top 5
   const rankedMatches = allMatches

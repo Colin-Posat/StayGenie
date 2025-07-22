@@ -212,7 +212,7 @@ const extractHotelImages = (hotelInfo: any): string[] => {
     
   // Fallback: check for old structure (main_photo, thumbnail, images)
   if (images.length === 0) {
-    console.log(`🔄 Trying fallback image sources...`);
+    console.log(`Trying fallback image sources...`);
     
     // Check both direct and nested data
     const mainPhoto = hotelInfo?.main_photo || hotelInfo?.data?.main_photo;
@@ -601,7 +601,7 @@ ${budgetGuidance}Rank by location, amenities, value. Use exact names from list.`
   
   // Merge and rank all results
   const allMatches = [...batch1Results, ...batch2Results];
-  console.log(`🔄 Llama found ${allMatches.length} total matches`);
+  console.log(`Llama found ${allMatches.length} total matches`);
   
   // Sort by AI match percentage and take top 5
   const rankedMatches = allMatches

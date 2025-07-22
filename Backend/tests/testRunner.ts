@@ -166,7 +166,7 @@ const main = async (): Promise<void> => {
 // ======================== GRACEFUL SHUTDOWN ========================
 process.on('SIGINT', () => {
   console.log('\n\n⚠️  Test interrupted by user (Ctrl+C)');
-  console.log('🔄 Partial results may be available');
+  console.log('Partial results may be available');
   console.log('💡 Consider running again for complete analysis');
   process.exit(130);
 });

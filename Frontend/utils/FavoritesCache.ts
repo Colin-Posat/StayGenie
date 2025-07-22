@@ -47,7 +47,7 @@ class FavoritesCache {
   // Initialize cache from AsyncStorage
   async initialize(): Promise<void> {
     try {
-      console.log('🔄 Initializing FavoritesCache...');
+      console.log('Initializing FavoritesCache...');
       
       const [favoritesData, metadataData] = await Promise.all([
         AsyncStorage.getItem(this.STORAGE_KEY),
@@ -162,11 +162,11 @@ class FavoritesCache {
       
       if (isCurrentlyFavorited) {
         await this.removeFromFavorites(normalizedId);
-        console.log(`🔄 Toggled OFF: ${hotel.name}`);
+        console.log(`Toggled OFF: ${hotel.name}`);
         return false; // Now not favorited
       } else {
         await this.addToFavorites(hotel);
-        console.log(`🔄 Toggled ON: ${hotel.name}`);
+        console.log(`Toggled ON: ${hotel.name}`);
         return true; // Now favorited
       }
     } catch (error) {
