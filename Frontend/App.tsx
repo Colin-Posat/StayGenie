@@ -40,7 +40,7 @@ const TabNavigator = () => {
       screenOptions={({ route }) => ({
         tabBarIcon: ({ focused, color, size }) => {
           let iconName: keyof typeof Ionicons.glyphMap;
-
+          
           if (route.name === 'Find') {
             iconName = focused ? 'search' : 'search-outline';
           } else if (route.name === 'Favorites') {
@@ -50,8 +50,8 @@ const TabNavigator = () => {
           } else {
             iconName = 'help-outline';
           }
-
-          return <Ionicons name={iconName} size={size} color={color} />;
+          
+          return <Ionicons name={iconName} size={20} color={color} />;
         },
         tabBarActiveTintColor: '#000000',
         tabBarInactiveTintColor: '#666666',
@@ -59,6 +59,13 @@ const TabNavigator = () => {
           backgroundColor: 'white',
           borderTopColor: '#E5E5E5',
           borderTopWidth: 1,
+          height: 70,
+          paddingBottom: 8,
+          paddingTop: 5,
+        },
+        tabBarLabelStyle: {
+          fontSize: 12,
+          marginTop: -5,
         },
         headerShown: false,
       })}

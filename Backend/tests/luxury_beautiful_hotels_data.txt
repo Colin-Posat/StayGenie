@@ -1,0 +1,1578 @@
+🌟 LUXURY BEAUTIFUL HOTELS DATA EXTRACTION ($500-$1000/night)
+==============================================================
+
+📊 Total Hotels: 19
+💰 Luxury Price Range: $500-$1000/night (HomeScreen pricing logic)
+📅 Generated: 2025-07-30T22:43:47.219Z
+🎯 Purpose: Beautiful luxury hotels with unique design and premium amenities
+
+📈 EXTRACTION STATISTICS
+========================
+🏙️  Cities: 10 (Aspen, Santorini, Copenhagen, Zermatt, Florence, Sydney, Whistler, Reykjavík, Bergen, Manuel Antonio)
+🌍 Countries: 10 (us, GR, DK, ch, it, au, ca, is, no, cr)
+📸 Average Images per Hotel: 1
+⭐ Average Star Rating: 8.4
+💰 Average Price: $713/night (Luxury HomeScreen logic)
+🏨 Hotels with 5+ Images: 0
+🔄 Hotels with Refundable Policy Data: 19
+✅ Refundable Hotels: 1
+❌ Non-Refundable Hotels: 18
+
+💰 LUXURY PRICE DISTRIBUTION (HomeScreen Style)
+===============================================
+Accessible Luxury ($500-$650): 8 hotels
+Premium Luxury ($650-$800): 4 hotels
+Ultra Luxury ($800-$1000): 7 hotels
+
+🏆 LUXURY FEATURES ANALYSIS
+===========================
+🏊 Hotels with Infinity Pools: 0
+🧘 Hotels with Spa & Wellness: 10
+🍾 Hotels with Fine Dining: 9
+
+🏨 LUXURY HOTEL DETAILS (HomeScreen Format)
+===========================================
+
+1. ASPEN MEADOWS RESORT
+=======================
+🆔 Hotel ID: lp1a7bb
+📍 Location: Aspen, us (US)
+🏠 Address: 845 Meadows Road
+⭐ Rating: 8.1/10
+💰 Luxury Price (HomeScreen Style):
+   • Display Price: $966/night
+   • Original Price: $1111/night
+   • Price Comparison: 966/night (providerDirect)
+   • Structured Price Data:
+     - Amount: 966
+     - Total Amount: 2897.11
+     - Currency: USD
+     - Display: 966/night
+     - Provider: providerDirect
+     - Is Supplier Price: true
+🔄 Refundable Policy:
+   • Is Refundable: No
+   • Policy Tag: NRFN
+   • Policy Info: Refund policy not specified
+🏗️  Style: Modern Luxury
+🌟 Theme: Mountain lodges with alpine charm
+🔍 Extracted From: Aspen - Mountain lodges with alpine charm
+📍 Coordinates: 39.20129, -106.83146
+
+📝 Description:
+<p><strong>Luxurious Accommodations</strong><br>The Aspen Meadows Resort offers spacious all-suite accommodations with modern amenities like wireless internet access, mini-refrigerators, and flat-screen TVs. The rooms also feature sofa beds and iPod docking stations for ultimate comfort.</p><p><strong>Recreational Activities</strong><br>Nestled in the Colorado Rocky Mountains, guests can enjoy a plethora of activities year-round, from top-rated ski trails in the winter to scenic hiking paths and white water rafting in the summer. The resort's outdoor year-round swimming pool and state-of-the-art fitness facilities provide additional entertainment options.</p><p><strong>Gourmet Dining and Local Transport</strong><br>Indulge in gourmet on-site dining options and unwind at the resort's bar after a day of adventure. Take advantage of the free 24-hour local transport service to explore the charming town of Aspen, with its array of shops and restaurants just a ride away.</p><p>Book your stay at Aspen Meadows Resort for a luxurious mountain getaway!</p>
+
+✨ Luxury Features:
+   • spa & wellness
+   • fine dining
+   • luxury suites
+
+📸 Images (1):
+   1. https://static.cupid.travel/hotels/512412599.jpg
+
+--------------------------------------------------------------------------------
+
+2. KATIKIES CHROMATA SANTORINI - THE LEADING HOTELS OF THE WORLD
+================================================================
+🆔 Hotel ID: lp31a72
+📍 Location: Santorini, GR (GR)
+🏠 Address: Imerovigli
+⭐ Rating: 7.1/10
+💰 Luxury Price (HomeScreen Style):
+   • Display Price: $807/night
+   • Original Price: $928/night
+   • Price Comparison: 807/night (providerDirect)
+   • Structured Price Data:
+     - Amount: 807
+     - Total Amount: 2420.25
+     - Currency: USD
+     - Display: 807/night
+     - Provider: providerDirect
+     - Is Supplier Price: true
+🔄 Refundable Policy:
+   • Is Refundable: No
+   • Policy Tag: NRFN
+   • Policy Info: Refund policy not specified
+🏗️  Style: Contemporary Luxury
+🌟 Theme: Cliffside hotels with sunset views
+🔍 Extracted From: Santorini - Cliffside hotels with sunset views
+📍 Coordinates: 36.43152, 25.424455
+
+📝 Description:
+<p><strong>Luxurious Spa and Pool Area</strong><br>Indulge in massages at the full-service spa or unwind by the outdoor pool and spa tub.</p><p><strong>Gourmet Dining and Bars</strong><br>Experience Mediterranean cuisine at Koukoumavlos Restaurant and sip on drinks from the poolside bar or the stylish bars/lounges.</p><p><strong>Convenient Location</strong><br>Centrally situated in Santorini, with easy access to popular attractions including Santorini Caldera and Oia Blue Dome Church Viewpoint.</p><p>To book your relaxing getaway at Katikies Chromata Santorini - The Leading Hotels of the World, visit our website or call us today!</p>
+
+✨ Luxury Features:
+   • spa & wellness
+   • fine dining
+
+📸 Images (1):
+   1. https://static.cupid.travel/hotels/ex_df570ccd_z.jpg
+
+--------------------------------------------------------------------------------
+
+3. MYSTIQUE, A LUXURY COLLECTION HOTEL, SANTORINI
+=================================================
+🆔 Hotel ID: lp3c64b
+📍 Location: Santorini, GR (GR)
+🏠 Address: Oia
+⭐ Rating: 7.1/10
+💰 Luxury Price (HomeScreen Style):
+   • Display Price: $829/night
+   • Original Price: $953/night
+   • Price Comparison: 829/night (providerDirect)
+   • Structured Price Data:
+     - Amount: 829
+     - Total Amount: 2487.41
+     - Currency: USD
+     - Display: 829/night
+     - Provider: providerDirect
+     - Is Supplier Price: true
+🔄 Refundable Policy:
+   • Is Refundable: No
+   • Policy Tag: NRFN
+   • Policy Info: Refund policy not specified
+🏗️  Style: Contemporary Luxury
+🌟 Theme: Cliffside hotels with sunset views
+🔍 Extracted From: Santorini - Cliffside hotels with sunset views
+📍 Coordinates: 36.462461, 25.375712
+
+📝 Description:
+No description available
+
+📸 Images (1):
+   1. https://liteapi-travel-static-data.s3.amazonaws.com/images/hotels/main/247371.jpg
+
+--------------------------------------------------------------------------------
+
+4. KATIKIES KIRINI SANTORINI - THE LEADING HOTELS OF THE WORLD
+==============================================================
+🆔 Hotel ID: lp3a517
+📍 Location: Santorini, GR (GR)
+🏠 Address: Oia
+⭐ Rating: 7.1/10
+💰 Luxury Price (HomeScreen Style):
+   • Display Price: $910/night
+   • Original Price: $1047/night
+   • Price Comparison: 910/night (providerDirect)
+   • Structured Price Data:
+     - Amount: 910
+     - Total Amount: 2731.06
+     - Currency: USD
+     - Display: 910/night
+     - Provider: providerDirect
+     - Is Supplier Price: true
+🔄 Refundable Policy:
+   • Is Refundable: No
+   • Policy Tag: NRFN
+   • Policy Info: Refund policy not specified
+🏗️  Style: Contemporary Luxury
+🌟 Theme: Cliffside hotels with sunset views
+🔍 Extracted From: Santorini - Cliffside hotels with sunset views
+📍 Coordinates: 36.461212, 25.387789
+
+📝 Description:
+<p><strong>Luxurious Spa and Recreation Facilities</strong><br>Indulge in massages, body treatments, and facials at the spa. Take a dip in the spa tub, sauna, or seasonal outdoor pool for relaxation and rejuvenation.<br><strong>Fine Dining and Poolside Bar</strong><br>Savor Mediterranean cuisine at Therasia Restaurant. Enjoy drinks at the bar/lounge or poolside bar while taking in the pool view. 24-hour room service and complimentary full breakfast are available.<br><strong>Convenient Amenities and Services</strong><br>Make use of complimentary Wi-Fi, concierge services, and gift shops. The hotel also offers express check-in/out, airport shuttle, and free valet parking.<br>Pamper yourself at Katikies Kirini Santorini - The Leading Hotels Of The World, steps away from Santorini Caldera. Don't miss the stunning Oia Blue Dome Church Viewpoint. Reserve your luxury stay now.</p>
+
+✨ Luxury Features:
+   • spa & wellness
+   • fine dining
+   • butler service
+
+📸 Images (1):
+   1. https://static.cupid.travel/hotels/ex_13c284ac_z.jpg
+
+--------------------------------------------------------------------------------
+
+5. BELVEDERE SUITES
+===================
+🆔 Hotel ID: lp3c6ee
+📍 Location: Santorini, GR (GR)
+🏠 Address: Georgiou Nomikou Street
+⭐ Rating: 7.1/10
+💰 Luxury Price (HomeScreen Style):
+   • Display Price: $695/night
+   • Original Price: $799/night
+   • Price Comparison: 695/night (providerDirect)
+   • Structured Price Data:
+     - Amount: 695
+     - Total Amount: 2084.97
+     - Currency: USD
+     - Display: 695/night
+     - Provider: providerDirect
+     - Is Supplier Price: true
+🔄 Refundable Policy:
+   • Is Refundable: No
+   • Policy Tag: NRFN
+   • Policy Info: Refund policy not specified
+🏗️  Style: Modern Luxury
+🌟 Theme: Cliffside hotels with sunset views
+🔍 Extracted From: Santorini - Cliffside hotels with sunset views
+📍 Coordinates: 36.42408, 25.428342
+
+📝 Description:
+<p><strong>Luxurious Amenities</strong><br>Indulge in the outdoor pool, rooftop terrace, and concierge services at Belvedere Suites.</p><p><strong>Culinary Delights</strong><br>Savor a delightful meal at the coffee shop/cafe or enjoy room service and drinks at the bar/lounge.</p><p><strong>Comfortable Accommodations</strong><br>Relax in one of the 23 guestrooms with modern amenities and rainfall showerheads.</p><p>Belvedere Suites in Santorini is a luxurious retreat in a prime location, just a stone's throw away from Santorini Caldera. Book your stay now for an unforgettable experience.</p>
+
+✨ Luxury Features:
+   • luxury suites
+   • private terraces
+   • butler service
+
+📸 Images (1):
+   1. https://static.cupid.travel/hotels/ex_0d0a6562_z.jpg
+
+--------------------------------------------------------------------------------
+
+6. 71 NYHAVN HOTEL
+==================
+🆔 Hotel ID: lp208f6
+📍 Location: Copenhagen, DK (DK)
+🏠 Address: Nyhavn 71
+⭐ Rating: 7.1/10
+💰 Luxury Price (HomeScreen Style):
+   • Display Price: $645/night
+   • Original Price: $742/night
+   • Price Comparison: 645/night (providerDirect)
+   • Structured Price Data:
+     - Amount: 645
+     - Total Amount: 1935.86
+     - Currency: USD
+     - Display: 645/night
+     - Provider: providerDirect
+     - Is Supplier Price: true
+🔄 Refundable Policy:
+   • Is Refundable: Yes
+   • Policy Tag: NRFN
+   • Policy Info: Refundable rates available
+🏗️  Style: Modern Luxury
+🌟 Theme: Scandinavian design luxury
+🔍 Extracted From: Copenhagen - Scandinavian design luxury
+📍 Coordinates: 55.67938, 12.59325
+
+📝 Description:
+<p>Experience the charm of Copenhagen at 71 Nyhavn Hotel, where luxury meets convenience in the heart of the city.</p><p><strong>Recreational Activities</strong><br>Explore the city on two wheels with our bicycle rentals or relax with a drink in our stylish bar/lounge. Take advantage of complimentary wireless internet access throughout the hotel to stay connected while enjoying your adventures.</p><p><strong>Gastronomic Delights</strong><br>Savor delectable meals at our on-site restaurant or indulge in room service during limited hours. Don’t forget to start your day with our complimentary buffet breakfast, served on weekdays and weekends—perfect for fueling your explorations!</p><p><strong>Comfort &amp; Convenience</strong><br>Unwind in our modern air-conditioned rooms, equipped with minibars and flat-screen TVs. With designer toiletries and thoughtful amenities, your comfort is our priority.</p><p>Book your stay at 71 Nyhavn Hotel today and immerse yourself in the culture and beauty of Copenhagen!</p>
+
+📸 Images (1):
+   1. https://static.cupid.travel/hotels/ex_0d9f2b47_z.jpg
+
+--------------------------------------------------------------------------------
+
+7. GRAND HOTEL ZERMATTERHOF
+===========================
+🆔 Hotel ID: lp46911
+📍 Location: Zermatt, ch (CH)
+🏠 Address: Bahnhofstrasse 55
+⭐ Rating: 9/10
+💰 Luxury Price (HomeScreen Style):
+   • Display Price: $810/night
+   • Original Price: $931/night
+   • Price Comparison: 810/night (providerDirect)
+   • Structured Price Data:
+     - Amount: 810
+     - Total Amount: 2429
+     - Currency: USD
+     - Display: 810/night
+     - Provider: providerDirect
+     - Is Supplier Price: true
+🔄 Refundable Policy:
+   • Is Refundable: No
+   • Policy Tag: NRFN
+   • Policy Info: Refund policy not specified
+🏗️  Style: Historic Luxury
+🌟 Theme: Alpine luxury with Matterhorn views
+🔍 Extracted From: Zermatt - Alpine luxury with Matterhorn views
+📍 Coordinates: 46.02015, 7.74679
+
+📝 Description:
+<p><strong>Luxurious Heritage Hotel in Zermatt</strong></p><p><strong>Exquisite Dining Experiences:</strong> Indulge in award-winning cuisine at Alpine Gourmet Prato Borni, Brasserie Lusi, and saycheese! Restaurant. Enjoy daily afternoon tea and live piano music at Stars Bar.</p><p><strong>Ultimate Relaxation:</strong> Unwind in the Vita Borni spa with a pool and sauna. Rooms offer stunning mountain views, with some overlooking the iconic Matterhorn. Enjoy complimentary tea, coffee, and minibar treats.</p><p><strong>Exclusive Events and Amenities:</strong> Host events in modern banquet rooms, relax in the smoker's lounge, and explore the hotel garden and terrace. Member of “Preferred Hotels &amp; Resorts” and “Swiss Deluxe Hotels”.</p><p>Book your stay at Grand Hotel Zermatterhof for a truly unforgettable experience!</p>
+
+✨ Luxury Features:
+   • spa & wellness
+   • fine dining
+   • panoramic views
+   • private terraces
+
+📸 Images (1):
+   1. https://static.cupid.travel/hotels/598561584.jpg
+
+--------------------------------------------------------------------------------
+
+8. MONT CERVIN PALACE
+=====================
+🆔 Hotel ID: lp1ab10
+📍 Location: Zermatt, ch (CH)
+🏠 Address: Bahnhofstrasse 31
+⭐ Rating: 9.1/10
+💰 Luxury Price (HomeScreen Style):
+   • Display Price: $978/night
+   • Original Price: $1125/night
+   • Price Comparison: 978/night (providerDirect)
+   • Structured Price Data:
+     - Amount: 978
+     - Total Amount: 2932.99
+     - Currency: USD
+     - Display: 978/night
+     - Provider: providerDirect
+     - Is Supplier Price: true
+🔄 Refundable Policy:
+   • Is Refundable: No
+   • Policy Tag: NRFN
+   • Policy Info: Refund policy not specified
+🏗️  Style: Historic Luxury
+🌟 Theme: Alpine luxury with Matterhorn views
+🔍 Extracted From: Zermatt - Alpine luxury with Matterhorn views
+📍 Coordinates: 46.02098, 7.74701
+
+📝 Description:
+<p><strong>Luxurious 5-Star Mont Cervin Palace in Zermatt</strong></p><p><strong>Relaxation and Indulgence</strong>: Enjoy the pool, 1,700 m² spa, and beauty treatments.</p><p><strong>Breathtaking Views and Comfort</strong>: Most rooms face south with Matterhorn views, some with hot tubs or fireplaces.</p><p><strong>Fine Dining and Entertainment</strong>: From rich breakfast buffets to gala dinners, Grill Le Cervin, and stylish bars.</p><p>Book your stay at the iconic Mont Cervin Palace for an unforgettable luxury experience in Zermatt.</p>
+
+✨ Luxury Features:
+   • spa & wellness
+   • fine dining
+
+📸 Images (1):
+   1. https://static.cupid.travel/hotels/498373205.jpg
+
+--------------------------------------------------------------------------------
+
+9. RIFFELALP RESORT 2222M - SKI-IN & SKI-OUT
+============================================
+🆔 Hotel ID: lp81889
+📍 Location: Zermatt, ch (CH)
+🏠 Address: Riffelalp
+⭐ Rating: 9.3/10
+💰 Luxury Price (HomeScreen Style):
+   • Display Price: $713/night
+   • Original Price: $820/night
+   • Price Comparison: 713/night (providerDirect)
+   • Structured Price Data:
+     - Amount: 713
+     - Total Amount: 2137.53
+     - Currency: USD
+     - Display: 713/night
+     - Provider: providerDirect
+     - Is Supplier Price: true
+🔄 Refundable Policy:
+   • Is Refundable: No
+   • Policy Tag: NRFN
+   • Policy Info: Refund policy not specified
+🏗️  Style: Historic Luxury
+🌟 Theme: Alpine luxury with Matterhorn views
+🔍 Extracted From: Zermatt - Alpine luxury with Matterhorn views
+📍 Coordinates: 46.00157, 7.75119
+
+📝 Description:
+<p><strong>Luxurious Accommodations with Stunning Views</strong><br>The Riffelalp Resort 2222m offers elegant rooms and suites, many with balconies showcasing breathtaking Matterhorn vistas. Each room is equipped with upscale amenities like a Nespresso coffee machine and Smart-TV, ensuring a comfortable stay.</p><p><strong>Relaxing Spa and Wellness Facilities</strong><br>Indulge in relaxation at the Spa 2'222m, featuring a heated outdoor pool, saunas, steam room, hot tub, and more. Treat yourself to rejuvenating massages and therapies for the ultimate pampering experience.</p><p><strong>Culinary Delights and Dining Options</strong><br>Savor a diverse culinary journey at the hotel's three restaurants, serving everything from gourmet dishes to traditional local fare. With a variety of dining choices, every palate is catered to.</p><p>Experience luxury, relaxation, and fine dining at Riffelalp Resort 2222m - Ski-in &amp; Ski-out 2222m. Book now for an unforgettable stay amidst the beauty of Zermatt.</p>
+
+✨ Luxury Features:
+   • spa & wellness
+   • fine dining
+   • luxury suites
+
+📸 Images (1):
+   1. https://static.cupid.travel/hotels/524149030.jpg
+
+--------------------------------------------------------------------------------
+
+10. HOTEL ZERMAMA ZERMATT
+========================
+🆔 Hotel ID: lp67196
+📍 Location: Zermatt, ch (CH)
+🏠 Address: Matterstrasse 23
+⭐ Rating: 9.1/10
+💰 Luxury Price (HomeScreen Style):
+   • Display Price: $561/night
+   • Original Price: $645/night
+   • Price Comparison: 561/night (providerDirect)
+   • Structured Price Data:
+     - Amount: 561
+     - Total Amount: 1683.89
+     - Currency: USD
+     - Display: 561/night
+     - Provider: providerDirect
+     - Is Supplier Price: true
+🔄 Refundable Policy:
+   • Is Refundable: No
+   • Policy Tag: NRFN
+   • Policy Info: Refund policy not specified
+🏗️  Style: Modern Luxury
+🌟 Theme: Alpine luxury with Matterhorn views
+🔍 Extracted From: Zermatt - Alpine luxury with Matterhorn views
+📍 Coordinates: 46.02195, 7.75135
+
+📝 Description:
+<p><strong>Central Location in Zermatt</strong><br>Discover the charm of our newly renovated hotel located in the heart of Zermatt, just a stone's throw away from the Zermatt Train Station and conveniently situated across from the valley station of the Sunnegga Express.</p><p><strong>Modern Amenities</strong><br>Experience comfort and convenience in every room at Hotel Mama, each equipped with an LCD TV and a private bathroom, ensuring a relaxing stay after a day of exploring the picturesque surroundings.</p><p><strong>Easy Access to Attractions</strong><br>Unwind and explore effortlessly with the Matterhorn Express Cable Car and Gornergrat Monte Rosa train easily accessible via the electric bus stop conveniently located right in front of Hotel Mama.</p><p>Embark on a memorable journey and book your stay with us today!</p>
+
+✨ Luxury Features:
+   • private terraces
+
+📸 Images (1):
+   1. https://static.cupid.travel/hotels/279327284.jpg
+
+--------------------------------------------------------------------------------
+
+11. HOTEL LUNGARNO - LUNGARNO COLLECTION
+=======================================
+🆔 Hotel ID: lp1f525
+📍 Location: Florence, it (IT)
+🏠 Address: Borgo San Jacopo 14
+⭐ Rating: 9.3/10
+💰 Luxury Price (HomeScreen Style):
+   • Display Price: $761/night
+   • Original Price: $875/night
+   • Price Comparison: 761/night (providerDirect)
+   • Structured Price Data:
+     - Amount: 761
+     - Total Amount: 2281.79
+     - Currency: USD
+     - Display: 761/night
+     - Provider: providerDirect
+     - Is Supplier Price: true
+🔄 Refundable Policy:
+   • Is Refundable: No
+   • Policy Tag: NRFN
+   • Policy Info: Refund policy not specified
+🏗️  Style: Modern Luxury
+🌟 Theme: Renaissance palazzos with artistic heritage
+🔍 Extracted From: Florence - Renaissance palazzos with artistic heritage
+📍 Coordinates: 43.76751, 11.25255
+
+📝 Description:
+<p><strong>Luxurious Riverside Setting</strong><br>Hotel Lungarno, nestled along the Arno river with stunning views of Ponte Vecchio, offers a unique stay in Florence.</p><p><strong>Art and Elegance</strong><br>Adorned with original modern art and 20th-century masterpieces, including works by Picasso and Cocteau, the hotel exudes sophistication and culture.</p><p><strong>Culinary Excellence</strong><br>Indulge in gourmet delights at the Michelin-starred Borgo San Jacopo restaurant or sip on cocktails at the renowned Picteau Lounge Bar.</p><p>Experience the epitome of luxury and culture at Hotel Lungarno. Book now for an unforgettable stay in the heart of Florence.</p>
+
+✨ Luxury Features:
+   • fine dining
+
+📸 Images (1):
+   1. https://static.cupid.travel/hotels/37800969.jpg
+
+--------------------------------------------------------------------------------
+
+12. HELVETIA&BRISTOL FIRENZE – STARHOTELS COLLEZIONE
+===================================================
+🆔 Hotel ID: lp1df03
+📍 Location: Florence, it (IT)
+🏠 Address: Via Dei Pescioni 2
+⭐ Rating: 9.2/10
+💰 Luxury Price (HomeScreen Style):
+   • Display Price: $559/night
+   • Original Price: $643/night
+   • Price Comparison: 559/night (providerDirect)
+   • Structured Price Data:
+     - Amount: 559
+     - Total Amount: 1678.4
+     - Currency: USD
+     - Display: 559/night
+     - Provider: providerDirect
+     - Is Supplier Price: true
+🔄 Refundable Policy:
+   • Is Refundable: No
+   • Policy Tag: NRFN
+   • Policy Info: Refund policy not specified
+🏗️  Style: Historic Luxury
+🌟 Theme: Renaissance palazzos with artistic heritage
+🔍 Extracted From: Florence - Renaissance palazzos with artistic heritage
+📍 Coordinates: 43.7719, 11.2522
+
+📝 Description:
+<p><strong>Historical Elegance in the Heart of Florence</strong></p><p><strong>Luxurious Accommodations</strong><br>Experience the charm of the 19th-Century palazzo with elegant rooms adorned with antique furniture, luxurious chandeliers, and wooden accents. Each room boasts a marble bathroom, air conditioning, and a flat-screen satellite TV for your comfort and entertainment.</p><p><strong>Fine Dining and Shopping</strong><br>Indulge in a delightful breakfast buffet in collaboration with Iginio Massari Alta Pasticceria. For a culinary adventure, visit the on-site Cibrèo Ristorante &amp; Cocktail Bar offering a selection of traditional dishes. Located near the high-fashion street Via de Tornabuoni, enjoy upscale shopping just steps away.</p><p>Immerse yourself in luxury and convenience at Helvetia&amp;Bristol Firenze – Starhotels Collezione.</p>
+
+✨ Luxury Features:
+   • fine dining
+
+📸 Images (1):
+   1. https://static.cupid.travel/hotels/353685239.jpg
+
+--------------------------------------------------------------------------------
+
+13. SYDNEY HARBOUR MARRIOTT HOTEL AT CIRCULAR QUAY
+=================================================
+🆔 Hotel ID: lp1b3d5
+📍 Location: Sydney, au (AU)
+🏠 Address: 30 Pitt Street
+⭐ Rating: 8.2/10
+💰 Luxury Price (HomeScreen Style):
+   • Display Price: $859/night
+   • Original Price: $988/night
+   • Price Comparison: 859/night (providerDirect)
+   • Structured Price Data:
+     - Amount: 859
+     - Total Amount: 2577.33
+     - Currency: USD
+     - Display: 859/night
+     - Provider: providerDirect
+     - Is Supplier Price: true
+🔄 Refundable Policy:
+   • Is Refundable: No
+   • Policy Tag: NRFN
+   • Policy Info: Refund policy not specified
+🏗️  Style: Contemporary Luxury
+🌟 Theme: Harbor luxury with Opera House views
+🔍 Extracted From: Sydney - Harbor luxury with Opera House views
+📍 Coordinates: -33.86252, 151.20921
+
+📝 Description:
+<p><strong>Luxurious Accommodations with Stunning Views</strong></p><p>Sydney Harbour Marriott at Circular Quay offers elegantly appointed rooms with breathtaking views of the harbour, city skyline, or the iconic Opera House. Each room is furnished with plush 300 thread-count linens and cozy down-filled comforters for a truly comfortable stay.</p><p><strong>Convenient Location for Exploring Sydney</strong></p><p>Situated in the heart of Sydney CBD, our hotel is within walking distance to major attractions such as the Opera House, The Rocks, and the Sydney Harbour Bridge. Explore the vibrant city with ease, with popular shopping destinations like Pitt St Mall just a stone's throw away.</p><p><strong>Relaxation and Wellness Amenities</strong></p><p>Unwind and rejuvenate at our day spa, take a refreshing swim in the indoor pool, or maintain your fitness routine at the well-equipped gym. After a day of sightseeing, guests can indulge in a soothing sauna session for the ultimate relaxation.</p><p>Experience luxury and convenience at Sydney Harbour Marriott at Circular Quay. Book your stay now for an unforgettable Sydney getaway.</p>
+
+✨ Luxury Features:
+   • spa & wellness
+   • panoramic views
+
+📸 Images (1):
+   1. https://static.cupid.travel/hotels/560284917.jpg
+
+--------------------------------------------------------------------------------
+
+14. THE FULLERTON HOTEL SYDNEY
+=============================
+🆔 Hotel ID: lp24d9f
+📍 Location: Sydney, au (AU)
+🏠 Address: 1 Martin Place
+⭐ Rating: 8.8/10
+💰 Luxury Price (HomeScreen Style):
+   • Display Price: $556/night
+   • Original Price: $639/night
+   • Price Comparison: 556/night (providerDirect)
+   • Structured Price Data:
+     - Amount: 556
+     - Total Amount: 1668.39
+     - Currency: USD
+     - Display: 556/night
+     - Provider: providerDirect
+     - Is Supplier Price: true
+🔄 Refundable Policy:
+   • Is Refundable: No
+   • Policy Tag: NRFN
+   • Policy Info: Refund policy not specified
+🏗️  Style: Modern Luxury
+🌟 Theme: Harbor luxury with Opera House views
+🔍 Extracted From: Sydney - Harbor luxury with Opera House views
+📍 Coordinates: -33.86772, 151.20772
+
+📝 Description:
+<p><strong>Luxurious Accommodation with Stunning Views</strong><br>Experience the elegance of The Fullerton Hotel Sydney's luxurious rooms with unique décor, flat-screen TVs, and some offering breathtaking city views. Enjoy free WiFi in public areas and indulge in a stay surrounded by sophistication and comfort.</p><p><strong>State-of-the-Art Fitness Centre</strong><br>Stay active during your visit with access to the hotel's Fitness Centre on level 6, equipped with top-of-the-line cardiovascular equipment, free weights, treadmills, and strength equipment. Maintain your fitness routine while enjoying your stay in the heart of Sydney.</p><p><strong>Diverse Dining Options</strong><br>Indulge in a culinary journey at The Fullerton Hotel Sydney with a range of dining options from modern Australian cuisine to Southeast Asian signature dishes and handcrafted cocktails. Whether you prefer a casual meal at The Place or a sophisticated experience at The Bar, savor every bite and sip during your stay.</p><p>Book your luxurious stay at The Fullerton Hotel Sydney and immerse yourself in unparalleled comfort and hospitality.</p>
+
+✨ Luxury Features:
+   • panoramic views
+
+📸 Images (1):
+   1. https://static.cupid.travel/hotels/225502866.jpg
+
+--------------------------------------------------------------------------------
+
+15. FAIRMONT CHATEAU WHISTLER
+============================
+🆔 Hotel ID: lp22732
+📍 Location: Whistler, ca (CA)
+🏠 Address: 4599 Chateau Blvd
+⭐ Rating: 8.7/10
+💰 Luxury Price (HomeScreen Style):
+   • Display Price: $525/night
+   • Original Price: $604/night
+   • Price Comparison: 525/night (providerDirect)
+   • Structured Price Data:
+     - Amount: 525
+     - Total Amount: 1575.45
+     - Currency: USD
+     - Display: 525/night
+     - Provider: providerDirect
+     - Is Supplier Price: true
+🔄 Refundable Policy:
+   • Is Refundable: No
+   • Policy Tag: NRFN
+   • Policy Info: Refund policy not specified
+🏗️  Style: Contemporary Luxury
+🌟 Theme: Mountain luxury with outdoor adventure
+🔍 Extracted From: Whistler - Mountain luxury with outdoor adventure
+📍 Coordinates: 50.11684, -122.94622
+
+📝 Description:
+<p><strong>Luxury Ski-In/Ski-Out Hotel at the Base of Blackcomb Mountain</strong></p><p><strong>Relaxation and Comfort</strong>: Indulge in hot tubs, saunas, and Eucalyptus steam rooms after a day on the slopes. Each room features a flat-screen TV, a seating area, a work desk, and tea/coffee facilities. Enjoy mountain or village views.</p><p><strong>Fine Dining and Entertainment</strong>: Choose from a variety of dining options, from casual to fine dining. Cap off your evening with live entertainment and cocktails at the Mallard Lounge and Terrace.</p><p><strong>Wellness and Activities</strong>: Stay active with a heated lap pool with underwater music, a health club, tennis courts, and Vida Spa. Join yoga and aqua fit classes or hop on the village shuttle for exploration.</p><p>Book now to experience the ultimate luxury and convenience at Fairmont Chateau Whistler.</p>
+
+✨ Luxury Features:
+   • spa & wellness
+   • fine dining
+   • luxury suites
+   • private terraces
+
+📸 Images (1):
+   1. https://static.cupid.travel/hotels/606843128.jpg
+
+--------------------------------------------------------------------------------
+
+16. HOTEL BORG BY KEAHOTELS
+==========================
+🆔 Hotel ID: lp1e7ea
+📍 Location: Reykjavík, is (IS)
+🏠 Address: Posthusstraeti 11
+⭐ Rating: 8.6/10
+💰 Luxury Price (HomeScreen Style):
+   • Display Price: $544/night
+   • Original Price: $626/night
+   • Price Comparison: 544/night (providerDirect)
+   • Structured Price Data:
+     - Amount: 544
+     - Total Amount: 1632.39
+     - Currency: USD
+     - Display: 544/night
+     - Provider: providerDirect
+     - Is Supplier Price: true
+🔄 Refundable Policy:
+   • Is Refundable: No
+   • Policy Tag: NRFN
+   • Policy Info: Refund policy not specified
+🏗️  Style: Contemporary Luxury
+🌟 Theme: Northern lights and unique Icelandic stays
+🔍 Extracted From: Reykjavik - Northern lights and unique Icelandic stays
+📍 Coordinates: 64.147, -21.93895
+
+📝 Description:
+<p><strong>Luxurious Art Deco Style in the Heart of Reykjavik</strong></p><p><strong>Elegant Rooms and Spa Facilities</strong><br>Indulge in the comfort of quality beds, Philippe Starck fittings, and stylish art deco furniture in every room at Hotel Borg. Unwind at the in-house spa and gym, complete with a hot tub, sauna, and steam room. Treat yourself to a relaxing massage during your stay.</p><p><strong>Convenient Services and Nearby Attractions</strong><br>Let our dedicated staff assist you with tour bookings and car rentals to make your stay stress-free. Explore the vibrant Laugavegur shopping street just steps away, or embark on a thrilling boat safari adventure at the Life of Whales terminal nearby.</p><p><strong>Experience luxury and convenience at Hotel Borg - Book now for an unforgettable stay!</strong></p>
+
+✨ Luxury Features:
+   • spa & wellness
+   • yacht access
+
+📸 Images (1):
+   1. https://static.cupid.travel/hotels/113577744.jpg
+
+--------------------------------------------------------------------------------
+
+17. HOTEL REYKJAVÍK CENTRUM
+==========================
+🆔 Hotel ID: lp379d8
+📍 Location: Reykjavík, is (IS)
+🏠 Address: Adalstraeti 16
+⭐ Rating: 8.7/10
+💰 Luxury Price (HomeScreen Style):
+   • Display Price: $502/night
+   • Original Price: $577/night
+   • Price Comparison: 502/night (providerDirect)
+   • Structured Price Data:
+     - Amount: 502
+     - Total Amount: 1504.71
+     - Currency: USD
+     - Display: 502/night
+     - Provider: providerDirect
+     - Is Supplier Price: true
+🔄 Refundable Policy:
+   • Is Refundable: No
+   • Policy Tag: NRFN
+   • Policy Info: Refund policy not specified
+🏗️  Style: Historic Luxury
+🌟 Theme: Northern lights and unique Icelandic stays
+🔍 Extracted From: Reykjavik - Northern lights and unique Icelandic stays
+📍 Coordinates: 64.14745, -21.94248
+
+📝 Description:
+<p><strong>Unique Viking Exhibition Centre</strong><br>Hotel Reykjavik Centrum offers a one-of-a-kind experience with its Viking exhibition centre, showcasing Iceland's rich history. Explore the on-site exhibition center honoring the Viking-era longhouse ruins and Iceland's oldest human remains.</p><p><strong>Award-Winning Dining</strong><br>Indulge in traditional Icelandic dishes and an extensive wine list at Fjalaköttur, the hotel's award-winning restaurant. For a more casual setting, visit Uppsalir, the hotel's own café bar, and enjoy a relaxing atmosphere.</p><p><strong>Modern Accommodations</strong><br>Choose from comfortable hotel rooms or self-service studios, all featuring modern décor, fresh bathrooms, and wooden floors. Enjoy in-room amenities such as satellite TV and tea/coffee facilities for a relaxing stay.</p><p>Experience history, indulge in exquisite dining, and enjoy modern comforts at Hotel Reykjavik Centrum. Book your stay now for an unforgettable Icelandic getaway!</p>
+
+✨ Luxury Features:
+   • wine cellar
+
+📸 Images (1):
+   1. https://static.cupid.travel/hotels/20143731.jpg
+
+--------------------------------------------------------------------------------
+
+18. BERGEN BØRS HOTEL
+====================
+🆔 Hotel ID: lpa57d0
+📍 Location: Bergen, no (NO)
+🏠 Address: Vågsallmenningen 1
+⭐ Rating: 8.4/10
+💰 Luxury Price (HomeScreen Style):
+   • Display Price: $537/night
+   • Original Price: $618/night
+   • Price Comparison: 537/night (providerDirect)
+   • Structured Price Data:
+     - Amount: 537
+     - Total Amount: 1610.6
+     - Currency: USD
+     - Display: 537/night
+     - Provider: providerDirect
+     - Is Supplier Price: true
+🔄 Refundable Policy:
+   • Is Refundable: No
+   • Policy Tag: NRFN
+   • Policy Info: Refund policy not specified
+🏗️  Style: Modern Luxury
+🌟 Theme: Norwegian fjord hotels
+🔍 Extracted From: Bergen - Norwegian fjord hotels
+📍 Coordinates: 60.3937, 5.32551
+
+📝 Description:
+<p><strong>Historic Charm in Central Bergen</strong></p><p><strong>Luxurious Accommodations</strong><br>Experience the blend of modern comfort and historic charm in our rooms equipped with flat-screen TVs, coffee machines, and minibars. Relax in a private bathroom with underfloor heating, and some rooms even feature a soothing bathtub for ultimate relaxation.</p><p><strong>Culinary Delights</strong><br>Indulge in a culinary journey at our restaurant serving Scandinavian cuisine with locally sourced ingredients. Unwind with cocktails and local beers at the on-site bar, offering a cozy atmosphere to socialize and enjoy the evening.</p><p><strong>Convenient Amenities</strong><br>Benefit from complimentary WiFi throughout the property and make use of our 24-hour front desk services. Stay active at our fitness center to keep up with your workout routine during your stay.</p><p>Book now to immerse yourself in the historic elegance and modern comforts of Bergen Børs Hotel.</p>
+
+✨ Luxury Features:
+   • private terraces
+
+📸 Images (1):
+   1. https://static.cupid.travel/hotels/411437070.jpg
+
+--------------------------------------------------------------------------------
+
+19. PARADOR NATURE RESORT AND SPA
+================================
+🆔 Hotel ID: lp41474
+📍 Location: Manuel Antonio, cr (CR)
+🏠 Address: Quepos to Manuel Antonio Road
+⭐ Rating: 9.3/10
+💰 Luxury Price (HomeScreen Style):
+   • Display Price: $786/night
+   • Original Price: $904/night
+   • Price Comparison: 786/night (providerDirect)
+   • Structured Price Data:
+     - Amount: 786
+     - Total Amount: 2359.32
+     - Currency: USD
+     - Display: 786/night
+     - Provider: providerDirect
+     - Is Supplier Price: true
+🔄 Refundable Policy:
+   • Is Refundable: No
+   • Policy Tag: NRFN
+   • Policy Info: Refund policy not specified
+🏗️  Style: Contemporary Luxury
+🌟 Theme: Rainforest canopy and wildlife hotels
+🔍 Extracted From: Manuel Antonio - Rainforest canopy and wildlife hotels
+📍 Coordinates: 9.39747, -84.16835
+
+📝 Description:
+<p><strong>Luxurious Eco-Resort in Costa Rica</strong></p><p>Escape to the eco-luxury Parador Nature Resort and Spa, nestled in 12 acres of tropical rainforest overlooking the Pacific Ocean.</p><p><strong>Serenity and Dining</strong></p><p>Indulge in the tranquility of 3 swimming pools and innovative cuisine at La Galeria Restaurant.</p><p><strong>Relaxation and Adventure</strong></p><p>Unwind at the spa with a variety of treatments and enjoy the wildlife-rich surroundings with hiking trails and unique animal encounters.</p><p>Ready to experience the ultimate blend of luxury and nature? Book your stay at Parador Nature Resort and Spa today!</p>
+
+✨ Luxury Features:
+   • spa & wellness
+
+📸 Images (1):
+   1. https://static.cupid.travel/hotels/459663966.jpg
+
+--------------------------------------------------------------------------------
+
+
+📋 JAVASCRIPT ARRAY FORMAT (HomeScreen Compatible - Luxury Hotels)
+================================================================
+
+const luxuryBeautifulHotels = [
+  {
+    // HomeScreen compatible luxury hotel object
+    id: 'lp1a7bb',
+    name: 'Aspen Meadows Resort',
+    image: 'https://static.cupid.travel/hotels/512412599.jpg',
+    images: ["https://static.cupid.travel/hotels/512412599.jpg"],
+    price: 966, // Luxury range 500-1000
+    originalPrice: 1111,
+    priceComparison: '966/night (providerDirect)',
+    rating: 8.1, // Higher luxury default
+    reviews: 810, // Generated
+    safetyRating: 9.5, // Higher luxury default
+    transitDistance: '5 min walk to main area', // Generated
+    tags: ["spa & wellness","fine dining","luxury suites"], // Luxury features as tags
+    location: '845 Meadows Road',
+    features: [],
+    city: 'Aspen',
+    country: 'us',
+    latitude: 39.20129,
+    longitude: -106.83146,
+    topAmenities: [],
+    fullDescription: '<p><strong>Luxurious Accommodations</strong><br>The Aspen Meadows Resort offers spacious all-suite a...',
+    fullAddress: '845 Meadows Road',
+    pricePerNight: {
+      amount: 966,
+      totalAmount: 2897.11,
+      currency: 'USD',
+      display: '966/night',
+      provider: 'providerDirect',
+      isSupplierPrice: true
+    },
+    isRefundable: false,
+    refundableTag: 'NRFN',
+    refundableInfo: 'Refund policy not specified',
+    hasAvailability: true, // Default
+    totalRooms: 68, // Generated luxury range
+    theme: 'Mountain lodges with alpine charm',
+    architecturalStyle: 'Modern Luxury',
+    uniqueFeatures: ["spa & wellness","fine dining","luxury suites"]
+  },
+  {
+    // HomeScreen compatible luxury hotel object
+    id: 'lp31a72',
+    name: 'Katikies Chromata Santorini - The Leading Hotels of the World',
+    image: 'https://static.cupid.travel/hotels/ex_df570ccd_z.jpg',
+    images: ["https://static.cupid.travel/hotels/ex_df570ccd_z.jpg"],
+    price: 807, // Luxury range 500-1000
+    originalPrice: 928,
+    priceComparison: '807/night (providerDirect)',
+    rating: 7.1, // Higher luxury default
+    reviews: 678, // Generated
+    safetyRating: 9.3, // Higher luxury default
+    transitDistance: '5 min walk to main area', // Generated
+    tags: ["spa & wellness","fine dining"], // Luxury features as tags
+    location: 'Imerovigli',
+    features: [],
+    city: 'Santorini',
+    country: 'GR',
+    latitude: 36.43152,
+    longitude: 25.424455,
+    topAmenities: [],
+    fullDescription: '<p><strong>Luxurious Spa and Pool Area</strong><br>Indulge in massages at the full-service spa or un...',
+    fullAddress: 'Imerovigli',
+    pricePerNight: {
+      amount: 807,
+      totalAmount: 2420.25,
+      currency: 'USD',
+      display: '807/night',
+      provider: 'providerDirect',
+      isSupplierPrice: true
+    },
+    isRefundable: false,
+    refundableTag: 'NRFN',
+    refundableInfo: 'Refund policy not specified',
+    hasAvailability: true, // Default
+    totalRooms: 63, // Generated luxury range
+    theme: 'Cliffside hotels with sunset views',
+    architecturalStyle: 'Contemporary Luxury',
+    uniqueFeatures: ["spa & wellness","fine dining"]
+  },
+  {
+    // HomeScreen compatible luxury hotel object
+    id: 'lp3c64b',
+    name: 'Mystique, a Luxury Collection Hotel, Santorini',
+    image: 'https://liteapi-travel-static-data.s3.amazonaws.com/images/hotels/main/247371.jpg',
+    images: ["https://liteapi-travel-static-data.s3.amazonaws.com/images/hotels/main/247371.jpg"],
+    price: 829, // Luxury range 500-1000
+    originalPrice: 953,
+    priceComparison: '829/night (providerDirect)',
+    rating: 7.1, // Higher luxury default
+    reviews: 658, // Generated
+    safetyRating: 9.9, // Higher luxury default
+    transitDistance: '5 min walk to main area', // Generated
+    tags: [], // Luxury features as tags
+    location: 'Oia',
+    features: [],
+    city: 'Santorini',
+    country: 'GR',
+    latitude: 36.462461,
+    longitude: 25.375712,
+    topAmenities: [],
+    fullDescription: 'No description available...',
+    fullAddress: 'Oia',
+    pricePerNight: {
+      amount: 829,
+      totalAmount: 2487.41,
+      currency: 'USD',
+      display: '829/night',
+      provider: 'providerDirect',
+      isSupplierPrice: true
+    },
+    isRefundable: false,
+    refundableTag: 'NRFN',
+    refundableInfo: 'Refund policy not specified',
+    hasAvailability: true, // Default
+    totalRooms: 39, // Generated luxury range
+    theme: 'Cliffside hotels with sunset views',
+    architecturalStyle: 'Contemporary Luxury',
+    uniqueFeatures: []
+  },
+  {
+    // HomeScreen compatible luxury hotel object
+    id: 'lp3a517',
+    name: 'Katikies Kirini Santorini - The Leading Hotels Of The World',
+    image: 'https://static.cupid.travel/hotels/ex_13c284ac_z.jpg',
+    images: ["https://static.cupid.travel/hotels/ex_13c284ac_z.jpg"],
+    price: 910, // Luxury range 500-1000
+    originalPrice: 1047,
+    priceComparison: '910/night (providerDirect)',
+    rating: 7.1, // Higher luxury default
+    reviews: 503, // Generated
+    safetyRating: 10.0, // Higher luxury default
+    transitDistance: '5 min walk to main area', // Generated
+    tags: ["spa & wellness","fine dining","butler service"], // Luxury features as tags
+    location: 'Oia',
+    features: [],
+    city: 'Santorini',
+    country: 'GR',
+    latitude: 36.461212,
+    longitude: 25.387789,
+    topAmenities: [],
+    fullDescription: '<p><strong>Luxurious Spa and Recreation Facilities</strong><br>Indulge in massages, body treatments,...',
+    fullAddress: 'Oia',
+    pricePerNight: {
+      amount: 910,
+      totalAmount: 2731.06,
+      currency: 'USD',
+      display: '910/night',
+      provider: 'providerDirect',
+      isSupplierPrice: true
+    },
+    isRefundable: false,
+    refundableTag: 'NRFN',
+    refundableInfo: 'Refund policy not specified',
+    hasAvailability: true, // Default
+    totalRooms: 53, // Generated luxury range
+    theme: 'Cliffside hotels with sunset views',
+    architecturalStyle: 'Contemporary Luxury',
+    uniqueFeatures: ["spa & wellness","fine dining","butler service"]
+  },
+  {
+    // HomeScreen compatible luxury hotel object
+    id: 'lp3c6ee',
+    name: 'Belvedere Suites',
+    image: 'https://static.cupid.travel/hotels/ex_0d0a6562_z.jpg',
+    images: ["https://static.cupid.travel/hotels/ex_0d0a6562_z.jpg"],
+    price: 695, // Luxury range 500-1000
+    originalPrice: 799,
+    priceComparison: '695/night (providerDirect)',
+    rating: 7.1, // Higher luxury default
+    reviews: 383, // Generated
+    safetyRating: 10.0, // Higher luxury default
+    transitDistance: '5 min walk to main area', // Generated
+    tags: ["luxury suites","private terraces","butler service"], // Luxury features as tags
+    location: 'Georgiou Nomikou Street',
+    features: [],
+    city: 'Santorini',
+    country: 'GR',
+    latitude: 36.42408,
+    longitude: 25.428342,
+    topAmenities: [],
+    fullDescription: '<p><strong>Luxurious Amenities</strong><br>Indulge in the outdoor pool, rooftop terrace, and concier...',
+    fullAddress: 'Georgiou Nomikou Street',
+    pricePerNight: {
+      amount: 695,
+      totalAmount: 2084.97,
+      currency: 'USD',
+      display: '695/night',
+      provider: 'providerDirect',
+      isSupplierPrice: true
+    },
+    isRefundable: false,
+    refundableTag: 'NRFN',
+    refundableInfo: 'Refund policy not specified',
+    hasAvailability: true, // Default
+    totalRooms: 62, // Generated luxury range
+    theme: 'Cliffside hotels with sunset views',
+    architecturalStyle: 'Modern Luxury',
+    uniqueFeatures: ["luxury suites","private terraces","butler service"]
+  },
+  {
+    // HomeScreen compatible luxury hotel object
+    id: 'lp208f6',
+    name: '71 Nyhavn Hotel',
+    image: 'https://static.cupid.travel/hotels/ex_0d9f2b47_z.jpg',
+    images: ["https://static.cupid.travel/hotels/ex_0d9f2b47_z.jpg"],
+    price: 645, // Luxury range 500-1000
+    originalPrice: 742,
+    priceComparison: '645/night (providerDirect)',
+    rating: 7.1, // Higher luxury default
+    reviews: 702, // Generated
+    safetyRating: 9.2, // Higher luxury default
+    transitDistance: '5 min walk to main area', // Generated
+    tags: [], // Luxury features as tags
+    location: 'Nyhavn 71',
+    features: [],
+    city: 'Copenhagen',
+    country: 'DK',
+    latitude: 55.67938,
+    longitude: 12.59325,
+    topAmenities: [],
+    fullDescription: '<p>Experience the charm of Copenhagen at 71 Nyhavn Hotel, where luxury meets convenience in the hear...',
+    fullAddress: 'Nyhavn 71',
+    pricePerNight: {
+      amount: 645,
+      totalAmount: 1935.86,
+      currency: 'USD',
+      display: '645/night',
+      provider: 'providerDirect',
+      isSupplierPrice: true
+    },
+    isRefundable: true,
+    refundableTag: 'NRFN',
+    refundableInfo: 'Refundable rates available',
+    hasAvailability: true, // Default
+    totalRooms: 23, // Generated luxury range
+    theme: 'Scandinavian design luxury',
+    architecturalStyle: 'Modern Luxury',
+    uniqueFeatures: []
+  },
+  {
+    // HomeScreen compatible luxury hotel object
+    id: 'lp46911',
+    name: 'Grand Hotel Zermatterhof',
+    image: 'https://static.cupid.travel/hotels/598561584.jpg',
+    images: ["https://static.cupid.travel/hotels/598561584.jpg"],
+    price: 810, // Luxury range 500-1000
+    originalPrice: 931,
+    priceComparison: '810/night (providerDirect)',
+    rating: 9, // Higher luxury default
+    reviews: 290, // Generated
+    safetyRating: 9.3, // Higher luxury default
+    transitDistance: '5 min walk to main area', // Generated
+    tags: ["spa & wellness","fine dining","panoramic views"], // Luxury features as tags
+    location: 'Bahnhofstrasse 55',
+    features: [],
+    city: 'Zermatt',
+    country: 'ch',
+    latitude: 46.02015,
+    longitude: 7.74679,
+    topAmenities: [],
+    fullDescription: '<p><strong>Luxurious Heritage Hotel in Zermatt</strong></p><p><strong>Exquisite Dining Experiences:<...',
+    fullAddress: 'Bahnhofstrasse 55',
+    pricePerNight: {
+      amount: 810,
+      totalAmount: 2429,
+      currency: 'USD',
+      display: '810/night',
+      provider: 'providerDirect',
+      isSupplierPrice: true
+    },
+    isRefundable: false,
+    refundableTag: 'NRFN',
+    refundableInfo: 'Refund policy not specified',
+    hasAvailability: true, // Default
+    totalRooms: 44, // Generated luxury range
+    theme: 'Alpine luxury with Matterhorn views',
+    architecturalStyle: 'Historic Luxury',
+    uniqueFeatures: ["spa & wellness","fine dining","panoramic views","private terraces"]
+  },
+  {
+    // HomeScreen compatible luxury hotel object
+    id: 'lp1ab10',
+    name: 'Mont Cervin Palace',
+    image: 'https://static.cupid.travel/hotels/498373205.jpg',
+    images: ["https://static.cupid.travel/hotels/498373205.jpg"],
+    price: 978, // Luxury range 500-1000
+    originalPrice: 1125,
+    priceComparison: '978/night (providerDirect)',
+    rating: 9.1, // Higher luxury default
+    reviews: 669, // Generated
+    safetyRating: 9.6, // Higher luxury default
+    transitDistance: '5 min walk to main area', // Generated
+    tags: ["spa & wellness","fine dining"], // Luxury features as tags
+    location: 'Bahnhofstrasse 31',
+    features: [],
+    city: 'Zermatt',
+    country: 'ch',
+    latitude: 46.02098,
+    longitude: 7.74701,
+    topAmenities: [],
+    fullDescription: '<p><strong>Luxurious 5-Star Mont Cervin Palace in Zermatt</strong></p><p><strong>Relaxation and Indu...',
+    fullAddress: 'Bahnhofstrasse 31',
+    pricePerNight: {
+      amount: 978,
+      totalAmount: 2932.99,
+      currency: 'USD',
+      display: '978/night',
+      provider: 'providerDirect',
+      isSupplierPrice: true
+    },
+    isRefundable: false,
+    refundableTag: 'NRFN',
+    refundableInfo: 'Refund policy not specified',
+    hasAvailability: true, // Default
+    totalRooms: 58, // Generated luxury range
+    theme: 'Alpine luxury with Matterhorn views',
+    architecturalStyle: 'Historic Luxury',
+    uniqueFeatures: ["spa & wellness","fine dining"]
+  },
+  {
+    // HomeScreen compatible luxury hotel object
+    id: 'lp81889',
+    name: 'Riffelalp Resort 2222m - Ski-in & Ski-out',
+    image: 'https://static.cupid.travel/hotels/524149030.jpg',
+    images: ["https://static.cupid.travel/hotels/524149030.jpg"],
+    price: 713, // Luxury range 500-1000
+    originalPrice: 820,
+    priceComparison: '713/night (providerDirect)',
+    rating: 9.3, // Higher luxury default
+    reviews: 287, // Generated
+    safetyRating: 9.8, // Higher luxury default
+    transitDistance: '5 min walk to main area', // Generated
+    tags: ["spa & wellness","fine dining","luxury suites"], // Luxury features as tags
+    location: 'Riffelalp',
+    features: [],
+    city: 'Zermatt',
+    country: 'ch',
+    latitude: 46.00157,
+    longitude: 7.75119,
+    topAmenities: [],
+    fullDescription: '<p><strong>Luxurious Accommodations with Stunning Views</strong><br>The Riffelalp Resort 2222m offer...',
+    fullAddress: 'Riffelalp',
+    pricePerNight: {
+      amount: 713,
+      totalAmount: 2137.53,
+      currency: 'USD',
+      display: '713/night',
+      provider: 'providerDirect',
+      isSupplierPrice: true
+    },
+    isRefundable: false,
+    refundableTag: 'NRFN',
+    refundableInfo: 'Refund policy not specified',
+    hasAvailability: true, // Default
+    totalRooms: 56, // Generated luxury range
+    theme: 'Alpine luxury with Matterhorn views',
+    architecturalStyle: 'Historic Luxury',
+    uniqueFeatures: ["spa & wellness","fine dining","luxury suites"]
+  },
+  {
+    // HomeScreen compatible luxury hotel object
+    id: 'lp67196',
+    name: 'Hotel ZERMAMA Zermatt',
+    image: 'https://static.cupid.travel/hotels/279327284.jpg',
+    images: ["https://static.cupid.travel/hotels/279327284.jpg"],
+    price: 561, // Luxury range 500-1000
+    originalPrice: 645,
+    priceComparison: '561/night (providerDirect)',
+    rating: 9.1, // Higher luxury default
+    reviews: 817, // Generated
+    safetyRating: 9.7, // Higher luxury default
+    transitDistance: '5 min walk to main area', // Generated
+    tags: ["private terraces"], // Luxury features as tags
+    location: 'Matterstrasse 23',
+    features: [],
+    city: 'Zermatt',
+    country: 'ch',
+    latitude: 46.02195,
+    longitude: 7.75135,
+    topAmenities: [],
+    fullDescription: '<p><strong>Central Location in Zermatt</strong><br>Discover the charm of our newly renovated hotel l...',
+    fullAddress: 'Matterstrasse 23',
+    pricePerNight: {
+      amount: 561,
+      totalAmount: 1683.89,
+      currency: 'USD',
+      display: '561/night',
+      provider: 'providerDirect',
+      isSupplierPrice: true
+    },
+    isRefundable: false,
+    refundableTag: 'NRFN',
+    refundableInfo: 'Refund policy not specified',
+    hasAvailability: true, // Default
+    totalRooms: 37, // Generated luxury range
+    theme: 'Alpine luxury with Matterhorn views',
+    architecturalStyle: 'Modern Luxury',
+    uniqueFeatures: ["private terraces"]
+  },
+  {
+    // HomeScreen compatible luxury hotel object
+    id: 'lp1f525',
+    name: 'Hotel Lungarno - Lungarno Collection',
+    image: 'https://static.cupid.travel/hotels/37800969.jpg',
+    images: ["https://static.cupid.travel/hotels/37800969.jpg"],
+    price: 761, // Luxury range 500-1000
+    originalPrice: 875,
+    priceComparison: '761/night (providerDirect)',
+    rating: 9.3, // Higher luxury default
+    reviews: 849, // Generated
+    safetyRating: 9.4, // Higher luxury default
+    transitDistance: '5 min walk to main area', // Generated
+    tags: ["fine dining"], // Luxury features as tags
+    location: 'Borgo San Jacopo 14',
+    features: [],
+    city: 'Florence',
+    country: 'it',
+    latitude: 43.76751,
+    longitude: 11.25255,
+    topAmenities: [],
+    fullDescription: '<p><strong>Luxurious Riverside Setting</strong><br>Hotel Lungarno, nestled along the Arno river with...',
+    fullAddress: 'Borgo San Jacopo 14',
+    pricePerNight: {
+      amount: 761,
+      totalAmount: 2281.79,
+      currency: 'USD',
+      display: '761/night',
+      provider: 'providerDirect',
+      isSupplierPrice: true
+    },
+    isRefundable: false,
+    refundableTag: 'NRFN',
+    refundableInfo: 'Refund policy not specified',
+    hasAvailability: true, // Default
+    totalRooms: 58, // Generated luxury range
+    theme: 'Renaissance palazzos with artistic heritage',
+    architecturalStyle: 'Modern Luxury',
+    uniqueFeatures: ["fine dining"]
+  },
+  {
+    // HomeScreen compatible luxury hotel object
+    id: 'lp1df03',
+    name: 'Helvetia&Bristol Firenze – Starhotels Collezione',
+    image: 'https://static.cupid.travel/hotels/353685239.jpg',
+    images: ["https://static.cupid.travel/hotels/353685239.jpg"],
+    price: 559, // Luxury range 500-1000
+    originalPrice: 643,
+    priceComparison: '559/night (providerDirect)',
+    rating: 9.2, // Higher luxury default
+    reviews: 886, // Generated
+    safetyRating: 9.4, // Higher luxury default
+    transitDistance: '5 min walk to main area', // Generated
+    tags: ["fine dining"], // Luxury features as tags
+    location: 'Via Dei Pescioni 2',
+    features: [],
+    city: 'Florence',
+    country: 'it',
+    latitude: 43.7719,
+    longitude: 11.2522,
+    topAmenities: [],
+    fullDescription: '<p><strong>Historical Elegance in the Heart of Florence</strong></p><p><strong>Luxurious Accommodati...',
+    fullAddress: 'Via Dei Pescioni 2',
+    pricePerNight: {
+      amount: 559,
+      totalAmount: 1678.4,
+      currency: 'USD',
+      display: '559/night',
+      provider: 'providerDirect',
+      isSupplierPrice: true
+    },
+    isRefundable: false,
+    refundableTag: 'NRFN',
+    refundableInfo: 'Refund policy not specified',
+    hasAvailability: true, // Default
+    totalRooms: 40, // Generated luxury range
+    theme: 'Renaissance palazzos with artistic heritage',
+    architecturalStyle: 'Historic Luxury',
+    uniqueFeatures: ["fine dining"]
+  },
+  {
+    // HomeScreen compatible luxury hotel object
+    id: 'lp1b3d5',
+    name: 'Sydney Harbour Marriott Hotel at Circular Quay',
+    image: 'https://static.cupid.travel/hotels/560284917.jpg',
+    images: ["https://static.cupid.travel/hotels/560284917.jpg"],
+    price: 859, // Luxury range 500-1000
+    originalPrice: 988,
+    priceComparison: '859/night (providerDirect)',
+    rating: 8.2, // Higher luxury default
+    reviews: 710, // Generated
+    safetyRating: 9.2, // Higher luxury default
+    transitDistance: '5 min walk to main area', // Generated
+    tags: ["spa & wellness","panoramic views"], // Luxury features as tags
+    location: '30 Pitt Street',
+    features: [],
+    city: 'Sydney',
+    country: 'au',
+    latitude: -33.86252,
+    longitude: 151.20921,
+    topAmenities: [],
+    fullDescription: '<p><strong>Luxurious Accommodations with Stunning Views</strong></p><p>Sydney Harbour Marriott at Ci...',
+    fullAddress: '30 Pitt Street',
+    pricePerNight: {
+      amount: 859,
+      totalAmount: 2577.33,
+      currency: 'USD',
+      display: '859/night',
+      provider: 'providerDirect',
+      isSupplierPrice: true
+    },
+    isRefundable: false,
+    refundableTag: 'NRFN',
+    refundableInfo: 'Refund policy not specified',
+    hasAvailability: true, // Default
+    totalRooms: 60, // Generated luxury range
+    theme: 'Harbor luxury with Opera House views',
+    architecturalStyle: 'Contemporary Luxury',
+    uniqueFeatures: ["spa & wellness","panoramic views"]
+  },
+  {
+    // HomeScreen compatible luxury hotel object
+    id: 'lp24d9f',
+    name: 'The Fullerton Hotel Sydney',
+    image: 'https://static.cupid.travel/hotels/225502866.jpg',
+    images: ["https://static.cupid.travel/hotels/225502866.jpg"],
+    price: 556, // Luxury range 500-1000
+    originalPrice: 639,
+    priceComparison: '556/night (providerDirect)',
+    rating: 8.8, // Higher luxury default
+    reviews: 413, // Generated
+    safetyRating: 9.7, // Higher luxury default
+    transitDistance: '5 min walk to main area', // Generated
+    tags: ["panoramic views"], // Luxury features as tags
+    location: '1 Martin Place',
+    features: [],
+    city: 'Sydney',
+    country: 'au',
+    latitude: -33.86772,
+    longitude: 151.20772,
+    topAmenities: [],
+    fullDescription: '<p><strong>Luxurious Accommodation with Stunning Views</strong><br>Experience the elegance of The Fu...',
+    fullAddress: '1 Martin Place',
+    pricePerNight: {
+      amount: 556,
+      totalAmount: 1668.39,
+      currency: 'USD',
+      display: '556/night',
+      provider: 'providerDirect',
+      isSupplierPrice: true
+    },
+    isRefundable: false,
+    refundableTag: 'NRFN',
+    refundableInfo: 'Refund policy not specified',
+    hasAvailability: true, // Default
+    totalRooms: 23, // Generated luxury range
+    theme: 'Harbor luxury with Opera House views',
+    architecturalStyle: 'Modern Luxury',
+    uniqueFeatures: ["panoramic views"]
+  },
+  {
+    // HomeScreen compatible luxury hotel object
+    id: 'lp22732',
+    name: 'Fairmont Chateau Whistler',
+    image: 'https://static.cupid.travel/hotels/606843128.jpg',
+    images: ["https://static.cupid.travel/hotels/606843128.jpg"],
+    price: 525, // Luxury range 500-1000
+    originalPrice: 604,
+    priceComparison: '525/night (providerDirect)',
+    rating: 8.7, // Higher luxury default
+    reviews: 1054, // Generated
+    safetyRating: 10.0, // Higher luxury default
+    transitDistance: '5 min walk to main area', // Generated
+    tags: ["spa & wellness","fine dining","luxury suites"], // Luxury features as tags
+    location: '4599 Chateau Blvd',
+    features: [],
+    city: 'Whistler',
+    country: 'ca',
+    latitude: 50.11684,
+    longitude: -122.94622,
+    topAmenities: [],
+    fullDescription: '<p><strong>Luxury Ski-In/Ski-Out Hotel at the Base of Blackcomb Mountain</strong></p><p><strong>Rela...',
+    fullAddress: '4599 Chateau Blvd',
+    pricePerNight: {
+      amount: 525,
+      totalAmount: 1575.45,
+      currency: 'USD',
+      display: '525/night',
+      provider: 'providerDirect',
+      isSupplierPrice: true
+    },
+    isRefundable: false,
+    refundableTag: 'NRFN',
+    refundableInfo: 'Refund policy not specified',
+    hasAvailability: true, // Default
+    totalRooms: 41, // Generated luxury range
+    theme: 'Mountain luxury with outdoor adventure',
+    architecturalStyle: 'Contemporary Luxury',
+    uniqueFeatures: ["spa & wellness","fine dining","luxury suites","private terraces"]
+  },
+  {
+    // HomeScreen compatible luxury hotel object
+    id: 'lp1e7ea',
+    name: 'Hotel Borg by Keahotels',
+    image: 'https://static.cupid.travel/hotels/113577744.jpg',
+    images: ["https://static.cupid.travel/hotels/113577744.jpg"],
+    price: 544, // Luxury range 500-1000
+    originalPrice: 626,
+    priceComparison: '544/night (providerDirect)',
+    rating: 8.6, // Higher luxury default
+    reviews: 855, // Generated
+    safetyRating: 9.5, // Higher luxury default
+    transitDistance: '5 min walk to main area', // Generated
+    tags: ["spa & wellness","yacht access"], // Luxury features as tags
+    location: 'Posthusstraeti 11',
+    features: [],
+    city: 'Reykjavík',
+    country: 'is',
+    latitude: 64.147,
+    longitude: -21.93895,
+    topAmenities: [],
+    fullDescription: '<p><strong>Luxurious Art Deco Style in the Heart of Reykjavik</strong></p><p><strong>Elegant Rooms a...',
+    fullAddress: 'Posthusstraeti 11',
+    pricePerNight: {
+      amount: 544,
+      totalAmount: 1632.39,
+      currency: 'USD',
+      display: '544/night',
+      provider: 'providerDirect',
+      isSupplierPrice: true
+    },
+    isRefundable: false,
+    refundableTag: 'NRFN',
+    refundableInfo: 'Refund policy not specified',
+    hasAvailability: true, // Default
+    totalRooms: 46, // Generated luxury range
+    theme: 'Northern lights and unique Icelandic stays',
+    architecturalStyle: 'Contemporary Luxury',
+    uniqueFeatures: ["spa & wellness","yacht access"]
+  },
+  {
+    // HomeScreen compatible luxury hotel object
+    id: 'lp379d8',
+    name: 'Hotel Reykjavík Centrum',
+    image: 'https://static.cupid.travel/hotels/20143731.jpg',
+    images: ["https://static.cupid.travel/hotels/20143731.jpg"],
+    price: 502, // Luxury range 500-1000
+    originalPrice: 577,
+    priceComparison: '502/night (providerDirect)',
+    rating: 8.7, // Higher luxury default
+    reviews: 765, // Generated
+    safetyRating: 10.0, // Higher luxury default
+    transitDistance: '5 min walk to main area', // Generated
+    tags: ["wine cellar"], // Luxury features as tags
+    location: 'Adalstraeti 16',
+    features: [],
+    city: 'Reykjavík',
+    country: 'is',
+    latitude: 64.14745,
+    longitude: -21.94248,
+    topAmenities: [],
+    fullDescription: '<p><strong>Unique Viking Exhibition Centre</strong><br>Hotel Reykjavik Centrum offers a one-of-a-kin...',
+    fullAddress: 'Adalstraeti 16',
+    pricePerNight: {
+      amount: 502,
+      totalAmount: 1504.71,
+      currency: 'USD',
+      display: '502/night',
+      provider: 'providerDirect',
+      isSupplierPrice: true
+    },
+    isRefundable: false,
+    refundableTag: 'NRFN',
+    refundableInfo: 'Refund policy not specified',
+    hasAvailability: true, // Default
+    totalRooms: 37, // Generated luxury range
+    theme: 'Northern lights and unique Icelandic stays',
+    architecturalStyle: 'Historic Luxury',
+    uniqueFeatures: ["wine cellar"]
+  },
+  {
+    // HomeScreen compatible luxury hotel object
+    id: 'lpa57d0',
+    name: 'Bergen Børs Hotel',
+    image: 'https://static.cupid.travel/hotels/411437070.jpg',
+    images: ["https://static.cupid.travel/hotels/411437070.jpg"],
+    price: 537, // Luxury range 500-1000
+    originalPrice: 618,
+    priceComparison: '537/night (providerDirect)',
+    rating: 8.4, // Higher luxury default
+    reviews: 742, // Generated
+    safetyRating: 9.4, // Higher luxury default
+    transitDistance: '5 min walk to main area', // Generated
+    tags: ["private terraces"], // Luxury features as tags
+    location: 'Vågsallmenningen 1',
+    features: [],
+    city: 'Bergen',
+    country: 'no',
+    latitude: 60.3937,
+    longitude: 5.32551,
+    topAmenities: [],
+    fullDescription: '<p><strong>Historic Charm in Central Bergen</strong></p><p><strong>Luxurious Accommodations</strong>...',
+    fullAddress: 'Vågsallmenningen 1',
+    pricePerNight: {
+      amount: 537,
+      totalAmount: 1610.6,
+      currency: 'USD',
+      display: '537/night',
+      provider: 'providerDirect',
+      isSupplierPrice: true
+    },
+    isRefundable: false,
+    refundableTag: 'NRFN',
+    refundableInfo: 'Refund policy not specified',
+    hasAvailability: true, // Default
+    totalRooms: 55, // Generated luxury range
+    theme: 'Norwegian fjord hotels',
+    architecturalStyle: 'Modern Luxury',
+    uniqueFeatures: ["private terraces"]
+  },
+  {
+    // HomeScreen compatible luxury hotel object
+    id: 'lp41474',
+    name: 'Parador Nature Resort and Spa',
+    image: 'https://static.cupid.travel/hotels/459663966.jpg',
+    images: ["https://static.cupid.travel/hotels/459663966.jpg"],
+    price: 786, // Luxury range 500-1000
+    originalPrice: 904,
+    priceComparison: '786/night (providerDirect)',
+    rating: 9.3, // Higher luxury default
+    reviews: 540, // Generated
+    safetyRating: 10.0, // Higher luxury default
+    transitDistance: '5 min walk to main area', // Generated
+    tags: ["spa & wellness"], // Luxury features as tags
+    location: 'Quepos to Manuel Antonio Road',
+    features: [],
+    city: 'Manuel Antonio',
+    country: 'cr',
+    latitude: 9.39747,
+    longitude: -84.16835,
+    topAmenities: [],
+    fullDescription: '<p><strong>Luxurious Eco-Resort in Costa Rica</strong></p><p>Escape to the eco-luxury Parador Nature...',
+    fullAddress: 'Quepos to Manuel Antonio Road',
+    pricePerNight: {
+      amount: 786,
+      totalAmount: 2359.32,
+      currency: 'USD',
+      display: '786/night',
+      provider: 'providerDirect',
+      isSupplierPrice: true
+    },
+    isRefundable: false,
+    refundableTag: 'NRFN',
+    refundableInfo: 'Refund policy not specified',
+    hasAvailability: true, // Default
+    totalRooms: 61, // Generated luxury range
+    theme: 'Rainforest canopy and wildlife hotels',
+    architecturalStyle: 'Contemporary Luxury',
+    uniqueFeatures: ["spa & wellness"]
+  }
+];
+
+// Export function that converts to HomeScreen Hotel format (Luxury)
+export const convertLuxuryToHomeScreenFormat = (luxuryHotel, index = 0) => {
+  return {
+    id: luxuryHotel.id,
+    name: luxuryHotel.name,
+    image: luxuryHotel.image,
+    images: luxuryHotel.images || [],
+    price: luxuryHotel.price, // Luxury pricing $500-$1000
+    originalPrice: luxuryHotel.originalPrice,
+    priceComparison: luxuryHotel.priceComparison,
+    rating: luxuryHotel.rating || 8.5, // Higher luxury default
+    reviews: luxuryHotel.reviews || Math.floor(Math.random() * 1000) + 200,
+    safetyRating: luxuryHotel.safetyRating || 9.0 + Math.random() * 1.0,
+    tags: luxuryHotel.tags || luxuryHotel.uniqueFeatures?.slice(0, 3) || [],
+    location: luxuryHotel.location,
+    features: luxuryHotel.features || [],
+    pricePerNight: luxuryHotel.pricePerNight,
+    priceRange: luxuryHotel.priceRange,
+    city: luxuryHotel.city,
+    country: luxuryHotel.country,
+    latitude: luxuryHotel.latitude,
+    longitude: luxuryHotel.longitude,
+    topAmenities: luxuryHotel.topAmenities || [],
+    fullDescription: luxuryHotel.fullDescription,
+    fullAddress: luxuryHotel.fullAddress,
+    hasAvailability: luxuryHotel.hasAvailability !== false,
+    totalRooms: luxuryHotel.totalRooms || 30,
+    isRefundable: luxuryHotel.isRefundable,
+    refundableTag: luxuryHotel.refundableTag,
+    refundableInfo: luxuryHotel.refundableInfo,
+    // Luxury AI fields
+    aiExcerpt: "Exceptional luxury hotel with stunning design and world-class amenities",
+    whyItMatches: "Perfect luxury choice with exceptional design, premium location, and exclusive amenities",
+    funFacts: ["Award-winning architecture", "Michelin-starred dining", "Celebrity guest history"],
+    aiMatchPercent: 90 + Math.floor(Math.random() * 10), // 90-100% for luxury
+    guestInsights: "Guests consistently praise the exceptional luxury, impeccable service, and stunning design that sets this property apart.",
+    nearbyAttractions: [`${luxuryHotel.city} landmarks`, "Exclusive shopping", "Cultural highlights"],
+    locationHighlight: "Prime luxury location",
+    matchType: "exceptional",
+    uniqueFeatures: luxuryHotel.uniqueFeatures || []
+  };
+};
+
+// Usage example for HomeScreen luxury integration:
+// const displayLuxuryHotels = luxuryBeautifulHotels.map((hotel, index) => convertLuxuryToHomeScreenFormat(hotel, index));
+
+// Luxury hotel themes available:
+// [
+  "Mountain lodges with alpine charm",
+  "Cliffside hotels with sunset views",
+  "Scandinavian design luxury",
+  "Alpine luxury with Matterhorn views",
+  "Renaissance palazzos with artistic heritage",
+  "Harbor luxury with Opera House views",
+  "Mountain luxury with outdoor adventure",
+  "Northern lights and unique Icelandic stays",
+  "Norwegian fjord hotels",
+  "Rainforest canopy and wildlife hotels"
+]
+
+// End of luxury beautiful hotels data

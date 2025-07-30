@@ -559,31 +559,6 @@ const AISearchOverlay: React.FC<AISearchOverlayProps> = ({
               </View>
             </View>
 
-            {/* Voice Input Button */}
-            <View style={tw`items-center mb-6`}>
-              <TouchableOpacity
-                style={[
-                  tw`w-14 h-14 rounded-full items-center justify-center border-2`,
-                  isListening 
-                    ? tw`bg-red-500 border-red-500` 
-                    : tw`bg-gray-50 border-gray-300`
-                ]}
-                onPress={handleMicrophonePress}
-                activeOpacity={0.7}
-              >
-                <Ionicons
-                  name={isListening ? "stop" : "mic"}
-                  size={20}
-                  color={isListening ? "white" : "#666666"}
-                />
-              </TouchableOpacity>
-              
-              {isListening && (
-                <Text style={tw`text-sm text-red-500 font-medium mt-2`}>
-                  Listening...
-                </Text>
-              )}
-            </View>
 
             {/* AI Suggestions */}
             <View style={tw`mb-6`}>

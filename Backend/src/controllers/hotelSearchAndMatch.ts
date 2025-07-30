@@ -870,6 +870,8 @@ export const hotelSearchAndMatchController = async (req: Request, res: Response)
 
     logger.endStep('6-BuildEnrichedData', { enrichedHotels: enrichedHotels.length });
 
+    
+
     // Final response
     const performanceReport = logger.getDetailedReport();
     console.log(`🚀 Hotel Search and Match Complete in ${performanceReport.totalTime}ms ✅`);

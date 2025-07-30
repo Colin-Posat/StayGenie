@@ -1,4 +1,4 @@
-// InitialSearchScreen.tsx - Sleek redesign with emphasized search
+// InitialSearchScreen.tsx - Updated to use BeautifulHotelCard without auto-search
 import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
@@ -10,11 +10,13 @@ import {
   Platform,
   Animated,
   Dimensions,
-  Image,
+  FlatList,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import tw from 'twrnc';
 import RevolvingPillWheel, { SearchRecommendation } from '../components/InitalSearch/RevolvingPillWheel';
+import BeautifulHotelCard, { BeautifulHotel } from '../components/InitalSearch/BeautifulHotelCard';
+import { getRandomBeautifulHotels } from '../utils/BeautifulHotelsData';
 
 const { width, height } = Dimensions.get('window');
 
@@ -66,42 +68,6 @@ const useTypingPlaceholder = (
   return { displayText, cursorVisible };
 };
 
-// Floating genie logo component
-const FloatingGenie: React.FC = () => {
-  const floatAnimation = useRef(new Animated.Value(0)).current;
-
-  useEffect(() => {
-    Animated.loop(
-      Animated.sequence([
-        Animated.timing(floatAnimation, {
-          toValue: -6,
-          duration: 2500,
-          useNativeDriver: true,
-        }),
-        Animated.timing(floatAnimation, {
-          toValue: 0,
-          duration: 2500,
-          useNativeDriver: true,
-        }),
-      ])
-    ).start();
-  }, []);
-
-  return (
-    <Animated.View
-      style={{
-        transform: [{ translateY: floatAnimation }],
-      }}
-    >
-      <Image
-        source={require('../assets/images/logo.png')}
-        style={tw`w-20 h-20 opacity-90`}
-        resizeMode="contain"
-      />
-    </Animated.View>
-  );
-};
-
 interface InitialSearchScreenProps {
   navigation?: any;
   onSearchStart?: (query: string) => void;
@@ -113,6 +79,7 @@ const InitialSearchScreen: React.FC<InitialSearchScreenProps> = ({
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [isFocused, setIsFocused] = useState(false);
+  const [displayedHotels, setDisplayedHotels] = useState<BeautifulHotel[]>([]);
   
   // Animation values
   const fadeAnimation = useRef(new Animated.Value(0)).current;
@@ -140,45 +107,46 @@ const InitialSearchScreen: React.FC<InitialSearchScreenProps> = ({
     2000
   );
 
-const searchRecommendations: SearchRecommendation[] = [
-  {
-    text: "Swiss Alps views in Zermatt",
-    query: "Hotels in Zermatt or Lauterbrunnen with breathtaking mountain views and easy access to hiking trails"
-  },
-  {
-    text: "Aurora lodges in Canada",
-    query: "Cozy lodges in Yellowknife, Canada with aurora viewing and snow activities for a winter getaway"
-  },
-  {
-    text: "Street food hotels in Osaka",
-    query: "Affordable hotels in Osaka near famous street food markets like Dotonbori, ideal for food-focused travel"
-  },
-  {
-    text: "Waterfalls & peaks in Lauterbrunnen",
-    query: "Mid-range hotels in Lauterbrunnen, Switzerland near Staubbach Falls and Jungfrau mountain cable cars"
-  },
-  {
-    text: "Sunset cliff hotels in Santorini",
-    query: "Romantic cliffside hotels in Oia, Santorini with sunset views and private balconies"
-  },
-  {
-    text: "Rice terrace views in Vietnam",
-    query: "Eco-lodges in Sa Pa, Vietnam with panoramic rice terrace views and access to trekking routes"
-  },
-  {
-    text: "Vineyard stays in Tuscany",
-    query: "Luxury countryside hotels in Montepulciano, Italy with vineyard tours, wine tastings, and Tuscan views"
-  },
-  {
-    text: "Castle hotels in Scotland",
-    query: "Historic hotels in Inverness or the Highlands with views of lochs, castles, and rugged landscapes"
-  },
-  {
-    text: "Sacred Valley hotels in Peru",
-    query: "Affordable hotels in Ollantaytambo, Peru with views of the Sacred Valley and access to Machu Picchu trains"
-  }
-];
+  const searchRecommendations: SearchRecommendation[] = [
+    {
+      text: "Chic boutique stays in Paris",
+      query: "Boutique hotels in Paris with artistic flair"
+    },
+    {
+      text: "Skyline-view hotels in NYC",
+      query: "Hotels in NYC with skyline views"
+    },
+    {
+      text: "Luxury desert stays in Morocco",
+      query: "Upscale desert camps and riads in Morocco"
+    },
+    {
+      text: "Cozy slopeside lodges in Aspen",
+      query: "Ski-in ski-out lodges in Aspen"
+    },
+    {
+      text: "Timeless stays in ancient Rome",
+      query: "Historic hotels near Roman landmarks"
+    },
+    {
+      text: "Executive stays in central London",
+      query: "Business hotels near London financial district"
+    },
+    {
+      text: "Cliffside sunsets in Santorini",
+      query: "Romantic cliffside hotels in Santorini with sunset views"
+    },
+    {
+      text: "Futuristic pods in Tokyo",
+      query: "Unique capsule hotels in Tokyo"
+    }
+  ];
 
+  // Load random hotels on mount
+  useEffect(() => {
+    const randomHotels = getRandomBeautifulHotels(6);
+    setDisplayedHotels(randomHotels);
+  }, []);
 
   // Initial animation on mount
   useEffect(() => {
@@ -224,6 +192,12 @@ const searchRecommendations: SearchRecommendation[] = [
     }
   };
 
+  const handleHotelPress = (hotel: BeautifulHotel) => {
+    console.log('Hotel card tapped - opening Google Maps for:', hotel.name);
+    // The BeautifulHotelCard will handle opening Google Maps internally
+    // No navigation or search is triggered here
+  };
+
   const getPlaceholderText = () => {
     if (!isFocused && !searchQuery) {
       return `${displayText}${cursorVisible ? '|' : ''}`;
@@ -239,9 +213,9 @@ const searchRecommendations: SearchRecommendation[] = [
       <View style={tw`absolute inset-0 bg-gradient-to-b from-gray-50 to-white opacity-60`} />
 
       {/* Main Content */}
-      <View style={tw`flex-1 px-8`}>
+      <View style={tw`flex-1 px-6`}>
         {/* Top spacing */}
-        <View style={tw`h-12`} />
+        <View style={tw`h-10`} />
         
         <Animated.View 
           style={[
@@ -252,14 +226,10 @@ const searchRecommendations: SearchRecommendation[] = [
             }
           ]}
         >
-          {/* Logo section */}
+          {/* Header section */}
           <View style={tw`items-center mb-6`}>
-            <View style={tw`mb-4`}>
-              <FloatingGenie />
-            </View>
-            
             {/* Refined tagline */}
-            <Text style={tw`text-xl font-medium text-gray-800 text-center mb-2`}>
+            <Text style={tw`text-2xl font-semibold text-gray-900 text-center mb-2`}>
               Where would you like to stay?
             </Text>
             
@@ -335,11 +305,11 @@ const searchRecommendations: SearchRecommendation[] = [
               )}
             </View>
             
-            {/* Floating search button - Changed to black background with white arrow */}
+            {/* Floating search button */}
             {searchQuery.trim().length > 0 && (
               <Animated.View
                 style={[
-                  tw`absolute -right--2 top-2`,
+                  tw`absolute -right-2 top-2`,
                   {
                     opacity: fadeAnimation,
                   }
@@ -366,12 +336,7 @@ const searchRecommendations: SearchRecommendation[] = [
           </Animated.View>
 
           {/* Suggestions section */}
-          <View style={tw`w-full max-w-md`}>
-            {/* Suggestions label */}
-            <View style={tw`mb-3`}>
-
-            </View>
-
+          <View style={tw`w-full max-w-md mb-4`}>
             {/* Revolving Search Recommendations */}
             <RevolvingPillWheel
               recommendations={searchRecommendations}
@@ -382,8 +347,31 @@ const searchRecommendations: SearchRecommendation[] = [
           </View>
         </Animated.View>
 
-        {/* Bottom spacing */}
-        <View style={tw`flex-1`} />
+        {/* Beautiful Hotels Section */}
+        <View style={tw`flex-1`}>
+          <View style={tw`mb-4`}>
+            <Text style={tw`text-lg font-semibold text-gray-900 mb-1`}>
+              Beautiful Stays For You
+            </Text>
+          </View>
+
+          {/* Hotel Grid using BeautifulHotelCard */}
+          <FlatList
+            data={displayedHotels}
+            numColumns={2}
+            keyExtractor={(item) => item.id}
+            columnWrapperStyle={tw`justify-between`}
+            contentContainerStyle={tw`gap-4`}
+            showsVerticalScrollIndicator={false}
+            renderItem={({ item }) => (
+              <BeautifulHotelCard
+                hotel={item}
+                onPress={() => handleHotelPress(item)}
+              />
+            )}
+            ItemSeparatorComponent={() => <View style={tw`h-4`} />}
+          />
+        </View>
       </View>
     </SafeAreaView>
   );

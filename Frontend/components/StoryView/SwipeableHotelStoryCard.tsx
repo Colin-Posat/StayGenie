@@ -536,8 +536,8 @@ const HotelOverviewSlide: React.FC<{
         style={[
           {
             position: 'absolute',
-            width: '100%', // REDUCED from '120%' to '110%'
-            height: '100%', // REDUCED from '120%' to '110%'
+            width: '110%', // REDUCED from '120%' to '110%'
+            height: '110%', // REDUCED from '120%' to '110%'
             left: '-5%', // REDUCED from '-10%' to '-5%'
             top: '-5%', // REDUCED from '-10%' to '-5%'
           },

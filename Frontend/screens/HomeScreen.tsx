@@ -1461,17 +1461,15 @@ const handleHotelPress = useCallback((hotel: Hotel) => {
                 }
               </Text>
               
-              {/* Performance indicator */}
-              {(stage1Results?.performance || searchResults?.performance) && (
+              {/* Performance indicator - hide in test mode */}
+              {!TEST_MODE && (stage1Results?.performance || searchResults?.performance) && (
                 <View style={tw`flex-row items-center ml-2`}>
                   <Ionicons 
-                    name={TEST_MODE ? "flask" : "flash"} 
+                    name="flash"
                     size={12} 
-                    color={TEST_MODE ? "#EA580C" : "#10B981"} 
+                    color="#10B981"
                   />
-                  <Text style={tw`text-xs ml-1 ${
-                    TEST_MODE ? 'text-orange-600' : 'text-green-600'
-                  }`}>
+                  <Text style={tw`text-xs ml-1 text-green-600`}>
                     {stage1Results?.performance?.totalTimeMs || searchResults?.performance?.totalTimeMs}ms
                   </Text>
                   {stage2Results && (
