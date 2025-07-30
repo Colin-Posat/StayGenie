@@ -309,7 +309,7 @@ const InitialSearchScreen: React.FC<InitialSearchScreenProps> = ({
             {searchQuery.trim().length > 0 && (
               <Animated.View
                 style={[
-                  tw`absolute -right-2 top-2`,
+                  tw`absolute -right--2 top-2`,
                   {
                     opacity: fadeAnimation,
                   }
