@@ -122,6 +122,17 @@ interface AccordionSectionProps {
   onToggle: () => void;
 }
 
+const getRatingColor = (rating: number): string => {
+  // Use the same turquoise color (#1df9ff) with different opacities based on rating
+  if (rating >= 8.0) return "#1df9ff"; // Full turquoise - Excellent
+  if (rating >= 7.0) return "#1df9ffE6"; // 90% opacity - Very Good  
+  if (rating >= 6.0) return "#1df9ffCC"; // 80% opacity - Good
+  if (rating >= 5.0) return "#1df9ffB3"; // 70% opacity - Average
+  if (rating >= 4.0) return "#1df9ff99"; // 60% opacity - Below Average
+  return "#1df9ff80"; // 50% opacity - Poor
+};
+
+
 const AccordionSection: React.FC<AccordionSectionProps> = ({
   title,
   icon,
@@ -400,11 +411,27 @@ const FavoriteHotelCard: React.FC<FavoriteHotelCardProps> = ({
               </Text>
                          
               <View style={tw`flex-row items-center`}>
-                <Ionicons name="star" size={10} color="#EAB308" />
-                <Text style={tw`text-xs font-medium text-gray-700 ml-1`}>
-                  {hotel.rating?.toFixed(1) || 'N/A'}
-                </Text>
-              </View>
+            <View 
+              style={[
+                tw`w-4 h-4 rounded-full items-center justify-center mr-1`,
+                { backgroundColor: getRatingColor(hotel.rating || 0) }
+              ]}
+            >
+              <Ionicons 
+                name="thumbs-up" 
+                size={8} 
+                color="#FFFFFF"
+                style={{
+                  textShadowColor: '#000000',
+                  textShadowOffset: { width: 0.5, height: 0.5 },
+                  textShadowRadius: 1
+                }}
+              />
+            </View>
+            <Text style={tw`text-xs font-medium text-gray-700`}>
+              {hotel.rating?.toFixed(1) || 'N/A'}
+            </Text>
+          </View>
             </View>
           </View>
         </TouchableOpacity>

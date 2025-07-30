@@ -219,13 +219,13 @@ const AnimatedHeartButton: React.FC<AnimatedHeartButtonProps> = ({ hotel, size =
 };
 
 const getRatingColor = (rating: number): string => {
-  const normalizedRating = Math.max(0, Math.min(10, rating)) / 10;
-  
-  if (normalizedRating >= 0.8) return "#10B981"; // Green (8-10)
-  if (normalizedRating >= 0.6) return "#84CC16"; // Light green (6-8)
-  if (normalizedRating >= 0.4) return "#EAB308"; // Yellow (4-6)
-  if (normalizedRating >= 0.2) return "#F97316"; // Orange (2-4)
-  return "#EF4444"; // Red (0-2)
+  // Use the same turquoise color (#1df9ff) with different opacities based on rating
+  if (rating >= 8.0) return "#1df9ff"; // Full turquoise - Excellent
+  if (rating >= 7.0) return "#1df9ffE6"; // 90% opacity - Very Good  
+  if (rating >= 6.0) return "#1df9ffCC"; // 80% opacity - Good
+  if (rating >= 5.0) return "#1df9ffB3"; // 70% opacity - Average
+  if (rating >= 4.0) return "#1df9ff99"; // 60% opacity - Below Average
+  return "#1df9ff80"; // 50% opacity - Poor
 };
 
 // NEW: Check if data is from Stage 1 (has loading placeholders)
@@ -584,28 +584,48 @@ const HotelOverviewSlide: React.FC<{
 
       {/* Hotel Information - Bottom Overlay */}
       <View style={tw`absolute bottom-6 left-4 right-4 z-10`}>
-        {/* UPDATED: Enhanced Price and Reviews with provider info */}
-        <View style={tw`flex-row items-end gap-2 mb-2.5`}>
-          <View style={tw`bg-black/50 border border-white/20 px-3 py-1.5 rounded-lg`}>
-            <View style={tw`flex-row items-baseline`}>
-              <Text style={tw`text-xl font-bold text-white`}>
-                {getDisplayPrice()}
-              </Text>
-              <Text style={tw`text-white/80 text-xs ml-1`}>
-                /night
-              </Text>
-            </View>
-          </View>
-          
-          <View style={tw`bg-black/50 border border-white/20 px-3 py-1.5 rounded-lg`}>
-            <View style={tw`flex-row items-center`}>
-              <Ionicons name="star" size={12} color="#1df9ff" />
-              <Text style={tw`text-white text-xs font-semibold ml-1`}>
-                {hotel.rating.toFixed(1)}
-              </Text>
-            </View>
-          </View>
-        </View>
+        {/* UPDATED: Enhanced Price and Reviews with turquoise rating system */}
+<View style={tw`flex-row items-end gap-2 mb-2.5`}>
+  <View style={tw`bg-black/50 border border-white/20 px-3 py-1.5 rounded-lg`}>
+    <View style={tw`flex-row items-baseline`}>
+      <Text style={tw`text-xl font-bold text-white`}>
+        {getDisplayPrice()}
+      </Text>
+      <Text style={tw`text-white/80 text-xs ml-1`}>
+        /night
+      </Text>
+    </View>
+  </View>
+  
+  {/* UPDATED: Rating with turquoise color scaling and appropriate icon */}
+  <View style={tw`bg-black/50 border border-white/20 px-3 py-1.5 rounded-lg`}>
+    <View style={tw`flex-row items-center`}>
+      <View 
+        style={[
+          tw`w-5 h-5 rounded-full items-center justify-center mr-1`,
+          { backgroundColor: getRatingColor(hotel.rating) }
+        ]}
+      >
+        <Ionicons 
+          name="thumbs-up" 
+          size={10} 
+          color="#FFFFFF"
+          style={{
+            textShadowColor: '#000000',
+            textShadowOffset: { width: 0.5, height: 0.5 },
+            textShadowRadius: 1
+          }}
+        />
+      </View>
+      <Text style={tw`text-white text-xs font-semibold`}>
+        {hotel.rating.toFixed(1)}
+      </Text>
+      <Text style={tw`text-white/70 text-xs ml-1`}>
+        ({hotel.reviews || 0})
+      </Text>
+    </View>
+  </View>
+</View>
 
         {/* UPDATED: Enhanced AI Match Insight with two-stage loading awareness */}
         <View style={tw`bg-black/50 p-2.5 rounded-lg border border-white/20`}>
@@ -858,13 +878,13 @@ const AmenitiesSlide: React.FC<{
 
   // Get rating color based on score using cyan shades
   const getRatingColor = (rating: number): string => {
-    if (rating >= 8.0) return "#06B6D4"; // Cyan-500 - Excellent
-    if (rating >= 7.0) return "#22D3EE"; // Cyan-400 - Very Good  
-    if (rating >= 6.0) return "#67E8F9"; // Cyan-300 - Good
-    if (rating >= 5.0) return "#A5F3FC"; // Cyan-200 - Average
-    if (rating >= 4.0) return "#CFFAFE"; // Cyan-100 - Below Average
-    return "#E0F7FA"; // Very light cyan - Poor
-  };
+  if (rating >= 8.0) return "#06B6D4"; // Cyan-500 - Excellent
+  if (rating >= 7.0) return "#22D3EE"; // Cyan-400 - Very Good  
+  if (rating >= 6.0) return "#67E8F9"; // Cyan-300 - Good
+  if (rating >= 5.0) return "#A5F3FC"; // Cyan-200 - Average
+  if (rating >= 4.0) return "#CFFAFE"; // Cyan-100 - Below Average
+  return "#E0F7FA"; // Very light cyan - Poor
+};
 
   // Get rating text color for contrast with cyan shades
   const getRatingTextColor = (rating: number): string => {

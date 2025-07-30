@@ -600,7 +600,7 @@ const createHotelSummaryForInsights = (hotel: HotelWithRates, hotelInfo: any, ni
   return {
     hotelId: hotel.hotelId,
     name: hotelInfo?.name || 'Unknown Hotel',
-    starRating: hotelInfo?.starRating || hotelInfo?.stars || hotelInfo?.rating || 0,
+    starRating: hotelInfo?.rating || 7.1,
     images: images.slice(0, 5), // Limit to 5 images
     pricePerNight: pricePerNight,
     reviewCount: fakeReviewCount,

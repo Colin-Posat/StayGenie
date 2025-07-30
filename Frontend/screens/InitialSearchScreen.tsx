@@ -140,49 +140,45 @@ const InitialSearchScreen: React.FC<InitialSearchScreenProps> = ({
     2000
   );
 
-  // Search recommendations for the revolving wheel
-  const searchRecommendations: SearchRecommendation[] = [
-    {
-      text: "Budget Tokyo food scene",
-      query: "Budget hotels in Tokyo with great local food and restaurants nearby"
-    },
-    {
-      text: "NYC rooftop bars downtown",
-      query: "Downtown Manhattan hotels with rooftop bars and city views"
-    },
-    {
-      text: "Bali spa beachfront",
-      query: "Beachfront spa resorts in Bali with wellness packages"
-    },
-    {
-      text: "Orlando family suites",
-      query: "Family hotels near Disney World Orlando with shuttle service"
-    },
-    {
-      text: "Paris historic walkable",
-      query: "Boutique hotels in historic Paris neighborhoods walkable to attractions"
-    },
-    {
-      text: "Cancun kids club resorts",
-      query: "All-inclusive Cancun resorts with children's activities and babysitting"
-    },
-    {
-      text: "London Heathrow business",
-      query: "Business hotels near London Heathrow with airport shuttle and meeting rooms"
-    },
-    {
-      text: "Tuscany vineyard romance",
-      query: "Romantic hotels in Tuscany wine country with vineyard views"
-    },
-    {
-      text: "Aspen ski-in ski-out",
-      query: "Ski-in ski-out mountain lodges in Aspen with equipment rental"
-    },
-    {
-      text: "Barcelona beach boutique",
-      query: "Boutique hotels near Barcelona beaches with rooftop terraces"
-    }
-  ];
+const searchRecommendations: SearchRecommendation[] = [
+  {
+    text: "Swiss Alps views in Zermatt",
+    query: "Hotels in Zermatt or Lauterbrunnen with breathtaking mountain views and easy access to hiking trails"
+  },
+  {
+    text: "Aurora lodges in Canada",
+    query: "Cozy lodges in Yellowknife, Canada with aurora viewing and snow activities for a winter getaway"
+  },
+  {
+    text: "Street food hotels in Osaka",
+    query: "Affordable hotels in Osaka near famous street food markets like Dotonbori, ideal for food-focused travel"
+  },
+  {
+    text: "Waterfalls & peaks in Lauterbrunnen",
+    query: "Mid-range hotels in Lauterbrunnen, Switzerland near Staubbach Falls and Jungfrau mountain cable cars"
+  },
+  {
+    text: "Sunset cliff hotels in Santorini",
+    query: "Romantic cliffside hotels in Oia, Santorini with sunset views and private balconies"
+  },
+  {
+    text: "Rice terrace views in Vietnam",
+    query: "Eco-lodges in Sa Pa, Vietnam with panoramic rice terrace views and access to trekking routes"
+  },
+  {
+    text: "Vineyard stays in Tuscany",
+    query: "Luxury countryside hotels in Montepulciano, Italy with vineyard tours, wine tastings, and Tuscan views"
+  },
+  {
+    text: "Castle hotels in Scotland",
+    query: "Historic hotels in Inverness or the Highlands with views of lochs, castles, and rugged landscapes"
+  },
+  {
+    text: "Sacred Valley hotels in Peru",
+    query: "Affordable hotels in Ollantaytambo, Peru with views of the Sacred Valley and access to Machu Picchu trains"
+  }
+];
+
 
   // Initial animation on mount
   useEffect(() => {

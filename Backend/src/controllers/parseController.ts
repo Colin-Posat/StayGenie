@@ -48,6 +48,23 @@ Output a JSON object with the following fields:
   "aiSearch": "All other descriptive info including preferences, amenities, hotel type, style, etc. - INCLUDE budget descriptors like 'luxury', 'budget', 'mid-range', 'affordable', 'premium', etc."
 }
 
+
+### City Selection Rules  (⚠️ NEW – read carefully)
+1. **If the user specifies a city → use it.**
+2. **If the user names only a country or region, choose a city that best fits their stated preferences.**
+   * Examples — *do **NOT** hard‑code these, they’re only guidance*:
+     * “best views in Switzerland” → pick **Zermatt, Grindelwald, Lauterbrunnen, Interlaken** … not Zürich.
+     * “ski trip in Japan” → pick **Niseko** or **Hakuba** … not Tokyo.
+     * “best street food in Japan” → pick **Osaka** or **Fukuoka** … not Tokyo (unless user says “Tokyo”).
+     * “beach resorts in Thailand” → pick **Phuket**, **Krabi**, or **Koh Samui** … not Bangkok.
+     * “wine tasting in France” → pick **Bordeaux**, **Reims**, **Dijon**, etc. … not Paris (unless no wine context).
+3. **Only default to the country’s largest / capital city if the user gives *no* hints** about scenery, activities, cuisine, or vibe.
+4. If you infer a city, be sure it truly delivers on the user’s theme (mountains, beaches, food scene, culture, nightlife, etc.). Mention that specialty in **aiSearch**.
+5. Never invent non‑existent cities; always return a real, well‑known destination.
+6.⚠️ Always return the name of a real, bookable city or town — not a region, coast, or mountain range.
+E.g., say "Positano", not "Amalfi Coast"; "Zermatt", not "Swiss Alps"; "Phuket", not "southern Thailand".
+
+
 Price Extraction Rules:
 - Look for specific dollar amounts (e.g., "$100-200", "under $150", "around $75 per night")
 - Convert price ranges to minCost/maxCost in USD per night
@@ -73,24 +90,22 @@ aiSearch Content Rules:
 - If NO specific context, default to: "interesting and well-reviewed hotels, good value properties"
 - Focus on matching the implied expectations from the trip purpose and destination
 
-Other Rules:
-- If the user doesn't provide check-in/check-out dates, default to:
+
+### Other Rules:
+- If the user doesn't provide check‑in/check‑out dates, default to:
   "checkin": "${formattedCheckin}"
   "checkout": "${formattedCheckout}"
-- IMPORTANT: Always return the ISO-2 country code in "countryCode" field (e.g., FR, GB, US, DE, IT, ES, etc.)
-- IMPORTANT: Always return the full city name in "cityName" field (e.g., Paris, London, New York)
-- For language, default to "en"
-- Put ALL other search criteria in "aiSearch": hotel preferences, amenities, style, business/leisure, AND budget descriptors
-- If they provide only a country, choose a city in that would have hotels that meet the users preferences if no preferences are given choose a major city in that country
-- If no location is provided, infer one from their preferences. Make sure this location really matches the users preferences it should be a city that is a hot spot for what the user is requesting
-- If number of people is not specified, default to 2 adults and 0 children
-- Only return the JSON. No explanation or extra formatting.
+- IMPORTANT: Always return the ISO‑2 country code and the full city name.
+- Default language = "en".
+- Put ALL other search criteria in "aiSearch".
+- If number of people is not specified, default to 2 adults / 0 children.
+- **Only return the JSON. No explanation or extra formatting.**
 
 User input: "${userInput}"
 `;
 
     const completion = await openai.chat.completions.create({
-      model: 'gpt-4.1-nano',
+      model: 'gpt-4o-mini',
       messages: [{ role: 'user', content: prompt }],
       temperature: 0.3,
       max_tokens: 1000,
