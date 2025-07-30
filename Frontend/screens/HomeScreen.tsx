@@ -100,6 +100,10 @@ interface Stage1Hotel {
   latitude: number | null;
   longitude: number | null;
   topAmenities: string[];
+  // NEW: Refundable policy fields
+  isRefundable: boolean;
+  refundableTag: string | null;
+  refundableInfo: string;
   // Contains summarized info for Stage 2
   summarizedInfo: {
     name: string;
@@ -111,6 +115,9 @@ interface Stage1Hotel {
     location: string;
     city: string;
     country: string;
+    // NEW: Refundable info in summary
+    isRefundable: boolean;
+    refundableInfo: string;
   };
 }
 
@@ -216,6 +223,11 @@ interface HotelRecommendation {
   latitude: number | null;
   longitude: number | null;
   topAmenities: string[];
+  
+  // NEW: Make refundable policy fields OPTIONAL (since API might not return them yet)
+  isRefundable?: boolean;
+  refundableTag?: string | null;
+  refundableInfo?: string;
 }
 
 // AI Suggestions interface
@@ -228,7 +240,7 @@ interface AISuggestion {
 }
 
 interface Hotel {
-  id: number;
+  id: string; // Changed from: id: number;
   name: string;
   image: string;
   price: number;
@@ -270,6 +282,11 @@ interface Hotel {
   totalRooms?: number;
   fullDescription?: string;
   fullAddress?: string;
+  
+  // NEW: Refundable policy fields
+  isRefundable?: boolean;
+  refundableTag?: string | null;
+  refundableInfo?: string;
 }
 
 // Base URL
@@ -481,126 +498,135 @@ const HomeScreen = () => {
 
   // NEW: Convert Stage 1 hotel to display format (basic info with loading placeholders)
   const convertStage1HotelToDisplay = (hotel: Stage1Hotel, index: number): Hotel => {
-    console.log('🔍 Converting Stage 1 hotel (basic data):', hotel.name);
+  console.log('🔍 Converting Stage 1 hotel (basic data):', hotel.name);
+  
+  const getHotelImage = (hotel: Stage1Hotel): string => {
+    const defaultImage = "https://images.unsplash.com/photo-1564501049412-61c2a3083791?auto=format&fit=crop&w=800&q=80";
     
-    const getHotelImage = (hotel: Stage1Hotel): string => {
-      const defaultImage = "https://images.unsplash.com/photo-1564501049412-61c2a3083791?auto=format&fit=crop&w=800&q=80";
-      
-      if (hotel.images && hotel.images.length > 0) {
-        const firstImage = hotel.images[0];
-        if (firstImage && typeof firstImage === 'string' && firstImage.trim() !== '') {
-          if (firstImage.startsWith('http://') || firstImage.startsWith('https://') || firstImage.startsWith('//')) {
-            return firstImage;
-          }
+    if (hotel.images && hotel.images.length > 0) {
+      const firstImage = hotel.images[0];
+      if (firstImage && typeof firstImage === 'string' && firstImage.trim() !== '') {
+        if (firstImage.startsWith('http://') || firstImage.startsWith('https://') || firstImage.startsWith('//')) {
+          return firstImage;
         }
       }
-      
-      return defaultImage;
-    };
-
-    let price = 200;
-    let originalPrice = price * 1.15;
-    let priceComparison = "Standard rate";
-
-    if (hotel.pricePerNight) {
-      price = hotel.pricePerNight.amount;
-      originalPrice = Math.round(price * 1.15);
-      priceComparison = hotel.pricePerNight.display;
-      
-      if (hotel.pricePerNight.provider) {
-        priceComparison += ` (${hotel.pricePerNight.provider})`;
-      }
-    } else if (hotel.priceRange) {
-      price = hotel.priceRange.min;
-      originalPrice = Math.round(price * 1.15);
-      priceComparison = hotel.priceRange.display;
     }
-
-    const generateTransitDistance = (city: string, topAmenities: string[]): string => {
-      const cityDistances: Record<string, string> = {
-        'Tokyo': '2 min walk to subway',
-        'Paris': '5 min walk to Metro',
-        'New York': '3 min walk to subway',
-        'London': '4 min walk to tube',
-        'Miami': '3 min walk to beach',
-        'Los Angeles': '5 min walk to metro',
-        'Vail': '2 min walk to ski lift',
-        'Chicago': '4 min walk to L train'
-      };
-      
-      return cityDistances[city] || '5 min walk to main area';
-    };
-
-    return {
-      id: index + 1,
-      name: hotel.name,
-      image: getHotelImage(hotel),
-      images: hotel.images || [],
-      price: Math.round(price),
-      originalPrice: Math.round(originalPrice),
-      priceComparison: priceComparison,
-      rating: hotel.starRating || 4.0,
-      reviews: hotel.reviewCount || Math.floor(Math.random() * 1000) + 100,
-      safetyRating: 8.5 + Math.random() * 1.5,
-      transitDistance: generateTransitDistance(hotel.city, hotel.topAmenities),
-      tags: hotel.topAmenities?.slice(0, 3) || hotel.amenities?.slice(0, 3) || ["Standard amenities"],
-      location: hotel.address,
-      features: hotel.amenities || ["Standard features"],
-      
-      // Stage 1: Show loading placeholders for AI content
-      aiExcerpt: "AI is analyzing this hotel for you...", 
-      whyItMatches: "AI match analysis in progress...", 
-      funFacts: ["Loading interesting facts..."], 
-      guestInsights: "Loading guest insights...", 
-      nearbyAttractions: ["Finding nearby attractions..."], 
-      locationHighlight: "Analyzing location advantages...", 
-      
-      // Basic data available immediately
-      aiMatchPercent: hotel.aiMatchPercent,
-      pricePerNight: hotel.pricePerNight,
-      roomTypes: hotel.roomTypes,
-      city: hotel.city,
-      country: hotel.country,
-      latitude: hotel.latitude,
-      longitude: hotel.longitude,
-      topAmenities: hotel.topAmenities,
-      matchType: "analyzing", // Will be updated in Stage 2
-      hasAvailability: hotel.hasAvailability,
-      totalRooms: hotel.totalRooms,
-      fullDescription: hotel.description,
-      fullAddress: hotel.address
-    };
+    
+    return defaultImage;
   };
+
+  let price = 200;
+  let originalPrice = price * 1.15;
+  let priceComparison = "Standard rate";
+
+  if (hotel.pricePerNight) {
+    price = hotel.pricePerNight.amount;
+    originalPrice = Math.round(price * 1.15);
+    priceComparison = hotel.pricePerNight.display;
+    
+    if (hotel.pricePerNight.provider) {
+      priceComparison += ` (${hotel.pricePerNight.provider})`;
+    }
+  } else if (hotel.priceRange) {
+    price = hotel.priceRange.min;
+    originalPrice = Math.round(price * 1.15);
+    priceComparison = hotel.priceRange.display;
+  }
+
+  const generateTransitDistance = (city: string, topAmenities: string[]): string => {
+    const cityDistances: Record<string, string> = {
+      'Tokyo': '2 min walk to subway',
+      'Paris': '5 min walk to Metro',
+      'New York': '3 min walk to subway',
+      'London': '4 min walk to tube',
+      'Miami': '3 min walk to beach',
+      'Los Angeles': '5 min walk to metro',
+      'Vail': '2 min walk to ski lift',
+      'Chicago': '4 min walk to L train'
+    };
+    
+    return cityDistances[city] || '5 min walk to main area';
+  };
+
+  return {
+    // FIX: Use the actual hotel ID from the API instead of array index
+    id: hotel.hotelId, // Changed from: index + 1
+    name: hotel.name,
+    image: getHotelImage(hotel),
+    images: hotel.images || [],
+    price: Math.round(price),
+    originalPrice: Math.round(originalPrice),
+    priceComparison: priceComparison,
+    rating: hotel.starRating || 4.0,
+    reviews: hotel.reviewCount || Math.floor(Math.random() * 1000) + 100,
+    safetyRating: 8.5 + Math.random() * 1.5,
+    transitDistance: generateTransitDistance(hotel.city, hotel.topAmenities),
+    tags: hotel.topAmenities?.slice(0, 3) || hotel.amenities?.slice(0, 3) || ["Standard amenities"],
+    location: hotel.address,
+    features: hotel.amenities || ["Standard features"],
+    
+    // Stage 1: Show loading placeholders for AI content
+    aiExcerpt: "AI is analyzing this hotel for you...", 
+    whyItMatches: "AI match analysis in progress...", 
+    funFacts: ["Loading interesting facts..."], 
+    guestInsights: "Loading guest insights...", 
+    nearbyAttractions: ["Finding nearby attractions..."], 
+    locationHighlight: "Analyzing location advantages...", 
+    
+    // Basic data available immediately
+    aiMatchPercent: hotel.aiMatchPercent,
+    pricePerNight: hotel.pricePerNight,
+    roomTypes: hotel.roomTypes,
+    city: hotel.city,
+    country: hotel.country,
+    latitude: hotel.latitude,
+    longitude: hotel.longitude,
+    topAmenities: hotel.topAmenities,
+    matchType: "analyzing", // Will be updated in Stage 2
+    hasAvailability: hotel.hasAvailability,
+    totalRooms: hotel.totalRooms,
+    fullDescription: hotel.description,
+    fullAddress: hotel.address,
+    
+    // NEW: Refundable policy data from Stage 1
+    isRefundable: hotel.isRefundable,
+    refundableTag: hotel.refundableTag,
+    refundableInfo: hotel.refundableInfo
+  };
+};
+
 
   // NEW: Update hotels with Stage 2 AI insights
   const updateHotelsWithInsights = (stage2Results: Stage2InsightsResponse) => {
-    console.log('🎨 Updating hotels with AI insights...');
-    
-    setDisplayHotels(prevHotels => 
-      prevHotels.map(hotel => {
-        const aiRecommendation = stage2Results.recommendations.find(
-          rec => rec.hotelId === hotel.id.toString() || rec.hotelName === hotel.name
-        );
-        
-        if (aiRecommendation) {
-          console.log(`✨ Updating ${hotel.name} with AI insights`);
-          return {
-            ...hotel,
-            aiExcerpt: aiRecommendation.whyItMatches,
-            whyItMatches: aiRecommendation.whyItMatches,
-            funFacts: aiRecommendation.funFacts || hotel.funFacts,
-            guestInsights: aiRecommendation.guestInsights,
-            nearbyAttractions: aiRecommendation.nearbyAttractions,
-            locationHighlight: aiRecommendation.locationHighlight,
-            matchType: aiRecommendation.aiMatchPercent >= 85 ? 'excellent' : 
-                      aiRecommendation.aiMatchPercent >= 75 ? 'great' : 'good'
-          };
-        }
-        
-        return hotel;
-      })
-    );
-  };
+  console.log('🎨 Updating hotels with AI insights...');
+  
+  setDisplayHotels(prevHotels => 
+    prevHotels.map(hotel => {
+      const aiRecommendation = stage2Results.recommendations.find(
+        rec => rec.hotelId === hotel.id.toString() || 
+               rec.hotelId === hotel.id || 
+               rec.hotelName === hotel.name
+      );
+      
+      if (aiRecommendation) {
+        console.log(`✨ Updating ${hotel.name} with AI insights`);
+        return {
+          ...hotel,
+          aiExcerpt: aiRecommendation.whyItMatches,
+          whyItMatches: aiRecommendation.whyItMatches,
+          funFacts: aiRecommendation.funFacts || hotel.funFacts,
+          guestInsights: aiRecommendation.guestInsights,
+          nearbyAttractions: aiRecommendation.nearbyAttractions,
+          locationHighlight: aiRecommendation.locationHighlight,
+          matchType: aiRecommendation.aiMatchPercent >= 85 ? 'excellent' : 
+                    aiRecommendation.aiMatchPercent >= 75 ? 'great' : 'good'
+        };
+      }
+      
+      return hotel;
+    })
+  );
+};
 
   // NEW: Execute Stage 2 - AI Insights
   const executeStage2Insights = async (stage1Data: Stage1SearchResponse, userQuery?: string) => {
@@ -697,99 +723,105 @@ const HomeScreen = () => {
   };
 
   // Convert recommendation to display format (legacy compatibility)
-  const convertRecommendationToDisplayHotel = (recommendation: HotelRecommendation, index: number): Hotel => {
-    console.log('🔍 Converting legacy recommendation:', recommendation.name);
+const convertRecommendationToDisplayHotel = (recommendation: HotelRecommendation, index: number): Hotel => {
+  console.log('🔍 Converting legacy recommendation:', recommendation.name);
+  
+  const getHotelImage = (recommendation: HotelRecommendation): string => {
+    const defaultImage = "https://images.unsplash.com/photo-1564501049412-61c2a3083791?auto=format&fit=crop&w=800&q=80";
     
-    const getHotelImage = (recommendation: HotelRecommendation): string => {
-      const defaultImage = "https://images.unsplash.com/photo-1564501049412-61c2a3083791?auto=format&fit=crop&w=800&q=80";
-      
-      if (recommendation.images && recommendation.images.length > 0) {
-        const firstImage = recommendation.images[0];
-        if (firstImage && typeof firstImage === 'string' && firstImage.trim() !== '') {
-          if (firstImage.startsWith('http://') || firstImage.startsWith('https://') || firstImage.startsWith('//')) {
-            return firstImage;
-          }
+    if (recommendation.images && recommendation.images.length > 0) {
+      const firstImage = recommendation.images[0];
+      if (firstImage && typeof firstImage === 'string' && firstImage.trim() !== '') {
+        if (firstImage.startsWith('http://') || firstImage.startsWith('https://') || firstImage.startsWith('//')) {
+          return firstImage;
         }
       }
-      
-      return defaultImage;
-    };
-
-    let price = 200;
-    let originalPrice = price * 1.15;
-    let priceComparison = "Standard rate";
-
-    if (recommendation.pricePerNight) {
-      price = recommendation.pricePerNight.amount;
-      originalPrice = Math.round(price * 1.15);
-      priceComparison = recommendation.pricePerNight.display;
-      
-      if (recommendation.pricePerNight.provider) {
-        priceComparison += ` (${recommendation.pricePerNight.provider})`;
-      }
-    } else if (recommendation.priceRange) {
-      price = recommendation.priceRange.min;
-      originalPrice = Math.round(price * 1.15);
-      priceComparison = recommendation.priceRange.display;
     }
-
-    const generateTransitDistance = (city: string, nearbyAttractions: string[]): string => {
-      if (nearbyAttractions.length > 0) {
-        const mainAttraction = nearbyAttractions[0].replace('Near ', '');
-        const distances = ['2 min walk', '5 min walk', '8 min walk', '3 min drive', '1 min walk'];
-        return `${distances[Math.floor(Math.random() * distances.length)]} to ${mainAttraction}`;
-      }
-      
-      const cityDistances: Record<string, string> = {
-        'Tokyo': '2 min walk to subway',
-        'Paris': '5 min walk to Metro',
-        'New York': '3 min walk to subway',
-        'London': '4 min walk to tube',
-        'Miami': '3 min walk to beach',
-        'Los Angeles': '5 min walk to metro',
-        'Vail': '2 min walk to ski lift',
-        'Chicago': '4 min walk to L train'
-      };
-      
-      return cityDistances[city] || '5 min walk to main area';
-    };
-
-    return {
-      id: index + 1,
-      name: recommendation.name,
-      image: getHotelImage(recommendation),
-      images: recommendation.images || [],
-      price: Math.round(price),
-      originalPrice: Math.round(originalPrice),
-      priceComparison: priceComparison,
-      rating: recommendation.starRating || 4.0,
-      reviews: recommendation.reviewCount || Math.floor(Math.random() * 1000) + 100,
-      safetyRating: 8.5 + Math.random() * 1.5,
-      transitDistance: generateTransitDistance(recommendation.city, recommendation.nearbyAttractions),
-      tags: recommendation.topAmenities?.slice(0, 3) || recommendation.amenities?.slice(0, 3) || ["Standard amenities"],
-      location: recommendation.address,
-      features: recommendation.amenities || ["Standard features"],
-      aiExcerpt: recommendation.whyItMatches,
-      whyItMatches: recommendation.whyItMatches,
-      funFacts: recommendation.funFacts,
-      aiMatchPercent: recommendation.aiMatchPercent,
-      pricePerNight: recommendation.pricePerNight,
-      roomTypes: recommendation.roomTypes,
-      guestInsights: recommendation.guestInsights,
-      city: recommendation.city,
-      country: recommendation.country,
-      latitude: recommendation.latitude,
-      longitude: recommendation.longitude,
-      topAmenities: recommendation.topAmenities,
-      nearbyAttractions: recommendation.nearbyAttractions,
-      locationHighlight: recommendation.locationHighlight,
-      matchType: recommendation.matchType,
-      hasAvailability: recommendation.hasAvailability,
-      totalRooms: recommendation.totalRooms,
-      fullDescription: recommendation.description,
-      fullAddress: recommendation.address
-    };
+    
+    return defaultImage;
   };
+
+  let price = 200;
+  let originalPrice = price * 1.15;
+  let priceComparison = "Standard rate";
+
+  if (recommendation.pricePerNight) {
+    price = recommendation.pricePerNight.amount;
+    originalPrice = Math.round(price * 1.15);
+    priceComparison = recommendation.pricePerNight.display;
+    
+    if (recommendation.pricePerNight.provider) {
+      priceComparison += ` (${recommendation.pricePerNight.provider})`;
+    }
+  } else if (recommendation.priceRange) {
+    price = recommendation.priceRange.min;
+    originalPrice = Math.round(price * 1.15);
+    priceComparison = recommendation.priceRange.display;
+  }
+
+  const generateTransitDistance = (city: string, nearbyAttractions: string[]): string => {
+    if (nearbyAttractions.length > 0) {
+      const mainAttraction = nearbyAttractions[0].replace('Near ', '');
+      const distances = ['2 min walk', '5 min walk', '8 min walk', '3 min drive', '1 min walk'];
+      return `${distances[Math.floor(Math.random() * distances.length)]} to ${mainAttraction}`;
+    }
+    
+    const cityDistances: Record<string, string> = {
+      'Tokyo': '2 min walk to subway',
+      'Paris': '5 min walk to Metro',
+      'New York': '3 min walk to subway',
+      'London': '4 min walk to tube',
+      'Miami': '3 min walk to beach',
+      'Los Angeles': '5 min walk to metro',
+      'Vail': '2 min walk to ski lift',
+      'Chicago': '4 min walk to L train'
+    };
+    
+    return cityDistances[city] || '5 min walk to main area';
+  };
+
+  return {
+    // FIX: Use the actual hotel ID from the API instead of array index
+    id: recommendation.hotelId, // Changed from: index + 1
+    name: recommendation.name,
+    image: getHotelImage(recommendation),
+    images: recommendation.images || [],
+    price: Math.round(price),
+    originalPrice: Math.round(originalPrice),
+    priceComparison: priceComparison,
+    rating: recommendation.starRating || 4.0,
+    reviews: recommendation.reviewCount || Math.floor(Math.random() * 1000) + 100,
+    safetyRating: 8.5 + Math.random() * 1.5,
+    transitDistance: generateTransitDistance(recommendation.city, recommendation.nearbyAttractions),
+    tags: recommendation.topAmenities?.slice(0, 3) || recommendation.amenities?.slice(0, 3) || ["Standard amenities"],
+    location: recommendation.address,
+    features: recommendation.amenities || ["Standard features"],
+    aiExcerpt: recommendation.whyItMatches,
+    whyItMatches: recommendation.whyItMatches,
+    funFacts: recommendation.funFacts,
+    aiMatchPercent: recommendation.aiMatchPercent,
+    pricePerNight: recommendation.pricePerNight,
+    roomTypes: recommendation.roomTypes,
+    guestInsights: recommendation.guestInsights,
+    city: recommendation.city,
+    country: recommendation.country,
+    latitude: recommendation.latitude,
+    longitude: recommendation.longitude,
+    topAmenities: recommendation.topAmenities,
+    nearbyAttractions: recommendation.nearbyAttractions,
+    locationHighlight: recommendation.locationHighlight,
+    matchType: recommendation.matchType,
+    hasAvailability: recommendation.hasAvailability,
+    totalRooms: recommendation.totalRooms,
+    fullDescription: recommendation.description,
+    fullAddress: recommendation.address,
+    
+    // NEW: Refundable policy data from legacy recommendation
+    isRefundable: recommendation.isRefundable,
+    refundableTag: recommendation.refundableTag,
+    refundableInfo: recommendation.refundableInfo
+  };
+};
 
   // TEST MODE: Execute test search with pre-loaded data
   const executeTestSearch = async (userInput: string) => {
@@ -1110,253 +1142,260 @@ const HomeScreen = () => {
     }
   }, []);
 
-  // Enhanced handleBookNow with provider information
-  const handleBookNow = useCallback((hotel: Hotel) => {
-    console.log('Book now pressed for:', hotel.name);
-    
-    let bookingMessage = `Ready to book ${hotel.name}!\n\n`;
-    
-    if (TEST_MODE) {
-      bookingMessage += `🧪 TEST MODE - No actual booking\n\n`;
+const handleBookNow = useCallback((hotel: Hotel) => {
+  console.log('Book now pressed for:', hotel.name);
+  
+  let bookingMessage = `Ready to book ${hotel.name}!\n\n`;
+  
+  if (TEST_MODE) {
+    bookingMessage += `🧪 TEST MODE - No actual booking\n\n`;
+  }
+  
+  if (hotel.city && hotel.country) {
+    bookingMessage += `📍 Location: ${hotel.city}, ${hotel.country}\n`;
+  }
+  
+  if (hotel.pricePerNight) {
+    bookingMessage += `💰 Price: ${hotel.pricePerNight.display}\n`;
+    if (hotel.pricePerNight.provider) {
+      bookingMessage += `🏷️  Provider: ${hotel.pricePerNight.provider}\n`;
     }
-    
-    if (hotel.city && hotel.country) {
-      bookingMessage += `📍 Location: ${hotel.city}, ${hotel.country}\n`;
+    if (hotel.pricePerNight.isSupplierPrice) {
+      bookingMessage += `✅ Supplier rate (best available)\n`;
     }
+  } else {
+    bookingMessage += `💰 Price: ${hotel.price}/night\n`;
+  }
+  
+  // NEW: Include refundable policy information
+  if (hotel.isRefundable !== undefined) {
+    const refundIcon = hotel.isRefundable ? '✅' : '❌';
+    bookingMessage += `${refundIcon} Refundable: ${hotel.refundableInfo || (hotel.isRefundable ? 'Yes' : 'No')}\n`;
+    if (hotel.refundableTag) {
+      bookingMessage += `🏷️  Policy: ${hotel.refundableTag}\n`;
+    }
+  }
+  
+  if (hotel.aiMatchPercent) {
+    bookingMessage += `🤖 AI Match: ${hotel.aiMatchPercent}% match\n`;
+    bookingMessage += `✨ Match Type: ${hotel.matchType || 'good'}\n`;
+  }
+  
+  bookingMessage += `\n`;
+  
+  // Use Stage 1 results if available, otherwise fallback to legacy
+  const searchParams = stage1Results?.searchParams || searchResults?.searchParams;
+  
+  if (searchParams) {
+    bookingMessage += `📅 Dates: ${searchParams.checkin} to ${searchParams.checkout}\n`;
+    bookingMessage += `👥 Guests: ${searchParams.adults} adults`;
+    if (searchParams.children > 0) {
+      bookingMessage += `, ${searchParams.children} children`;
+    }
+    bookingMessage += `\n🌙 Nights: ${searchParams.nights}\n`;
     
-    if (hotel.pricePerNight) {
-      bookingMessage += `💰 Price: ${hotel.pricePerNight.display}\n`;
+    const nightsCount = searchParams.nights;
+    let totalCost = hotel.price * nightsCount;
+    
+    if (hotel.pricePerNight && hotel.pricePerNight.totalAmount) {
+      bookingMessage += `💵 Total Cost: ${hotel.pricePerNight.currency} ${hotel.pricePerNight.totalAmount}`;
       if (hotel.pricePerNight.provider) {
-        bookingMessage += `🏷️  Provider: ${hotel.pricePerNight.provider}\n`;
-      }
-      if (hotel.pricePerNight.isSupplierPrice) {
-        bookingMessage += `✅ Supplier rate (best available)\n`;
+        bookingMessage += ` (via ${hotel.pricePerNight.provider})`;
       }
     } else {
-      bookingMessage += `💰 Price: ${hotel.price}/night\n`;
+      bookingMessage += `💵 Total Cost: ${totalCost}`;
     }
-    
-    if (hotel.aiMatchPercent) {
-      bookingMessage += `🤖 AI Match: ${hotel.aiMatchPercent}% match\n`;
-      bookingMessage += `✨ Match Type: ${hotel.matchType || 'good'}\n`;
-    }
-    
-    bookingMessage += `\n`;
-    
-    // Use Stage 1 results if available, otherwise fallback to legacy
-    const searchParams = stage1Results?.searchParams || searchResults?.searchParams;
-    
-    if (searchParams) {
-      bookingMessage += `📅 Dates: ${searchParams.checkin} to ${searchParams.checkout}\n`;
-      bookingMessage += `👥 Guests: ${searchParams.adults} adults`;
-      if (searchParams.children > 0) {
-        bookingMessage += `, ${searchParams.children} children`;
-      }
-      bookingMessage += `\n🌙 Nights: ${searchParams.nights}\n`;
-      
-      const nightsCount = searchParams.nights;
-      let totalCost = hotel.price * nightsCount;
-      
-      if (hotel.pricePerNight && hotel.pricePerNight.totalAmount) {
-        bookingMessage += `💵 Total Cost: ${hotel.pricePerNight.currency} ${hotel.pricePerNight.totalAmount}`;
-        if (hotel.pricePerNight.provider) {
-          bookingMessage += ` (via ${hotel.pricePerNight.provider})`;
-        }
-      } else {
-        bookingMessage += `💵 Total Cost: ${totalCost}`;
-      }
-    }
-    
-    Alert.alert(
-      'Booking Confirmation',
-      bookingMessage,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { text: TEST_MODE ? 'Test Book' : 'Proceed to Book', style: 'default' }
-      ]
-    );
-  }, [stage1Results, searchResults]);
+  }
+  
+  Alert.alert(
+    'Booking Confirmation',
+    bookingMessage,
+    [
+      { text: 'Cancel', style: 'cancel' },
+      { text: TEST_MODE ? 'Test Book' : 'Proceed to Book', style: 'default' }
+    ]
+  );
+}, [stage1Results, searchResults]);
 
   // Enhanced handleViewDetails
-  const handleViewDetails = useCallback((hotel: Hotel) => {
-    console.log('View details pressed for:', hotel.name);
-    
-    let detailsMessage = `🏨 ${hotel.name}\n\n`;
-    
-    if (TEST_MODE) {
-      detailsMessage += `🧪 TEST MODE DATA\n\n`;
-    }
-    
-    if (hotel.aiMatchPercent) {
-      detailsMessage += `🤖 AI Analysis:\n`;
-      detailsMessage += `• Match Score: ${hotel.aiMatchPercent}%\n`;
-      detailsMessage += `• Match Type: ${hotel.matchType || 'good'}\n`;
-      if (hotel.whyItMatches && !hotel.whyItMatches.includes('progress')) {
-        detailsMessage += `• Why it matches: ${hotel.whyItMatches}\n`;
-      }
-      detailsMessage += `\n`;
-    }
-    
-    detailsMessage += `📍 Location Details:\n`;
-    if (hotel.city && hotel.country) {
-      detailsMessage += `• City: ${hotel.city}, ${hotel.country}\n`;
-    }
-    if (hotel.fullAddress) {
-      detailsMessage += `• Address: ${hotel.fullAddress}\n`;
-    }
-    if (hotel.latitude && hotel.longitude) {
-      detailsMessage += `• Coordinates: ${hotel.latitude}, ${hotel.longitude}\n`;
-    }
-    if (hotel.locationHighlight && !hotel.locationHighlight.includes('Analyzing')) {
-      detailsMessage += `• Highlight: ${hotel.locationHighlight}\n`;
-    }
-    detailsMessage += `• Transit: ${hotel.transitDistance}\n\n`;
-    
-    if (hotel.nearbyAttractions && hotel.nearbyAttractions.length > 0 && !hotel.nearbyAttractions[0].includes('Loading')) {
-      detailsMessage += `🗺️ Nearby Attractions:\n`;
-      hotel.nearbyAttractions.forEach(attraction => {
-        detailsMessage += `• ${attraction}\n`;
-      });
-      detailsMessage += `\n`;
-    }
-    
-    detailsMessage += `⭐ Ratings & Reviews:\n`;
-    detailsMessage += `• Star Rating: ${hotel.rating}/5\n`;
-    detailsMessage += `• Guest Reviews: ${hotel.reviews.toLocaleString()} reviews\n`;
-    detailsMessage += `• Safety Rating: ${hotel.safetyRating.toFixed(1)}/10\n\n`;
-    
-    if (isInsightsLoading && hotel.guestInsights?.includes('Loading')) {
-      detailsMessage += `💬 Guest Insights:\nGenerating AI insights...\n\n`;
-    } else if (hotel.guestInsights && !hotel.guestInsights.includes('Loading')) {
-      detailsMessage += `💬 Guest Insights:\n${hotel.guestInsights}\n\n`;
-    }
-    
-    if (hotel.topAmenities && hotel.topAmenities.length > 0) {
-      detailsMessage += `🏨 Top Amenities:\n`;
-      hotel.topAmenities.forEach(amenity => {
-        detailsMessage += `• ${amenity}\n`;
-      });
-      detailsMessage += `\n`;
-    }
-    
-    if (hotel.funFacts && hotel.funFacts.length > 0 && !hotel.funFacts[0].includes('Loading')) {
-      detailsMessage += `🎉 Fun Facts:\n`;
-      hotel.funFacts.forEach(fact => {
-        detailsMessage += `• ${fact}\n`;
-      });
-      detailsMessage += `\n`;
-    }
-    
-    if (hotel.hasAvailability !== undefined || hotel.totalRooms) {
-      detailsMessage += `🛏️ Accommodation:\n`;
-      if (hotel.hasAvailability !== undefined) {
-        detailsMessage += `• Availability: ${hotel.hasAvailability ? 'Available' : 'Limited'}\n`;
-      }
-      if (hotel.totalRooms) {
-        detailsMessage += `• Room Types: ${hotel.totalRooms} different options\n`;
-      }
-      detailsMessage += `\n`;
-    }
-    
-    detailsMessage += `💰 Pricing Information:\n`;
-    if (hotel.pricePerNight) {
-      detailsMessage += `• Per Night: ${hotel.pricePerNight.display}\n`;
-      detailsMessage += `• Currency: ${hotel.pricePerNight.currency}\n`;
-      if (hotel.pricePerNight.provider) {
-        detailsMessage += `• Provider: ${hotel.pricePerNight.provider}\n`;
-      }
-      if (hotel.pricePerNight.isSupplierPrice) {
-        detailsMessage += `• Rate Type: Supplier rate\n`;
-      } else {
-        detailsMessage += `• Rate Type: Retail rate\n`;
-      }
-      if (hotel.pricePerNight.totalAmount) {
-        detailsMessage += `• Total Stay Cost: ${hotel.pricePerNight.currency} ${hotel.pricePerNight.totalAmount}\n`;
-      }
-    } else {
-      detailsMessage += `• Per Night: ${hotel.price}\n`;
-      detailsMessage += `• Original Price: ${hotel.originalPrice}\n`;
-      detailsMessage += `• Comparison: ${hotel.priceComparison}\n`;
-    }
-    
-    Alert.alert(
-      'Hotel Details',
-      detailsMessage,
-      [
-        { text: 'Close', style: 'cancel' },
-        { text: TEST_MODE ? 'Test Book' : 'Book Now', style: 'default', onPress: () => handleBookNow(hotel) }
-      ]
-    );
-  }, [handleBookNow, isInsightsLoading]);
-
-  // Enhanced handleHotelPress
-  const handleHotelPress = useCallback((hotel: Hotel) => {
-    console.log('Hotel selected:', hotel.name);
-    
-    let alertMessage = '';
-    
-    if (TEST_MODE) {
-      alertMessage += `🧪 TEST MODE\n\n`;
-    }
-    
-    if (hotel.aiMatchPercent) {
-      alertMessage += `🤖 AI Match: ${hotel.aiMatchPercent}% (${hotel.matchType || 'good'} match)\n\n`;
-    }
-    
-    if (hotel.city && hotel.country) {
-      alertMessage += `📍 ${hotel.city}, ${hotel.country}\n`;
-    }
-    
-    if (hotel.locationHighlight && !hotel.locationHighlight.includes('Analyzing')) {
-      alertMessage += `🎯 ${hotel.locationHighlight}\n\n`;
-    }
-    
+const handleViewDetails = useCallback((hotel: Hotel) => {
+  console.log('View details pressed for:', hotel.name);
+  
+  let detailsMessage = `🏨 ${hotel.name}\n\n`;
+  
+  if (TEST_MODE) {
+    detailsMessage += `🧪 TEST MODE DATA\n\n`;
+  }
+  
+  if (hotel.aiMatchPercent) {
+    detailsMessage += `🤖 AI Analysis:\n`;
+    detailsMessage += `• Match Score: ${hotel.aiMatchPercent}%\n`;
+    detailsMessage += `• Match Type: ${hotel.matchType || 'good'}\n`;
     if (hotel.whyItMatches && !hotel.whyItMatches.includes('progress')) {
-      alertMessage += `✨ Why it matches: ${hotel.whyItMatches}\n\n`;
+      detailsMessage += `• Why it matches: ${hotel.whyItMatches}\n`;
     }
-    
-    if (isInsightsLoading && hotel.guestInsights?.includes('Loading')) {
-      alertMessage += `💬 Guest Insights: Generating...\n\n`;
-    } else if (hotel.guestInsights && !hotel.guestInsights.includes('Loading')) {
-      alertMessage += `💬 Guest Insights: ${hotel.guestInsights}\n\n`;
-    }
-    
-    if (hotel.nearbyAttractions && hotel.nearbyAttractions.length > 0 && !hotel.nearbyAttractions[0].includes('Loading')) {
-      alertMessage += `🗺️ Nearby: ${hotel.nearbyAttractions.slice(0, 2).join(', ')}\n\n`;
-    }
-    
-    if (hotel.topAmenities && hotel.topAmenities.length > 0) {
-      alertMessage += `🏨 Top Amenities: ${hotel.topAmenities.join(', ')}\n\n`;
-    }
-    
-    if (hotel.pricePerNight) {
-      alertMessage += `💰 ${hotel.pricePerNight.display}`;
-      if (hotel.pricePerNight.provider) {
-        alertMessage += ` (via ${hotel.pricePerNight.provider})`;
-      }
-      alertMessage += `\n`;
-      if (hotel.pricePerNight.isSupplierPrice) {
-        alertMessage += `🏷️  Supplier rate\n`;
-      }
-    } else {
-      alertMessage += `💰 ${hotel.price}/night\n`;
-    }
-    
-    alertMessage += `⭐ ${hotel.rating}/5 (${hotel.reviews.toLocaleString()} reviews)\n`;
-    
+    detailsMessage += `\n`;
+  }
+  
+  detailsMessage += `📍 Location Details:\n`;
+  if (hotel.city && hotel.country) {
+    detailsMessage += `• City: ${hotel.city}, ${hotel.country}\n`;
+  }
+  if (hotel.fullAddress) {
+    detailsMessage += `• Address: ${hotel.fullAddress}\n`;
+  }
+  if (hotel.latitude && hotel.longitude) {
+    detailsMessage += `• Coordinates: ${hotel.latitude}, ${hotel.longitude}\n`;
+  }
+  if (hotel.locationHighlight && !hotel.locationHighlight.includes('Analyzing')) {
+    detailsMessage += `• Highlight: ${hotel.locationHighlight}\n`;
+  }
+  detailsMessage += `• Transit: ${hotel.transitDistance}\n\n`;
+  
+  if (hotel.nearbyAttractions && hotel.nearbyAttractions.length > 0 && !hotel.nearbyAttractions[0].includes('Loading')) {
+    detailsMessage += `🗺️ Nearby Attractions:\n`;
+    hotel.nearbyAttractions.forEach(attraction => {
+      detailsMessage += `• ${attraction}\n`;
+    });
+    detailsMessage += `\n`;
+  }
+  
+  detailsMessage += `⭐ Ratings & Reviews:\n`;
+  detailsMessage += `• Star Rating: ${hotel.rating}/5\n`;
+  detailsMessage += `• Guest Reviews: ${hotel.reviews.toLocaleString()} reviews\n`;
+  detailsMessage += `• Safety Rating: ${hotel.safetyRating.toFixed(1)}/10\n\n`;
+  
+  if (isInsightsLoading && hotel.guestInsights?.includes('Loading')) {
+    detailsMessage += `💬 Guest Insights:\nGenerating AI insights...\n\n`;
+  } else if (hotel.guestInsights && !hotel.guestInsights.includes('Loading')) {
+    detailsMessage += `💬 Guest Insights:\n${hotel.guestInsights}\n\n`;
+  }
+  
+  if (hotel.topAmenities && hotel.topAmenities.length > 0) {
+    detailsMessage += `🏨 Top Amenities:\n`;
+    hotel.topAmenities.forEach(amenity => {
+      detailsMessage += `• ${amenity}\n`;
+    });
+    detailsMessage += `\n`;
+  }
+  
+  if (hotel.funFacts && hotel.funFacts.length > 0 && !hotel.funFacts[0].includes('Loading')) {
+    detailsMessage += `🎉 Fun Facts:\n`;
+    hotel.funFacts.forEach(fact => {
+      detailsMessage += `• ${fact}\n`;
+    });
+    detailsMessage += `\n`;
+  }
+  
+  if (hotel.hasAvailability !== undefined || hotel.totalRooms) {
+    detailsMessage += `🛏️ Accommodation:\n`;
     if (hotel.hasAvailability !== undefined) {
-      alertMessage += `🏨 ${hotel.hasAvailability ? 'Available' : 'Limited availability'}`;
+      detailsMessage += `• Availability: ${hotel.hasAvailability ? 'Available' : 'Limited'}\n`;
     }
-    
-    Alert.alert(
-      hotel.name,
-      alertMessage || 'Hotel details',
-      [
-        { text: 'Close', style: 'cancel' },
-        { text: 'Full Details', onPress: () => handleViewDetails(hotel) }
-      ]
-    );
-  }, [handleViewDetails, isInsightsLoading]);
+    if (hotel.totalRooms) {
+      detailsMessage += `• Room Types: ${hotel.totalRooms} different options\n`;
+    }
+    detailsMessage += `\n`;
+  }
+  
+  detailsMessage += `💰 Pricing Information:\n`;
+  if (hotel.pricePerNight) {
+    detailsMessage += `• Per Night: ${hotel.pricePerNight.display}\n`;
+    detailsMessage += `• Currency: ${hotel.pricePerNight.currency}\n`;
+    if (hotel.pricePerNight.provider) {
+      detailsMessage += `• Provider: ${hotel.pricePerNight.provider}\n`;
+    }
+    if (hotel.pricePerNight.isSupplierPrice) {
+      detailsMessage += `• Rate Type: Supplier rate\n`;
+    } else {
+      detailsMessage += `• Rate Type: Retail rate\n`;
+    }
+    if (hotel.pricePerNight.totalAmount) {
+      detailsMessage += `• Total Stay Cost: ${hotel.pricePerNight.currency} ${hotel.pricePerNight.totalAmount}\n`;
+    }
+  } else {
+    detailsMessage += `• Per Night: ${hotel.price}\n`;
+    detailsMessage += `• Original Price: ${hotel.originalPrice}\n`;
+    detailsMessage += `• Comparison: ${hotel.priceComparison}\n`;
+  }
+  
+  Alert.alert(
+    'Hotel Details',
+    detailsMessage,
+    [
+      { text: 'Close', style: 'cancel' },
+      { text: TEST_MODE ? 'Test Book' : 'Book Now', style: 'default', onPress: () => handleBookNow(hotel) }
+    ]
+  );
+}, [handleBookNow, isInsightsLoading]);
+
+const handleHotelPress = useCallback((hotel: Hotel) => {
+  console.log('Hotel selected:', hotel.name);
+  
+  let alertMessage = '';
+  
+  if (TEST_MODE) {
+    alertMessage += `🧪 TEST MODE\n\n`;
+  }
+  
+  if (hotel.aiMatchPercent) {
+    alertMessage += `🤖 AI Match: ${hotel.aiMatchPercent}% (${hotel.matchType || 'good'} match)\n\n`;
+  }
+  
+  if (hotel.city && hotel.country) {
+    alertMessage += `📍 ${hotel.city}, ${hotel.country}\n`;
+  }
+  
+  if (hotel.locationHighlight && !hotel.locationHighlight.includes('Analyzing')) {
+    alertMessage += `🎯 ${hotel.locationHighlight}\n\n`;
+  }
+  
+  if (hotel.whyItMatches && !hotel.whyItMatches.includes('progress')) {
+    alertMessage += `✨ Why it matches: ${hotel.whyItMatches}\n\n`;
+  }
+  
+  if (isInsightsLoading && hotel.guestInsights?.includes('Loading')) {
+    alertMessage += `💬 Guest Insights: Generating...\n\n`;
+  } else if (hotel.guestInsights && !hotel.guestInsights.includes('Loading')) {
+    alertMessage += `💬 Guest Insights: ${hotel.guestInsights}\n\n`;
+  }
+  
+  if (hotel.nearbyAttractions && hotel.nearbyAttractions.length > 0 && !hotel.nearbyAttractions[0].includes('Loading')) {
+    alertMessage += `🗺️ Nearby: ${hotel.nearbyAttractions.slice(0, 2).join(', ')}\n\n`;
+  }
+  
+  if (hotel.topAmenities && hotel.topAmenities.length > 0) {
+    alertMessage += `🏨 Top Amenities: ${hotel.topAmenities.join(', ')}\n\n`;
+  }
+  
+  if (hotel.pricePerNight) {
+    alertMessage += `💰 ${hotel.pricePerNight.display}`;
+    if (hotel.pricePerNight.provider) {
+      alertMessage += ` (via ${hotel.pricePerNight.provider})`;
+    }
+    alertMessage += `\n`;
+    if (hotel.pricePerNight.isSupplierPrice) {
+      alertMessage += `🏷️  Supplier rate\n`;
+    }
+  } else {
+    alertMessage += `💰 ${hotel.price}/night\n`;
+  }
+  
+  alertMessage += `⭐ ${hotel.rating}/5 (${hotel.reviews.toLocaleString()} reviews)\n`;
+  
+  if (hotel.hasAvailability !== undefined) {
+    alertMessage += `🏨 ${hotel.hasAvailability ? 'Available' : 'Limited availability'}`;
+  }
+  
+  Alert.alert(
+    hotel.name,
+    alertMessage || 'Hotel details',
+    [
+      { text: 'Close', style: 'cancel' },
+      { text: 'Full Details', onPress: () => handleViewDetails(hotel) }
+    ]
+  );
+}, [handleViewDetails, isInsightsLoading]);
 
   const handleBackPress = useCallback(() => {
     console.log('Back button pressed - returning to initial search');

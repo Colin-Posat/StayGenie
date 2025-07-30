@@ -108,6 +108,61 @@ const SMART_HOTEL_LIMIT = parseInt(process.env.SMART_HOTEL_LIMIT || '50');
 const groq = new Groq({
   apiKey: process.env.GROQ_API_KEY
 });
+const extractRefundablePolicy = (hotel: HotelWithRates): { isRefundable: boolean; refundableTag: string | null; refundableInfo: string } => {
+  if (!hotel.roomTypes || hotel.roomTypes.length === 0) {
+    return {
+      isRefundable: false,
+      refundableTag: null,
+      refundableInfo: 'No rate information available'
+    };
+  }
+
+  // Check all rates across all room types for refundable policies
+  const refundableTags: string[] = [];
+  let hasRefundableRates = false;
+  let hasNonRefundableRates = false;
+
+  hotel.roomTypes.forEach(roomType => {
+    if (roomType.rates && roomType.rates.length > 0) {
+      roomType.rates.forEach(rate => {
+        const refundableTag = rate.cancellationPolicies?.refundableTag;
+        if (refundableTag) {
+          refundableTags.push(refundableTag);
+          
+          // RFN typically means refundable, NRF means non-refundable
+          if (refundableTag === 'RFN' || refundableTag.toLowerCase().includes('refund')) {
+            hasRefundableRates = true;
+          } else if (refundableTag === 'NRF' || refundableTag.toLowerCase().includes('non')) {
+            hasNonRefundableRates = true;
+          }
+        }
+      });
+    }
+  });
+
+  // Determine overall refundable status
+  let isRefundable = false;
+  let refundableInfo = '';
+
+  if (hasRefundableRates && hasNonRefundableRates) {
+    isRefundable = true; // Mixed - some refundable options available
+    refundableInfo = 'Mixed refund policies available';
+  } else if (hasRefundableRates) {
+    isRefundable = true;
+    refundableInfo = 'Refundable rates available';
+  } else if (hasNonRefundableRates) {
+    isRefundable = false;
+    refundableInfo = 'Non-refundable rates only';
+  } else {
+    refundableInfo = 'Refund policy not specified';
+  }
+
+  return {
+    isRefundable,
+    refundableTag: refundableTags.length > 0 ? refundableTags[0] : null, // Return first tag found
+    refundableInfo
+  };
+};
 
 // Optimized axios instances
 const liteApiInstance = axios.create({
@@ -220,7 +275,8 @@ const calculatePriceInfo = (hotel: HotelWithRates, nights: number) => {
         retailPrice: rate.retailRate?.total?.[0]?.amount,
         suggestedPrice: rate.retailRate?.suggestedSellingPrice?.[0]?.amount,
         provider: rate.retailRate?.suggestedSellingPrice?.[0]?.source,
-        currency: rate.retailRate?.total?.[0]?.currency || 'USD'
+        currency: rate.retailRate?.total?.[0]?.currency || 'USD',
+        refundableTag: rate.cancellationPolicies?.refundableTag || null
       }))
       .filter(data => data.retailPrice != null && data.retailPrice !== undefined);
     
@@ -292,11 +348,16 @@ const createOptimizedHotelSummaryForAI = (hotel: HotelWithRates, index: number, 
       longitude: null,
       topAmenities: ['Wi-Fi', 'AC', 'Bathroom'],
       starRating: 0,
-      reviewCount: 0
+      reviewCount: 0,
+      // Add refundable policy info
+      isRefundable: false,
+      refundableTag: null,
+      refundableInfo: 'No rate information available'
     };
   }
 
   const { pricePerNightInfo, suggestedPrice, priceProvider } = calculatePriceInfo(hotel, nights);
+  const refundablePolicy = extractRefundablePolicy(hotel);
   
   const city = hotelInfo?.city || 'Unknown City';
   const country = hotelInfo?.country || 'Unknown Country';
@@ -312,14 +373,13 @@ const createOptimizedHotelSummaryForAI = (hotel: HotelWithRates, index: number, 
                     null;
   
   const topAmenities = getTop3Amenities(hotelInfo);
-  const starRating = hotelInfo?.starRating || hotelInfo?.stars || hotelInfo?.rating || 0; // Also check 'stars'
+  const starRating = hotelInfo?.starRating || hotelInfo?.stars || hotelInfo?.rating || 0;
   const reviewCount = hotelInfo?.reviewCount || 0;
 
   // Truncate description to 100 chars for faster token processing
   const shortDescription = hotelInfo.hotelDescription || hotelInfo.description 
     ? (hotelInfo.hotelDescription || hotelInfo.description)!.substring(0, 100).trim() + '...'
     : 'No description available';
-
 
   let displayPrice = pricePerNightInfo;
   if (suggestedPrice && priceProvider) {
@@ -339,7 +399,11 @@ const createOptimizedHotelSummaryForAI = (hotel: HotelWithRates, index: number, 
     longitude: longitude,
     topAmenities: topAmenities,
     starRating: starRating,
-    reviewCount: reviewCount
+    reviewCount: reviewCount,
+    // Add refundable policy information
+    isRefundable: refundablePolicy.isRefundable,
+    refundableTag: refundablePolicy.refundableTag,
+    refundableInfo: refundablePolicy.refundableInfo
   };
 };
 
@@ -499,6 +563,7 @@ ${budgetGuidance}Rank by location, amenities, value. Use exact names from list.`
 // Create hotel summary for AI insights endpoint
 const createHotelSummaryForInsights = (hotel: HotelWithRates, hotelInfo: any, nights: number) => {
   const { priceRange, suggestedPrice, priceProvider } = calculatePriceInfo(hotel, nights);
+  const refundablePolicy = extractRefundablePolicy(hotel);
   const topAmenities = getTop3Amenities(hotelInfo);
   const images = extractHotelImages(hotelInfo);
   
@@ -560,7 +625,19 @@ const createHotelSummaryForInsights = (hotel: HotelWithRates, hotelInfo: any, ni
                hotelInfo?.location?.longitude || 
                hotelInfo?.coordinates?.longitude || 
                null,
-    topAmenities: topAmenities
+    topAmenities: topAmenities,
+    // Add refundable policy information
+    isRefundable: refundablePolicy.isRefundable,
+    refundableTag: refundablePolicy.refundableTag,
+    refundableInfo: refundablePolicy.refundableInfo,
+    // Add detailed cancellation policies for insights
+    cancellationPolicies: hotel.roomTypes?.flatMap(room => 
+      room.rates?.map(rate => ({
+        refundableTag: rate.cancellationPolicies?.refundableTag,
+        cancelPolicyInfos: rate.cancellationPolicies?.cancelPolicyInfos || [],
+        hotelRemarks: rate.cancellationPolicies?.hotelRemarks || []
+      })) || []
+    ) || []
   };
 };
 

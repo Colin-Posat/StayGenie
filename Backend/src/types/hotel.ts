@@ -1,4 +1,4 @@
-// Hotel search types and interfaces - UPDATED
+// Hotel search types and interfaces - UPDATED WITH REFUNDABLE POLICY
 export interface SentimentCategory {
   name: string;
   rating: number;
@@ -69,8 +69,15 @@ export interface HotelInfo {
   main_photo?: string;   // ← API provides this
   thumbnail?: string;    // ← API provides this
   
+  // NEW: Hotel images from API response
+  hotelImages?: Array<{
+    url: string;
+    urlHd?: string;
+    caption?: string;
+  }>;
+  
   // Amenities and facilities
-  amenities?: string[];
+  amenities?: string[] | Array<{ name: string; [key: string]: unknown }>;
   facilityIds?: number[];  // ← ADDED: API provides facility IDs
   
   // Hotel classification
@@ -94,7 +101,37 @@ export interface HotelInfo {
   Attractions?: string;    // ← ADDED: API provides attraction info
 }
 
+// NEW: Cancellation policy interfaces
+export interface CancelPolicyInfo {
+  cancelTime: string;
+  amount: number;
+  currency: string;
+  type: string;
+  timezone: string;
+}
+
+export interface CancellationPolicies {
+  cancelPolicyInfos?: CancelPolicyInfo[];
+  hotelRemarks?: string[];
+  refundableTag?: string; // ← KEY FIELD: "RFN", "NRF", etc.
+}
+
+// UPDATED: Rate interface with cancellation policies
 export interface Rate {
+  rateId?: string;
+  occupancyNumber?: number;
+  name?: string;
+  maxOccupancy?: number;
+  adultCount?: number;
+  childCount?: number;
+  boardType?: string;
+  boardName?: string;
+  remarks?: string;
+  priceType?: string;
+  commission?: Array<{
+    amount: number;
+    currency: string;
+  }>;
   retailRate?: {
     total?: Array<{
       amount: number;
@@ -116,10 +153,32 @@ export interface Rate {
       currency: string;
     }>;
   };
+  // NEW: Cancellation policies with refundable tag
+  cancellationPolicies?: CancellationPolicies;
+  paymentTypes?: string[];
 }
 
 export interface RoomType {
+  roomTypeId?: string;
+  offerId?: string;
+  supplier?: string;
+  supplierId?: number;
   rates?: Rate[];
+  offerRetailRate?: {
+    amount: number;
+    currency: string;
+  };
+  suggestedSellingPrice?: {
+    amount: number;
+    currency: string;
+    source: string;
+  };
+  offerInitialPrice?: {
+    amount: number;
+    currency: string;
+  };
+  priceType?: string;
+  rateType?: string;
 }
 
 export interface HotelWithRates {
@@ -132,6 +191,7 @@ export interface EnrichedHotel extends HotelWithRates {
   hotelInfo: HotelInfo;
 }
 
+// UPDATED: HotelSummaryForAI with refundable policy
 export interface HotelSummaryForAI {
   index: number;
   hotelId: string;
@@ -146,6 +206,10 @@ export interface HotelSummaryForAI {
   topAmenities: string[];
   starRating: number;
   reviewCount: number;
+  // NEW: Refundable policy fields
+  isRefundable: boolean;
+  refundableTag: string | null;
+  refundableInfo: string;
 }
 
 export interface AIRecommendation {
@@ -157,6 +221,7 @@ export interface AIRecommendation {
   locationHighlight: string;
 }
 
+// UPDATED: HotelRecommendation with refundable policy
 export interface HotelRecommendation {
   hotelId: string;
   name: string;
@@ -191,4 +256,87 @@ export interface HotelRecommendation {
   longitude: number | null;
   topAmenities: string[];
   sentimentData: HotelSentimentData | null;
+  // NEW: Refundable policy fields
+  isRefundable: boolean;
+  refundableTag: string | null;
+  refundableInfo: string;
+  // NEW: Detailed cancellation policies for insights
+  cancellationPolicies?: Array<{
+    refundableTag?: string;
+    cancelPolicyInfos: CancelPolicyInfo[];
+    hotelRemarks: string[];
+  }>;
+}
+
+// NEW: Refundable policy utility type
+export interface RefundablePolicy {
+  isRefundable: boolean;
+  refundableTag: string | null;
+  refundableInfo: string;
+}
+
+// NEW: Extended price information with refundable context
+export interface PriceInfo {
+  priceRange: {
+    min: number;
+    max: number;
+    currency: string;
+    display: string;
+  } | null;
+  pricePerNightInfo: string;
+  suggestedPrice: {
+    amount: number;
+    currency: string;
+    display: string;
+    totalAmount: number;
+  } | null;
+  priceProvider: string | null;
+}
+
+// UPDATED: Hotel search response type
+export interface HotelSearchResponse {
+  searchParams: ParsedSearchQuery & {
+    nights: number;
+    currency: string;
+  };
+  totalHotelsFound: number;
+  hotelsWithRates: number;
+  matchedHotelsCount: number;
+  hotels: Array<HotelRecommendation & {
+    summarizedInfo: {
+      name: string;
+      description: string;
+      amenities: string[];
+      starRating: number;
+      reviewCount: number;
+      pricePerNight: string;
+      location: string;
+      city: string;
+      country: string;
+      // NEW: Refundable info in summary
+      isRefundable: boolean;
+      refundableInfo: string;
+    };
+  }>;
+  aiMatchingCompleted: boolean;
+  generatedAt: string;
+  searchId: string;
+  aiModel: string;
+  performance: {
+    totalTimeMs: number;
+    stepBreakdown: Array<{
+      step: string;
+      duration?: number;
+      status: string;
+      percentage: string;
+      details?: Record<string, unknown>;
+    }>;
+    bottlenecks: Array<{
+      step: string;
+      duration?: number;
+      status: string;
+      percentage: string;
+      details?: Record<string, unknown>;
+    }>;
+  };
 }

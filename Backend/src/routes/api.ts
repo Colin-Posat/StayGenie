@@ -1,6 +1,5 @@
 // src/routes/api.ts
 import express from 'express';
-import { smartHotelSearchController as smartHotelSearch } from '../controllers/smartHotelSearch';
 import { hotelSearchAndMatchController } from '../controllers/hotelSearchAndMatch';
 import { aiInsightsController } from '../controllers/aiInsightsController';
 import { parseSearchQuery } from '../controllers/parseController';
@@ -9,7 +8,6 @@ import { generateSuggestions } from '../controllers/aiSuggestionsController';
 const router = express.Router();
 
 // Hotel routes
-router.post('/hotels/search', smartHotelSearch); // Legacy endpoint (keep for backward compatibility)
 router.post('/hotels/search-and-match', hotelSearchAndMatchController); // New: Stage 1 - Search + Llama matching
 router.post('/hotels/ai-insights', aiInsightsController); // New: Stage 2 - GPT content + sentiment insights
 

@@ -22,7 +22,7 @@ const CARD_HEIGHT = screenHeight * 0.55;
 
 // UPDATED: Interface to match two-stage API structure
 interface Hotel {
-  id: number;
+  id: string; // FIXED: Changed from number to string to match API hotel IDs
   name: string;
   image: string;
   price: number;
@@ -74,6 +74,11 @@ interface Hotel {
   
   // Room availability
   roomTypes?: any[];
+
+  // NEW: Refundable policy fields
+  isRefundable?: boolean;
+  refundableTag?: string | null;
+  refundableInfo?: string;
 }
 
 interface EnhancedHotel extends Hotel {
@@ -509,6 +514,21 @@ const HotelOverviewSlide: React.FC<{
     return hotel.location;
   };
 
+  // NEW: Helper function to get refundable policy display
+  const getRefundablePolicyDisplay = () => {
+    if (hotel.isRefundable === undefined) {
+      return null; // Don't show anything if no refundable data available
+    }
+    
+    return {
+      icon: hotel.isRefundable ? "checkmark-circle" : "close-circle",
+      color: hotel.isRefundable ? "#10B981" : "#EF4444",
+      tag: hotel.refundableTag
+    };
+  };
+
+  const refundableDisplay = getRefundablePolicyDisplay();
+
   return (
     <View style={tw`flex-1 relative overflow-hidden`}>
       <Animated.Image 
@@ -559,6 +579,7 @@ const HotelOverviewSlide: React.FC<{
             </Text>
           </View>
         </View>
+
       </View>
 
       {/* Hotel Information - Bottom Overlay */}
@@ -578,12 +599,9 @@ const HotelOverviewSlide: React.FC<{
           
           <View style={tw`bg-black/50 border border-white/20 px-3 py-1.5 rounded-lg`}>
             <View style={tw`flex-row items-center`}>
-              <Ionicons name="checkmark-circle" size={12} color={getRatingColor(hotel.rating)} />
+              <Ionicons name="star" size={12} color="#1df9ff" />
               <Text style={tw`text-white text-xs font-semibold ml-1`}>
                 {hotel.rating.toFixed(1)}
-              </Text>
-              <Text style={tw`text-white/80 text-xs ml-1`}>
-                ({hotel.reviews.toLocaleString()})
               </Text>
             </View>
           </View>
@@ -615,6 +633,24 @@ const HotelOverviewSlide: React.FC<{
           <Text style={tw`text-white text-xs leading-4`}>
             {aiInsight}
           </Text>
+        
+       {/* NEW: Detailed refundable policy info in AI insight section */}
+          {/* {refundableDisplay && refundableDisplay.tag && (
+            <View style={tw`mt-2 pt-2 border-t border-white/20`}>
+              <View style={tw`flex-row items-center`}>
+                <Ionicons 
+                  name="information-circle" 
+                  size={10} 
+                  color="#1df9ff" 
+                />
+                <Text style={tw`text-white/80 text-xs ml-1`}>
+                  Policy: {refundableDisplay.tag}
+                  {refundableDisplay.tag === 'RFN' && ' (Refundable rates available)'}
+                  {refundableDisplay.tag === 'NRFN' && ' (Non-refundable rates only)'}
+                </Text>
+              </View>
+            </View>
+          )} */}
         </View>
       </View>
     </View>
