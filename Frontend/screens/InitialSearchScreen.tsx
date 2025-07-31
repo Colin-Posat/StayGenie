@@ -1,4 +1,4 @@
-// InitialSearchScreen.tsx - Updated to use BeautifulHotelCard without auto-search
+// InitialSearchScreen.tsx - Updated with turquoise (#1df9ff) integration and logo
 import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
@@ -11,6 +11,7 @@ import {
   Animated,
   Dimensions,
   FlatList,
+  Image,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import tw from 'twrnc';
@@ -19,6 +20,11 @@ import BeautifulHotelCard, { BeautifulHotel } from '../components/InitalSearch/B
 import { getRandomBeautifulHotels } from '../utils/BeautifulHotelsData';
 
 const { width, height } = Dimensions.get('window');
+
+// Turquoise color theme
+const TURQUOISE = '#1df9ff';
+const TURQUOISE_LIGHT = '#5dfbff';
+const TURQUOISE_DARK = '#00d4e6';
 
 // Custom hook for auto-typing placeholder text
 const useTypingPlaceholder = (
@@ -85,8 +91,10 @@ const InitialSearchScreen: React.FC<InitialSearchScreenProps> = ({
   const fadeAnimation = useRef(new Animated.Value(0)).current;
   const slideAnimation = useRef(new Animated.Value(40)).current;
   const searchBarScale = useRef(new Animated.Value(0.98)).current;
+  const turquoiseGlow = useRef(new Animated.Value(0)).current;
+  const logoFade = useRef(new Animated.Value(0)).current;
 
-  // Refined search suggestions
+  // Refined search suggestions with turquoise theme
   const hotelSearchSuggestions = [
     "Tokyo capsule hotels",
     "Bali beachfront villas",
@@ -161,16 +169,29 @@ const InitialSearchScreen: React.FC<InitialSearchScreenProps> = ({
         duration: 800,
         useNativeDriver: true,
       }),
+      Animated.timing(logoFade, {
+        toValue: 1,
+        duration: 1000,
+        delay: 200,
+        useNativeDriver: true,
+      }),
     ]).start();
   }, []);
 
-  // Search bar focus animation
+  // Search bar focus animation with turquoise glow
   useEffect(() => {
-    Animated.timing(searchBarScale, {
-      toValue: isFocused ? 1.02 : 1,
-      duration: 200,
-      useNativeDriver: true,
-    }).start();
+    Animated.parallel([
+      Animated.timing(searchBarScale, {
+        toValue: isFocused ? 1.02 : 1,
+        duration: 200,
+        useNativeDriver: true,
+      }),
+      Animated.timing(turquoiseGlow, {
+        toValue: isFocused ? 1 : 0,
+        duration: 300,
+        useNativeDriver: false,
+      }),
+    ]).start();
   }, [isFocused]);
 
   const handleSearch = () => {
@@ -212,10 +233,12 @@ const InitialSearchScreen: React.FC<InitialSearchScreenProps> = ({
       {/* Background gradient overlay */}
       <View style={tw`absolute inset-0 bg-gradient-to-b from-gray-50 to-white opacity-60`} />
 
+
+
       {/* Main Content */}
       <View style={tw`flex-1 px-6`}>
-        {/* Top spacing */}
-        <View style={tw`h-10`} />
+        {/* Top spacing - increased to accommodate logo */}
+        <View style={tw`h-16`} />
         
         <Animated.View 
           style={[
@@ -226,19 +249,26 @@ const InitialSearchScreen: React.FC<InitialSearchScreenProps> = ({
             }
           ]}
         >
-          {/* Header section */}
-          <View style={tw`items-center mb-6`}>
-            {/* Refined tagline */}
-            <Text style={tw`text-2xl font-semibold text-gray-900 text-center mb-2`}>
-              Where would you like to stay?
-            </Text>
-            
-            <Text style={tw`text-sm text-gray-500 text-center font-light`}>
+          {/* Header section with turquoise accent */}
+          <View style={tw`items-center mb-2`}>
+              <Text style={tw`text-2xl font-semibold text-gray-900 text-center`}>
+                Where would you like to{' '}
+                <Text style={[
+                  tw`font-bold`,
+                  { color: TURQUOISE }
+                ]}>
+                  stay?
+                </Text>
+              </Text>
+              
+            </View>
+            <Text style={tw`text-sm text-gray-500 text-center font-light mb-4`}>
               Tell us anything, we'll find the perfect match
             </Text>
-          </View>
 
-          {/* Main Search Input */}
+            
+
+          {/* Main Search Input with turquoise styling */}
           <Animated.View 
             style={[
               tw`relative mb-6 w-full max-w-md`,
@@ -247,27 +277,33 @@ const InitialSearchScreen: React.FC<InitialSearchScreenProps> = ({
               }
             ]}
           >
-            <View style={[
-              tw`flex-row items-center bg-white rounded-3xl px-6 shadow-lg border border-gray-100`,
-              { 
-                height: 64,
-                shadowColor: '#000',
-                shadowOffset: { width: 0, height: 8 },
-                shadowOpacity: 0.1,
-                shadowRadius: 20,
-                elevation: 10,
-              },
-              isFocused && {
-                borderColor: '#000000',
-                shadowOpacity: 0.15,
-              }
-            ]}>
-              {/* Search icon */}
-              <View style={tw`w-6 h-6 mr-4 items-center justify-center`}>
+            <Animated.View 
+              style={[
+                tw`flex-row items-center bg-white rounded-3xl px-6 shadow-lg border`,
+                { 
+                  height: 64,
+                  shadowColor: isFocused ? TURQUOISE : '#000',
+                  shadowOffset: { width: 0, height: 8 },
+                  shadowOpacity: isFocused ? 0.3 : 0.1,
+                  shadowRadius: 20,
+                  elevation: 10,
+                  borderColor: turquoiseGlow.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: ['#E5E7EB', TURQUOISE],
+                  }),
+                  borderWidth: turquoiseGlow.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [1, 2],
+                  }),
+                },
+              ]}
+            >
+              {/* Search icon with turquoise color when focused */}
+              <View style={tw`w-6 h-6 mr-2 items-center justify-center`}>
                 <Ionicons
                   name="search"
                   size={20}
-                  color={isFocused ? "#000000" : "#9CA3AF"}
+                  color={isFocused ? TURQUOISE : "#9CA3AF"}
                 />
               </View>
               
@@ -291,21 +327,22 @@ const InitialSearchScreen: React.FC<InitialSearchScreenProps> = ({
                 autoCorrect={false}
                 autoCapitalize="words"
                 returnKeyType="search"
+                selectionColor={TURQUOISE}
               />
               
-              {/* Clear button */}
+              {/* Clear button with turquoise hover */}
               {searchQuery.length > 0 && (
                 <TouchableOpacity
                   onPress={() => setSearchQuery('')}
                   activeOpacity={0.6}
                   style={tw`ml-3 w-6 h-6 items-center justify-center`}
                 >
-                  <Ionicons name="close-circle" size={20} color="#9CA3AF" />
+                  <Ionicons name="close-circle" size={20} color={TURQUOISE} />
                 </TouchableOpacity>
               )}
-            </View>
+            </Animated.View>
             
-            {/* Floating search button */}
+            {/* Floating search button with turquoise gradient */}
             {searchQuery.trim().length > 0 && (
               <Animated.View
                 style={[
@@ -317,12 +354,13 @@ const InitialSearchScreen: React.FC<InitialSearchScreenProps> = ({
               >
                 <TouchableOpacity
                   style={[
-                    tw`w-12 h-12 bg-black rounded-2xl items-center justify-center shadow-lg`,
+                    tw`w-12 h-12 rounded-2xl items-center justify-center shadow-lg`,
                     {
-                      shadowColor: '#000000',
+                      backgroundColor: TURQUOISE,
+                      shadowColor: TURQUOISE,
                       shadowOffset: { width: 0, height: 4 },
-                      shadowOpacity: 0.3,
-                      shadowRadius: 8,
+                      shadowOpacity: 0.4,
+                      shadowRadius: 12,
                       elevation: 8,
                     }
                   ]}
@@ -347,10 +385,10 @@ const InitialSearchScreen: React.FC<InitialSearchScreenProps> = ({
           </View>
         </Animated.View>
 
-        {/* Beautiful Hotels Section */}
+        {/* Beautiful Hotels Section with turquoise accent */}
         <View style={tw`flex-1`}>
-          <View style={tw`mb-4`}>
-            <Text style={tw`text-lg font-semibold text-gray-900 mb-1`}>
+          <View style={tw`mb-4 flex-row items-center`}>
+            <Text style={tw`text-lg font-semibold text-gray-900 mb-1 flex-1`}>
               Beautiful Stays For You
             </Text>
           </View>

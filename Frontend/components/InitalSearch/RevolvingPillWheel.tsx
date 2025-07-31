@@ -12,6 +12,13 @@ import tw from 'twrnc';
 
 const { width } = Dimensions.get('window');
 
+// Turquoise color theme
+const TURQUOISE = '#1df9ff';
+const TURQUOISE_LIGHT = '#5dfbff';
+const TURQUOISE_DARK = '#00d4e6';
+const TURQUOISE_SUBTLE = '#f0feff'; // Very light turquoise background
+const TURQUOISE_BORDER = '#b3f7ff'; // Light turquoise border
+
 export interface SearchRecommendation {
   text: string;
   query: string;
@@ -33,6 +40,7 @@ const RevolvingPillWheel: React.FC<RevolvingPillWheelProps> = ({
   const scrollX = useRef(new Animated.Value(0)).current;
   const animationRef = useRef<Animated.CompositeAnimation | null>(null);
   const [isPaused, setIsPaused] = useState(false);
+  const [pressedIndex, setPressedIndex] = useState<number | null>(null);
   
   // Create seamless loop by tripling the array
   const extendedRecommendations = [
@@ -99,12 +107,14 @@ const RevolvingPillWheel: React.FC<RevolvingPillWheelProps> = ({
     }
   }, [isPaused]);
 
-  const handlePillPress = (recommendation: SearchRecommendation) => {
+  const handlePillPress = (recommendation: SearchRecommendation, index: number) => {
     if (pauseOnInteraction) {
       setIsPaused(true);
+      setPressedIndex(index);
             
       setTimeout(() => {
         setIsPaused(false);
+        setPressedIndex(null);
       }, 3000);
     }
         
@@ -122,37 +132,49 @@ const RevolvingPillWheel: React.FC<RevolvingPillWheelProps> = ({
           }
         ]}
       >
-        {extendedRecommendations.map((recommendation, index) => (
-          <TouchableOpacity
-            key={`${recommendation.text}-${index}`}
-            style={[
-              tw`bg-gray-50 px-4 py-2 rounded-full border border-gray-100`,
-              {
-                width: 140, // Fixed shorter width
-                minHeight: 40, // Allow height to grow for stacked text
-                justifyContent: 'center',
-                shadowColor: '#000',
-                shadowOffset: {
-                  width: 0,
-                  height: 1,
-                },
-                shadowOpacity: 0.1,
-                shadowRadius: 2,
-                elevation: 2,
-              }
-            ]}
-            activeOpacity={0.8}
-            onPress={() => handlePillPress(recommendation)}
-          >
-            <Text
-              style={tw`text-xs font-medium text-gray-700 text-center leading-tight`}
-              numberOfLines={2} // Allow up to 2 lines
-              ellipsizeMode="tail"
+        {extendedRecommendations.map((recommendation, index) => {
+          const isPressed = pressedIndex === index;
+          
+          return (
+            <TouchableOpacity
+              key={`${recommendation.text}-${index}`}
+              style={[
+                tw`px-4 py-2 rounded-full border`,
+                {
+                  width: 140, // Fixed shorter width
+                  minHeight: 40, // Allow height to grow for stacked text
+                  justifyContent: 'center',
+                  backgroundColor: isPressed ? TURQUOISE_LIGHT : TURQUOISE_SUBTLE,
+                  borderColor: isPressed ? TURQUOISE : TURQUOISE_BORDER,
+                  borderWidth: isPressed ? 1.5 : 1,
+                  shadowColor: isPressed ? TURQUOISE : '#000',
+                  shadowOffset: {
+                    width: 0,
+                    height: isPressed ? 2 : 1,
+                  },
+                  shadowOpacity: isPressed ? 0.2 : 0.08,
+                  shadowRadius: isPressed ? 4 : 2,
+                  elevation: isPressed ? 4 : 2,
+                }
+              ]}
+              activeOpacity={0.7}
+              onPress={() => handlePillPress(recommendation, index)}
             >
-              {recommendation.text}
-            </Text>
-          </TouchableOpacity>
-        ))}
+              <Text
+                style={[
+                  tw`text-xs font-medium text-center leading-tight`,
+                  {
+                    color: isPressed ? TURQUOISE_DARK : '#4B5563', // Gray-600 equivalent
+                  }
+                ]}
+                numberOfLines={2} // Allow up to 2 lines
+                ellipsizeMode="tail"
+              >
+                {recommendation.text}
+              </Text>
+            </TouchableOpacity>
+          );
+        })}
       </Animated.View>
     </View>
   );
