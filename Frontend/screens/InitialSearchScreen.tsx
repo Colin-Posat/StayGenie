@@ -252,13 +252,7 @@ const InitialSearchScreen: React.FC<InitialSearchScreenProps> = ({
           {/* Header section with turquoise accent */}
           <View style={tw`items-center mb-2`}>
               <Text style={tw`text-2xl font-semibold text-gray-900 text-center`}>
-                Where would you like to{' '}
-                <Text style={[
-                  tw`font-bold`,
-                  { color: TURQUOISE }
-                ]}>
-                  stay?
-                </Text>
+                Where would you like to stay?{' '}
               </Text>
               
             </View>
