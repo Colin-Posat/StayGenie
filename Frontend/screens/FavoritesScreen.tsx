@@ -1,4 +1,4 @@
-// FavoritesScreen.tsx - Optimized with better organization and UX
+// FavoritesScreen.tsx - Clean turquoise design with enhanced UX
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   View,
@@ -22,29 +22,33 @@ import FavoriteHotelCard from '../components/Favorites/FavoriteHotelCard';
 
 const { width } = Dimensions.get('window');
 
-// Enhanced Empty State Component - Fixed without wiggling
+// Turquoise color constants
+const TURQUOISE = '#1df9ff';
+const TURQUOISE_LIGHT = '#5dfbff';
+const TURQUOISE_DARK = '#00d4e6';
+
+// Clean empty state with turquoise accents
 const EmptyFavorites: React.FC<{ onExplore: () => void }> = ({ onExplore }) => {
   const fadeAnimation = useRef(new Animated.Value(0)).current;
-  const scaleAnimation = useRef(new Animated.Value(0.8)).current;
-  const slideAnimation = useRef(new Animated.Value(30)).current;
+  const scaleAnimation = useRef(new Animated.Value(0.9)).current;
+  const slideAnimation = useRef(new Animated.Value(20)).current;
 
   useEffect(() => {
-    // Clean entrance animation sequence
     Animated.parallel([
       Animated.timing(fadeAnimation, {
         toValue: 1,
-        duration: 800,
+        duration: 600,
         useNativeDriver: true,
       }),
       Animated.spring(scaleAnimation, {
         toValue: 1,
-        tension: 50,
+        tension: 60,
         friction: 8,
         useNativeDriver: true,
       }),
       Animated.timing(slideAnimation, {
         toValue: 0,
-        duration: 600,
+        duration: 500,
         useNativeDriver: true,
       }),
     ]).start();
@@ -63,29 +67,46 @@ const EmptyFavorites: React.FC<{ onExplore: () => void }> = ({ onExplore }) => {
         }
       ]}
     >
-      <View style={tw`items-center mb-12`}>
-        {/* Enhanced Icon Container */}
-        <View style={tw`w-24 h-24 bg-gray-50 rounded-3xl items-center justify-center mb-6 border border-gray-100 shadow-sm`}>
-          <Ionicons name="heart-outline" size={36} color="#9CA3AF" />
+      <View style={tw`items-center mb-10`}>
+        {/* Enhanced icon with turquoise gradient */}
+        <View style={[
+          tw`w-24 h-24 rounded-3xl items-center justify-center mb-6 shadow-lg`,
+          { 
+            backgroundColor: TURQUOISE + '15',
+            borderWidth: 2,
+            borderColor: TURQUOISE + '40',
+          }
+        ]}>
+          <Ionicons name="heart-outline" size={32} color={TURQUOISE_DARK} />
         </View>
 
-        <Text style={tw`text-2xl font-bold text-black text-center mb-3`}>
+        <Text style={tw`text-2xl font-bold text-gray-900 text-center mb-3`}>
           No Favorites Yet
         </Text>
 
-        <Text style={tw`text-[15px] text-gray-600 text-center leading-6 mb-8 max-w-sm`}>
-          Discover amazing hotels and save your favorites for quick access. Your perfect stay awaits!
+        <Text style={tw`text-base text-gray-600 text-center leading-6 mb-8 max-w-sm`}>
+          Start exploring amazing hotels and save the ones you love for quick access later.
         </Text>
       </View>
 
-      {/* Enhanced CTA Button */}
+      {/* Enhanced CTA with turquoise styling */}
       <TouchableOpacity
-        style={tw`bg-black py-4 px-8 rounded-2xl flex-row items-center shadow-lg`}
+        style={[
+          tw`py-4 px-8 rounded-2xl flex-row items-center shadow-lg`,
+          { 
+            backgroundColor: TURQUOISE,
+            shadowColor: TURQUOISE,
+            shadowOffset: { width: 0, height: 4 },
+            shadowOpacity: 0.3,
+            shadowRadius: 12,
+            elevation: 8,
+          }
+        ]}
         onPress={onExplore}
-        activeOpacity={0.8}
+        activeOpacity={0.9}
       >
-        <Ionicons name="search" size={18} color="#FFFFFF" />
-        <Text style={tw`text-white font-semibold text-[16px] ml-3`}>
+        <Ionicons name="search" size={20} color="#FFFFFF" />
+        <Text style={tw`text-white font-semibold text-base ml-3`}>
           Explore Hotels
         </Text>
       </TouchableOpacity>
@@ -93,7 +114,7 @@ const EmptyFavorites: React.FC<{ onExplore: () => void }> = ({ onExplore }) => {
   );
 };
 
-// Enhanced Header Component
+// Clean header with turquoise accents
 const FavoritesHeader: React.FC<{
   count: number;
   onRefresh: () => void;
@@ -110,38 +131,53 @@ const FavoritesHeader: React.FC<{
     }
   };
 
+  const getSortLabel = () => {
+    switch (sortBy) {
+      case 'recent': return 'Recently Added';
+      case 'name': return 'Hotel Name';
+      case 'location': return 'Location';
+      default: return 'Sort';
+    }
+  };
+
   return (
-    <View style={tw`px-6 pt-4 pb-5 bg-white border-b border-gray-100`}>
-      <View style={tw`flex-row items-center justify-between mb-2`}>
-        <Text style={tw`text-2xl font-bold text-black`}>
+    <View style={tw`px-6 pt-6 pb-4 bg-white`}>
+      <View style={tw`flex-row items-center justify-between mb-3`}>
+        <Text style={tw`text-2xl font-bold text-gray-900`}>
           My Favorites
         </Text>
         
         {count > 0 && (
-          <View style={tw`flex-row items-center gap-2`}>
-            <TouchableOpacity
-              style={tw`bg-gray-100 py-2.5 px-3.5 rounded-xl border border-gray-200`}
-              onPress={onSort}
-              activeOpacity={0.7}
-            >
-              <Ionicons name={getSortIcon()} size={16} color="#666666" />
-            </TouchableOpacity>
-            
-          </View>
+          <TouchableOpacity
+            style={[
+              tw`py-2.5 px-4 rounded-xl border-2 flex-row items-center`,
+              { 
+                backgroundColor: TURQUOISE + '10',
+                borderColor: TURQUOISE + '30',
+              }
+            ]}
+            onPress={onSort}
+            activeOpacity={0.8}
+          >
+            <Ionicons name={getSortIcon()} size={16} color={TURQUOISE_DARK} />
+            <Text style={[tw`ml-2 font-medium text-sm`, { color: TURQUOISE_DARK }]}>
+              Sort
+            </Text>
+          </TouchableOpacity>
         )}
       </View>
       
       <View style={tw`flex-row items-center justify-between`}>
-        <Text style={tw`text-[14px] text-gray-600`}>
+        <Text style={tw`text-base text-gray-600`}>
           {count > 0
             ? `${count} saved hotel${count > 1 ? 's' : ''}`
-            : "Save hotels you love"
+            : "Save hotels you love for quick access"
           }
         </Text>
         
         {count > 0 && (
-          <Text style={tw`text-[12px] text-gray-500 capitalize`}>
-            Sorted by {sortBy}
+          <Text style={tw`text-sm text-gray-500`}>
+            {getSortLabel()}
           </Text>
         )}
       </View>
@@ -149,51 +185,76 @@ const FavoritesHeader: React.FC<{
   );
 };
 
-// Enhanced Loading Component
+// Clean loading state with turquoise animation
 const LoadingState: React.FC<{ error?: string | null }> = ({ error }) => {
   const pulseAnimation = useRef(new Animated.Value(0)).current;
+  const rotateAnimation = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     const pulse = Animated.loop(
       Animated.sequence([
         Animated.timing(pulseAnimation, {
           toValue: 1,
-          duration: 1000,
+          duration: 1200,
           useNativeDriver: true,
         }),
         Animated.timing(pulseAnimation, {
           toValue: 0,
-          duration: 1000,
+          duration: 1200,
           useNativeDriver: true,
         }),
       ])
     );
+
+    const rotate = Animated.loop(
+      Animated.timing(rotateAnimation, {
+        toValue: 1,
+        duration: 2000,
+        useNativeDriver: true,
+      })
+    );
+
     pulse.start();
-    return () => pulse.stop();
+    rotate.start();
+
+    return () => {
+      pulse.stop();
+      rotate.stop();
+    };
   }, []);
 
   const opacity = pulseAnimation.interpolate({
     inputRange: [0, 1],
-    outputRange: [0.3, 1],
+    outputRange: [0.4, 1],
+  });
+
+  const rotation = rotateAnimation.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['0deg', '360deg'],
   });
 
   return (
     <View style={tw`flex-1 items-center justify-center px-6`}>
       <Animated.View 
         style={[
-          tw`w-16 h-16 bg-gray-100 rounded-3xl items-center justify-center mb-4`,
-          { opacity }
+          tw`w-16 h-16 rounded-3xl items-center justify-center mb-4 border-2`,
+          { 
+            opacity,
+            transform: [{ rotate: rotation }],
+            backgroundColor: TURQUOISE + '15',
+            borderColor: TURQUOISE + '40',
+          }
         ]}
       >
-        <Ionicons name="heart" size={28} color="#9CA3AF" />
+        <Ionicons name="heart" size={24} color={TURQUOISE_DARK} />
       </Animated.View>
       
-      <Text style={tw`text-gray-700 text-[16px] mb-2 font-medium`}>
-        Loading favorites...
+      <Text style={tw`text-gray-800 text-base mb-2 font-medium`}>
+        Loading your favorites...
       </Text>
       
       {error && (
-        <Text style={tw`text-red-500 text-[13px] text-center px-4 leading-5`}>
+        <Text style={tw`text-red-500 text-sm text-center px-4 leading-5 mt-2`}>
           {error}
         </Text>
       )}
@@ -201,27 +262,36 @@ const LoadingState: React.FC<{ error?: string | null }> = ({ error }) => {
   );
 };
 
-// Enhanced Error Component
+// Clean error state with turquoise retry button
 const ErrorState: React.FC<{ error: string; onRetry: () => void }> = ({ error, onRetry }) => (
   <View style={tw`flex-1 items-center justify-center px-8`}>
-    <View style={tw`w-16 h-16 bg-red-50 rounded-3xl items-center justify-center mb-4 border border-red-100`}>
-      <Ionicons name="alert-circle" size={28} color="#EF4444" />
+    <View style={tw`w-16 h-16 bg-red-50 rounded-3xl items-center justify-center mb-4 border-2 border-red-100`}>
+      <Ionicons name="alert-circle" size={24} color="#EF4444" />
     </View>
     
-    <Text style={tw`text-red-600 text-[17px] mb-2 text-center font-semibold`}>
-      Unable to Load Favorites
+    <Text style={tw`text-red-600 text-lg mb-2 text-center font-semibold`}>
+      Couldn't Load Favorites
     </Text>
     
-    <Text style={tw`text-gray-600 text-[14px] text-center mb-6 leading-5 max-w-sm`}>
+    <Text style={tw`text-gray-600 text-base text-center mb-6 leading-6 max-w-sm`}>
       {error}
     </Text>
     
     <TouchableOpacity
-      style={tw`bg-black py-3 px-6 rounded-xl`}
+      style={[
+        tw`py-3 px-6 rounded-xl shadow-lg`,
+        { 
+          backgroundColor: TURQUOISE,
+          shadowColor: TURQUOISE,
+          shadowOffset: { width: 0, height: 4 },
+          shadowOpacity: 0.3,
+          shadowRadius: 8,
+        }
+      ]}
       onPress={onRetry}
-      activeOpacity={0.8}
+      activeOpacity={0.9}
     >
-      <Text style={tw`text-white font-semibold text-[15px]`}>
+      <Text style={tw`text-white font-semibold text-base`}>
         Try Again
       </Text>
     </TouchableOpacity>
@@ -390,14 +460,14 @@ const FavoritesScreen = () => {
             <RefreshControl
               refreshing={isRefreshing}
               onRefresh={handleRefresh}
-              tintColor="#666666"
-              colors={["#666666"]}
+              tintColor={TURQUOISE_DARK}
+              colors={[TURQUOISE_DARK]}
               progressBackgroundColor="#F9FAFB"
             />
           }
         >
-          {/* Enhanced Grid Layout */}
-          <View style={tw`gap-4`}>
+          {/* Clean hotel cards layout */}
+          <View style={tw`gap-0`}>
             {favorites.map((hotel, index) => (
               <FavoriteHotelCard
                 key={`${hotel.id}-${sortBy}`}
@@ -409,15 +479,9 @@ const FavoritesScreen = () => {
             ))}
           </View>
 
-          {/* Enhanced Bottom Spacing */}
-          <View style={tw`h-8`} />
+          {/* Clean bottom spacing */}
+          <View style={tw`h-6`} />
           
-          {/* Subtle Footer */}
-          <View style={tw`items-center py-4`}>
-            <Text style={tw`text-gray-400 text-[12px]`}>
-              {favoritesCount} of ∞ amazing hotels
-            </Text>
-          </View>
         </ScrollView>
       )}
     </SafeAreaView>
