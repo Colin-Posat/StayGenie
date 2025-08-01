@@ -191,7 +191,7 @@ const LoadingScreen: React.FC<LoadingScreenProps> = ({
         }
       ]}>
         <Image 
-          source={require('../../assets/images/logo.png')}
+          source={require('../../assets/images/logo3.png')}
           style={tw`w-50 h-50`}
           resizeMode="contain"
         />

@@ -1,4 +1,4 @@
-// SwipeableHotelStoryCard.tsx - Updated for Two-Stage API system
+// SwipeableHotelStoryCard.tsx - Updated with Deep Link Button
 import React, { useState, useRef, useEffect } from 'react';
 import {
   View,
@@ -13,16 +13,18 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import tw from 'twrnc';
-import FavoritesCache from '../../utils/FavoritesCache'; // Import the cache
+import FavoritesCache from '../../utils/FavoritesCache';
 import { formatLocationDisplay, getCountryName } from '../../utils/countryMapping';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 const CARD_WIDTH = screenWidth - 40;
 const CARD_HEIGHT = screenHeight * 0.55;
 
-// UPDATED: Interface to match two-stage API structure
+// Base deep link URL
+const DEEP_LINK_BASE_URL = 'https://colin-posat-1t6gl.nuitee.link';
+
 interface Hotel {
-  id: string; // FIXED: Changed from number to string to match API hotel IDs
+  id: string;
   name: string;
   image: string;
   price: number;
@@ -75,10 +77,13 @@ interface Hotel {
   // Room availability
   roomTypes?: any[];
 
-  // NEW: Refundable policy fields
+  // Refundable policy fields
   isRefundable?: boolean;
   refundableTag?: string | null;
   refundableInfo?: string;
+
+  // NEW: Fields needed for deep linking
+  placeId?: string; // Google Place ID for destination
 }
 
 interface EnhancedHotel extends Hotel {
@@ -88,7 +93,7 @@ interface EnhancedHotel extends Hotel {
 
 interface SwipeableHotelStoryCardProps {
   hotel: EnhancedHotel;
-  onSave?: () => void; // Made optional since we'll handle internally
+  onSave?: () => void;
   onViewDetails: () => void;
   onHotelPress: () => void;
   index: number;
@@ -97,13 +102,78 @@ interface SwipeableHotelStoryCardProps {
   checkOutDate?: Date;
   adults?: number;
   children?: number;
-  // NEW: Two-stage API props
+  // Two-stage API props
   isInsightsLoading?: boolean;
   insightsStatus?: 'loading' | 'partial' | 'complete';
   searchMode?: 'test' | 'two-stage' | 'legacy';
+  // NEW: Props for deep linking
+  placeId?: string; // Google Place ID for the destination
+  occupancies?: any[]; // Room and guest configuration
 }
 
-// UPDATED: Animated Heart Button Component with cache integration
+// NEW: Helper function to generate hotel deep link URL
+const generateHotelDeepLink = (
+  hotel: EnhancedHotel,
+  checkInDate?: Date,
+  checkOutDate?: Date,
+  adults: number = 2,
+  children: number = 0,
+  placeId?: string,
+  occupancies?: any[]
+): string => {
+  let url = `${DEEP_LINK_BASE_URL}/hotels/${hotel.id}`;
+  const params = new URLSearchParams();
+
+  // Add place ID if available
+  if (placeId) {
+    params.append('placeId', placeId);
+  }
+
+  // Add dates if available
+  if (checkInDate) {
+    params.append('checkin', checkInDate.toISOString().split('T')[0]);
+  }
+  if (checkOutDate) {
+    params.append('checkout', checkOutDate.toISOString().split('T')[0]);
+  }
+
+  // Add occupancies - encode room and guest configuration
+  if (occupancies && occupancies.length > 0) {
+    try {
+      const occupanciesString = btoa(JSON.stringify(occupancies));
+      params.append('occupancies', occupanciesString);
+    } catch (error) {
+      console.warn('Failed to encode occupancies:', error);
+    }
+  } else if (adults || children) {
+    // Create default occupancy structure
+    const defaultOccupancy = [{ adults, children: children > 0 ? [children] : [] }];
+    try {
+      const occupanciesString = btoa(JSON.stringify(defaultOccupancy));
+      params.append('occupancies', occupanciesString);
+    } catch (error) {
+      console.warn('Failed to encode default occupancy:', error);
+    }
+  }
+
+  // Add meal plan preferences if hotel has them
+  if (hotel.tags?.includes('All Inclusive')) {
+    params.append('needAllInclusive', '1');
+  }
+  if (hotel.tags?.includes('Breakfast Included')) {
+    params.append('needBreakfast', '1');
+  }
+
+  // Add free cancellation if hotel supports it
+  if (hotel.isRefundable) {
+    params.append('needFreeCancellation', '1');
+  }
+
+  const queryString = params.toString();
+  return queryString ? `${url}?${queryString}` : url;
+};
+
+// Animated Heart Button Component with cache integration
 interface AnimatedHeartButtonProps {
   hotel: EnhancedHotel;
   size?: number;
@@ -116,7 +186,6 @@ const AnimatedHeartButton: React.FC<AnimatedHeartButtonProps> = ({ hotel, size =
   const bounceAnim = useRef(new Animated.Value(1)).current;
   const favoritesCache = FavoritesCache.getInstance();
 
-  // Check if hotel is already favorited on mount
   useEffect(() => {
     const checkFavoriteStatus = async () => {
       try {
@@ -165,17 +234,13 @@ const AnimatedHeartButton: React.FC<AnimatedHeartButtonProps> = ({ hotel, size =
     animateHeart();
     
     try {
-      // Toggle favorite status in cache
       const newStatus = await favoritesCache.toggleFavorite(hotel);
       setIsLiked(newStatus);
       
-      // Show feedback to user
       if (newStatus) {
         console.log(`❤️ Added "${hotel.name}" to favorites`);
-        // Could show a toast notification here
       } else {
         console.log(`💔 Removed "${hotel.name}" from favorites`);
-        // Could show a toast notification here
       }
     } catch (error) {
       console.error('Error toggling favorite:', error);
@@ -219,16 +284,14 @@ const AnimatedHeartButton: React.FC<AnimatedHeartButtonProps> = ({ hotel, size =
 };
 
 const getRatingColor = (rating: number): string => {
-  // Use the same turquoise color (#1df9ff) with different opacities based on rating
-  if (rating >= 8.0) return "#1df9ff"; // Full turquoise - Excellent
-  if (rating >= 7.0) return "#1df9ffE6"; // 90% opacity - Very Good  
-  if (rating >= 6.0) return "#1df9ffCC"; // 80% opacity - Good
-  if (rating >= 5.0) return "#1df9ffB3"; // 70% opacity - Average
-  if (rating >= 4.0) return "#1df9ff99"; // 60% opacity - Below Average
-  return "#1df9ff80"; // 50% opacity - Poor
+  if (rating >= 8.0) return "#1df9ff";
+  if (rating >= 7.0) return "#1df9ffE6";
+  if (rating >= 6.0) return "#1df9ffCC";
+  if (rating >= 5.0) return "#1df9ffB3";
+  if (rating >= 4.0) return "#1df9ff99";
+  return "#1df9ff80";
 };
 
-// NEW: Check if data is from Stage 1 (has loading placeholders)
 const isStage1Data = (hotel: Hotel): boolean => {
   return (
     (hotel.whyItMatches?.includes('progress') ?? false) ||
@@ -240,36 +303,29 @@ const isStage1Data = (hotel: Hotel): boolean => {
   );
 };
 
-// UPDATED: Enhanced AI insights using two-stage API data
 const generateAIInsight = (hotel: Hotel, insightsStatus?: string): string => {
-  // Show loading state for Stage 1 data
   if (insightsStatus === 'loading' || isStage1Data(hotel)) {
     return "AI is analyzing this hotel...";
   }
   
-  // Priority 1: Use API-provided AI match explanation (Stage 2)
   if (hotel.whyItMatches && !hotel.whyItMatches.includes('progress') && !hotel.whyItMatches.includes('loading')) {
     return hotel.whyItMatches;
   }
   
-  // Priority 2: Use AI excerpt
   if (hotel.aiExcerpt && !hotel.aiExcerpt.includes('progress')) {
     return hotel.aiExcerpt;
   }
 
-  // Priority 3: Use location highlight from two-stage API
   if (hotel.locationHighlight && !hotel.locationHighlight.includes('Analyzing')) {
     return hotel.locationHighlight;
   }
 
-  // Priority 4: Use description excerpt
   if (hotel.fullDescription) {
     return hotel.fullDescription.length > 120 
       ? hotel.fullDescription.substring(0, 120) + "..."
       : hotel.fullDescription;
   }
 
-  // Priority 5: Generate based on match type and AI match percentage
   if (hotel.aiMatchPercent && hotel.matchType) {
     const percentage = hotel.aiMatchPercent;
     const type = hotel.matchType;
@@ -285,28 +341,22 @@ const generateAIInsight = (hotel: Hotel, insightsStatus?: string): string => {
     }
   }
 
-  // Fallback for partial data
   if (insightsStatus === 'partial') {
     return "✨ AI analysis in progress - detailed insights coming soon...";
   }
 
-  // Final fallback
   return "Quality hotel choice with excellent amenities and service";
 };
 
-// UPDATED: Enhanced review summary using two-stage API guest insights
 const generateReviewSummary = (hotel: Hotel, insightsStatus?: string): string => {
-  // Show loading state for insights
   if (insightsStatus === 'loading' || (hotel.guestInsights && hotel.guestInsights.includes('Loading'))) {
     return "Loading detailed guest sentiment analysis...";
   }
 
-  // Priority 1: Use two-stage API guest insights
   if (hotel.guestInsights && !hotel.guestInsights.includes('Loading')) {
     return hotel.guestInsights;
   }
 
-  // Priority 2: Use sentiment analysis data
   if (hotel.sentimentPros && hotel.sentimentPros.length > 0) {
     const topPros = hotel.sentimentPros.slice(0, 2).join(' and ');
     let summary = `Guests particularly love the ${topPros}.`;
@@ -318,12 +368,10 @@ const generateReviewSummary = (hotel: Hotel, insightsStatus?: string): string =>
     return summary;
   }
 
-  // Show partial loading state
   if (insightsStatus === 'partial') {
     return "✨ Analyzing guest reviews to provide detailed insights...";
   }
 
-  // Priority 3: Generate based on rating and match type
   const rating = hotel.rating;
   const matchType = hotel.matchType || 'standard';
   
@@ -338,7 +386,6 @@ const generateReviewSummary = (hotel: Hotel, insightsStatus?: string): string =>
   }
 };
 
-// Smooth Story Progress Bar Component
 interface StoryProgressBarProps {
   currentSlide: number;
   totalSlides: number;
@@ -430,7 +477,6 @@ const StoryProgressBar: React.FC<StoryProgressBarProps> = ({
   );
 };
 
-// UPDATED: Hotel Overview slide with two-stage API data and loading states
 const HotelOverviewSlide: React.FC<{ 
   hotel: EnhancedHotel; 
   insightsStatus?: string;
@@ -442,7 +488,7 @@ const HotelOverviewSlide: React.FC<{
 }) => {
   const aiInsight = generateAIInsight(hotel, insightsStatus);
   const panAnimation = useRef(new Animated.Value(0)).current;
-  const scaleAnimation = useRef(new Animated.Value(1.05)).current; // REDUCED from 1.2 to 1.05
+  const scaleAnimation = useRef(new Animated.Value(1.05)).current;
 
   useEffect(() => {
     const panningAnimation = Animated.loop(
@@ -463,12 +509,12 @@ const HotelOverviewSlide: React.FC<{
     const scalingAnimation = Animated.loop(
       Animated.sequence([
         Animated.timing(scaleAnimation, {
-          toValue: 1.1, // REDUCED from 1.3 to 1.1
+          toValue: 1.1,
           duration: 10000,
           useNativeDriver: true,
         }),
         Animated.timing(scaleAnimation, {
-          toValue: 1.05, // REDUCED from 1.2 to 1.05
+          toValue: 1.05,
           duration: 10000,
           useNativeDriver: true,
         }),
@@ -484,18 +530,16 @@ const HotelOverviewSlide: React.FC<{
     };
   }, [panAnimation, scaleAnimation]);
 
-  // REDUCED pan movement for more image visibility
   const translateX = panAnimation.interpolate({
     inputRange: [0, 1],
-    outputRange: [-8, 8], // REDUCED from [-15, 15] to [-8, 8]
+    outputRange: [-8, 8],
   });
 
   const translateY = panAnimation.interpolate({
     inputRange: [0, 1],
-    outputRange: [-4, 4], // REDUCED from [-8, 8] to [-4, 4]
+    outputRange: [-4, 4],
   });
 
-  // UPDATED: Enhanced price display using two-stage API pricing
   const getDisplayPrice = () => {
     if (hotel.pricePerNight && hotel.pricePerNight !== null) {
       return `${hotel.pricePerNight.currency} ${hotel.pricePerNight.amount}`;
@@ -503,7 +547,6 @@ const HotelOverviewSlide: React.FC<{
     return `${hotel.price}`;
   };
 
-  // UPDATED: Location display using two-stage API location data
   const getLocationDisplay = () => {
     if (hotel.city && hotel.country) {
       return formatLocationDisplay(hotel.city, hotel.country);
@@ -514,21 +557,6 @@ const HotelOverviewSlide: React.FC<{
     return hotel.location;
   };
 
-  // NEW: Helper function to get refundable policy display
-  const getRefundablePolicyDisplay = () => {
-    if (hotel.isRefundable === undefined) {
-      return null; // Don't show anything if no refundable data available
-    }
-    
-    return {
-      icon: hotel.isRefundable ? "checkmark-circle" : "close-circle",
-      color: hotel.isRefundable ? "#10B981" : "#EF4444",
-      tag: hotel.refundableTag
-    };
-  };
-
-  const refundableDisplay = getRefundablePolicyDisplay();
-
   return (
     <View style={tw`flex-1 relative overflow-hidden`}>
       <Animated.Image 
@@ -536,10 +564,10 @@ const HotelOverviewSlide: React.FC<{
         style={[
           {
             position: 'absolute',
-            width: '110%', // REDUCED from '120%' to '110%'
-            height: '110%', // REDUCED from '120%' to '110%'
-            left: '-5%', // REDUCED from '-10%' to '-5%'
-            top: '-5%', // REDUCED from '-10%' to '-5%'
+            width: '110%',
+            height: '110%',
+            left: '-5%',
+            top: '-5%',
           },
           {
             transform: [
@@ -554,7 +582,6 @@ const HotelOverviewSlide: React.FC<{
       
       <View style={tw`absolute bottom-0 left-0 right-0 h-52 bg-gradient-to-t from-black/70 to-transparent z-1`} />
       
-      {/* Hotel Title and Location */}
       <View style={tw`absolute top-10 left-4 z-10`}>
         <View style={[tw`bg-black/30 border border-white/20 px-2.5 py-1.5 rounded-lg`, { maxWidth: screenWidth * 0.6 }]}>
           <Text 
@@ -579,55 +606,50 @@ const HotelOverviewSlide: React.FC<{
             </Text>
           </View>
         </View>
-
       </View>
 
-      {/* Hotel Information - Bottom Overlay */}
       <View style={tw`absolute bottom-6 left-4 right-4 z-10`}>
-        {/* UPDATED: Enhanced Price and Reviews with turquoise rating system */}
-<View style={tw`flex-row items-end gap-2 mb-2.5`}>
-  <View style={tw`bg-black/50 border border-white/20 px-3 py-1.5 rounded-lg`}>
-    <View style={tw`flex-row items-baseline`}>
-      <Text style={tw`text-xl font-bold text-white`}>
-        {getDisplayPrice()}
-      </Text>
-      <Text style={tw`text-white/80 text-xs ml-1`}>
-        /night
-      </Text>
-    </View>
-  </View>
-  
-  {/* UPDATED: Rating with turquoise color scaling and appropriate icon */}
-  <View style={tw`bg-black/50 border border-white/20 px-3 py-1.5 rounded-lg`}>
-    <View style={tw`flex-row items-center`}>
-      <View 
-        style={[
-          tw`w-5 h-5 rounded-full items-center justify-center mr-1`,
-          { backgroundColor: getRatingColor(hotel.rating) }
-        ]}
-      >
-        <Ionicons 
-          name="thumbs-up" 
-          size={10} 
-          color="#FFFFFF"
-          style={{
-            textShadowColor: '#000000',
-            textShadowOffset: { width: 0.5, height: 0.5 },
-            textShadowRadius: 1
-          }}
-        />
-      </View>
-      <Text style={tw`text-white text-xs font-semibold`}>
-        {hotel.rating.toFixed(1)}
-      </Text>
-      <Text style={tw`text-white/70 text-xs ml-1`}>
-        ({hotel.reviews || 0})
-      </Text>
-    </View>
-  </View>
-</View>
+        <View style={tw`flex-row items-end gap-2 mb-2.5`}>
+          <View style={tw`bg-black/50 border border-white/20 px-3 py-1.5 rounded-lg`}>
+            <View style={tw`flex-row items-baseline`}>
+              <Text style={tw`text-xl font-bold text-white`}>
+                {getDisplayPrice()}
+              </Text>
+              <Text style={tw`text-white/80 text-xs ml-1`}>
+                /night
+              </Text>
+            </View>
+          </View>
+          
+          <View style={tw`bg-black/50 border border-white/20 px-3 py-1.5 rounded-lg`}>
+            <View style={tw`flex-row items-center`}>
+              <View 
+                style={[
+                  tw`w-5 h-5 rounded-full items-center justify-center mr-1`,
+                  { backgroundColor: getRatingColor(hotel.rating) }
+                ]}
+              >
+                <Ionicons 
+                  name="thumbs-up" 
+                  size={10} 
+                  color="#FFFFFF"
+                  style={{
+                    textShadowColor: '#000000',
+                    textShadowOffset: { width: 0.5, height: 0.5 },
+                    textShadowRadius: 1
+                  }}
+                />
+              </View>
+              <Text style={tw`text-white text-xs font-semibold`}>
+                {hotel.rating.toFixed(1)}
+              </Text>
+              <Text style={tw`text-white/70 text-xs ml-1`}>
+                ({hotel.reviews || 0})
+              </Text>
+            </View>
+          </View>
+        </View>
 
-        {/* UPDATED: Enhanced AI Match Insight with two-stage loading awareness */}
         <View style={tw`bg-black/50 p-2.5 rounded-lg border border-white/20`}>
           <View style={tw`flex-row items-center mb-1`}>
             <Ionicons 
@@ -643,7 +665,6 @@ const HotelOverviewSlide: React.FC<{
                   : 'AI Insight'
               }
             </Text>
-            {/* NEW: Loading indicator for insights */}
             {insightsStatus === 'loading' && (
               <View style={tw`ml-2`}>
                 <Text style={tw`text-white/60 text-xs`}>Loading...</Text>
@@ -653,39 +674,16 @@ const HotelOverviewSlide: React.FC<{
           <Text style={tw`text-white text-xs leading-4`}>
             {aiInsight}
           </Text>
-        
-       {/* NEW: Detailed refundable policy info in AI insight section */}
-          {/* {refundableDisplay && refundableDisplay.tag && (
-            <View style={tw`mt-2 pt-2 border-t border-white/20`}>
-              <View style={tw`flex-row items-center`}>
-                <Ionicons 
-                  name="information-circle" 
-                  size={10} 
-                  color="#1df9ff" 
-                />
-                <Text style={tw`text-white/80 text-xs ml-1`}>
-                  Policy: {refundableDisplay.tag}
-                  {refundableDisplay.tag === 'RFN' && ' (Refundable rates available)'}
-                  {refundableDisplay.tag === 'NRFN' && ' (Non-refundable rates only)'}
-                </Text>
-              </View>
-            </View>
-          )} */}
         </View>
       </View>
     </View>
   );
 };
 
-// UPDATED: Enhanced Location slide with two-stage API location data
-// UPDATED: Enhanced Location slide with two-stage API location data - NO KEN BURNS EFFECT
 const LocationSlide: React.FC<{ hotel: EnhancedHotel; insightsStatus?: string }> = ({ 
   hotel, 
   insightsStatus = 'complete' 
 }) => {
-  // REMOVED: All animation references and effects for static image display
-
-  // UPDATED: Use images array for second slide background
   const getLocationImage = () => {
     if (hotel.latitude && hotel.longitude) {
       const zoom = 13;
@@ -694,7 +692,6 @@ const LocationSlide: React.FC<{ hotel: EnhancedHotel; insightsStatus?: string }>
       return `https://maps.locationiq.com/v3/staticmap?key=pk.79c544ae745ee83f91a7523c99939210&center=${hotel.latitude},${hotel.longitude}&zoom=${zoom}&size=${width}x${height}&markers=icon:large-red-cutout|${hotel.latitude},${hotel.longitude}`;
     }
 
-    // Fallbacks if coordinates are missing
     if (hotel.images && hotel.images.length > 1) {
       return hotel.images[1];
     }
@@ -703,7 +700,6 @@ const LocationSlide: React.FC<{ hotel: EnhancedHotel; insightsStatus?: string }>
 
   return (
     <View style={tw`flex-1 relative overflow-hidden`}>
-      {/* UPDATED: Static image with full coverage and no animations */}
       <Image 
         source={{ uri: getLocationImage() }} 
         style={{
@@ -718,10 +714,7 @@ const LocationSlide: React.FC<{ hotel: EnhancedHotel; insightsStatus?: string }>
       
       <View style={tw`absolute bottom-0 left-0 right-0 h-52 bg-gradient-to-t from-black/70 to-transparent z-1`} />
       
-      {/* UPDATED: Enhanced Location Information using two-stage API data */}
       <View style={tw`absolute bottom-6 left-4 right-4 z-10`}>
-
-        {/* UPDATED: Nearby Attractions using two-stage API data with loading state */}
         {hotel.nearbyAttractions && hotel.nearbyAttractions.length > 0 && (
           <View style={tw`bg-black/50 p-2.5 rounded-lg border border-white/20 mb-2.5`}>
             <View style={tw`flex-row items-center mb-1`}>
@@ -743,7 +736,6 @@ const LocationSlide: React.FC<{ hotel: EnhancedHotel; insightsStatus?: string }>
           </View>
         )}
         
-        {/* UPDATED: Location Highlight using two-stage API data with loading state */}
         <View style={tw`bg-black/50 p-2.5 border border-white/20 rounded-lg`}>
           <View style={tw`flex-row items-center mb-1`}>
             <Ionicons 
@@ -772,7 +764,6 @@ const LocationSlide: React.FC<{ hotel: EnhancedHotel; insightsStatus?: string }>
   );
 };
 
-// UPDATED: Enhanced Amenities & Reviews slide with clean rating grid format
 const AmenitiesSlide: React.FC<{ 
   hotel: EnhancedHotel; 
   insightsStatus?: string;
@@ -847,7 +838,6 @@ const AmenitiesSlide: React.FC<{
     }
 
     try {
-      // Parse the clean format from the API
       const lines = guestInsights.split('\n');
       const ratings = { ...defaultRatings };
 
@@ -876,22 +866,19 @@ const AmenitiesSlide: React.FC<{
 
   const ratings = parseRatings(hotel.guestInsights);
 
-  // Get rating color based on score using cyan shades
   const getRatingColor = (rating: number): string => {
-  if (rating >= 8.0) return "#06B6D4"; // Cyan-500 - Excellent
-  if (rating >= 7.0) return "#22D3EE"; // Cyan-400 - Very Good  
-  if (rating >= 6.0) return "#67E8F9"; // Cyan-300 - Good
-  if (rating >= 5.0) return "#A5F3FC"; // Cyan-200 - Average
-  if (rating >= 4.0) return "#CFFAFE"; // Cyan-100 - Below Average
-  return "#E0F7FA"; // Very light cyan - Poor
-};
-
-  // Get rating text color for contrast with cyan shades
-  const getRatingTextColor = (rating: number): string => {
-    return "#FFFFFF"; // Always white text
+    if (rating >= 8.0) return "#06B6D4";
+    if (rating >= 7.0) return "#22D3EE";
+    if (rating >= 6.0) return "#67E8F9";
+    if (rating >= 5.0) return "#A5F3FC";
+    if (rating >= 4.0) return "#CFFAFE";
+    return "#E0F7FA";
   };
 
-  // UPDATED: Use images array for third slide background
+  const getRatingTextColor = (rating: number): string => {
+    return "#FFFFFF";
+  };
+
   const getAmenitiesImage = () => {
     if (hotel.images && hotel.images.length > 2) {
       return hotel.images[2];
@@ -927,10 +914,8 @@ const AmenitiesSlide: React.FC<{
       
       <View style={tw`absolute bottom-0 left-0 right-0 h-52 bg-gradient-to-t from-black/70 to-transparent z-1`} />
       
-      {/* Guest Ratings Grid */}
       <View style={tw`absolute bottom-6 left-4 right-4 z-10`}>
         
-        {/* Fun Facts Header */}
         <View style={tw`bg-black/50 p-2.5 rounded-lg border border-white/20 mb-3`}>
           <View style={tw`flex-row items-center mb-1`}>
             <Ionicons 
@@ -963,11 +948,8 @@ const AmenitiesSlide: React.FC<{
           )}
         </View>
 
-        {/* 2x2 Ratings Grid - Compact with Labels to the Right */}
         <View style={tw`gap-1`}>
-          {/* Top Row */}
           <View style={tw`flex-row gap-1`}>
-            {/* Cleanliness - Top Left */}
             <View style={tw`flex-1 bg-black/50 border border-white/20 rounded-md p-1.5 flex-row items-center`}>
               <View 
                 style={[
@@ -992,7 +974,6 @@ const AmenitiesSlide: React.FC<{
               <Text style={tw`text-white text-xs font-medium ml-1.5`}>Cleanliness</Text>
             </View>
 
-            {/* Service - Top Right */}
             <View style={tw`flex-1 bg-black/50 border border-white/20 rounded-md p-1.5 flex-row items-center`}>
               <View 
                 style={[
@@ -1018,9 +999,7 @@ const AmenitiesSlide: React.FC<{
             </View>
           </View>
 
-          {/* Bottom Row */}
           <View style={tw`flex-row gap-1`}>
-            {/* Location - Bottom Left */}
             <View style={tw`flex-1 bg-black/50 border border-white/20 rounded-md p-1.5 flex-row items-center`}>
               <View 
                 style={[
@@ -1045,7 +1024,6 @@ const AmenitiesSlide: React.FC<{
               <Text style={tw`text-white text-xs font-medium ml-1.5`}>Location</Text>
             </View>
 
-            {/* Room Quality - Bottom Right */}
             <View style={tw`flex-1 bg-black/50 border border-white/20 rounded-md p-1.5 flex-row items-center`}>
               <View 
                 style={[
@@ -1076,10 +1054,9 @@ const AmenitiesSlide: React.FC<{
   );
 };
 
-// UPDATED: Main component with enhanced two-stage API integration
 const SwipeableHotelStoryCard: React.FC<SwipeableHotelStoryCardProps> = ({ 
   hotel, 
-  onSave, // Optional, for backward compatibility
+  onSave,
   onViewDetails, 
   onHotelPress,
   index,
@@ -1088,10 +1065,11 @@ const SwipeableHotelStoryCard: React.FC<SwipeableHotelStoryCardProps> = ({
   checkOutDate,
   adults = 2,
   children = 0,
-  // NEW: Two-stage API props
   isInsightsLoading = false,
   insightsStatus = 'complete',
-  searchMode = 'two-stage'
+  searchMode = 'two-stage',
+  placeId,
+  occupancies
 }) => {
   const [currentSlide, setCurrentSlide] = useState(0);
   const scrollViewRef = useRef<ScrollView>(null);
@@ -1108,18 +1086,52 @@ const SwipeableHotelStoryCard: React.FC<SwipeableHotelStoryCardProps> = ({
     }
   }, [hotel.id]);
 
-  // UPDATED: Enhanced Google Maps link generation with two-stage API coordinates
+  // NEW: Handler for deep link button
+  const handleDeepLink = async () => {
+    try {
+      const deepLinkUrl = generateHotelDeepLink(
+        hotel,
+        checkInDate,
+        checkOutDate,
+        adults,
+        children,
+        placeId || hotel.placeId,
+        occupancies
+      );
+
+      console.log(`🔗 Opening hotel deep link: ${deepLinkUrl}`);
+
+      const canOpen = await Linking.canOpenURL(deepLinkUrl);
+      
+      if (canOpen) {
+        await Linking.openURL(deepLinkUrl);
+      } else {
+        Alert.alert(
+          'Unable to Open Link',
+          'Could not open the hotel booking page. Please check your internet connection and try again.',
+          [{ text: 'OK' }]
+        );
+      }
+    } catch (error) {
+      console.error('Error opening deep link:', error);
+      Alert.alert(
+        'Error',
+        'Failed to open hotel booking page. Please try again.',
+        [{ text: 'OK' }]
+      );
+    }
+  };
+
   const generateGoogleMapsLink = (hotel: Hotel, checkin?: Date, checkout?: Date, adults: number = 2, children: number = 0): string => {
     let query = '';
 
-      const locationText = hotel.city && hotel.country 
-        ? `${hotel.name} ${hotel.city} ${hotel.country}`
-        : hotel.fullAddress 
-        ? `${hotel.name} ${hotel.fullAddress}`
-        : `${hotel.name} ${hotel.location}`;
-      query = encodeURIComponent(locationText);
-      console.log(`📍 Using location text: ${locationText}`);
-    
+    const locationText = hotel.city && hotel.country 
+      ? `${hotel.name} ${hotel.city} ${hotel.country}`
+      : hotel.fullAddress 
+      ? `${hotel.name} ${hotel.fullAddress}`
+      : `${hotel.name} ${hotel.location}`;
+    query = encodeURIComponent(locationText);
+    console.log(`📍 Using location text: ${locationText}`);
     
     let url = `https://www.google.com/maps/search/?api=1&query=${query}`;
     
@@ -1138,7 +1150,6 @@ const SwipeableHotelStoryCard: React.FC<SwipeableHotelStoryCardProps> = ({
     return url;
   };
 
-  // UPDATED: Enhanced View Details handler with two-stage API location data
   const handleViewDetails = async () => {
     try {
       const mapsLink = generateGoogleMapsLink(
@@ -1157,7 +1168,6 @@ const SwipeableHotelStoryCard: React.FC<SwipeableHotelStoryCardProps> = ({
       if (canOpen) {
         await Linking.openURL(mapsLink);
       } else {
-        // Enhanced fallback with two-stage API data
         let fallbackQuery = '';
         if (hotel.latitude && hotel.longitude) {
           fallbackQuery = `${hotel.latitude},${hotel.longitude}`;
@@ -1219,10 +1229,7 @@ const SwipeableHotelStoryCard: React.FC<SwipeableHotelStoryCardProps> = ({
     onHotelPress();
   };
 
-  // UPDATED: Handle save action with optional callback for backward compatibility
   const handleSave = () => {
-    // The AnimatedHeartButton now handles the cache internally
-    // This is just for backward compatibility
     if (onSave) {
       onSave();
     }
@@ -1230,7 +1237,6 @@ const SwipeableHotelStoryCard: React.FC<SwipeableHotelStoryCardProps> = ({
 
   return (
     <View style={tw`bg-white rounded-2xl overflow-hidden shadow-lg`}>
-      {/* Hotel Card */}
       <TouchableOpacity
         activeOpacity={0.95}
         onPress={handleCardPress}
@@ -1239,14 +1245,12 @@ const SwipeableHotelStoryCard: React.FC<SwipeableHotelStoryCardProps> = ({
           { width: CARD_WIDTH, height: CARD_HEIGHT },
         ]}
       >
-        {/* Smooth Story Progress Bar */}
         <StoryProgressBar
           currentSlide={currentSlide}
           totalSlides={3}
           onSlideChange={handleSlideChange}
         />
         
-        {/* Left Tap Zone */}
         {currentSlide > 0 && (
           <TouchableOpacity
             style={tw`absolute top-0 left-0 w-40 h-full z-20`}
@@ -1255,7 +1259,6 @@ const SwipeableHotelStoryCard: React.FC<SwipeableHotelStoryCardProps> = ({
           />
         )}
         
-        {/* Right Tap Zone */}
         {currentSlide < 2 && (
           <TouchableOpacity
             style={tw`absolute top-0 right-0 w-40 h-full z-20`}
@@ -1264,7 +1267,6 @@ const SwipeableHotelStoryCard: React.FC<SwipeableHotelStoryCardProps> = ({
           />
         )}
         
-        {/* Navigation Buttons */}
         {currentSlide > 0 && (
           <TouchableOpacity
             style={tw`absolute top-24 left-3 w-8 h-8 rounded-full bg-black/30 items-center justify-center z-25`}
@@ -1285,7 +1287,6 @@ const SwipeableHotelStoryCard: React.FC<SwipeableHotelStoryCardProps> = ({
           </TouchableOpacity>
         )}
         
-        {/* UPDATED: Slides with two-stage API data and loading awareness */}
         <ScrollView
           ref={scrollViewRef}
           horizontal
@@ -1317,10 +1318,9 @@ const SwipeableHotelStoryCard: React.FC<SwipeableHotelStoryCardProps> = ({
         </ScrollView>
       </TouchableOpacity>
       
-      {/* UPDATED: Action Section with two-stage API status indicators */}
+      {/* UPDATED: Action Section with new deep link button */}
       <View style={tw`bg-white rounded-b-2xl`}>
         
-        {/* NEW: Partial insights indicator */}
         {insightsStatus === 'partial' && !isInsightsLoading && (
           <View style={tw`px-4 py-2 bg-amber-50 border-b border-amber-100`}>
             <View style={tw`flex-row items-center`}>
@@ -1332,27 +1332,45 @@ const SwipeableHotelStoryCard: React.FC<SwipeableHotelStoryCardProps> = ({
           </View>
         )}
         
-        {/* Main Action Row */}
-        <View style={tw`flex-row items-center px-4 py-3 gap-3`}>
-          {/* UPDATED: Self-contained Animated Heart/Save Button */}
+        {/* UPDATED: Three-button layout with deep link button */}
+        <View style={tw`flex-row items-center px-4 py-3 gap-2`}>
+          {/* Heart/Save Button */}
           <AnimatedHeartButton
-            hotel={hotel}
-            size={28}
-          />
+  hotel={hotel}
+  size={24}
+/>
           
-          {/* View Details Button with enhanced wording */}
+          {/* View Details Button - Maps */}
           <TouchableOpacity
-            style={tw`border border-black/10 flex-1 bg-gray-100 py-3 rounded-lg items-center justify-center ml-2`}
+            style={tw`border border-black/10 flex-1 bg-gray-100 py-3 rounded-lg items-center justify-center`}
             onPress={handleViewDetails}
             activeOpacity={0.7}
           >
             <View style={tw`flex-row items-center`}>
               <Ionicons name="map" size={16} color="#374151" />
-              <Text style={tw`text-gray-800 text-base font-medium ml-2`}>
-                View Details
+              <Text style={tw`text-gray-800 text-sm font-medium ml-1.5`}>
+                Details
               </Text>
             </View>
           </TouchableOpacity>
+
+          {/* NEW: Book Now Button - Deep Link */}
+<TouchableOpacity
+  style={[tw`border border-black/10 flex-1 py-3 rounded-lg items-center justify-center  bg-gray-100`]}
+  onPress={handleDeepLink}
+  activeOpacity={0.7}
+>
+  <View style={tw`flex-row items-center`}>
+    <Image 
+      source={require('../../assets/images/logo.png')} 
+      style={{ width: 16, height: 16 }} 
+      resizeMode="contain"
+    />
+    <Text style={tw`text-black text-sm font-medium ml-1.5`}>
+      Book Now
+    </Text>
+  </View>
+</TouchableOpacity>
         </View>
       </View>
     </View>
