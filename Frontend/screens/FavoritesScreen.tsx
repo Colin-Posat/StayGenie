@@ -26,6 +26,7 @@ const { width } = Dimensions.get('window');
 const TURQUOISE = '#1df9ff';
 const TURQUOISE_LIGHT = '#5dfbff';
 const TURQUOISE_DARK = '#00d4e6';
+const BLACK = "#000000";
 
 // Clean empty state with turquoise accents
 const EmptyFavorites: React.FC<{ onExplore: () => void }> = ({ onExplore }) => {
@@ -160,7 +161,7 @@ const FavoritesHeader: React.FC<{
             activeOpacity={0.8}
           >
             <Ionicons name={getSortIcon()} size={16} color={TURQUOISE_DARK} />
-            <Text style={[tw`ml-2 font-medium text-sm`, { color: TURQUOISE_DARK }]}>
+            <Text style={[tw`ml-2 font-medium text-sm`, { color: BLACK }]}>
               Sort
             </Text>
           </TouchableOpacity>

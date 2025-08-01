@@ -1,4 +1,4 @@
-// InitialSearchScreen.tsx - Updated with turquoise (#1df9ff) integration and logo
+// InitialSearchScreen.tsx - Enhanced with dynamic backgrounds and visual appeal
 import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
@@ -93,6 +93,8 @@ const InitialSearchScreen: React.FC<InitialSearchScreenProps> = ({
   const searchBarScale = useRef(new Animated.Value(0.98)).current;
   const turquoiseGlow = useRef(new Animated.Value(0)).current;
   const logoFade = useRef(new Animated.Value(0)).current;
+  const floatingElements = useRef(new Animated.Value(0)).current;
+  const backgroundShift = useRef(new Animated.Value(0)).current;
 
   // Refined search suggestions with turquoise theme
   const hotelSearchSuggestions = [
@@ -154,6 +156,47 @@ const InitialSearchScreen: React.FC<InitialSearchScreenProps> = ({
   useEffect(() => {
     const randomHotels = getRandomBeautifulHotels(6);
     setDisplayedHotels(randomHotels);
+  }, []);
+
+  // Continuous floating animation for background elements
+  useEffect(() => {
+    const floatingAnimation = Animated.loop(
+      Animated.sequence([
+        Animated.timing(floatingElements, {
+          toValue: 1,
+          duration: 6000,
+          useNativeDriver: true,
+        }),
+        Animated.timing(floatingElements, {
+          toValue: 0,
+          duration: 6000,
+          useNativeDriver: true,
+        }),
+      ])
+    );
+
+    const backgroundAnimation = Animated.loop(
+      Animated.sequence([
+        Animated.timing(backgroundShift, {
+          toValue: 1,
+          duration: 20000,
+          useNativeDriver: false,
+        }),
+        Animated.timing(backgroundShift, {
+          toValue: 0,
+          duration: 20000,
+          useNativeDriver: false,
+        }),
+      ])
+    );
+
+    floatingAnimation.start();
+    backgroundAnimation.start();
+
+    return () => {
+      floatingAnimation.stop();
+      backgroundAnimation.stop();
+    };
   }, []);
 
   // Initial animation on mount
@@ -226,14 +269,79 @@ const InitialSearchScreen: React.FC<InitialSearchScreenProps> = ({
     return "Search for amazing stays...";
   };
 
+  // Floating background elements positions
+  const getFloatingElementTransform = (index: number, scale = 1) => {
+    const baseY = (index * 150) % height;
+    const baseX = (index * 120) % width;
+    
+    return {
+      transform: [
+        {
+          translateY: floatingElements.interpolate({
+            inputRange: [0, 1],
+            outputRange: [baseY, baseY - 30],
+          }),
+        },
+        {
+          translateX: floatingElements.interpolate({
+            inputRange: [0, 1],
+            outputRange: [baseX, baseX + (index % 2 === 0 ? 20 : -20)],
+          }),
+        },
+        { scale },
+        {
+          rotate: floatingElements.interpolate({
+            inputRange: [0, 1],
+            outputRange: ['0deg', index % 2 === 0 ? '10deg' : '-10deg'],
+          }),
+        },
+      ],
+    };
+  };
+
   return (
     <SafeAreaView style={tw`flex-1 bg-white`}>
       <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" translucent />
 
-      {/* Background gradient overlay */}
-      <View style={tw`absolute inset-0 bg-gradient-to-b from-gray-50 to-white opacity-60`} />
+      {/* Simple white background with subtle floating elements */}
+      <View style={tw`absolute inset-0 bg-white`}>
+        {/* Floating geometric elements - more subtle */}
+        {[...Array(5)].map((_, index) => (
+          <Animated.View
+            key={index}
+            style={[
+              tw`absolute rounded-full opacity-5`,
+              {
+                width: 40 + (index * 15) % 60,
+                height: 40 + (index * 15) % 60,
+                backgroundColor: index % 3 === 0 ? TURQUOISE_LIGHT : 
+                                index % 3 === 1 ? TURQUOISE : '#e0f7ff',
+                ...getFloatingElementTransform(index, 0.3 + (index * 0.05)),
+              }
+            ]}
+          />
+        ))}
 
-
+        {/* Floating sparkle icons - very subtle */}
+        {[...Array(3)].map((_, index) => (
+          <Animated.View
+            key={`sparkle-${index}`}
+            style={[
+              tw`absolute`,
+              {
+                ...getFloatingElementTransform(index + 8, 0.6),
+                opacity: 0.1,
+              }
+            ]}
+          >
+            <Ionicons 
+              name="sparkles" 
+              size={12 + (index * 2)} 
+              color={TURQUOISE_LIGHT} 
+            />
+          </Animated.View>
+        ))}
+      </View>
 
       {/* Main Content */}
       <View style={tw`flex-1 px-6`}>
@@ -249,20 +357,28 @@ const InitialSearchScreen: React.FC<InitialSearchScreenProps> = ({
             }
           ]}
         >
-          {/* Header section with turquoise accent */}
-          <View style={tw`items-center mb-2`}>
-              <Text style={tw`text-2xl font-semibold text-gray-900 text-center`}>
-                Where would you like to stay?{' '}
-              </Text>
-              
-            </View>
-            <Text style={tw`text-sm text-gray-500 text-center font-light mb-4`}>
-              Tell us anything, we'll find the perfect match
-            </Text>
-
+          {/* Enhanced Header section with encapsulating highlight */}
+          <View style={tw`items-center mb-2 relative`}>
+            {/* Subtle background glow that encapsulates both texts */}
+            <View style={[
+              tw`absolute -inset-3 rounded-3xl opacity-5 `,
+              { backgroundColor: TURQUOISE,
+                top: -25,
+               }
+            ]} />
             
+            <Text style={tw`text-2xl font-semibold text-gray-900 text-center relative z-10`}>
+              Describe your perfect stay{' '}
+              <Text style={{ color: TURQUOISE }}></Text>
+            </Text>
+            
+            <Text style={tw`text-sm text-gray-500 text-center font-light mb-4 relative z-10`}>
+              Type anything. We'll find the right place.
+            </Text>
+            
+          </View>
 
-          {/* Main Search Input with turquoise styling */}
+          {/* Main Search Input - KEEPING EXACTLY AS IS */}
           <Animated.View 
             style={[
               tw`relative mb-6 w-full max-w-md`,
@@ -295,7 +411,7 @@ const InitialSearchScreen: React.FC<InitialSearchScreenProps> = ({
               {/* Search icon with turquoise color when focused */}
               <View style={tw`w-6 h-6 mr-2 items-center justify-center`}>
                 <Ionicons
-                  name="search"
+                  name="sparkles"
                   size={20}
                   color={isFocused ? TURQUOISE : "#9CA3AF"}
                 />
@@ -367,7 +483,7 @@ const InitialSearchScreen: React.FC<InitialSearchScreenProps> = ({
             )}
           </Animated.View>
 
-          {/* Suggestions section */}
+          {/* Suggestions section - KEEPING EXACTLY AS IS */}
           <View style={tw`w-full max-w-md mb-4`}>
             {/* Revolving Search Recommendations */}
             <RevolvingPillWheel
@@ -379,30 +495,77 @@ const InitialSearchScreen: React.FC<InitialSearchScreenProps> = ({
           </View>
         </Animated.View>
 
-        {/* Beautiful Hotels Section with turquoise accent */}
+        {/* Enhanced Beautiful Hotels Section */}
         <View style={tw`flex-1`}>
-          <View style={tw`mb-4 flex-row items-center`}>
-            <Text style={tw`text-lg font-semibold text-gray-900 mb-1 flex-1`}>
-              Beautiful Stays For You
-            </Text>
+          <View style={tw`mb-6 flex-row items-center justify-between`}>
+            <View style={tw`flex-1`}>
+              <Text style={tw`text-lg font-semibold text-gray-900 mb-1`}>
+                Beautiful Stays For You
+              </Text>
+              <View style={tw`flex-row items-center`}>
+                <View style={[tw`w-8 h-0.5 rounded-full mr-2`, { backgroundColor: TURQUOISE }]} />
+                <Text style={tw`text-xs text-gray-500 font-medium`}>
+                  Curated just for you
+                </Text>
+              </View>
+            </View>
+            
+            {/* Animated explore more button */}
+            <Animated.View
+              style={{
+                opacity: fadeAnimation,
+                transform: [{
+                  scale: fadeAnimation.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [0.8, 1],
+                  }),
+                }],
+              }}
+            >
+
+            </Animated.View>
           </View>
 
-          {/* Hotel Grid using BeautifulHotelCard */}
-          <FlatList
-            data={displayedHotels}
-            numColumns={2}
-            keyExtractor={(item) => item.id}
-            columnWrapperStyle={tw`justify-between`}
-            contentContainerStyle={tw`gap-4`}
-            showsVerticalScrollIndicator={false}
-            renderItem={({ item }) => (
-              <BeautifulHotelCard
-                hotel={item}
-                onPress={() => handleHotelPress(item)}
-              />
-            )}
-            ItemSeparatorComponent={() => <View style={tw`h-4`} />}
-          />
+          {/* Enhanced Hotel Grid */}
+          <Animated.View
+            style={{
+              opacity: fadeAnimation,
+              transform: [{
+                translateY: slideAnimation.interpolate({
+                  inputRange: [0, 40],
+                  outputRange: [0, 20],
+                }),
+              }],
+            }}
+          >
+            <FlatList
+              data={displayedHotels}
+              numColumns={2}
+              keyExtractor={(item) => item.id}
+              columnWrapperStyle={tw`justify-between`}
+              contentContainerStyle={tw`gap-4 pb-8`}
+              showsVerticalScrollIndicator={false}
+              renderItem={({ item, index }) => (
+                <Animated.View
+                  style={{
+                    opacity: fadeAnimation,
+                    transform: [{
+                      translateY: fadeAnimation.interpolate({
+                        inputRange: [0, 1],
+                        outputRange: [30, 0],
+                      }),
+                    }],
+                  }}
+                >
+                  <BeautifulHotelCard
+                    hotel={item}
+                    onPress={() => handleHotelPress(item)}
+                  />
+                </Animated.View>
+              )}
+              ItemSeparatorComponent={() => <View style={tw`h-4`} />}
+            />
+          </Animated.View>
         </View>
       </View>
     </SafeAreaView>
