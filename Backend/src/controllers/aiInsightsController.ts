@@ -285,7 +285,7 @@ const generateInsightsFromSentiment = async (hotelName: string, sentimentData: H
     console.log(`⚠️ No sentiment analysis data found for ${hotelName}, using fallback`);
     
     // Fallback ratings
-    return `Cleanliness: 5.9/10\nService: 7.6/10\nLocation: 8.3/10\nRoom Quality: 4.9/10`;
+    return `Cleanliness: 7.2/10\nService: 7.9/10\nLocation: 8.3/10\nRoom Quality: 7.2/10`;
   }
 
   try {
