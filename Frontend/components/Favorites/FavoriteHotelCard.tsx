@@ -344,12 +344,33 @@ const FavoriteHotelCard: React.FC<FavoriteHotelCardProps> = ({
     setShowConfirmModal(false);
   };
 
-  const getDisplayPrice = () => {
-    if (hotel.pricePerNight) {
-      return `${hotel.pricePerNight.currency} ${hotel.pricePerNight.amount}`;
-    }
-    return `${hotel.price}`;
-  };
+
+const getDisplayPrice = () => {
+  if (hotel.pricePerNight) {
+    // Convert currency code to symbol
+    const getCurrencySymbol = (currencyCode: string) => {
+      switch (currencyCode.toUpperCase()) {
+        case 'USD':
+          return '$';
+        case 'EUR':
+          return '€';
+        case 'GBP':
+          return '£';
+        case 'JPY':
+          return '¥';
+        case 'CAD':
+          return 'C$';
+        case 'AUD':
+          return 'A$';
+        default:
+          return currencyCode; // fallback to currency code if symbol not found
+      }
+    };
+    
+    return `${getCurrencySymbol(hotel.pricePerNight.currency)}${hotel.pricePerNight.amount}`;
+  }
+  return `${hotel.price}`;
+};
 
   const getLocationDisplay = () => {
     if (hotel.city && hotel.country) {

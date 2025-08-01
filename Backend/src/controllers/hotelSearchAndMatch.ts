@@ -102,6 +102,7 @@ class PerformanceLogger {
   }
 }
 
+
 // Configuration
 const SMART_HOTEL_LIMIT = parseInt(process.env.SMART_HOTEL_LIMIT || '50');
 
@@ -407,7 +408,7 @@ const createOptimizedHotelSummaryForAI = (hotel: HotelWithRates, index: number, 
   };
 };
 
-// Llama hotel matching and ranking
+// Simplified Llama hotel matching and ranking (no batch processing)
 const llamaHotelMatching = async (
   hotelSummaries: HotelSummaryForAI[], 
   parsedQuery: ParsedSearchQuery, 
@@ -416,7 +417,7 @@ const llamaHotelMatching = async (
   
   const hasSpecificPreferences = parsedQuery.aiSearch && parsedQuery.aiSearch.trim() !== '';
   
-  // Price context for prompts
+  // Price context for prompts - MAKE PRICE THE TOP PRIORITY
   let priceContext = '';
   let budgetGuidance = '';
   
@@ -425,102 +426,94 @@ const llamaHotelMatching = async (
     const maxText = parsedQuery.maxCost ? `${parsedQuery.maxCost}` : '';
     
     if (minText && maxText) {
-      priceContext = `\nBUDGET: ${minText} - ${maxText}/night`;
-      budgetGuidance = `Prioritize ${minText}-${maxText} range. `;
+      priceContext = `\n🔥 BUDGET REQUIREMENT: ${minText} - ${maxText}/night`;
+      budgetGuidance = `CRITICAL: PRICE IS THE #1 PRIORITY! Only select hotels within ${minText}-${maxText}/night range. `;
     } else if (minText) {
-      priceContext = `\nBUDGET: ${minText}+ minimum`;
-      budgetGuidance = `Focus on ${minText}+. `;
+      priceContext = `\n🔥 MINIMUM BUDGET: ${minText}+ per night`;
+      budgetGuidance = `CRITICAL: PRICE IS THE #1 PRIORITY! Only select hotels ${minText}+ per night. `;
     } else if (maxText) {
-      priceContext = `\nBUDGET: Under ${maxText}`;
-      budgetGuidance = `Prioritize under ${maxText}. `;
+      priceContext = `\n🔥 MAXIMUM BUDGET: Under ${maxText} per night`;
+      budgetGuidance = `CRITICAL: PRICE IS THE #1 PRIORITY! Only select hotels under ${maxText} per night. `;
     }
+  } else {
+    budgetGuidance = `PRICE IS THE #1 PRIORITY! Select the best value hotels with lowest prices first. `;
   }
 
-  // Split hotels into 2 batches for parallel processing
-  const midpoint = Math.ceil(hotelSummaries.length / 2);
-  const batch1 = hotelSummaries.slice(0, midpoint);
-  const batch2 = hotelSummaries.slice(midpoint);
+  console.log(`🤖 Llama Matching - Processing ${hotelSummaries.length} hotels`);
   
-  console.log(`🤖 Llama Matching - Batch 1: ${batch1.length} hotels, Batch 2: ${batch2.length} hotels`);
+  // Create single hotel summary for all hotels - EMPHASIZE PRICE
+  const hotelSummary = hotelSummaries.map((hotel, index) => {
+    // Extract numeric price for sorting emphasis
+    const priceMatch = hotel.pricePerNight.match(/(\d+)/);
+    const numericPrice = priceMatch ? parseInt(priceMatch[1]) : 999999;
+    
+    return `${index + 1}: ${hotel.name}|💰${numericPrice}/night|${hotel.starRating}⭐|${hotel.topAmenities.join(',')}`;
+  }).join('\n');
   
-  const createBatchSummary = (hotels: HotelSummaryForAI[]) => {
-    return hotels.map((hotel, index) => {
-      return `${index + 1}: ${hotel.name}|${hotel.starRating}⭐|${hotel.pricePerNight}|${hotel.topAmenities.join(',')}`;
-    }).join('\n');
-  };
-  
-  const createBatchPrompt = (batchSummary: string, batchNum: number) => {
-    const basePrompt = hasSpecificPreferences ? 
-      `USER REQUEST: "${parsedQuery.aiSearch}"
+  // Create single prompt for all hotels - PRICE AS TOP PRIORITY
+  const prompt = hasSpecificPreferences ? 
+    `USER REQUEST: "${parsedQuery.aiSearch}"
 STAY: ${nights} nights${priceContext}
 
-BATCH ${batchNum} HOTELS:
-${batchSummary}
+🎯 RANKING PRIORITY ORDER:
+1. PRICE (Most Important) - Select cheapest options first
+2. User preferences alignment
+3. Star rating and amenities
 
-TASK: Match hotels to user request and return ONLY hotel names with match percentages.
-Return JSON array with EXACTLY 3 hotels (no more, no less):
+HOTELS:
+${hotelSummary}
+
+TASK: Match hotels to user request with PRICE AS THE #1 PRIORITY.
+${budgetGuidance}Return JSON array with EXACTLY 5 hotels (no more, no less):
 [{"hotelName":"exact name","aiMatchPercent":65-95}]
 
-${budgetGuidance}Base percentages on alignment with "${parsedQuery.aiSearch}". Use exact hotel names from list.` :
+REMEMBER: Price beats everything else! Choose the cheapest hotels that meet the user's request. Use exact hotel names from list.` :
 
-      `DESTINATION: ${parsedQuery.cityName}, ${parsedQuery.countryCode}
+    `DESTINATION: ${parsedQuery.cityName}, ${parsedQuery.countryCode}
 STAY: ${nights} nights${priceContext}
 
-BATCH ${batchNum} HOTELS:
-${batchSummary}
+🎯 RANKING PRIORITY ORDER:
+1. PRICE (Most Important) - Select cheapest options first
+2. Location quality
+3. Star rating and amenities
 
-TASK: Rank hotels by overall appeal (location, amenities, value).
-Return JSON array with EXACTLY 3 hotels (no more, no less):
+HOTELS:
+${hotelSummary}
+
+TASK: Rank hotels with PRICE AS THE #1 PRIORITY.
+${budgetGuidance}Return JSON array with EXACTLY 5 hotels (no more, no less):
 [{"hotelName":"exact name","aiMatchPercent":70-95}]
 
-${budgetGuidance}Rank by location, amenities, value. Use exact names from list.`;
-    
-    return basePrompt;
-  };
+REMEMBER: Price beats everything else! Choose the cheapest hotels first. Use exact names from list.`;
   
-  // Run both Llama calls in parallel for matching only
-  const [batch1Response, batch2Response] = await Promise.all([
-    groq.chat.completions.create({
-      model: 'llama-3.1-8b-instant',
-      messages: [
-        {
-          role: 'system',
-          content: 'You are a hotel-matching expert. Reply ONLY with valid JSON array of 3 items with exact hotel names and match percentages.'
-        },
-        { role: 'user', content: createBatchPrompt(createBatchSummary(batch1), 1) }
-      ],
-      temperature: 0.3,
-      max_tokens: 400,
-    }),
-    
-    groq.chat.completions.create({
-      model: 'llama-3.1-8b-instant',
-      messages: [
-        {
-          role: 'system',
-          content: 'You are a hotel-matching expert. Reply ONLY with valid JSON array of 3 items with exact hotel names and match percentages.'
-        },
-        { role: 'user', content: createBatchPrompt(createBatchSummary(batch2), 2) }
-      ],
-      temperature: 0.3,
-      max_tokens: 400,
-    })
-  ]);
+  // Single Llama API call
+  const response = await groq.chat.completions.create({
+    model: 'llama-3.1-8b-instant',
+    messages: [
+      {
+        role: 'system',
+        content: 'You are a price-focused hotel expert. PRICE IS THE #1 PRIORITY - always select the cheapest hotels first. Reply ONLY with valid JSON array of 5 items with exact hotel names and match percentages.'
+      },
+      { role: 'user', content: prompt }
+    ],
+    temperature: 0.3,
+    max_tokens: 600,
+  });
   
-  // Parse and merge results
-  const parseMatchingResponse = (response: any, batchNum: number, batchHotels: HotelSummaryForAI[]): Array<{ hotelName: string; aiMatchPercent: number; hotelData: HotelSummaryForAI }> => {
+  // Parse response
+  const parseMatchingResponse = (response: any): Array<{ hotelName: string; aiMatchPercent: number; hotelData: HotelSummaryForAI }> => {
     try {
       const aiResponse = response.choices[0]?.message?.content || '[]';
       const cleanResponse = aiResponse.replace(/```json\n?|\n?```/g, '').trim();
       const matches: Array<{ hotelName: string; aiMatchPercent: number }> = JSON.parse(cleanResponse);
       
-      console.log(`🎯 Llama Batch ${batchNum} matched ${matches.length} hotels`);
+      console.log(`🎯 Llama matched ${matches.length} hotels`);
       
       // Map hotel names back to full hotel data
-      return matches.slice(0, 3).map(match => {
-        const hotelData = batchHotels.find(hotel => hotel.name === match.hotelName);
+      return matches.slice(0, 5).map(match => {
+        const hotelData = hotelSummaries.find(hotel => hotel.name === match.hotelName);
         if (!hotelData) {
-          console.warn(`⚠️ Hotel "${match.hotelName}" not found in batch ${batchNum}`);
+          console.warn(`⚠️ Hotel "${match.hotelName}" not found in hotel list`);
           return null;
         }
         return {
@@ -531,22 +524,16 @@ ${budgetGuidance}Rank by location, amenities, value. Use exact names from list.`
       }).filter(Boolean) as Array<{ hotelName: string; aiMatchPercent: number; hotelData: HotelSummaryForAI }>;
       
     } catch (parseError) {
-      console.warn(`⚠️ Failed to parse Llama batch ${batchNum} response:`, parseError);
+      console.warn(`⚠️ Failed to parse Llama response:`, parseError);
       return [];
     }
   };
   
-  const batch1Results = parseMatchingResponse(batch1Response, 1, batch1);
-  const batch2Results = parseMatchingResponse(batch2Response, 2, batch2);
+  const matches = parseMatchingResponse(response);
+  console.log(`Llama found ${matches.length} total matches`);
   
-  // Merge and rank all results
-  const allMatches = [...batch1Results, ...batch2Results];
-  console.log(`Llama found ${allMatches.length} total matches`);
-  
-  // Sort by AI match percentage and take top 5
-  const rankedMatches = allMatches
-    .sort((a, b) => b.aiMatchPercent - a.aiMatchPercent)
-    .slice(0, 5);
+  // Sort by AI match percentage (already should be sorted, but ensure it)
+  const rankedMatches = matches.sort((a, b) => b.aiMatchPercent - a.aiMatchPercent);
   
   // Ensure percentage variety in final results
   rankedMatches.forEach((match, index) => {
@@ -820,7 +807,93 @@ export const hotelSearchAndMatchController = async (req: Request, res: Response)
     // STEP 5: Llama AI Matching
     logger.startStep('5-LlamaMatching', { hotelCount: hotelSummariesForAI.length });
 
-    const llamaMatches = await llamaHotelMatching(hotelSummariesForAI, parsedQuery, nights);
+const applyHardPriceFilter = (
+  hotelSummaries: HotelSummaryForAI[], 
+  parsedQuery: ParsedSearchQuery
+): HotelSummaryForAI[] => {
+  
+  // If no price filter, return all hotels
+  if (!parsedQuery.minCost && !parsedQuery.maxCost) {
+    console.log('💰 No price filter applied - using all hotels');
+    return hotelSummaries;
+  }
+
+  console.log(`💰 Applying hard price filter: $${parsedQuery.minCost || 'no min'} - $${parsedQuery.maxCost || 'no max'}/night`);
+
+  const withinBudget: HotelSummaryForAI[] = [];
+  const outsideBudget: Array<{ hotel: HotelSummaryForAI, price: number, distance: number }> = [];
+
+  hotelSummaries.forEach(hotel => {
+    // Extract price from "324/night (providerDirect)" format
+    const priceMatch = hotel.pricePerNight.match(/(\d+)/);
+    if (!priceMatch) {
+      console.warn(`⚠️ Could not extract price from: "${hotel.pricePerNight}"`);
+      return;
+    }
+    
+    const price = parseInt(priceMatch[1]);
+    
+    // Check if within budget
+    const withinMin = !parsedQuery.minCost || price >= parsedQuery.minCost;
+    const withinMax = !parsedQuery.maxCost || price <= parsedQuery.maxCost;
+    
+    if (withinMin && withinMax) {
+      withinBudget.push(hotel);
+      console.log(`✅ ${hotel.name}: $${price} (WITHIN BUDGET)`);
+    } else {
+      // Calculate how far outside budget
+      let distance = 0;
+      if (parsedQuery.minCost && price < parsedQuery.minCost) {
+        distance = parsedQuery.minCost - price;
+      } else if (parsedQuery.maxCost && price > parsedQuery.maxCost) {
+        distance = price - parsedQuery.maxCost;
+      }
+      outsideBudget.push({ hotel, price, distance });
+      console.log(`❌ ${hotel.name}: $${price} (OUTSIDE BUDGET - distance: $${distance})`);
+    }
+  });
+
+  // Ensure AI gets at least 20 hotels for good selection
+  const minHotelsForAI = 20;
+  
+  // If we have enough hotels within budget, use only those (but at least 20)
+  if (withinBudget.length >= minHotelsForAI) {
+    console.log(`🎯 Found ${withinBudget.length} hotels within budget - using only these`);
+    return withinBudget;
+  }
+
+  // If not enough within budget, add closest ones to reach 20 hotels
+  const neededHotels = minHotelsForAI - withinBudget.length;
+  const sortedOutside = outsideBudget
+    .sort((a, b) => a.distance - b.distance)
+    .slice(0, neededHotels);
+
+  const finalHotels = [...withinBudget, ...sortedOutside.map(item => item.hotel)];
+  
+  console.log(`⚠️ Only ${withinBudget.length} within budget, adding ${sortedOutside.length} closest hotels (total: ${finalHotels.length})`);
+  sortedOutside.forEach(item => {
+    console.log(`  Adding: ${item.hotel.name} (${item.price}, distance: ${item.distance})`);
+  });
+
+  return finalHotels;
+};
+
+// STEP 5: Apply hard price filter BEFORE AI matching
+logger.startStep('5.5-PriceFilter', { 
+  originalCount: hotelSummariesForAI.length,
+  minCost: parsedQuery.minCost,
+  maxCost: parsedQuery.maxCost
+});
+
+const priceFilteredHotels = applyHardPriceFilter(hotelSummariesForAI, parsedQuery);
+
+logger.endStep('5-PriceFilter', { 
+  filteredCount: priceFilteredHotels.length,
+  removedCount: hotelSummariesForAI.length - priceFilteredHotels.length
+});
+
+    
+    const llamaMatches = await llamaHotelMatching(priceFilteredHotels, parsedQuery, nights);
     
     logger.endStep('5-LlamaMatching', { matches: llamaMatches.length });
 

@@ -292,6 +292,7 @@ interface Hotel {
 // Base URL
 const BASE_URL = 'http://localhost:3003';
 
+
 const HomeScreen = () => {
   const route = useRoute();
   const params = route.params as RouteParams;
