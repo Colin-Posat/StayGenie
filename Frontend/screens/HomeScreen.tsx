@@ -642,7 +642,7 @@ const HomeScreen = () => {
         aiMatchPercent: hotel.aiMatchPercent,
         summarizedInfo: {
           name: hotel.summarizedInfo.name,
-          description: hotel.summarizedInfo.description.substring(0, 100) + '...', // Further reduce
+          description: hotel.summarizedInfo.description.substring(0, 2000) + '...', // Further reduce
           amenities: hotel.summarizedInfo.amenities.slice(0, 2), // Only top 2 amenities
           starRating: hotel.summarizedInfo.starRating,
           reviewCount: hotel.summarizedInfo.reviewCount,

@@ -735,30 +735,6 @@ const LocationSlide: React.FC<{ hotel: EnhancedHotel; insightsStatus?: string }>
             ))}
           </View>
         )}
-        
-        <View style={tw`bg-black/50 p-2.5 border border-white/20 rounded-lg`}>
-          <View style={tw`flex-row items-center mb-1`}>
-            <Ionicons 
-              name={insightsStatus === 'loading' && hotel.locationHighlight?.includes('Analyzing') ? "sync" : "star"} 
-              size={12} 
-              color="#1df9ff" 
-            />
-            <Text style={tw`text-white text-xs font-semibold ml-1`}>Location Highlight</Text>
-            {insightsStatus === 'loading' && hotel.locationHighlight?.includes('Analyzing') && (
-              <Text style={tw`text-white/60 text-xs ml-2`}>Analyzing...</Text>
-            )}
-          </View>
-          <Text style={tw`text-white text-xs leading-4`}>
-            {hotel.locationHighlight && !hotel.locationHighlight.includes('Analyzing')
-              ? hotel.locationHighlight
-              : (hotel.funFacts && hotel.funFacts[0] && !hotel.funFacts[0].includes('Loading')) 
-                ? hotel.funFacts[0]
-                : insightsStatus === 'loading'
-                  ? "Analyzing location advantages..."
-                  : `Prime location in ${hotel.city || 'the city'} with easy access to attractions and dining`
-            }
-          </Text>
-        </View>
       </View>
     </View>
   );

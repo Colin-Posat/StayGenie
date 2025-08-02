@@ -246,9 +246,10 @@ interface HotelSummaryForInsights {
     location: string;
     city: string;
     country: string;
+    latitude: number | null;  // ADD THIS
+    longitude: number | null; // ADD THIS
   };
 }
-
 // Fetch hotel details including sentiment data from LiteAPI
 const getHotelSentimentOptimized = async (hotelId: string): Promise<HotelSentimentData | null> => {
   try {
@@ -348,46 +349,74 @@ const generateDetailedAIContent = async (
   const hasSpecificPreferences = userQuery && userQuery.trim() !== '';
   const summary = hotel.summarizedInfo;
   
-  const prompt = hasSpecificPreferences ? 
-    `USER REQUEST: "${userQuery}"
+const prompt = hasSpecificPreferences ? 
+  `USER REQUEST: "${userQuery}"
 HOTEL: ${summary.name}
+FULL ADDRESS: ${summary.location}
+COORDINATES: ${summary.latitude}, ${summary.longitude}
 LOCATION: ${summary.city}, ${summary.country}
+FULL DESCRIPTION: ${summary.description}
 AMENITIES: ${summary.amenities.join(', ')}
 PRICE: ${summary.pricePerNight}
 RATING: ${summary.starRating} stars
-DESCRIPTION: ${summary.description}
 MATCH PERCENTAGE: ${hotel.aiMatchPercent}%
 
 TASK: Generate engaging content explaining why this hotel matches the user's request.
+Use the COORDINATES and FULL ADDRESS to identify real nearby attractions with accurate travel times.
 
 Return JSON:
 {
-  "whyItMatches": "20 words max - why it fits their specific request",
+  "whyItMatches": "25 words max - why it fits their specific request ${userQuery} and why its a great choice",
   "funFacts": ["fact1", "fact2"],
-  "nearbyAttractions": ["attraction1", "attraction2"],
-  "locationHighlight": "key location advantage"
+  "nearbyAttractions": [
+    "attraction name - brief description - X min by transportation_mode",
+    "attraction name - brief description - X min by transportation_mode"
+  ],
+  "locationHighlight": "key location advantage based on coordinates/address"
 }
 
-Make it compelling and specific to their "${userQuery}" request.` :
+CRITICAL: nearbyAttractions MUST follow this EXACT format:
+"Attraction Name - brief description - X min by walk/metro/bus/taxi"
 
-    `HOTEL: ${summary.name}
-LOCATION: ${summary.city}, ${summary.country}  
+Examples:
+"Eiffel Tower - iconic Paris landmark - 15 min by metro"
+"Central Park - green oasis in Manhattan - 8 min by walk"
+"Times Square - bustling entertainment district - 12 min by subway"
+
+Use the hotel's coordinates (${summary.latitude}, ${summary.longitude}) and address to find real attractions nearby and calculate realistic travel times with specific transportation modes.` :
+
+  `HOTEL: ${summary.name}
+FULL ADDRESS: ${summary.location}
+COORDINATES: ${summary.latitude}, ${summary.longitude}
+LOCATION: ${summary.city}, ${summary.country}
+FULL DESCRIPTION: ${summary.description}
 AMENITIES: ${summary.amenities.join(', ')}
 PRICE: ${summary.pricePerNight}
 RATING: ${summary.starRating} stars
-DESCRIPTION: ${summary.description}
 
 TASK: Generate engaging content for this hotel recommendation.
+Use the COORDINATES and ADDRESS to identify real nearby attractions.
 
 Return JSON:
 {
-  "whyItMatches": "20 words max - why it's a great choice",
+  "whyItMatches": "20 words max - why it's a great choice based on location",
   "funFacts": ["fact1", "fact2"],
-  "nearbyAttractions": ["attraction1", "attraction2"], 
+  "nearbyAttractions": [
+    "attraction name - brief description - X min by transportation_mode",
+    "attraction name - brief description - X min by transportation_mode"
+  ],
   "locationHighlight": "key location advantage"
 }
 
-Focus on value, location, and guest experience.`;
+CRITICAL: nearbyAttractions MUST follow this EXACT format:
+"Attraction Name - brief description - X min by walk/metro/bus/taxi"
+
+Examples:
+"Louvre Museum - world famous art collection - 10 min by metro"
+"Notre Dame Cathedral - historic Gothic architecture - 5 min by walk"
+"Champs-Élysées - luxury shopping avenue - 20 min by bus"
+
+Use coordinates (${summary.latitude}, ${summary.longitude}) to find real attractions and accurate travel times with specific transportation modes.`;
 
   try {
     const completion = await openai.chat.completions.create({
@@ -395,7 +424,7 @@ Focus on value, location, and guest experience.`;
       messages: [
         {
           role: 'system',
-          content: 'You are a travel content expert. Generate engaging, accurate hotel descriptions. Reply ONLY with valid JSON.'
+          content: 'You are a travel content expert. Generate engaging, accurate hotel descriptions. Reply ONLY with valid JSON. Make nearbyAttractions as "Attraction Name - brief description" format with descriptions being 5-8 words maximum.'
         },
         { role: 'user', content: prompt }
       ],
@@ -409,27 +438,52 @@ Focus on value, location, and guest experience.`;
     
     console.log(`✅ GPT-4o Mini generated content for ${hotel.name}`);
     
+    // Ensure nearbyAttractions has the correct format (string array with hyphen separator + travel time)
+    const nearbyAttractions = Array.isArray(parsedContent.nearbyAttractions) 
+      ? parsedContent.nearbyAttractions.map((attraction: any) => {
+          if (typeof attraction === 'string') {
+            // Already in correct format or convert simple name to proper format
+            if (attraction.includes(' - ') && attraction.split(' - ').length >= 3) {
+              return attraction; // Already has description and travel time
+            } else if (attraction.includes(' - ')) {
+              return `${attraction} - 8 min walk`; // Has description, add travel time
+            } else {
+              return `${attraction} - popular local attraction - 12 min walk`; // Add description and travel time
+            }
+          }
+          // Handle object format by converting to string
+          return `${attraction.name || "Local attraction"} - ${attraction.description || "worth visiting during stay"} - ${attraction.travelTime || "15 min walk"}`;
+        })
+      : [
+          `${summary.city} Center - main city attractions and shopping - 8 min walk`,
+          "Local Landmarks - historic sites and cultural spots - 15 min walk"
+        ];
+    
     return {
       whyItMatches: parsedContent.whyItMatches || "Great choice for your stay",
       funFacts: parsedContent.funFacts || ["Modern amenities", "Excellent service"],
-      nearbyAttractions: parsedContent.nearbyAttractions || ["City center", "Local attractions"],
+      nearbyAttractions: nearbyAttractions,
       locationHighlight: parsedContent.locationHighlight || "Convenient location"
     };
     
   } catch (error) {
     console.warn(`⚠️ GPT-4o Mini failed for ${hotel.name}:`, error);
     
-    // Fallback content
+    // Fallback content with proper structure
     return {
       whyItMatches: hasSpecificPreferences ? 
         `Perfect match for your ${userQuery} requirements` : 
         "Excellent choice with great amenities and location",
       funFacts: ["Modern facilities", "Excellent guest reviews"],
-      nearbyAttractions: [`${summary.city} center`, "Local landmarks"], 
+      nearbyAttractions: [
+        `${summary.city} Center - main city attractions and shopping - 8 min walk`,
+        "Local Landmarks - historic sites and cultural spots - 15 min walk"
+      ],
       locationHighlight: "Prime location"
     };
   }
 };
+
 
 // New combined function that handles hotel details fetching and insight generation in parallel
 const fetchHotelDetailsAndGenerateInsights = async (

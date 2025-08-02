@@ -363,9 +363,7 @@ const createOptimizedHotelSummaryForAI = (hotel: HotelWithRates, hotelMetadata: 
   const fakeReviewCount = Math.floor(Math.random() * (1100 - 700 + 1)) + 700;
 
   // Use hotelDescription from initial API call and truncate for faster processing
-  const shortDescription = hotelInfo.hotelDescription || hotelInfo.description 
-    ? (hotelInfo.hotelDescription || hotelInfo.description)!.substring(0, 100).trim() + '...'
-    : 'No description available';
+  const shortDescription = hotelInfo.hotelDescription || hotelInfo.description || 'No description available';
 
   let displayPrice = pricePerNightInfo;
   if (suggestedPrice && priceProvider) {
@@ -442,6 +440,15 @@ const gptHotelMatching = async (
         ? hotel.location.substring(0, 47) + '...' 
         : hotel.location
       : '';
+
+      const cleanDescription = hotel.description
+    .replace(/<[^>]*>/g, '') // Remove HTML tags
+    .replace(/&nbsp;/g, ' ') // Replace &nbsp; with space
+    .replace(/&amp;/g, '&')  // Replace HTML entities
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .trim();
     
     const locationDetails = [
       locationInfo,
@@ -449,13 +456,9 @@ const gptHotelMatching = async (
       coordinates
     ].filter(Boolean).join(' | ');
     
-    return `${index + 1}: ${hotel.name}|💰${numericPrice}/night|${hotel.starRating}⭐|📍${locationDetails}|🏨${hotel.topAmenities.join(',')}|📝${hotel.reviewCount} reviews`;
+     return `${index + 1}: ${hotel.name}|💰${numericPrice}/night|${hotel.starRating}⭐|📍${locationDetails}|🏨${hotel.topAmenities.join(',')}|📝${hotel.reviewCount} reviews|📖${cleanDescription}`;
   }).join('\n');
   
-  console.log('\n🎯 HOTEL DATA BEING SENT TO GPT-4o MINI:');
-  console.log('=' .repeat(80));
-  console.log(hotelSummary);
-  console.log('=' .repeat(80));
   
   // Create prompts focused on preferences, not price
   const prompt = hasSpecificPreferences ? 
@@ -644,7 +647,7 @@ const createHotelSummaryForInsights = (hotel: HotelWithRates, hotelMetadata: any
   return {
     hotelId: hotel.hotelId,
     name: hotelMetadata?.name || 'Unknown Hotel',
-    starRating: hotelMetadata?.stars || hotelMetadata?.rating || 7.1,
+    starRating: hotelMetadata?.rating || (hotelMetadata?.starRating * 2) - (Math.random() * 0.2 + 0.2) || 7.5, 
     images: images.slice(0, 5),
     pricePerNight: pricePerNight,
     reviewCount: fakeReviewCount,
@@ -839,19 +842,20 @@ export const hotelSearchAndMatchController = async (req: Request, res: Response)
     logger.startStep('4-FetchRates', { hotelCount: hotelIds.length, checkin: parsedQuery.checkin, checkout: parsedQuery.checkout });
 
     const ratesRequestBody = {
-      checkin: parsedQuery.checkin,
-      checkout: parsedQuery.checkout,
-      currency: 'USD',
-      guestNationality: 'US',
-      occupancies: [
-        {
-          adults: parsedQuery.adults || 2,
-          children: parsedQuery.children ? Array(parsedQuery.children).fill(10) : []
-        }
-      ],
-      timeout: 10,
-      hotelIds: hotelIds
-    };
+  checkin: parsedQuery.checkin,
+  checkout: parsedQuery.checkout,
+  currency: 'USD',
+  guestNationality: 'US',
+  occupancies: [
+    {
+      adults: parsedQuery.adults || 2,
+      children: parsedQuery.children ? Array(parsedQuery.children).fill(10) : []
+    }
+  ],
+  timeout: 6, // Reduced to 3 seconds
+  maxRatesPerHotel: 1, // Only get cheapest rate per hotel
+  hotelIds: hotelIds
+};
 
     const ratesResponse = await liteApiInstance.post('/hotels/rates', ratesRequestBody, {
       timeout: 20000
@@ -1002,18 +1006,18 @@ export const hotelSearchAndMatchController = async (req: Request, res: Response)
         aiMatchPercent: match.aiMatchPercent,
         // Add summarized info for AI insights endpoint
         summarizedInfo: {
-          name: enrichedHotelSummary.name,
-          description: hotelMetadata?.hotelDescription ? 
-            hotelMetadata.hotelDescription.toString().substring(0, 200) + '...' : 
-            'No description available',
-          amenities: enrichedHotelSummary.topAmenities,
-          starRating: enrichedHotelSummary.starRating,
-          reviewCount: enrichedHotelSummary.reviewCount,
-          pricePerNight: enrichedHotelSummary.pricePerNight?.display || 'Price not available',
-          location: enrichedHotelSummary.address,
-          city: enrichedHotelSummary.city,
-          country: enrichedHotelSummary.country
-        }
+  name: enrichedHotelSummary.name,
+  description: hotelMetadata?.hotelDescription || hotelMetadata?.description || 'No description available',
+  amenities: enrichedHotelSummary.topAmenities,
+  starRating: enrichedHotelSummary.starRating,
+  reviewCount: enrichedHotelSummary.reviewCount,
+  pricePerNight: enrichedHotelSummary.pricePerNight?.display || 'Price not available',
+  location: enrichedHotelSummary.address,
+  city: enrichedHotelSummary.city,
+  country: enrichedHotelSummary.country,
+  latitude: enrichedHotelSummary.latitude,  // ADD THIS
+  longitude: enrichedHotelSummary.longitude  // ADD THIS
+}
       };
     }).filter(Boolean);
 
