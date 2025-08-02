@@ -31,81 +31,59 @@ export const parseSearchQuery = async (req: Request, res: Response) => {
     const formattedCheckin = checkin.toISOString().split('T')[0];
     const formattedCheckout = checkout.toISOString().split('T')[0];
 
-    const prompt = `
-Today is ${formattedToday}. You are a travel assistant that turns user requests into structured hotel search JSON.
+const prompt = `
+Today is ${formattedToday}. You are a travel assistant converting user hotel search requests into structured JSON. Output only a valid JSON object with:
 
-Output a JSON object with the following fields:
 {
-  "checkin": "YYYY-MM-DD",
-  "checkout": "YYYY-MM-DD", 
-  "countryCode": "ISO-2 country code (e.g., FR for France, GB for UK, US for USA)",
-  "cityName": "Full city name (e.g., Paris, London, New York)",
-  "language": "ISO-639-1 language code (e.g., en, fr, es, de) - infer from location or default to 'en'",
-  "adults": Number of adult guests (default to 2 if not specified),
-  "children": Number of children (default to 0),
-  "minCost": Minimum price per night in USD (null if not specified),
-  "maxCost": Maximum price per night in USD (null if not specified),
-  "aiSearch": "All other descriptive info including preferences, amenities, hotel type, style, etc. - INCLUDE budget descriptors like 'luxury', 'budget', 'mid-range', 'affordable', 'premium', etc."
+  "checkin": "YYYY-MM-DD",            // Default: ${formattedCheckin}
+  "checkout": "YYYY-MM-DD",           // Default: ${formattedCheckout}
+  "countryCode": "ISO-2 country code",
+  "cityName": "Full city name",
+  "language": "ISO 639-1 code, default 'en'",
+  "adults": number (default 2),
+  "children": number (default 0),
+  "minCost": number or null (USD/night),
+  "maxCost": number or null (USD/night),
+  "aiSearch": "All other preferences, descriptors, trip purpose, vibe, hotel style, etc."
 }
 
+ **City Selection Rules**
+1. Use user-provided city if available.
+2. If only a country/region is mentioned, infer a city that best fits the user's theme (e.g., mountains, food, beaches).
+   - Example: “ski in Japan” → Niseko, not Tokyo.
+3. Avoid regions (e.g., "Swiss Alps") — pick a bookable city/town (e.g., Zermatt).
+4. Capital/largest cities only if no preference/hint is given.
 
-### City Selection Rules  (⚠️ NEW – read carefully)
-1. **If the user specifies a city → use it.**
-2. **If the user names only a country or region, choose a city that best fits their stated preferences.**
-   * Examples — *do **NOT** hard‑code these, they’re only guidance*:
-     * “best views in Switzerland” → pick **Zermatt, Grindelwald, Lauterbrunnen, Interlaken** … not Zürich.
-     * “ski trip in Japan” → pick **Niseko** or **Hakuba** … not Tokyo.
-     * “best street food in Japan” → pick **Osaka** or **Fukuoka** … not Tokyo (unless user says “Tokyo”).
-     * “beach resorts in Thailand” → pick **Phuket**, **Krabi**, or **Koh Samui** … not Bangkok.
-     * “wine tasting in France” → pick **Bordeaux**, **Reims**, **Dijon**, etc. … not Paris (unless no wine context).
-3. **Only default to the country’s largest / capital city if the user gives *no* hints** about scenery, activities, cuisine, or vibe.
-4. If you infer a city, be sure it truly delivers on the user’s theme (mountains, beaches, food scene, culture, nightlife, etc.). Mention that specialty in **aiSearch**.
-5. Never invent non‑existent cities; always return a real, well‑known destination.
-6.⚠️ Always return the name of a real, bookable city or town — not a region, coast, or mountain range.
-E.g., say "Positano", not "Amalfi Coast"; "Zermatt", not "Swiss Alps"; "Phuket", not "southern Thailand".
+ **Price/Budget Parsing**
+- "$X to $Y" → minCost: X, maxCost: Y
+- "under $X" → maxCost: X
+- "over/at least $X" → minCost: X
+- Budget words only:
+  - "budget", "cheap", "affordable" → maxCost: 100
+  - "mid-range", "moderate" → minCost: 100, maxCost: 250
+  - "luxury", "premium" → minCost: 300
+  - "ultra-luxury", "5-star" → minCost: 500
+- If no budget mentioned, set both to null.
 
+ **aiSearch Inference**
+- Always include inferred trip vibe and expectations (e.g., “romantic luxury stay”, “budget backpacker trip”)
+- Use context: 
+  - "honeymoon" → romantic, luxury
+  - "student trip", "backpacking" → budget-friendly
+  - "business trip" → reliable mid-range
+  - "family vacation" → family-friendly mid-range
+- If unclear → default: "well-reviewed, good-value hotels"
 
-Price Extraction Rules:
-- Look for specific dollar amounts (e.g., "$100-200", "under $150", "around $75 per night")
-- Convert price ranges to minCost/maxCost in USD per night
-- For budget descriptors WITHOUT specific amounts:
-  * "budget" or "cheap" or "affordable" → maxCost: 100
-  * "mid-range" or "moderate" → minCost: 100, maxCost: 250  
-  * "luxury" or "high-end" or "premium" → minCost: 300
-  * "ultra-luxury" or "5-star" → minCost: 500
-- If they say "under $X" → maxCost: X
-- If they say "over $X" or "at least $X" → minCost: X
-- If they say "$X to $Y" or "$X-$Y" → minCost: X, maxCost: Y
-- **IMPORTANT: If NO explicit price or budget terms are mentioned → minCost: null, maxCost: null**
-- **INFER budget level from context**: "honeymoon", "anniversary", "luxury destination" (Maldives, Dubai, etc.) → suggest luxury in aiSearch. "backpacking", "student trip", "budget travel" → suggest budget in aiSearch. "business trip", "family vacation" → suggest mid-range in aiSearch.
-- ALWAYS include budget descriptors in aiSearch based on context inference
-
-aiSearch Content Rules:
-- INFER appropriate hotel level from context and purpose of trip
-- "honeymoon", "anniversary", "romantic getaway" → luxury, romantic properties, premium amenities
-- Luxury destinations (Maldives, Dubai, Paris, etc.) → upscale accommodations unless budget explicitly mentioned
-- "backpacking", "student", "budget travel" → affordable, hostel-style, budget-friendly options
-- "business trip", "conference" → business hotels, reliable mid-range properties with good amenities
-- "family vacation" → family-friendly mid-range properties with appropriate facilities
-- If NO specific context, default to: "interesting and well-reviewed hotels, good value properties"
-- Focus on matching the implied expectations from the trip purpose and destination
-
-
-### Other Rules:
-- If the user doesn't provide check‑in/check‑out dates, default to:
-  "checkin": "${formattedCheckin}"
-  "checkout": "${formattedCheckout}"
-- IMPORTANT: Always return the ISO‑2 country code and the full city name.
-- Default language = "en".
-- Put ALL other search criteria in "aiSearch".
-- If number of people is not specified, default to 2 adults / 0 children.
-- **Only return the JSON. No explanation or extra formatting.**
+ Other:
+- Default adults: 2, children: 0
+- Always include real, bookable cities and ISO-2 country codes
+- Output only the JSON – no explanations or extra text.
 
 User input: "${userInput}"
 `;
 
     const completion = await openai.chat.completions.create({
-      model: 'gpt-4o-mini',
+      model: 'gpt-3.5-turbo-0125',
       messages: [{ role: 'user', content: prompt }],
       temperature: 0.3,
       max_tokens: 1000,

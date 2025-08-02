@@ -505,7 +505,7 @@ const InitialSearchScreen: React.FC<InitialSearchScreenProps> = ({
               <View style={tw`flex-row items-center`}>
                 <View style={[tw`w-8 h-0.5 rounded-full mr-2`, { backgroundColor: TURQUOISE }]} />
                 <Text style={tw`text-xs text-gray-500 font-medium`}>
-                  Curated just for you
+                  Our top picks
                 </Text>
               </View>
             </View>

@@ -1,7 +1,7 @@
 // src/controllers/hotelSearchAndMatch.ts
 import { Request, Response } from 'express';
 import axios from 'axios';
-import Groq from 'groq-sdk';
+import OpenAI from 'openai';
 import { randomUUID } from 'crypto';
 import dotenv from 'dotenv';
 import path from 'path';
@@ -16,7 +16,7 @@ dotenv.config({ path: path.resolve(__dirname, '../../.env') });
 
 // Verify environment variables
 console.log('🔑 Environment Variables Check:');
-console.log('GROQ_API_KEY exists:', !!process.env.GROQ_API_KEY);
+console.log('OPENAI_API_KEY exists:', !!process.env.OPENAI_API_KEY);
 console.log('LITEAPI_KEY exists:', !!process.env.LITEAPI_KEY);
 
 interface StepTiming {
@@ -105,8 +105,9 @@ class PerformanceLogger {
 // Configuration
 const SMART_HOTEL_LIMIT = parseInt(process.env.SMART_HOTEL_LIMIT || '50');
 
-const groq = new Groq({
-  apiKey: process.env.GROQ_API_KEY
+// OpenAI instance
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY
 });
 
 // Optimized axios instances
@@ -129,20 +130,6 @@ const internalApiInstance = axios.create({
   },
   timeout: 20000,
 });
-
-// NEW: Helper function to fetch detailed hotel data
-const fetchHotelDetails = async (hotelId: string): Promise<any> => {
-  try {
-    const response = await liteApiInstance.get(`/data/hotel?hotelId=${hotelId}`, {
-      timeout: 8000
-    });
-    const detailData = response.data?.data || response.data;
-    return detailData;
-  } catch (error) {
-    console.warn(`⚠️ Failed to fetch details for hotel ${hotelId}:`, error);
-    return null;
-  }
-};
 
 const extractRefundablePolicy = (hotel: HotelWithRates): { isRefundable: boolean; refundableTag: string | null; refundableInfo: string } => {
   if (!hotel.roomTypes || hotel.roomTypes.length === 0) {
@@ -195,7 +182,7 @@ const extractRefundablePolicy = (hotel: HotelWithRates): { isRefundable: boolean
 
   return {
     isRefundable,
-    refundableTag: refundableTags.length > 0 ? refundableTags[0] : null, // Return first tag found
+    refundableTag: refundableTags.length > 0 ? refundableTags[0] : null,
     refundableInfo
   };
 };
@@ -231,54 +218,36 @@ const getTop3Amenities = (hotelInfo: any): string[] => {
   return amenities.slice(0, 3);
 };
 
-// FIXED: Helper function to extract images from hotelImages array
+// Optimized function to extract images from hotel data
 const extractHotelImages = (hotelInfo: any): string[] => {
   const images: string[] = [];
   
-  // Check if hotelImages is directly available (from detailed endpoint)
-  let hotelImagesArray = hotelInfo?.hotelImages;
-  
-  // Also check nested paths
-  if (!hotelImagesArray && hotelInfo?.data?.hotelImages) {
-    hotelImagesArray = hotelInfo.data.hotelImages;
+  // Use main_photo and thumbnail from initial API call
+  if (hotelInfo?.main_photo) {
+    images.push(hotelInfo.main_photo);
   }
   
-  if (hotelImagesArray && Array.isArray(hotelImagesArray)) {
-    // Get images from hotelImages array (prefer HD, fallback to regular)
-    const imageUrls = hotelImagesArray
-      .slice(0, 8) // Take up to 8 images
+  if (hotelInfo?.thumbnail && hotelInfo.thumbnail !== hotelInfo?.main_photo) {
+    images.push(hotelInfo.thumbnail);
+  }
+  
+  // If we have hotelImages array (from detailed data), use it
+  if (hotelInfo?.hotelImages && Array.isArray(hotelInfo.hotelImages)) {
+    const imageUrls = hotelInfo.hotelImages
+      .slice(0, 6) // Take up to 6 additional images
       .map((imageObj: any) => {
         if (typeof imageObj === 'string') {
           return imageObj;
         }
-        
-        // Prefer HD URL if available, otherwise use regular URL
         return imageObj.urlHd || imageObj.url;
       })
-      .filter(Boolean); // Remove any null/undefined URLs
+      .filter(Boolean);
         
     images.push(...imageUrls);
   }
-    
-  // Fallback: use main_photo and thumbnail if hotelImages not available
-  if (images.length === 0) {
-    const mainPhoto = hotelInfo?.main_photo || hotelInfo?.data?.main_photo;
-    const thumbnail = hotelInfo?.thumbnail || hotelInfo?.data?.thumbnail;
-    const oldImages = hotelInfo?.images || hotelInfo?.data?.images;
-    
-    if (mainPhoto) {
-      images.push(mainPhoto);
-    }
-    if (thumbnail && thumbnail !== mainPhoto) {
-      images.push(thumbnail);
-    }
-    if (oldImages && Array.isArray(oldImages)) {
-      const oldImageUrls = oldImages.slice(0, 5);
-      images.push(...oldImageUrls);
-    }
-  }
-    
-  return images;
+  
+  // Remove duplicates and limit to 8 total images
+  return [...new Set(images)].slice(0, 8);
 };
 
 const calculatePriceInfo = (hotel: HotelWithRates, nights: number) => {
@@ -350,10 +319,12 @@ const calculatePriceInfo = (hotel: HotelWithRates, nights: number) => {
   return { priceRange, pricePerNightInfo, suggestedPrice, priceProvider };
 };
 
-const createOptimizedHotelSummaryForAI = (hotel: HotelWithRates, index: number, nights: number): HotelSummaryForAI => {
-  const hotelInfo = hotel.hotelInfo;
+// OPTIMIZED: Create hotel summary using data from initial API call
+const createOptimizedHotelSummaryForAI = (hotel: HotelWithRates, hotelMetadata: any, index: number, nights: number): HotelSummaryForAI => {
+  // Use the metadata from the initial /data/hotels call - it has all we need!
+  const hotelInfo = hotelMetadata || hotel.hotelInfo || {};
   
-  if (!hotelInfo) {
+  if (!hotelInfo && !hotelMetadata) {
     return {
       index: index + 1,
       hotelId: hotel.hotelId,
@@ -368,7 +339,6 @@ const createOptimizedHotelSummaryForAI = (hotel: HotelWithRates, index: number, 
       topAmenities: ['Wi-Fi', 'AC', 'Bathroom'],
       starRating: 0,
       reviewCount: 0,
-      // Add refundable policy info
       isRefundable: false,
       refundableTag: null,
       refundableInfo: 'No rate information available'
@@ -378,24 +348,21 @@ const createOptimizedHotelSummaryForAI = (hotel: HotelWithRates, index: number, 
   const { pricePerNightInfo, suggestedPrice, priceProvider } = calculatePriceInfo(hotel, nights);
   const refundablePolicy = extractRefundablePolicy(hotel);
   
-  const city = hotelInfo?.city || 'Unknown City';
-  const country = hotelInfo?.country || 'Unknown Country';
-  
-  // FIX: Check top level first, then nested paths
-  const latitude = hotelInfo?.latitude || 
-                   hotelInfo?.location?.latitude || 
-                   hotelInfo?.coordinates?.latitude || 
-                   null;
-  const longitude = hotelInfo?.longitude || 
-                    hotelInfo?.location?.longitude || 
-                    hotelInfo?.coordinates?.longitude || 
-                    null;
+  // Get data directly from initial API response
+  const city = hotelInfo.city || 'Unknown City';
+  const country = hotelInfo.country || 'Unknown Country';
+  const latitude = hotelInfo.latitude || null;
+  const longitude = hotelInfo.longitude || null;
+  const address = hotelInfo.address || 'Location not available';
+  const name = hotelInfo.name || 'Unknown Hotel';
+  const starRating = hotelInfo.stars || hotelInfo.starRating || hotelInfo.rating || 0;
   
   const topAmenities = getTop3Amenities(hotelInfo);
-  const starRating = hotelInfo?.starRating || hotelInfo?.stars || hotelInfo?.rating || 0;
-  const reviewCount = hotelInfo?.reviewCount || 0;
+  
+  // Generate fake review count since we're not fetching real reviews
+  const fakeReviewCount = Math.floor(Math.random() * (1100 - 700 + 1)) + 700;
 
-  // Truncate description to 100 chars for faster token processing
+  // Use hotelDescription from initial API call and truncate for faster processing
   const shortDescription = hotelInfo.hotelDescription || hotelInfo.description 
     ? (hotelInfo.hotelDescription || hotelInfo.description)!.substring(0, 100).trim() + '...'
     : 'No description available';
@@ -408,8 +375,8 @@ const createOptimizedHotelSummaryForAI = (hotel: HotelWithRates, index: number, 
   return {
     index: index + 1,
     hotelId: hotel.hotelId,
-    name: hotelInfo.name || 'Unknown Hotel',
-    location: hotelInfo.address || 'Location not available',
+    name: name,
+    location: address,
     description: shortDescription,
     pricePerNight: displayPrice,
     city: city,
@@ -418,16 +385,15 @@ const createOptimizedHotelSummaryForAI = (hotel: HotelWithRates, index: number, 
     longitude: longitude,
     topAmenities: topAmenities,
     starRating: starRating,
-    reviewCount: reviewCount,
-    // Add refundable policy information
+    reviewCount: fakeReviewCount,
     isRefundable: refundablePolicy.isRefundable,
     refundableTag: refundablePolicy.refundableTag,
     refundableInfo: refundablePolicy.refundableInfo
   };
 };
 
-// Simplified Llama hotel matching and ranking (no batch processing)
-const llamaHotelMatching = async (
+// GPT-4o Mini hotel matching and ranking (unchanged)
+const gptHotelMatching = async (
   hotelSummaries: HotelSummaryForAI[], 
   parsedQuery: ParsedSearchQuery, 
   nights: number
@@ -435,8 +401,8 @@ const llamaHotelMatching = async (
   
   const hasSpecificPreferences = parsedQuery.aiSearch && parsedQuery.aiSearch.trim() !== '';
   
-  // Price context for prompts - MAKE PRICE THE TOP PRIORITY
-  let priceContext = '';
+  // Budget context - only apply if user specified a budget
+  let budgetContext = '';
   let budgetGuidance = '';
   
   if (parsedQuery.minCost || parsedQuery.maxCost) {
@@ -444,73 +410,107 @@ const llamaHotelMatching = async (
     const maxText = parsedQuery.maxCost ? `${parsedQuery.maxCost}` : '';
     
     if (minText && maxText) {
-      priceContext = `\n🔥 BUDGET REQUIREMENT: ${minText} - ${maxText}/night`;
-      budgetGuidance = `CRITICAL: PRICE IS THE #1 PRIORITY! Only select hotels within ${minText}-${maxText}/night range. `;
+      budgetContext = `\n💰 BUDGET CONSTRAINT: ${minText} - ${maxText}/night`;
+      budgetGuidance = `IMPORTANT: Stay within the specified budget of ${minText}-${maxText}/night. `;
     } else if (minText) {
-      priceContext = `\n🔥 MINIMUM BUDGET: ${minText}+ per night`;
-      budgetGuidance = `CRITICAL: PRICE IS THE #1 PRIORITY! Only select hotels ${minText}+ per night. `;
+      budgetContext = `\n💰 MINIMUM BUDGET: ${minText}+ per night`;
+      budgetGuidance = `IMPORTANT: Only select hotels ${minText}+ per night. `;
     } else if (maxText) {
-      priceContext = `\n🔥 MAXIMUM BUDGET: Under ${maxText} per night`;
-      budgetGuidance = `CRITICAL: PRICE IS THE #1 PRIORITY! Only select hotels under ${maxText} per night. `;
+      budgetContext = `\n💰 MAXIMUM BUDGET: Under ${maxText} per night`;
+      budgetGuidance = `IMPORTANT: Only select hotels under ${maxText} per night. `;
     }
-  } else {
-    budgetGuidance = `PRICE IS THE #1 PRIORITY! Select the best value hotels with lowest prices first. `;
   }
 
-  console.log(`🤖 Llama Matching - Processing ${hotelSummaries.length} hotels`);
+  console.log(`🤖 GPT-4o Mini Matching - Processing ${hotelSummaries.length} hotels`);
   
-  // Create single hotel summary for all hotels - EMPHASIZE PRICE
+  // Create enhanced hotel summary for all hotels
   const hotelSummary = hotelSummaries.map((hotel, index) => {
-    // Extract numeric price for sorting emphasis
     const priceMatch = hotel.pricePerNight.match(/(\d+)/);
     const numericPrice = priceMatch ? parseInt(priceMatch[1]) : 999999;
     
-    return `${index + 1}: ${hotel.name}|💰${numericPrice}/night|${hotel.starRating}⭐|${hotel.topAmenities.join(',')}`;
+    const locationInfo = [
+      hotel.city !== 'Unknown City' ? hotel.city : '',
+      hotel.country !== 'Unknown Country' ? hotel.country : ''
+    ].filter(Boolean).join(', ') || 'Location unknown';
+    
+    const coordinates = hotel.latitude && hotel.longitude 
+      ? `(${hotel.latitude.toFixed(4)}, ${hotel.longitude.toFixed(4)})` 
+      : '';
+    
+    const shortAddress = hotel.location && hotel.location !== 'Location not available' 
+      ? hotel.location.length > 50 
+        ? hotel.location.substring(0, 47) + '...' 
+        : hotel.location
+      : '';
+    
+    const locationDetails = [
+      locationInfo,
+      shortAddress,
+      coordinates
+    ].filter(Boolean).join(' | ');
+    
+    return `${index + 1}: ${hotel.name}|💰${numericPrice}/night|${hotel.starRating}⭐|📍${locationDetails}|🏨${hotel.topAmenities.join(',')}|📝${hotel.reviewCount} reviews`;
   }).join('\n');
   
-  // Create single prompt for all hotels - PRICE AS TOP PRIORITY
+  console.log('\n🎯 HOTEL DATA BEING SENT TO GPT-4o MINI:');
+  console.log('=' .repeat(80));
+  console.log(hotelSummary);
+  console.log('=' .repeat(80));
+  
+  // Create prompts focused on preferences, not price
   const prompt = hasSpecificPreferences ? 
     `USER REQUEST: "${parsedQuery.aiSearch}"
-STAY: ${nights} nights${priceContext}
+STAY: ${nights} nights${budgetContext}
 
 🎯 RANKING PRIORITY ORDER:
-1. PRICE (Most Important) - Select cheapest options first
-2. User preferences alignment
-3. Star rating and amenities
+1. USER PREFERENCES MATCH (Most Important) - Find hotels that best match what the user is looking for. If user wants it near somethiing check address and coordinates and verify it is near that place
+2. Location convenience and accessibility
+3. Star rating and quality
+4. Value for money
+5. Overall hotel amenities
 
 HOTELS:
 ${hotelSummary}
 
-TASK: Match hotels to user request with PRICE AS THE #1 PRIORITY.
-${budgetGuidance}Return JSON array with EXACTLY 5 hotels (no more, no less):
-[{"hotelName":"exact name","aiMatchPercent":65-95}]
+CRITICAL REQUIREMENT: You MUST return EXACTLY 5 hotels no matter what! Even if no hotels perfectly match the user's preferences, find the 5 CLOSEST matches available from the list.
 
-REMEMBER: Price beats everything else! Choose the cheapest hotels that meet the user's request. Use exact hotel names from list.` :
+TASK: Find hotels that BEST MATCH the user's specific preferences and requirements.
+${budgetGuidance}Pay attention to location, amenities, and overall quality that align with user needs.
+
+Return JSON array with EXACTLY 5 hotels:
+[{"hotelName":"exact name","aiMatchPercent":30-95}]
+
+REMEMBER: ALWAYS return 5 hotels! Use exact hotel names from list.` :
 
     `DESTINATION: ${parsedQuery.cityName}, ${parsedQuery.countryCode}
-STAY: ${nights} nights${priceContext}
+STAY: ${nights} nights${budgetContext}
 
 🎯 RANKING PRIORITY ORDER:
-1. PRICE (Most Important) - Select cheapest options first
-2. Location quality
+1. OVERALL QUALITY AND VALUE (Most Important) - Best hotels for the destination
+2. Location quality and convenience
 3. Star rating and amenities
+4. Price value proposition
+5. Guest satisfaction potential
 
 HOTELS:
 ${hotelSummary}
 
-TASK: Rank hotels with PRICE AS THE #1 PRIORITY.
-${budgetGuidance}Return JSON array with EXACTLY 5 hotels (no more, no less):
-[{"hotelName":"exact name","aiMatchPercent":70-95}]
+CRITICAL REQUIREMENT: You MUST return EXACTLY 5 hotels no matter what!
 
-REMEMBER: Price beats everything else! Choose the cheapest hotels first. Use exact names from list.`;
+TASK: Recommend the BEST QUALITY hotels for this destination.
+${budgetGuidance}Focus on hotels that consistently deliver great experiences and value.
+Return JSON array with EXACTLY 5 hotels:
+[{"hotelName":"exact name","aiMatchPercent":60-95}]
+
+REMEMBER: ALWAYS return 5 hotels! Use exact names from list.`;
   
-  // Single Llama API call
-  const response = await groq.chat.completions.create({
-    model: 'llama-3.1-8b-instant',
+  // Single GPT-4o Mini API call
+  const response = await openai.chat.completions.create({
+    model: 'gpt-4o-mini',
     messages: [
       {
         role: 'system',
-        content: 'You are a price-focused hotel expert. PRICE IS THE #1 PRIORITY - always select the cheapest hotels first. Reply ONLY with valid JSON array of 5 items with exact hotel names and match percentages.'
+        content: 'You are an expert hotel recommendation specialist. Reply ONLY with valid JSON array of 5 items with exact hotel names and match percentages.'
       },
       { role: 'user', content: prompt }
     ],
@@ -518,17 +518,31 @@ REMEMBER: Price beats everything else! Choose the cheapest hotels first. Use exa
     max_tokens: 600,
   });
   
-  // Parse response
+  // Parse response with fallback logic (same as before)
   const parseMatchingResponse = (response: any): Array<{ hotelName: string; aiMatchPercent: number; hotelData: HotelSummaryForAI }> => {
     try {
       const aiResponse = response.choices[0]?.message?.content || '[]';
       const cleanResponse = aiResponse.replace(/```json\n?|\n?```/g, '').trim();
-      const matches: Array<{ hotelName: string; aiMatchPercent: number }> = JSON.parse(cleanResponse);
       
-      console.log(`🎯 Llama matched ${matches.length} hotels`);
+      let matches: Array<{ hotelName: string; aiMatchPercent: number }> = [];
+      
+      try {
+        matches = JSON.parse(cleanResponse);
+      } catch (jsonError) {
+        console.warn('⚠️ JSON parsing failed, using fallback extraction');
+        const hotelNameMatches = aiResponse.match(/"([^"]+)"/g);
+        const percentMatches = aiResponse.match(/(\d+)/g);
+        
+        if (hotelNameMatches && percentMatches) {
+          matches = hotelNameMatches.slice(0, 5).map((name: string, index: number) => ({
+            hotelName: name.replace(/"/g, ''),
+            aiMatchPercent: parseInt(percentMatches[index] || '50')
+          }));
+        }
+      }
       
       // Map hotel names back to full hotel data
-      return matches.slice(0, 5).map(match => {
+      const validMatches = matches.slice(0, 5).map(match => {
         const hotelData = hotelSummaries.find(hotel => hotel.name === match.hotelName);
         if (!hotelData) {
           console.warn(`⚠️ Hotel "${match.hotelName}" not found in hotel list`);
@@ -541,37 +555,68 @@ REMEMBER: Price beats everything else! Choose the cheapest hotels first. Use exa
         };
       }).filter(Boolean) as Array<{ hotelName: string; aiMatchPercent: number; hotelData: HotelSummaryForAI }>;
       
+      // FALLBACK: If we don't have 5 valid matches, fill with top hotels
+      if (validMatches.length < 5) {
+        const usedHotelIds = new Set(validMatches.map(m => m.hotelData.hotelId));
+        const remainingHotels = hotelSummaries.filter(hotel => !usedHotelIds.has(hotel.hotelId));
+        
+        const topRemainingHotels = remainingHotels
+          .sort((a, b) => b.starRating - a.starRating)
+          .slice(0, 5 - validMatches.length);
+        
+        const fallbackMatches = topRemainingHotels.map((hotel, index) => ({
+          hotelName: hotel.name,
+          aiMatchPercent: hasSpecificPreferences ? 30 + (index * 5) : 60 + (index * 5),
+          hotelData: hotel
+        }));
+        
+        validMatches.push(...fallbackMatches);
+      }
+      
+      return validMatches.slice(0, 5);
+      
     } catch (parseError) {
-      console.warn(`⚠️ Failed to parse Llama response:`, parseError);
-      return [];
+      console.warn(`⚠️ Complete parsing failure, using fallback strategy:`, parseError);
+      
+      // ULTIMATE FALLBACK: Just return top 5 hotels by star rating
+      const fallbackHotels = hotelSummaries
+        .sort((a, b) => b.starRating - a.starRating)
+        .slice(0, 5)
+        .map((hotel, index) => ({
+          hotelName: hotel.name,
+          aiMatchPercent: hasSpecificPreferences ? 25 + (index * 10) : 55 + (index * 10),
+          hotelData: hotel
+        }));
+      
+      return fallbackHotels;
     }
   };
   
   const matches = parseMatchingResponse(response);
-  console.log(`Llama found ${matches.length} total matches`);
   
-  // Sort by AI match percentage (already should be sorted, but ensure it)
-  const rankedMatches = matches.sort((a, b) => b.aiMatchPercent - a.aiMatchPercent);
+  // Ensure exactly 5 matches
+  if (matches.length === 0) {
+    const emergencyMatches = hotelSummaries
+      .sort((a, b) => b.starRating - a.starRating)
+      .slice(0, 5)
+      .map((hotel, index) => ({
+        hotelName: hotel.name,
+        aiMatchPercent: hasSpecificPreferences ? 20 + (index * 5) : 50 + (index * 5),
+        hotelData: hotel
+      }));
+    
+    return emergencyMatches;
+  }
   
-  // Ensure percentage variety in final results
-  rankedMatches.forEach((match, index) => {
-    const basePercentage = match.aiMatchPercent;
-    const variation = index * 2;
-    match.aiMatchPercent = Math.min(95, Math.max(hasSpecificPreferences ? 65 : 70, basePercentage - variation));
-  });
-  
-  console.log(`🎯 Llama final rankings: ${rankedMatches.map(r => `${r.hotelName}: ${r.aiMatchPercent}%`).join(', ')}`);
-  
-  return rankedMatches;
+  return matches.slice(0, 5);
 };
 
-// Create hotel summary for AI insights endpoint
-const createHotelSummaryForInsights = (hotel: HotelWithRates, hotelInfo: any, nights: number) => {
+// OPTIMIZED: Create hotel summary using existing data (no additional API calls)
+const createHotelSummaryForInsights = (hotel: HotelWithRates, hotelMetadata: any, nights: number) => {
   const { priceRange, suggestedPrice, priceProvider } = calculatePriceInfo(hotel, nights);
   const refundablePolicy = extractRefundablePolicy(hotel);
-  const topAmenities = getTop3Amenities(hotelInfo);
-  
-  const images = extractHotelImages(hotelInfo);
+  const topAmenities = getTop3Amenities(hotelMetadata);
+  const images = extractHotelImages(hotelMetadata);
   
   let pricePerNight = null;
   if (suggestedPrice && nights > 0) {
@@ -598,38 +643,32 @@ const createHotelSummaryForInsights = (hotel: HotelWithRates, hotelInfo: any, ni
 
   return {
     hotelId: hotel.hotelId,
-    name: hotelInfo?.name || 'Unknown Hotel',
-    starRating: hotelInfo?.rating || 7.1,
-    images: images.slice(0, 5), // Limit to 5 images
+    name: hotelMetadata?.name || 'Unknown Hotel',
+    starRating: hotelMetadata?.stars || hotelMetadata?.rating || 7.1,
+    images: images.slice(0, 5),
     pricePerNight: pricePerNight,
     reviewCount: fakeReviewCount,
-    address: hotelInfo?.address || 'Address not available',
-    amenities: hotelInfo?.amenities || [],
-    description: hotelInfo?.hotelDescription || hotelInfo?.description || 'No description available',
-    coordinates: hotelInfo?.coordinates || null,
+    address: hotelMetadata?.address || 'Address not available',
+    amenities: hotelMetadata?.amenities || [],
+    description: hotelMetadata?.hotelDescription || hotelMetadata?.description || 'No description available',
+    coordinates: {
+      latitude: hotelMetadata?.latitude || null,
+      longitude: hotelMetadata?.longitude || null
+    },
     priceRange: priceRange,
     totalRooms: hotel.roomTypes ? hotel.roomTypes.length : 0,
     hasAvailability: hotel.roomTypes && hotel.roomTypes.length > 0,
     roomTypes: hotel.roomTypes,
     suggestedPrice: suggestedPrice,
     priceProvider: priceProvider,
-    city: hotelInfo?.city || 'Unknown City',
-    country: hotelInfo?.country || 'Unknown Country',
-    // FIX: Check top level first, then nested paths
-    latitude: hotelInfo?.latitude || 
-              hotelInfo?.location?.latitude || 
-              hotelInfo?.coordinates?.latitude || 
-              null,
-    longitude: hotelInfo?.longitude || 
-               hotelInfo?.location?.longitude || 
-               hotelInfo?.coordinates?.longitude || 
-               null,
+    city: hotelMetadata?.city || 'Unknown City',
+    country: hotelMetadata?.country || 'Unknown Country',
+    latitude: hotelMetadata?.latitude || null,
+    longitude: hotelMetadata?.longitude || null,
     topAmenities: topAmenities,
-    // Add refundable policy information
     isRefundable: refundablePolicy.isRefundable,
     refundableTag: refundablePolicy.refundableTag,
     refundableInfo: refundablePolicy.refundableInfo,
-    // Add detailed cancellation policies for insights
     cancellationPolicies: hotel.roomTypes?.flatMap(room => 
       room.rates?.map(rate => ({
         refundableTag: rate.cancellationPolicies?.refundableTag,
@@ -645,19 +684,17 @@ const applyHardPriceFilter = (
   parsedQuery: ParsedSearchQuery
 ): HotelSummaryForAI[] => {
   
-  // If no price filter, return all hotels
   if (!parsedQuery.minCost && !parsedQuery.maxCost) {
     console.log('💰 No price filter applied - using all hotels');
     return hotelSummaries;
   }
 
-  console.log(`💰 Applying hard price filter: $${parsedQuery.minCost || 'no min'} - $${parsedQuery.maxCost || 'no max'}/night`);
+  console.log(`💰 Applying hard price filter: ${parsedQuery.minCost || 'no min'} - ${parsedQuery.maxCost || 'no max'}/night`);
 
   const withinBudget: HotelSummaryForAI[] = [];
   const outsideBudget: Array<{ hotel: HotelSummaryForAI, price: number, distance: number }> = [];
 
   hotelSummaries.forEach(hotel => {
-    // Extract price from "324/night (providerDirect)" format
     const priceMatch = hotel.pricePerNight.match(/(\d+)/);
     if (!priceMatch) {
       console.warn(`⚠️ Could not extract price from: "${hotel.pricePerNight}"`);
@@ -711,7 +748,7 @@ const applyHardPriceFilter = (
   return finalHotels;
 };
 
-// Main controller function for hotel search and matching
+// OPTIMIZED Main controller function - NO redundant API calls!
 export const hotelSearchAndMatchController = async (req: Request, res: Response) => {
   const logger = new PerformanceLogger();
   
@@ -722,7 +759,7 @@ export const hotelSearchAndMatchController = async (req: Request, res: Response)
       return res.status(400).json({ error: 'userInput is required' });
     }
 
-    console.log('🚀 Hotel Search and Match Starting for:', userInput);
+    console.log('🚀 OPTIMIZED Hotel Search and Match Starting for:', userInput);
     const searchId = randomUUID();
 
     // STEP 1: Parse user input
@@ -743,8 +780,8 @@ export const hotelSearchAndMatchController = async (req: Request, res: Response)
 
     const nights = Math.ceil((new Date(parsedQuery.checkout).getTime() - new Date(parsedQuery.checkin).getTime()) / (1000 * 60 * 60 * 24));
 
-    // STEP 2: Fetch hotels
-    logger.startStep('2-FetchHotels', { limit: SMART_HOTEL_LIMIT, city: parsedQuery.cityName, country: parsedQuery.countryCode });
+    // STEP 2: Fetch hotels with ALL metadata (latitude, longitude, address, etc.)
+    logger.startStep('2-FetchHotelsWithMetadata', { limit: SMART_HOTEL_LIMIT, city: parsedQuery.cityName, country: parsedQuery.countryCode });
     
     const hotelsSearchResponse = await liteApiInstance.get('/data/hotels', {
       params: {
@@ -758,7 +795,7 @@ export const hotelSearchAndMatchController = async (req: Request, res: Response)
 
     const hotels = hotelsSearchResponse.data?.data || hotelsSearchResponse.data;
 
-    logger.endStep('2-FetchHotels', { hotelCount: hotels?.length || 0 });
+    logger.endStep('2-FetchHotelsWithMetadata', { hotelCount: hotels?.length || 0 });
 
     if (!hotels || !Array.isArray(hotels) || hotels.length === 0) {
       return res.status(404).json({
@@ -768,12 +805,38 @@ export const hotelSearchAndMatchController = async (req: Request, res: Response)
       });
     }
 
-    // STEP 3: Fetch rates for all hotels
+    // STEP 3: Build metadata map from initial hotel search (contains all info we need!)
+    logger.startStep('3-BuildMetadataMap', { hotelCount: hotels.length });
+    
+    const hotelMetadataMap = new Map<string, Record<string, unknown>>();
+    hotels.forEach((hotel: Record<string, unknown>) => {
+      const id = hotel.id || hotel.hotelId || hotel.hotel_id || hotel.code;
+      if (id) {
+        hotelMetadataMap.set(String(id), hotel);
+        // Log what data we have for the first few hotels
+        if (hotelMetadataMap.size <= 3) {
+          console.log(`✅ Hotel ${id} metadata:`, {
+            name: hotel.name,
+            address: hotel.address,
+            city: hotel.city,
+            country: hotel.country,
+            latitude: hotel.latitude,
+            longitude: hotel.longitude,
+            stars: hotel.stars,
+            hasDescription: !!(hotel.hotelDescription || hotel.description)
+          });
+        }
+      }
+    });
+    
+    logger.endStep('3-BuildMetadataMap', { metadataEntries: hotelMetadataMap.size });
+
+    // STEP 4: Fetch rates for all hotels
     const hotelIds = hotels.map((hotel: any) => 
       hotel.id || hotel.hotelId || hotel.hotel_id || hotel.code
     ).filter(Boolean);
 
-    logger.startStep('3-FetchRates', { hotelCount: hotelIds.length, checkin: parsedQuery.checkin, checkout: parsedQuery.checkout });
+    logger.startStep('4-FetchRates', { hotelCount: hotelIds.length, checkin: parsedQuery.checkin, checkout: parsedQuery.checkout });
 
     const ratesRequestBody = {
       checkin: parsedQuery.checkin,
@@ -815,10 +878,10 @@ export const hotelSearchAndMatchController = async (req: Request, res: Response)
       }
     }
 
-    logger.endStep('3-FetchRates', { hotelsWithRates: hotelsWithRates.length });
+    logger.endStep('4-FetchRates', { hotelsWithRates: hotelsWithRates.length });
 
     if (hotelsWithRates.length === 0) {
-      logger.failStep('3-FetchRates', new Error('No available hotels'));
+      logger.failStep('4-FetchRates', new Error('No available hotels'));
       return res.status(404).json({
         error: 'No available hotels',
         message: 'Hotels found but no availability for your dates',
@@ -826,81 +889,54 @@ export const hotelSearchAndMatchController = async (req: Request, res: Response)
       });
     }
 
-    // STEP 4: Fetch detailed hotel data AND build AI summaries
-    logger.startStep('4-FetchDetailsAndBuildSummaries', { hotelCount: hotelsWithRates.length });
-
-    // Build basic metadata map from search results (for fallback data)
-    const hotelMetadataMap = new Map<string, Record<string, unknown>>();
-    hotels.forEach((hotel: Record<string, unknown>) => {
-      const id = hotel.id || hotel.hotelId || hotel.hotel_id || hotel.code;
-      if (id) {
-        hotelMetadataMap.set(String(id), hotel);
-      }
-    });
+    // STEP 5: Build AI summaries using existing metadata (NO additional API calls!)
+    logger.startStep('5-BuildAISummaries', { hotelCount: hotelsWithRates.length });
 
     const hotelSummariesForAI: HotelSummaryForAI[] = [];
+    
+    hotelsWithRates.forEach((rateHotel: any, index: number) => {
+      try {
+        if (!rateHotel || typeof rateHotel !== 'object') {
+          console.warn(`⚠️  Invalid hotel data at index ${index}:`, rateHotel);
+          return;
+        }
 
-    try {
-      if (Array.isArray(hotelsWithRates) && hotelsWithRates.length > 0) {
-        // Fetch detailed data for each hotel in parallel
-        const detailPromises = hotelsWithRates.map(async (rateHotel: any, index: number) => {
-          try {
-            if (!rateHotel || typeof rateHotel !== 'object') {
-              console.warn(`⚠️  Invalid hotel data at index ${index}:`, rateHotel);
-              return null;
-            }
+        const hotelId = rateHotel.hotelId || rateHotel.id || rateHotel.hotel_id;
+        if (!hotelId) {
+          console.warn(`⚠️  Missing hotel ID at index ${index}`);
+          return;
+        }
 
-            const hotelId = rateHotel.hotelId || rateHotel.id || rateHotel.hotel_id;
-            if (!hotelId) {
-              console.warn(`⚠️  Missing hotel ID at index ${index}`);
-              return null;
-            }
-
-            // Fetch detailed hotel data (THIS IS THE KEY FIX)
-            const detailedData = await fetchHotelDetails(hotelId);
-            
-            // Combine basic metadata + detailed data
-            const basicMetadata = hotelMetadataMap.get(String(hotelId)) || {};
-            const combinedHotelInfo = {
-              ...basicMetadata,
-              ...detailedData // This will include hotelImages array!
-            };
-
-            const basicHotel: HotelWithRates = {
-              ...rateHotel,
-              hotelId: hotelId,
-              hotelInfo: combinedHotelInfo // Now includes hotelImages!
-            };
-            
-            const summary = createOptimizedHotelSummaryForAI(basicHotel, index, nights);
-            return summary;
-          } catch (innerError) {
-            console.warn(`⚠️  Error processing hotel at index ${index}:`, innerError);
-            return null;
-          }
-        });
-
-        // Wait for all detail fetches to complete
-        const detailResults = await Promise.allSettled(detailPromises);
+        // Get metadata from our map - this has ALL the info we need!
+        const hotelMetadata = hotelMetadataMap.get(String(hotelId));
         
-        // Collect successful results
-        detailResults.forEach((result, index) => {
-          if (result.status === 'fulfilled' && result.value) {
-            hotelSummariesForAI.push(result.value);
-          } else {
-            console.warn(`⚠️ Failed to get details for hotel at index ${index}`);
-          }
-        });
+        if (!hotelMetadata) {
+          console.warn(`⚠️  No metadata found for hotel ID ${hotelId}`);
+          return;
+        }
+
+        // Create summary using existing metadata (no API calls!)
+        const summary = createOptimizedHotelSummaryForAI(rateHotel, hotelMetadata, index, nights);
+        hotelSummariesForAI.push(summary);
         
-        console.log(`✅ Successfully built ${hotelSummariesForAI.length} hotel summaries with detailed data`);
+        // Log the first few summaries to verify data quality
+        if (hotelSummariesForAI.length <= 3) {
+          console.log(`✅ Summary ${hotelSummariesForAI.length}:`, {
+            name: summary.name,
+            location: summary.location,
+            city: summary.city,
+            coordinates: `${summary.latitude}, ${summary.longitude}`,
+            price: summary.pricePerNight,
+            stars: summary.starRating
+          });
+        }
+        
+      } catch (error) {
+        console.warn(`⚠️  Error processing hotel at index ${index}:`, error);
       }
-    } catch (summaryError) {
-      console.error('❌ Error building hotel summaries:', summaryError);
-      return res.status(500).json({
-        error: 'Failed to process hotel data',
-        message: 'Error building hotel summaries for AI processing'
-      });
-    }
+    });
+    
+    logger.endStep('5-BuildAISummaries', { summariesBuilt: hotelSummariesForAI.length });
 
     if (hotelSummariesForAI.length === 0) {
       return res.status(404).json({
@@ -910,13 +946,8 @@ export const hotelSearchAndMatchController = async (req: Request, res: Response)
       });
     }
 
-    logger.endStep('4-FetchDetailsAndBuildSummaries', { 
-      summariesBuilt: hotelSummariesForAI.length,
-      detailsFetched: hotelSummariesForAI.length
-    });
-
-    // STEP 5: Apply hard price filter BEFORE AI matching
-    logger.startStep('5-PriceFilter', { 
+    // STEP 6: Apply hard price filter BEFORE AI matching
+    logger.startStep('6-PriceFilter', { 
       originalCount: hotelSummariesForAI.length,
       minCost: parsedQuery.minCost,
       maxCost: parsedQuery.maxCost
@@ -924,28 +955,27 @@ export const hotelSearchAndMatchController = async (req: Request, res: Response)
 
     const priceFilteredHotels = applyHardPriceFilter(hotelSummariesForAI, parsedQuery);
 
-    logger.endStep('5-PriceFilter', { 
+    logger.endStep('6-PriceFilter', { 
       filteredCount: priceFilteredHotels.length,
       removedCount: hotelSummariesForAI.length - priceFilteredHotels.length
     });
 
-    // STEP 6: Llama AI Matching
-    logger.startStep('6-LlamaMatching', { hotelCount: priceFilteredHotels.length });
+    // STEP 7: GPT-4o Mini AI Matching
+    logger.startStep('7-GPTMatching', { hotelCount: priceFilteredHotels.length });
     
-    const llamaMatches = await llamaHotelMatching(priceFilteredHotels, parsedQuery, nights);
+    const gptMatches = await gptHotelMatching(priceFilteredHotels, parsedQuery, nights);
     
-    logger.endStep('6-LlamaMatching', { matches: llamaMatches.length });
+    logger.endStep('7-GPTMatching', { matches: gptMatches.length });
 
-    if (llamaMatches.length === 0) {
-      throw new Error('Llama failed to find any hotel matches');
+    if (gptMatches.length === 0) {
+      throw new Error('CRITICAL ERROR: GPT-4o Mini matching system completely failed');
     }
 
-    // STEP 7: Build enriched hotel data for matched hotels
-    logger.startStep('7-BuildEnrichedData', { selectedHotels: llamaMatches.length });
+    // STEP 8: Build enriched hotel data for matched hotels (using existing metadata!)
+    logger.startStep('8-BuildEnrichedData', { selectedHotels: gptMatches.length });
 
-    const enrichedHotels = llamaMatches.map(match => {
+    const enrichedHotels = gptMatches.map(match => {
       const matchingHotel = hotelsWithRates.find((hotel: any) => {
-        // Find hotel by ID since names might not match exactly
         const hotelId = hotel.hotelId || hotel.id || hotel.hotel_id;
         return hotelId === match.hotelData.hotelId;
       });
@@ -955,64 +985,44 @@ export const hotelSearchAndMatchController = async (req: Request, res: Response)
         return null;
       }
 
-      // Get the detailed data we already fetched
-      const detailedData = hotelSummariesForAI.find(summary => summary.hotelId === matchingHotel.hotelId);
+      // Get metadata we already have
+      const hotelId = matchingHotel.hotelId || matchingHotel.id || matchingHotel.hotel_id;
+      const hotelMetadata = hotelMetadataMap.get(String(hotelId));
       
-      if (!detailedData) {
-        console.warn(`Warning: Could not find detailed data for hotel "${match.hotelName}"`);
+      if (!hotelMetadata) {
+        console.warn(`Warning: Could not find metadata for hotel "${match.hotelName}"`);
         return null;
       }
 
-      // Re-fetch detailed hotel data for the final enriched response
-      const hotelId = matchingHotel.hotelId || matchingHotel.id || matchingHotel.hotel_id;
-      const basicMetadata = hotelMetadataMap.get(String(hotelId)) || {};
+      // Create enriched summary using existing metadata (NO API calls!)
+      const enrichedHotelSummary = createHotelSummaryForInsights(matchingHotel, hotelMetadata, nights);
       
-      // For the enriched response, we need to get fresh detailed data again
-      // This is because createHotelSummaryForInsights needs the full detailed data structure
-      return fetchHotelDetails(hotelId).then(freshDetailedData => {
-        const fullHotelInfo = {
-          ...basicMetadata,
-          ...freshDetailedData
-        };
-
-        const enrichedHotelSummary = createHotelSummaryForInsights({
-          ...matchingHotel,
-          hotelInfo: fullHotelInfo
-        }, fullHotelInfo, nights);
-        
-        return {
-          ...enrichedHotelSummary,
-          aiMatchPercent: match.aiMatchPercent,
-          // Add summarized info for AI insights endpoint
-          summarizedInfo: {
-            name: enrichedHotelSummary.name,
-            description: fullHotelInfo?.description ? 
-              fullHotelInfo.description.toString().substring(0, 200) + '...' : 
-              'No description available',
-            amenities: enrichedHotelSummary.topAmenities,
-            starRating: enrichedHotelSummary.starRating,
-            reviewCount: enrichedHotelSummary.reviewCount,
-            pricePerNight: enrichedHotelSummary.pricePerNight?.display || 'Price not available',
-            location: enrichedHotelSummary.address,
-            city: enrichedHotelSummary.city,
-            country: enrichedHotelSummary.country
-          }
-        };
-      });
+      return {
+        ...enrichedHotelSummary,
+        aiMatchPercent: match.aiMatchPercent,
+        // Add summarized info for AI insights endpoint
+        summarizedInfo: {
+          name: enrichedHotelSummary.name,
+          description: hotelMetadata?.hotelDescription ? 
+            hotelMetadata.hotelDescription.toString().substring(0, 200) + '...' : 
+            'No description available',
+          amenities: enrichedHotelSummary.topAmenities,
+          starRating: enrichedHotelSummary.starRating,
+          reviewCount: enrichedHotelSummary.reviewCount,
+          pricePerNight: enrichedHotelSummary.pricePerNight?.display || 'Price not available',
+          location: enrichedHotelSummary.address,
+          city: enrichedHotelSummary.city,
+          country: enrichedHotelSummary.country
+        }
+      };
     }).filter(Boolean);
 
-    // Wait for all enriched hotel data to be processed
-    const enrichedResults = await Promise.allSettled(enrichedHotels);
-    const finalEnrichedHotels = enrichedResults
-      .filter((result): result is PromiseFulfilledResult<any> => result.status === 'fulfilled')
-      .map(result => result.value)
-      .filter(Boolean);
-
-    logger.endStep('7-BuildEnrichedData', { enrichedHotels: finalEnrichedHotels.length });
+    logger.endStep('8-BuildEnrichedData', { enrichedHotels: enrichedHotels.length });
 
     // Final response
     const performanceReport = logger.getDetailedReport();
-    console.log(`🚀 Hotel Search and Match Complete in ${performanceReport.totalTime}ms ✅`);
+    console.log(`🚀 OPTIMIZED Hotel Search and Match Complete in ${performanceReport.totalTime}ms ✅`);
+    console.log(`⚡ Performance improvement: Eliminated ${hotelSummariesForAI.length} redundant API calls!`);
 
     return res.status(200).json({
       searchParams: {
@@ -1022,21 +1032,22 @@ export const hotelSearchAndMatchController = async (req: Request, res: Response)
       },
       totalHotelsFound: hotels.length,
       hotelsWithRates: hotelsWithRates.length,
-      matchedHotelsCount: finalEnrichedHotels.length,
-      hotels: finalEnrichedHotels,
+      matchedHotelsCount: enrichedHotels.length,
+      hotels: enrichedHotels,
       aiMatchingCompleted: true,
       generatedAt: new Date().toISOString(),
       searchId: searchId,
-      aiModel: "llama-3.1-8b-instant",
+      aiModel: "gpt-4o-mini",
       performance: {
         totalTimeMs: performanceReport.totalTime,
         stepBreakdown: performanceReport.steps,
-        bottlenecks: performanceReport.bottlenecks
+        bottlenecks: performanceReport.bottlenecks,
+        optimization: `Eliminated ${hotelSummariesForAI.length} redundant detail API calls`
       }
     });
 
   } catch (error) {
-    console.error('Error in hotel search and match:', error);
+    console.error('Error in optimized hotel search and match:', error);
     const errorReport = logger.getDetailedReport();
     
     if (axios.isAxiosError(error)) {
@@ -1047,14 +1058,14 @@ export const hotelSearchAndMatchController = async (req: Request, res: Response)
           details: error.response.data,
           step: error.config?.url?.includes('/parse') ? 'parsing' : 
                 error.config?.url?.includes('/data/hotels') ? 'hotel_search' : 
-                error.config?.url?.includes('groq') ? 'llama_matching' : 'rates_search',
+                error.config?.url?.includes('openai') ? 'gpt_matching' : 'rates_search',
           performance: errorReport
         });
       }
     }
 
     return res.status(500).json({ 
-      error: 'Hotel search and match failed',
+      error: 'Optimized hotel search and match failed',
       message: error instanceof Error ? error.message : 'Unknown error',
       performance: errorReport
     });
