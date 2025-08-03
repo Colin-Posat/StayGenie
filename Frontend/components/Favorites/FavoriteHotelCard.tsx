@@ -44,6 +44,7 @@ const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
 }) => {
   const fadeAnimation = useRef(new Animated.Value(0)).current;
   const scaleAnimation = useRef(new Animated.Value(0.8)).current;
+  const [textHeight, setTextHeight] = useState(0);
 
   useEffect(() => {
     if (isVisible) {
@@ -78,9 +79,18 @@ const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
 
   if (!isVisible) return null;
 
-  // Calculate modal dimensions based on card size
+  // Calculate modal dimensions based on card size - match exact card dimensions
   const modalWidth = cardLayout ? cardLayout.width : 300;
-  const modalHeight = cardLayout ? Math.min(cardLayout.height, 200) : 140;
+  const baseModalHeight = cardLayout ? cardLayout.height : 140;
+  
+  // Estimate if text will wrap (rough calculation based on character count and modal width)
+  const textContent = `Remove "${hotelName}" from your favorites?`;
+  const estimatedTextWidth = textContent.length * 8; // rough estimate: 8px per character
+  const availableTextWidth = modalWidth - 48; // subtract padding
+  const willTextWrap = estimatedTextWidth > availableTextWidth;
+  
+  // Add extra height if text will wrap to second line
+  const modalHeight = willTextWrap ? baseModalHeight + 24 : baseModalHeight;
 
   return (
     <View
@@ -91,7 +101,7 @@ const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
           tw`bg-white rounded-xl p-6 border border-gray-200 shadow-xl`,
           { 
             width: modalWidth,
-            minHeight: modalHeight,
+            height: modalHeight,
             transform: [{ scale: scaleAnimation }],
             opacity: fadeAnimation,
           }
@@ -100,9 +110,11 @@ const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
         <Text style={tw`text-lg font-semibold text-black mb-2`}>
           Remove from Favorites
         </Text>
-        <Text style={tw`text-gray-600 text-sm mb-6 flex-1`}>
-          Remove "{hotelName}" from your favorites?
-        </Text>
+        <View style={tw`mb-6`}>
+          <Text style={tw`text-gray-600 text-sm leading-5`}>
+            Remove "{hotelName}" from your favorites?
+          </Text>
+        </View>
         
         <View style={tw`flex-row justify-end gap-3`}>
           <TouchableOpacity
