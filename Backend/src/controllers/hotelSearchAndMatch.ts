@@ -846,13 +846,13 @@ export const hotelSearchAndMatchController = async (req: Request, res: Response)
   checkout: parsedQuery.checkout,
   currency: 'USD',
   guestNationality: 'US',
-  occupancies: [
+  occupancies: [ 
     {
       adults: parsedQuery.adults || 2,
       children: parsedQuery.children ? Array(parsedQuery.children).fill(10) : []
     }
   ],
-  timeout: 6, // Reduced to 3 seconds
+  timeout: 3, // Reduced to 3 seconds
   maxRatesPerHotel: 1, // Only get cheapest rate per hotel
   hotelIds: hotelIds
 };
