@@ -206,7 +206,7 @@ class PerformanceLogger {
 
 // Configuration
 const SENTIMENT_FETCH_TIMEOUT = 8000;
-const AI_INSIGHTS_CONCURRENCY = parseInt(process.env.AI_INSIGHTS_CONCURRENCY || '4');
+const AI_INSIGHTS_CONCURRENCY = 5;
 
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY
@@ -366,7 +366,7 @@ Use the COORDINATES and FULL ADDRESS to identify real nearby attractions with ac
 
 Return JSON:
 {
-  "whyItMatches": "25 words max - why it fits their specific request ${userQuery} and why its a great choice",
+  "whyItMatches": "25 words max - why it fits their specific request ${userQuery} and why its a great choice.",
   "funFacts": ["fact1", "fact2"],
   "nearbyAttractions": [
     "attraction name - brief description - X min by transportation_mode",
@@ -374,6 +374,13 @@ Return JSON:
   ],
   "locationHighlight": "key location advantage based on coordinates/address"
 }
+CRITICAL:
+If what the user request in ${userQuery} is in the description mention it in the whyItMatches.
+Do not say anything on whyItMatches that is not mentioned in the decription ${summary.description} unless is is obvious or you are very sure about it.
+If something is not mentioned in the description, do not make it up. Instead say WHAT THE USER REQUESTED is not specifically mentioned.
+make sure it is still around 20 words and very engaging like a fun travel agent! 
+
+In Why is matches always start with the hotel name UNLESSS something is not mentioned in the description, then start with while then say WHAT THE USER REQUESTED is not specifically mentioned
 
 CRITICAL: nearbyAttractions MUST follow this EXACT format:
 "Attraction Name - brief description - X min by walk/metro/bus/taxi"
@@ -407,6 +414,12 @@ Return JSON:
   ],
   "locationHighlight": "key location advantage"
 }
+CRITICAL:
+Do not say anything on whyItMatches that is not mentioned in the decription ${summary.description} unless is is obvious or you are very sure about it.
+If something is not mentioned in the description, do not make it up. Instead say WHAT THE USER REQUESTED is not specifically mentioned (MAKE SURE IT IS CLEAR WHAT IS NOT SPECIFIALLY MENTIONED).
+make sure it is still around 20 words and very engaging like a fun travel agent! 
+
+In Why is matches always start with the hotel name UNLESSS something is not mentioned in the description, then start with while then say WHAT THE USER REQUESTED is not specifically mentioned
 
 CRITICAL: nearbyAttractions MUST follow this EXACT format:
 "Attraction Name - brief description - X min by walk/metro/bus/taxi"

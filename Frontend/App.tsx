@@ -3,6 +3,7 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
+import { Image } from 'react-native';
 
 // Import your screen components
 import InitialSearchScreen from './screens/InitialSearchScreen';
@@ -37,21 +38,31 @@ const FindStackNavigator = () => {
 const TabNavigator = () => {
   return (
     <Tab.Navigator
+      initialRouteName="Find"
       screenOptions={({ route }) => ({
         tabBarIcon: ({ focused, color, size }) => {
-          let iconName: keyof typeof Ionicons.glyphMap;
-          
-          if (route.name === 'Find') {
-            iconName = focused ? 'search' : 'search-outline';
-          } else if (route.name === 'Favorites') {
-            iconName = focused ? 'heart' : 'heart-outline';
+          if (route.name === 'Favorites') {
+            const iconName: keyof typeof Ionicons.glyphMap = focused ? 'heart' : 'heart-outline';
+            return <Ionicons name={iconName} size={20} color={color} />;
+          } else if (route.name === 'Find') {
+            // Use custom logo for the Find tab
+            return (
+              <Image
+                source={require('./assets/images/logo.png')}
+                style={{
+                  width: 20,
+                  height: 20,
+                  opacity: focused ? 1 : 0.6, // Use opacity instead of tint
+                }}
+                resizeMode="contain"
+              />
+            );
           } else if (route.name === 'Profile') {
-            iconName = focused ? 'person' : 'person-outline';
+            const iconName: keyof typeof Ionicons.glyphMap = focused ? 'person' : 'person-outline';
+            return <Ionicons name={iconName} size={20} color={color} />;
           } else {
-            iconName = 'help-outline';
+            return <Ionicons name="help-outline" size={20} color={color} />;
           }
-          
-          return <Ionicons name={iconName} size={20} color={color} />;
         },
         tabBarActiveTintColor: '#000000',
         tabBarInactiveTintColor: '#666666',
@@ -71,17 +82,17 @@ const TabNavigator = () => {
       })}
     >
       <Tab.Screen 
-        name="Find" 
-        component={FindStackNavigator}
-        options={{
-          tabBarLabel: 'Find',
-        }}
-      />
-      <Tab.Screen 
         name="Favorites" 
         component={FavoritesScreen}
         options={{
           tabBarLabel: 'Favorites',
+        }}
+      />
+      <Tab.Screen 
+        name="Find" 
+        component={FindStackNavigator}
+        options={{
+          tabBarLabel: 'Genie',
         }}
       />
       <Tab.Screen 

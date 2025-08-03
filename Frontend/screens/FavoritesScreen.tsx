@@ -1,4 +1,4 @@
-// FavoritesScreen.tsx - Clean turquoise design with enhanced UX
+// FavoritesScreen.tsx - Clean turquoise design with enhanced UX and city sorting
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   View,
@@ -27,6 +27,9 @@ const TURQUOISE = '#1df9ff';
 const TURQUOISE_LIGHT = '#5dfbff';
 const TURQUOISE_DARK = '#00d4e6';
 const BLACK = "#000000";
+
+// Updated sort options to include city
+type SortOption = 'recent' | 'name' | 'city' | 'location';
 
 // Clean empty state with turquoise accents
 const EmptyFavorites: React.FC<{ onExplore: () => void }> = ({ onExplore }) => {
@@ -115,18 +118,19 @@ const EmptyFavorites: React.FC<{ onExplore: () => void }> = ({ onExplore }) => {
   );
 };
 
-// Clean header with turquoise accents
+// Clean header with turquoise accents and enhanced city sorting
 const FavoritesHeader: React.FC<{
   count: number;
   onRefresh: () => void;
   isRefreshing: boolean;
   onSort: () => void;
-  sortBy: 'recent' | 'name' | 'location';
+  sortBy: SortOption;
 }> = ({ count, onRefresh, isRefreshing, onSort, sortBy }) => {
   const getSortIcon = () => {
     switch (sortBy) {
       case 'recent': return 'time-outline';
       case 'name': return 'text-outline';
+      case 'city': return 'business-outline';
       case 'location': return 'location-outline';
       default: return 'swap-vertical-outline';
     }
@@ -136,6 +140,7 @@ const FavoritesHeader: React.FC<{
     switch (sortBy) {
       case 'recent': return 'Recently Added';
       case 'name': return 'Hotel Name';
+      case 'city': return 'City';
       case 'location': return 'Location';
       default: return 'Sort';
     }
@@ -306,18 +311,39 @@ const FavoritesScreen = () => {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [favoritesCount, setFavoritesCount] = useState(0);
   const [error, setError] = useState<string | null>(null);
-  const [sortBy, setSortBy] = useState<'recent' | 'name' | 'location'>('recent');
+  // Changed default sort to 'city'
+  const [sortBy, setSortBy] = useState<SortOption>('city');
 
   const favoritesCache = useRef(FavoritesCache.getInstance()).current;
 
-  // Enhanced sort function
-  const sortFavorites = useCallback((hotels: FavoritedHotel[], sortType: 'recent' | 'name' | 'location') => {
+  // Helper function to extract city from location string
+  const extractCity = useCallback((location: string | undefined): string => {
+    if (!location) return 'Unknown';
+    
+    // Common patterns for extracting city:
+    // "New York, NY" -> "New York"
+    // "Paris, France" -> "Paris"
+    // "Los Angeles, CA, USA" -> "Los Angeles"
+    // "Tokyo" -> "Tokyo"
+    
+    const parts = location.split(',');
+    return parts[0].trim() || 'Unknown';
+  }, []);
+
+  // Enhanced sort function with city sorting
+  const sortFavorites = useCallback((hotels: FavoritedHotel[], sortType: SortOption) => {
     const sorted = [...hotels].sort((a, b) => {
       switch (sortType) {
         case 'recent':
           return new Date(b.addedAt).getTime() - new Date(a.addedAt).getTime();
         case 'name':
           return a.name.localeCompare(b.name);
+        case 'city':
+          const cityA = extractCity(a.location);
+          const cityB = extractCity(b.location);
+          // Sort by city first, then by hotel name within the same city
+          const cityCompare = cityA.localeCompare(cityB);
+          return cityCompare !== 0 ? cityCompare : a.name.localeCompare(b.name);
         case 'location':
           return (a.location || '').localeCompare(b.location || '');
         default:
@@ -325,7 +351,7 @@ const FavoritesScreen = () => {
       }
     });
     return sorted;
-  }, []);
+  }, [extractCity]);
 
   // Enhanced load favorites with sorting
   const loadFavorites = useCallback(async () => {
@@ -344,7 +370,7 @@ const FavoritesScreen = () => {
       
       const sortedFavorites = sortFavorites(cachedFavorites, sortBy);
       
-      console.log(`📱 Loaded ${sortedFavorites.length} favorites`);
+      console.log(`📱 Loaded ${sortedFavorites.length} favorites, sorted by ${sortBy}`);
       
       // Smooth transition for data updates
       if (Platform.OS === 'ios') {
@@ -377,9 +403,12 @@ const FavoritesScreen = () => {
     }
   }, [loadFavorites]);
 
-  // Enhanced sort handler
+  // Enhanced sort handler with city option
   const handleSort = useCallback(() => {
-    const nextSort = sortBy === 'recent' ? 'name' : sortBy === 'name' ? 'location' : 'recent';
+    const sortOrder: SortOption[] = ['city', 'recent', 'name', 'location'];
+    const currentIndex = sortOrder.indexOf(sortBy);
+    const nextSort = sortOrder[(currentIndex + 1) % sortOrder.length];
+    
     setSortBy(nextSort);
     
     if (Platform.OS === 'ios') {

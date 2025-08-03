@@ -365,6 +365,7 @@ const createOptimizedHotelSummaryForAI = (hotel: HotelWithRates, hotelMetadata: 
   // Use hotelDescription from initial API call and truncate for faster processing
   const shortDescription = hotelInfo.hotelDescription || hotelInfo.description || 'No description available';
 
+
   let displayPrice = pricePerNightInfo;
   if (suggestedPrice && priceProvider) {
     displayPrice = `${pricePerNightInfo} (${priceProvider})`;
