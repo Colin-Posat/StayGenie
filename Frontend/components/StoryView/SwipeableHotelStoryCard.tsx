@@ -305,7 +305,11 @@ const isStage1Data = (hotel: Hotel): boolean => {
 
 const generateAIInsight = (hotel: Hotel, insightsStatus?: string): string => {
   if (insightsStatus === 'loading' || isStage1Data(hotel)) {
-    return "AI is analyzing this hotel...";
+    return "Loading AI insights..."; // Simple loading text
+  }
+  
+  if (insightsStatus === 'partial') {
+    return "✨ Generating detailed insights..."; // Simple partial text
   }
   
   if (hotel.whyItMatches && !hotel.whyItMatches.includes('progress') && !hotel.whyItMatches.includes('loading')) {
@@ -341,13 +345,8 @@ const generateAIInsight = (hotel: Hotel, insightsStatus?: string): string => {
     }
   }
 
-  if (insightsStatus === 'partial') {
-    return "✨ AI analysis in progress - detailed insights coming soon...";
-  }
-
   return "Quality hotel choice with excellent amenities and service";
 };
-
 const generateReviewSummary = (hotel: Hotel, insightsStatus?: string): string => {
   if (insightsStatus === 'loading' || (hotel.guestInsights && hotel.guestInsights.includes('Loading'))) {
     return "Loading detailed guest sentiment analysis...";
@@ -1296,17 +1295,6 @@ const SwipeableHotelStoryCard: React.FC<SwipeableHotelStoryCardProps> = ({
       
       {/* UPDATED: Action Section with new deep link button */}
       <View style={tw`bg-white rounded-b-2xl`}>
-        
-        {insightsStatus === 'partial' && !isInsightsLoading && (
-          <View style={tw`px-4 py-2 bg-amber-50 border-b border-amber-100`}>
-            <View style={tw`flex-row items-center`}>
-              <Ionicons name="time" size={14} color="#F59E0B" />
-              <Text style={tw`text-amber-600 text-xs font-medium ml-2`}>
-                Partial insights loaded - detailed analysis completing...
-              </Text>
-            </View>
-          </View>
-        )}
         
         {/* UPDATED: Three-button layout with deep link button */}
         <View style={tw`flex-row items-center px-4 py-3 gap-2`}>

@@ -352,80 +352,6 @@ const [firstHotelFound, setFirstHotelFound] = useState(false);
     };
   }, []);
 
-const executeStreamingSearch = async (userInput: string) => {
-  if (!userInput.trim()) return;
-
-  try {
-    console.log('🌊 Starting Enhanced Streaming Search with Auto-Insights...');
-    setIsSearching(true);
-    setIsStreamingSearch(true);
-    setFirstHotelFound(false);
-    setStreamingProgress({ step: 0, totalSteps: 10, message: 'Starting search...' }); // Increased for insights
-    
-    // Clear previous results
-    setDisplayHotels([]);
-    setStage1Results(null);
-    setStage2Results(null);
-
-    const response = await fetch(`${BASE_URL}/api/hotels/search-and-match`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'text/event-stream',
-      },
-      body: JSON.stringify({ 
-        userInput: userInput,
-        enableStreaming: true,
-        includeStage1Data: true // NEW: Request Stage 1 data for insights
-      }),
-    });
-
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-
-    const reader = response.body?.getReader();
-    const decoder = new TextDecoder();
-
-    if (!reader) {
-      throw new Error('No response body');
-    }
-
-    let buffer = '';
-
-    while (true) {
-      const { done, value } = await reader.read();
-      
-      if (done) {
-        console.log('✅ Streaming complete');
-        break;
-      }
-
-      buffer += decoder.decode(value, { stream: true });
-      
-      const lines = buffer.split('\n');
-      buffer = lines.pop() || '';
-
-      for (const line of lines) {
-        if (line.startsWith('data: ')) {
-          try {
-            const data = JSON.parse(line.slice(6));
-            await handleStreamingUpdate(data, userInput); // Pass userInput for insights
-          } catch (parseError) {
-            console.warn('Failed to parse streaming data:', parseError);
-          }
-        }
-      }
-    }
-
-  } catch (error: any) {
-    console.error('💥 Enhanced streaming search failed:', error);
-    Alert.alert('Search Failed', error.message, [{ text: 'OK' }]);
-  } finally {
-    setIsStreamingSearch(false);
-  }
-};
-
 const handleStreamingUpdate = async (data: any, userInput?: string) => {
   console.log('📡 Streaming update received:', data.type);
 
@@ -433,7 +359,7 @@ const handleStreamingUpdate = async (data: any, userInput?: string) => {
     case 'progress':
       setStreamingProgress({
         step: data.step || 0,
-        totalSteps: data.totalSteps || 10, // Increased for insights
+        totalSteps: data.totalSteps || 8,
         message: data.message || 'Processing...'
       });
       break;
@@ -449,10 +375,9 @@ const handleStreamingUpdate = async (data: any, userInput?: string) => {
           setIsSearching(false); // ⚡ IMMEDIATELY dismiss main loading screen
           setDisplayHotels([newHotel]); // Show just the first hotel
           
-          // Show excitement alert for first result
           Alert.alert(
             'Perfect Match Found! 🎯',
-            `${newHotel.name} (${newHotel.aiMatchPercent}% match)\n\n🌊 ${data.totalExpected - 1} more hotels streaming in...`,
+            `${newHotel.name} (${newHotel.aiMatchPercent}% match)\n\n🌊 More hotels streaming in with AI insights...`,
             [{ text: 'View Hotel' }]
           );
         } else {
@@ -482,116 +407,71 @@ const handleStreamingUpdate = async (data: any, userInput?: string) => {
       }
       break;
 
+    // 🔥 NEW: Handle enhanced hotels with AI insights
+    case 'hotel_enhanced':
+      if (data.hotel && data.hotelId) {
+        console.log(`✨ Received AI-enhanced hotel: ${data.hotel.name}`);
+        
+        const enhancedHotel = convertStreamedHotelToDisplay(data.hotel, data.hotelIndex - 1);
+        
+        setDisplayHotels(prevHotels => {
+          const updatedHotels = [...prevHotels];
+          const existingIndex = updatedHotels.findIndex(h => h.id === data.hotelId);
+          
+          if (existingIndex >= 0) {
+            // Replace with AI-enhanced version
+            updatedHotels[existingIndex] = {
+              ...updatedHotels[existingIndex],
+              ...enhancedHotel,
+              // Specifically update AI-generated content
+              aiExcerpt: enhancedHotel.whyItMatches || enhancedHotel.aiExcerpt,
+              whyItMatches: enhancedHotel.whyItMatches || "Enhanced with AI insights",
+              funFacts: enhancedHotel.funFacts || ["AI-curated facts"],
+              guestInsights: enhancedHotel.guestInsights || "AI-enhanced guest insights",
+              nearbyAttractions: enhancedHotel.nearbyAttractions || ["AI-found attractions"],
+              locationHighlight: enhancedHotel.locationHighlight || "AI-analyzed location"
+            };
+            
+            console.log(`🎨 Enhanced existing hotel with AI insights: ${data.hotel.name}`);
+            
+            // Show subtle notification for enhancement (optional)
+            if (data.hotelIndex <= 3) { // Only for first 3 hotels to avoid spam
+              console.log(`✨ Hotel ${data.hotelIndex} enhanced: ${data.hotel.name}`);
+            }
+          } else {
+            console.warn(`⚠️ Could not find hotel ${data.hotelId} to enhance`);
+          }
+          
+          // Sort by AI match percentage (best matches first)
+          return updatedHotels.sort((a, b) => (b.aiMatchPercent || 0) - (a.aiMatchPercent || 0));
+        });
+      }
+      break;
+
     case 'complete':
-      console.log('🎉 All hotels found and displayed!');
+      console.log('🎉 All hotels found and AI-enhanced!');
       
-      // Update progress for insights phase
       setStreamingProgress({
         step: 8,
-        totalSteps: 10,
-        message: 'Hotels loaded! Starting AI insights...'
+        totalSteps: 8,
+        message: 'All hotels enhanced with AI insights!'
       });
       
       if (data.searchId) {
         setCurrentSearchId(data.searchId);
       }
 
-      // 🧠 NEW: Automatically start Stage 2 AI insights if Stage 1 data is available
-      if (data.stage1Data && userInput) {
-        console.log('🧠 Stage 1 data received, starting AI insights automatically...');
-        console.log('📦 Stage 1 data structure:', data.stage1Data);
-        
-        setIsInsightsLoading(true);
-        
-        // Update progress to show insights starting
-        setStreamingProgress({
-          step: 9,
-          totalSteps: 10,
-          message: 'Generating AI insights for your hotels...'
-        });
-        
-        try {
-          // Store Stage 1 results for UI state
-          setStage1Results(data.stage1Data);
-          
-          // Update dates and guest info from Stage 1 data
-          if (data.stage1Data.searchParams) {
-            const params = data.stage1Data.searchParams;
-            if (params.checkin) {
-              setCheckInDate(new Date(params.checkin));
-            }
-            if (params.checkout) {
-              setCheckOutDate(new Date(params.checkout));
-            }
-            if (params.adults) {
-              setAdults(params.adults);
-            }
-            if (params.children) {
-              setChildren(params.children);
-            }
-          }
-          
-          // 🚀 Execute Stage 2 insights using the Stage 1 data
-          console.log('🧠 Calling executeStage2Insights with Stage 1 data...');
-          await executeStage2Insights(data.stage1Data, userInput);
-          
-          // Final completion
-          setStreamingProgress({
-            step: 10,
-            totalSteps: 10,
-            message: 'AI insights complete! ✨'
-          });
-          
-          console.log('✅ AI insights completed after streaming');
-          
-          // Show completion notification
-          Alert.alert(
-            'Enhanced Results Ready! ✨',
-            `All ${data.totalHotels} hotels now have detailed AI insights and recommendations!`,
-            [{ text: 'Explore Hotels' }]
-          );
-          
-        } catch (insightsError: any) {
-          console.error('❌ AI insights failed after streaming:', insightsError);
-          
-          // Update progress to show completion despite insights failure
-          setStreamingProgress({
-            step: 10,
-            totalSteps: 10,
-            message: 'Hotels ready (insights unavailable)'
-          });
-          
-          Alert.alert(
-            'Hotels Ready! 🏨',
-            `Found ${data.totalHotels} great hotels. AI insights temporarily unavailable.\n\nError: ${insightsError.message}`,
-            [{ text: 'View Hotels' }]
-          );
-        } finally {
-          setIsInsightsLoading(false);
-        }
-      } else {
-        // No Stage 1 data available, just show hotels
-        console.log(`🏁 Streaming complete without insights: ${data.totalHotels} hotels`);
-        console.log('⚠️ Stage 1 data not available:', { hasStage1Data: !!data.stage1Data, hasUserInput: !!userInput });
-        
-        setStreamingProgress({
-          step: 10,
-          totalSteps: 10,
-          message: 'All hotels loaded!'
-        });
-        
-        Alert.alert(
-          'Hotels Found! 🎯',
-          `Found ${data.totalHotels} perfect matches!\n\n⚡ Fast search (${data.performance?.totalTimeMs}ms)`,
-          [{ text: 'View Hotels' }]
-        );
-      }
+      // Show completion notification
+      Alert.alert(
+        'Enhanced Results Ready! ✨',
+        `All ${data.totalHotels} hotels found with real-time AI insights!\n\n⚡ Lightning fast (${data.performance?.totalTimeMs}ms)`,
+        [{ text: 'Explore Hotels' }]
+      );
       break;
 
     case 'error':
       console.error('❌ Streaming error:', data.message);
-      setIsSearching(false); // Make sure loading screen is dismissed
-      setIsInsightsLoading(false); // Stop insights loading
+      setIsSearching(false);
       Alert.alert('Search Error', data.message, [{ text: 'OK' }]);
       break;
 
@@ -600,36 +480,8 @@ const handleStreamingUpdate = async (data: any, userInput?: string) => {
   }
 };
 
-  // API request helper
-  const makeRequest = async (endpoint: string, data?: any) => {
-    try {
-      const config: RequestInit = {
-        method: data ? 'POST' : 'GET',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      };
-
-      if (data) {
-        config.body = JSON.stringify(data);
-      }
-
-      const response = await fetch(`${BASE_URL}${endpoint}`, config);
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.error || errorData.message || `HTTP error! status: ${response.status}`);
-      }
-
-      return await response.json();
-    } catch (error: any) {
-      console.error(`❌ API Error: ${error.message}`);
-      throw error;
-    }
-  };
-
 const convertStreamedHotelToDisplay = (streamedHotel: any, index: number): Hotel => {
-  console.log('🔄 Converting streamed hotel for immediate display:', streamedHotel.name);
+  console.log('🔄 Converting streamed hotel:', streamedHotel.name);
 
   const getHotelImage = (hotel: any): string => {
     const defaultImage = "https://images.unsplash.com/photo-1564501049412-61c2a3083791?auto=format&fit=crop&w=800&q=80";
@@ -654,6 +506,11 @@ const convertStreamedHotelToDisplay = (streamedHotel: any, index: number): Hotel
     priceComparison = streamedHotel.pricePerNight.display || `${price}/night`;
   }
 
+  // Handle both basic hotels and AI-enhanced hotels
+  const isAIEnhanced = streamedHotel.whyItMatches && 
+                      !streamedHotel.whyItMatches.includes('Analyzing') && 
+                      !streamedHotel.whyItMatches.includes('progress');
+
   return {
     id: streamedHotel.hotelId || streamedHotel.id,
     name: streamedHotel.name,
@@ -670,13 +527,40 @@ const convertStreamedHotelToDisplay = (streamedHotel: any, index: number): Hotel
     location: streamedHotel.address || streamedHotel.summarizedInfo?.location || 'Prime location',
     features: streamedHotel.amenities || streamedHotel.topAmenities || ["Excellent features"],
     
-    // AI content - rich and immediate
-    aiExcerpt: streamedHotel.whyItMatches || "Perfect match for your preferences!",
-    whyItMatches: streamedHotel.whyItMatches || "Excellent choice based on your specific needs",
-    funFacts: streamedHotel.funFacts || ["Modern luxury facilities", "Prime location", "Excellent guest reviews"],
-    guestInsights: streamedHotel.guestInsights || "Guests consistently praise the exceptional service and perfect location",
-    nearbyAttractions: streamedHotel.nearbyAttractions || [`${streamedHotel.city || 'City'} center`, "Local attractions"],
-    locationHighlight: streamedHotel.locationHighlight || "Prime location with easy access to everything",
+    // AI content - use enhanced if available, otherwise show loading
+    aiExcerpt: isAIEnhanced 
+      ? streamedHotel.whyItMatches 
+      : streamedHotel.whyItMatches?.includes('Analyzing') 
+        ? streamedHotel.whyItMatches 
+        : "Perfect match for your preferences!",
+        
+    whyItMatches: isAIEnhanced 
+      ? streamedHotel.whyItMatches 
+      : streamedHotel.whyItMatches || "Analyzing match reasons...",
+      
+    funFacts: isAIEnhanced 
+      ? streamedHotel.funFacts 
+      : streamedHotel.funFacts?.includes?.('Generating') 
+        ? streamedHotel.funFacts 
+        : ["Modern luxury facilities", "Prime location", "Excellent guest reviews"],
+        
+    guestInsights: isAIEnhanced 
+      ? streamedHotel.guestInsights 
+      : streamedHotel.guestInsights?.includes?.('Processing') 
+        ? streamedHotel.guestInsights 
+        : "Guests consistently praise the exceptional service and perfect location",
+        
+    nearbyAttractions: isAIEnhanced 
+      ? streamedHotel.nearbyAttractions 
+      : streamedHotel.nearbyAttractions?.includes?.('Finding') 
+        ? streamedHotel.nearbyAttractions 
+        : [`${streamedHotel.city || 'City'} center`, "Local attractions"],
+        
+    locationHighlight: isAIEnhanced 
+      ? streamedHotel.locationHighlight 
+      : streamedHotel.locationHighlight?.includes?.('Analyzing') 
+        ? streamedHotel.locationHighlight 
+        : "Prime location with easy access to everything",
     
     // Match data
     aiMatchPercent: streamedHotel.aiMatchPercent,
@@ -701,6 +585,81 @@ const convertStreamedHotelToDisplay = (streamedHotel: any, index: number): Hotel
     refundableTag: streamedHotel.refundableTag,
     refundableInfo: streamedHotel.refundableInfo || streamedHotel.summarizedInfo?.refundableInfo
   };
+};
+
+// UPDATED: Simplified executeStreamingSearch for real-time insights
+const executeStreamingSearch = async (userInput: string) => {
+  if (!userInput.trim()) return;
+
+  try {
+    console.log('🌊 Starting Real-time Streaming Search with Immediate AI Insights...');
+    setIsSearching(true);
+    setIsStreamingSearch(true);
+    setFirstHotelFound(false);
+    setStreamingProgress({ step: 0, totalSteps: 8, message: 'Starting search...' });
+    
+    // Clear previous results
+    setDisplayHotels([]);
+    setStage1Results(null);
+    setStage2Results(null);
+
+    const response = await fetch(`${BASE_URL}/api/hotels/search-and-match`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'text/event-stream',
+      },
+      body: JSON.stringify({ 
+        userInput: userInput,
+        enableStreaming: true
+        // No need for includeStage1Data since we're doing real-time insights
+      }),
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const reader = response.body?.getReader();
+    const decoder = new TextDecoder();
+
+    if (!reader) {
+      throw new Error('No response body');
+    }
+
+    let buffer = '';
+
+    while (true) {
+      const { done, value } = await reader.read();
+      
+      if (done) {
+        console.log('✅ Real-time streaming complete');
+        break;
+      }
+
+      buffer += decoder.decode(value, { stream: true });
+      
+      const lines = buffer.split('\n');
+      buffer = lines.pop() || '';
+
+      for (const line of lines) {
+        if (line.startsWith('data: ')) {
+          try {
+            const data = JSON.parse(line.slice(6));
+            await handleStreamingUpdate(data, userInput);
+          } catch (parseError) {
+            console.warn('Failed to parse streaming data:', parseError);
+          }
+        }
+      }
+    }
+
+  } catch (error: any) {
+    console.error('💥 Real-time streaming search failed:', error);
+    Alert.alert('Search Failed', error.message, [{ text: 'OK' }]);
+  } finally {
+    setIsStreamingSearch(false);
+  }
 };
 
   // TEST MODE: Load pre-loaded AI suggestions
@@ -1419,6 +1378,34 @@ const convertRecommendationToDisplayHotel = (recommendation: HotelRecommendation
     }
   };
 
+  const makeRequest = async (endpoint: string, data?: any) => {
+  try {
+    const config: RequestInit = {
+      method: data ? 'POST' : 'GET',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    };
+
+    if (data) {
+      config.body = JSON.stringify(data);
+    }
+
+    const response = await fetch(`${BASE_URL}${endpoint}`, config);
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.error || errorData.message || `HTTP error! status: ${response.status}`);
+    }
+
+    return await response.json();
+  } catch (error: any) {
+    console.error(`❌ API Error: ${error.message}`);
+    throw error;
+  }
+};
+  
+
   // MAIN SEARCH FUNCTION - routes to test, two-stage, or legacy
 const executeSearch = async (userInput: string) => {
   if (TEST_MODE) {
@@ -1557,8 +1544,16 @@ const handleViewDetails = useCallback((hotel: Hotel) => {
     detailsMessage += `🤖 AI Analysis:\n`;
     detailsMessage += `• Match Score: ${hotel.aiMatchPercent}%\n`;
     detailsMessage += `• Match Type: ${hotel.matchType || 'good'}\n`;
-    if (hotel.whyItMatches && !hotel.whyItMatches.includes('progress')) {
+    
+    const hasEnhancedInsights = hotel.whyItMatches && 
+                                !hotel.whyItMatches.includes('Analyzing') && 
+                                !hotel.whyItMatches.includes('progress');
+    
+    if (hasEnhancedInsights) {
       detailsMessage += `• Why it matches: ${hotel.whyItMatches}\n`;
+      detailsMessage += `• ✨ Real-time AI insights active\n`;
+    } else {
+      detailsMessage += `• 🔄 AI insights generating...\n`;
     }
     detailsMessage += `\n`;
   }
@@ -1578,7 +1573,7 @@ const handleViewDetails = useCallback((hotel: Hotel) => {
   }
   detailsMessage += `• Transit: ${hotel.transitDistance}\n\n`;
   
-  if (hotel.nearbyAttractions && hotel.nearbyAttractions.length > 0 && !hotel.nearbyAttractions[0].includes('Loading')) {
+  if (hotel.nearbyAttractions && hotel.nearbyAttractions.length > 0 && !hotel.nearbyAttractions[0].includes('Finding')) {
     detailsMessage += `🗺️ Nearby Attractions:\n`;
     hotel.nearbyAttractions.forEach(attraction => {
       detailsMessage += `• ${attraction}\n`;
@@ -1591,10 +1586,11 @@ const handleViewDetails = useCallback((hotel: Hotel) => {
   detailsMessage += `• Guest Reviews: ${hotel.reviews.toLocaleString()} reviews\n`;
   detailsMessage += `• Safety Rating: ${hotel.safetyRating.toFixed(1)}/10\n\n`;
   
-  if (isInsightsLoading && hotel.guestInsights?.includes('Loading')) {
-    detailsMessage += `💬 Guest Insights:\nGenerating AI insights...\n\n`;
-  } else if (hotel.guestInsights && !hotel.guestInsights.includes('Loading')) {
-    detailsMessage += `💬 Guest Insights:\n${hotel.guestInsights}\n\n`;
+  const hasEnhancedGuestInsights = hotel.guestInsights && !hotel.guestInsights.includes('Processing');
+  if (hasEnhancedGuestInsights) {
+    detailsMessage += `💬 Guest Insights (AI-Enhanced):\n${hotel.guestInsights}\n\n`;
+  } else {
+    detailsMessage += `💬 Guest Insights:\n🔄 AI analyzing guest feedback...\n\n`;
   }
   
   if (hotel.topAmenities && hotel.topAmenities.length > 0) {
@@ -1605,8 +1601,8 @@ const handleViewDetails = useCallback((hotel: Hotel) => {
     detailsMessage += `\n`;
   }
   
-  if (hotel.funFacts && hotel.funFacts.length > 0 && !hotel.funFacts[0].includes('Loading')) {
-    detailsMessage += `🎉 Fun Facts:\n`;
+  if (hotel.funFacts && hotel.funFacts.length > 0 && !hotel.funFacts[0].includes('Generating')) {
+    detailsMessage += `🎉 AI-Curated Fun Facts:\n`;
     hotel.funFacts.forEach(fact => {
       detailsMessage += `• ${fact}\n`;
     });
@@ -1645,6 +1641,18 @@ const handleViewDetails = useCallback((hotel: Hotel) => {
     detailsMessage += `• Comparison: ${hotel.priceComparison}\n`;
   }
   
+  // Add refundable policy info
+  if (hotel.isRefundable !== undefined) {
+    detailsMessage += `\n🔄 Refund Policy:\n`;
+    detailsMessage += `• Refundable: ${hotel.isRefundable ? 'Yes' : 'No'}\n`;
+    if (hotel.refundableInfo) {
+      detailsMessage += `• Details: ${hotel.refundableInfo}\n`;
+    }
+    if (hotel.refundableTag) {
+      detailsMessage += `• Policy Code: ${hotel.refundableTag}\n`;
+    }
+  }
+  
   Alert.alert(
     'Hotel Details',
     detailsMessage,
@@ -1653,7 +1661,7 @@ const handleViewDetails = useCallback((hotel: Hotel) => {
       { text: TEST_MODE ? 'Test Book' : 'Book Now', style: 'default', onPress: () => handleBookNow(hotel) }
     ]
   );
-}, [handleBookNow, isInsightsLoading]);
+}, [handleBookNow]);
 
 const handleHotelPress = useCallback((hotel: Hotel) => {
   console.log('Hotel selected:', hotel.name);
@@ -1676,18 +1684,23 @@ const handleHotelPress = useCallback((hotel: Hotel) => {
     alertMessage += `🎯 ${hotel.locationHighlight}\n\n`;
   }
   
-  if (hotel.whyItMatches && !hotel.whyItMatches.includes('progress')) {
+  // Check if AI insights are enhanced or still loading
+  const hasEnhancedInsights = hotel.whyItMatches && 
+                              !hotel.whyItMatches.includes('Analyzing') && 
+                              !hotel.whyItMatches.includes('progress');
+  
+  if (hasEnhancedInsights) {
     alertMessage += `✨ Why it matches: ${hotel.whyItMatches}\n\n`;
-  }
-  
-  if (isInsightsLoading && hotel.guestInsights?.includes('Loading')) {
-    alertMessage += `💬 Guest Insights: Generating...\n\n`;
-  } else if (hotel.guestInsights && !hotel.guestInsights.includes('Loading')) {
-    alertMessage += `💬 Guest Insights: ${hotel.guestInsights}\n\n`;
-  }
-  
-  if (hotel.nearbyAttractions && hotel.nearbyAttractions.length > 0 && !hotel.nearbyAttractions[0].includes('Loading')) {
-    alertMessage += `🗺️ Nearby: ${hotel.nearbyAttractions.slice(0, 2).join(', ')}\n\n`;
+    
+    if (hotel.guestInsights && !hotel.guestInsights.includes('Processing')) {
+      alertMessage += `💬 Guest Insights: ${hotel.guestInsights}\n\n`;
+    }
+    
+    if (hotel.nearbyAttractions && hotel.nearbyAttractions.length > 0 && !hotel.nearbyAttractions[0].includes('Finding')) {
+      alertMessage += `🗺️ Nearby: ${hotel.nearbyAttractions.slice(0, 2).join(', ')}\n\n`;
+    }
+  } else {
+    alertMessage += `🔄 AI insights generating in real-time...\n\n`;
   }
   
   if (hotel.topAmenities && hotel.topAmenities.length > 0) {
@@ -1721,7 +1734,7 @@ const handleHotelPress = useCallback((hotel: Hotel) => {
       { text: 'Full Details', onPress: () => handleViewDetails(hotel) }
     ]
   );
-}, [handleViewDetails, isInsightsLoading]);
+}, [handleViewDetails]);
 
   const handleBackPress = useCallback(() => {
     console.log('Back button pressed - returning to initial search');
