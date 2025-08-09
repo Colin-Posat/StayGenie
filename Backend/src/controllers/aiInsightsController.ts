@@ -379,7 +379,7 @@ If what the user request in ${userQuery} is in the description mention it in the
 Do not say anything on whyItMatches that is not mentioned in the decription ${summary.description} unless is is obvious or you are very sure about it.
 If something is not mentioned in the description, do not make it up. Instead say WHAT THE USER REQUESTED is not specifically mentioned.
 make sure it is still around 20 words and very engaging like a fun travel agent! 
-
+IMPORTANT: Make sure you mention what the user said in${userQuery} either saying it is or not metnioned in teh description but it should always link back to the users request. (WHEN MENTIONING THE QEURY PUT IT INTO WORDS THAT FIT INTO THE SENTENCE SMOOTHLY DONT JUST REPEAT THE EXACT USER QUERY)
 In Why is matches always start with the hotel name UNLESSS something is not mentioned in the description, then start with while then say WHAT THE USER REQUESTED is not specifically mentioned
 
 CRITICAL: nearbyAttractions MUST follow this EXACT format:

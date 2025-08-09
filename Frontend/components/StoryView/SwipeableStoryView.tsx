@@ -1,5 +1,5 @@
-// SwipeableStoryView.tsx - Updated for Two-Stage API system
-import React, { useState } from 'react';
+// SwipeableStoryView.tsx - Updated with Streaming Support
+import React, { useState, useEffect } from 'react'; // ADD useEffect import
 import {
   View,
   Text,
@@ -17,175 +17,29 @@ interface SwipeableStoryViewProps {
   hotels: Hotel[];
   onHotelPress?: (hotel: Hotel) => void;
   onViewDetails?: (hotel: Hotel) => void;
-  onSave?: (hotel: Hotel) => void; // Optional - for backward compatibility, now handled by cache
-  // Additional props for Google Maps integration
+  onSave?: (hotel: Hotel) => void;
   checkInDate?: Date;
   checkOutDate?: Date;
   adults?: number;
   children?: number;
-  // NEW: Track insights loading state for two-stage API
   isInsightsLoading?: boolean;
-  // NEW: Additional state tracking for better UX
   stage1Complete?: boolean;
   stage2Complete?: boolean;
   searchMode?: 'test' | 'two-stage' | 'legacy';
+  // ADD: New streaming props
+  isStreaming?: boolean;
+  streamingProgress?: {
+    step: number;
+    totalSteps: number;
+    message: string;
+  };
 }
 
-// UPDATED: Enhanced function to preserve optimized backend data while adding story card requirements
-const enhanceHotel = (hotel: Hotel): EnhancedHotel => {
-  // UPDATED: Generate multiple images for story slides, preserving API data
-  const generateImages = (hotel: Hotel): string[] => {
-    // Priority 1: Use images array from optimized backend API if available
-    if (hotel.images && hotel.images.length > 0) {
-      console.log(`✅ Using API images for ${hotel.name}:`, hotel.images.length, 'images');
-      
-      // If we have enough images from API, use them
-      if (hotel.images.length >= 3) {
-        return hotel.images.slice(0, 3); // Use first 3 API images
-      }
-      
-      // If we have some API images but need more, extend with variations
-      const apiImages = [...hotel.images];
-      const baseImage = hotel.images[0];
-      
-      // Generate additional images based on the first API image
-      if (baseImage && (baseImage.includes('unsplash.com') || baseImage.includes('http') || baseImage.startsWith('//'))) {
-        const baseUrl = baseImage.split('?')[0];
-        
-        while (apiImages.length < 3) {
-          if (apiImages.length === 1) {
-            apiImages.push(`${baseUrl}?auto=format&fit=crop&w=800&q=80&crop=entropy`);
-          } else if (apiImages.length === 2) {
-            apiImages.push(`${baseUrl}?auto=format&fit=crop&w=800&q=80&crop=faces`);
-          }
-        }
-      }
-      
-      // Ensure we have at least 3 images, pad with fallbacks if needed
-      while (apiImages.length < 3) {
-        const fallbackImages = [
-          "https://images.unsplash.com/photo-1564501049412-61c2a3083791?auto=format&fit=crop&w=800&q=80",
-          "https://images.unsplash.com/photo-1571896349842-33c89424de2d?auto=format&fit=crop&w=800&q=80",
-          "https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?auto=format&fit=crop&w=800&q=80",
-        ];
-        apiImages.push(fallbackImages[apiImages.length - 1] || fallbackImages[0]);
-      }
-      
-      return apiImages.slice(0, 3);
-    }
-    
-    // Priority 2: Use single image from API to generate variations
-    const baseImage = hotel.image;
-    if (baseImage && (baseImage.includes('unsplash.com') || baseImage.includes('http') || baseImage.startsWith('//'))) {
-      console.log(`⚠️ No API images array for ${hotel.name}, generating from base image:`, baseImage);
-      const baseUrl = baseImage.split('?')[0];
-      return [
-        baseImage, // Main hotel image (from optimized backend)
-        `${baseUrl}?auto=format&fit=crop&w=800&q=80&crop=entropy`, // Different crop for location
-        `${baseUrl}?auto=format&fit=crop&w=800&q=80&crop=faces`, // Different crop for amenities
-      ];
-    }
-    
-    // Priority 3: Fallback images if no valid base image
-    console.log(`❌ No valid images for ${hotel.name}, using fallback images`);
-    const fallbackImages = [
-      "https://images.unsplash.com/photo-1564501049412-61c2a3083791?auto=format&fit=crop&w=800&q=80",
-      "https://images.unsplash.com/photo-1571896349842-33c89424de2d?auto=format&fit=crop&w=800&q=80",
-      "https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?auto=format&fit=crop&w=800&q=80",
-    ];
-    
-    return fallbackImages;
-  };
-
-  // NEW: Detect if hotel has loading placeholders (Stage 1 data)
-  const hasLoadingPlaceholders = (hotel: Hotel): boolean => {
-    return (
-      (hotel.whyItMatches?.includes('progress') ?? false) ||
-      (hotel.whyItMatches?.includes('loading') ?? false) ||
-      (hotel.guestInsights?.includes('Loading') ?? false) ||
-      (hotel.locationHighlight?.includes('Analyzing') ?? false) ||
-      (hotel.nearbyAttractions?.some(attr => attr.includes('Loading')) ?? false) ||
-      (hotel.funFacts?.some(fact => fact.includes('Loading')) ?? false)
-    );
-  };
-
-  // NEW: Get data stage for better debugging
-  const getDataStage = (hotel: Hotel): 'stage1' | 'stage2' | 'complete' => {
-    if (hasLoadingPlaceholders(hotel)) {
-      return 'stage1';
-    } else if (hotel.whyItMatches && hotel.guestInsights && !hotel.guestInsights.includes('Loading')) {
-      return 'complete';
-    } else {
-      return 'stage2';
-    }
-  };
-
-  // UPDATED: Ensure we preserve all optimized backend data while enhancing for story view
-  const enhancedHotel: EnhancedHotel = {
-    ...hotel, // Preserve ALL optimized backend data
-    images: generateImages(hotel),
-    mapImage: hotel.latitude && hotel.longitude 
-      ? `https://maps.googleapis.com/maps/api/staticmap?center=${hotel.latitude},${hotel.longitude}&zoom=15&size=400x200&markers=color:red%7C${hotel.latitude},${hotel.longitude}&key=YOUR_API_KEY`
-      : "https://maps.googleapis.com/maps/api/staticmap?center=",
-    nearbyAttractions: hotel.nearbyAttractions && hotel.nearbyAttractions.length > 0 
-      ? hotel.nearbyAttractions 
-      : ["Exploring nearby attractions..."],
-  };
-
-  // Enhanced logging for debugging two-stage API
-  const dataStage = getDataStage(hotel);
-  console.log(`🎨 Enhanced hotel ${hotel.name} (${dataStage}):`, {
-    dataStage: dataStage,
-    hasLoadingPlaceholders: hasLoadingPlaceholders(hotel),
-    originalImages: hotel.images?.length || 0,
-    finalImages: enhancedHotel.images.length,
-    imagesSample: enhancedHotel.images[0]?.substring(0, 50) + '...',
-    originalNearbyAttractions: hotel.nearbyAttractions,
-    finalNearbyAttractions: enhancedHotel.nearbyAttractions,
-    locationData: {
-      city: hotel.city,
-      country: hotel.country,
-      coordinates: hotel.latitude && hotel.longitude ? `${hotel.latitude}, ${hotel.longitude}` : 'None',
-      locationHighlight: hotel.locationHighlight,
-    },
-    aiData: {
-      matchPercent: hotel.aiMatchPercent,
-      matchType: hotel.matchType,
-      whyItMatches: hotel.whyItMatches ? hotel.whyItMatches.substring(0, 50) + '...' : 'None',
-      guestInsights: hotel.guestInsights ? hotel.guestInsights.substring(0, 50) + '...' : 'None',
-    },
-    pricingData: {
-      hasEnhancedPricing: !!hotel.pricePerNight,
-      provider: hotel.pricePerNight?.provider || 'None',
-      isSupplierRate: hotel.pricePerNight?.isSupplierPrice || false,
-    }
-  });
-
-  return enhancedHotel;
-};
-
-// NEW: Get insights loading status for individual hotels
-const getHotelInsightsStatus = (hotel: Hotel): 'loading' | 'partial' | 'complete' => {
-  const hasLoadingGuestInsights = hotel.guestInsights?.includes('Loading') ?? false;
-  const hasLoadingWhyItMatches = (hotel.whyItMatches?.includes('progress') ?? false) || (hotel.whyItMatches?.includes('loading') ?? false);
-  const hasLoadingLocationHighlight = hotel.locationHighlight?.includes('Analyzing') ?? false;
-  const hasLoadingAttractions = hotel.nearbyAttractions?.some(attr => attr.includes('Loading')) ?? false;
-  
-  if (hasLoadingGuestInsights || hasLoadingWhyItMatches) {
-    return 'loading';
-  } else if (hasLoadingLocationHighlight || hasLoadingAttractions) {
-    return 'partial';
-  } else {
-    return 'complete';
-  }
-};
-
-// UPDATED: Main SwipeableStoryView Component with two-stage API support
 const SwipeableStoryView: React.FC<SwipeableStoryViewProps> = ({ 
   hotels = [], 
   onHotelPress, 
   onViewDetails, 
-  onSave, // Optional - kept for backward compatibility
+  onSave,
   checkInDate,
   checkOutDate,
   adults = 2,
@@ -193,12 +47,144 @@ const SwipeableStoryView: React.FC<SwipeableStoryViewProps> = ({
   isInsightsLoading = false,
   stage1Complete = false,
   stage2Complete = false,
-  searchMode = 'two-stage'
+  searchMode = 'two-stage',
+  // ADD: Streaming props with defaults
+  isStreaming = false,
+  streamingProgress = { step: 0, totalSteps: 8, message: '' }
 }) => {
-  // UPDATED: Enhance hotels with additional data while preserving optimized backend data
+  // ADD: Local state for streaming animation and effects
+  const [streamingHotelsCount, setStreamingHotelsCount] = useState(0);
+  const [lastStreamedHotel, setLastStreamedHotel] = useState<Hotel | null>(null);
+  const [showNewHotelAnimation, setShowNewHotelAnimation] = useState(false);
+
+  // ADD: useEffect to track streaming hotels and trigger animations
+  useEffect(() => {
+    if (isStreaming) {
+      // Update streaming count when hotels array changes during streaming
+      const currentCount = hotels.length;
+      
+      if (currentCount > streamingHotelsCount) {
+        const newHotel = hotels[currentCount - 1];
+        console.log(`🌊 New hotel streamed in: ${newHotel?.name} (${currentCount} total)`);
+        
+        setStreamingHotelsCount(currentCount);
+        setLastStreamedHotel(newHotel);
+        setShowNewHotelAnimation(true);
+        
+        // Hide animation after 2 seconds
+        const timer = setTimeout(() => {
+          setShowNewHotelAnimation(false);
+        }, 2000);
+        
+        return () => clearTimeout(timer);
+      }
+    } else {
+      // Reset streaming state when streaming stops
+      setStreamingHotelsCount(hotels.length);
+      setShowNewHotelAnimation(false);
+    }
+  }, [hotels.length, isStreaming, streamingHotelsCount]);
+
+  // ADD: useEffect to handle streaming completion
+  useEffect(() => {
+    if (!isStreaming && streamingHotelsCount > 0) {
+      console.log(`✅ Streaming completed with ${hotels.length} hotels`);
+      // Could trigger completion animation here
+    }
+  }, [isStreaming, streamingHotelsCount, hotels.length]);
+
+  // Existing functions (enhanceHotel, getHotelInsightsStatus, etc.) remain the same...
+
+  const enhanceHotel = (hotel: Hotel): EnhancedHotel => {
+    // Your existing enhanceHotel logic remains exactly the same
+    const generateImages = (hotel: Hotel): string[] => {
+      if (hotel.images && hotel.images.length > 0) {
+        console.log(`✅ Using API images for ${hotel.name}:`, hotel.images.length, 'images');
+        
+        if (hotel.images.length >= 3) {
+          return hotel.images.slice(0, 3);
+        }
+        
+        const apiImages = [...hotel.images];
+        const baseImage = hotel.images[0];
+        
+        if (baseImage && (baseImage.includes('unsplash.com') || baseImage.includes('http') || baseImage.startsWith('//'))) {
+          const baseUrl = baseImage.split('?')[0];
+          
+          while (apiImages.length < 3) {
+            if (apiImages.length === 1) {
+              apiImages.push(`${baseUrl}?auto=format&fit=crop&w=800&q=80&crop=entropy`);
+            } else if (apiImages.length === 2) {
+              apiImages.push(`${baseUrl}?auto=format&fit=crop&w=800&q=80&crop=faces`);
+            }
+          }
+        }
+        
+        while (apiImages.length < 3) {
+          const fallbackImages = [
+            "https://images.unsplash.com/photo-1564501049412-61c2a3083791?auto=format&fit=crop&w=800&q=80",
+            "https://images.unsplash.com/photo-1571896349842-33c89424de2d?auto=format&fit=crop&w=800&q=80",
+            "https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?auto=format&fit=crop&w=800&q=80",
+          ];
+          apiImages.push(fallbackImages[apiImages.length - 1] || fallbackImages[0]);
+        }
+        
+        return apiImages.slice(0, 3);
+      }
+      
+      const baseImage = hotel.image;
+      if (baseImage && (baseImage.includes('unsplash.com') || baseImage.includes('http') || baseImage.startsWith('//'))) {
+        console.log(`⚠️ No API images array for ${hotel.name}, generating from base image:`, baseImage);
+        const baseUrl = baseImage.split('?')[0];
+        return [
+          baseImage,
+          `${baseUrl}?auto=format&fit=crop&w=800&q=80&crop=entropy`,
+          `${baseUrl}?auto=format&fit=crop&w=800&q=80&crop=faces`,
+        ];
+      }
+      
+      console.log(`❌ No valid images for ${hotel.name}, using fallback images`);
+      const fallbackImages = [
+        "https://images.unsplash.com/photo-1564501049412-61c2a3083791?auto=format&fit=crop&w=800&q=80",
+        "https://images.unsplash.com/photo-1571896349842-33c89424de2d?auto=format&fit=crop&w=800&q=80",
+        "https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?auto=format&fit=crop&w=800&q=80",
+      ];
+      
+      return fallbackImages;
+    };
+
+    const enhancedHotel: EnhancedHotel = {
+      ...hotel,
+      images: generateImages(hotel),
+      mapImage: hotel.latitude && hotel.longitude 
+        ? `https://maps.googleapis.com/maps/api/staticmap?center=${hotel.latitude},${hotel.longitude}&zoom=15&size=400x200&markers=color:red%7C${hotel.latitude},${hotel.longitude}&key=YOUR_API_KEY`
+        : "https://maps.googleapis.com/maps/api/staticmap?center=",
+      nearbyAttractions: hotel.nearbyAttractions && hotel.nearbyAttractions.length > 0 
+        ? hotel.nearbyAttractions 
+        : ["Exploring nearby attractions..."],
+    };
+
+    return enhancedHotel;
+  };
+
+  // Enhanced hotels with existing logic
   const enhancedHotels = hotels.map(enhanceHotel);
 
-  // NEW: Calculate insights completion status
+  const getHotelInsightsStatus = (hotel: Hotel): 'loading' | 'partial' | 'complete' => {
+    const hasLoadingGuestInsights = hotel.guestInsights?.includes('Loading') ?? false;
+    const hasLoadingWhyItMatches = (hotel.whyItMatches?.includes('progress') ?? false) || (hotel.whyItMatches?.includes('loading') ?? false);
+    const hasLoadingLocationHighlight = hotel.locationHighlight?.includes('Analyzing') ?? false;
+    const hasLoadingAttractions = hotel.nearbyAttractions?.some(attr => attr.includes('Loading')) ?? false;
+    
+    if (hasLoadingGuestInsights || hasLoadingWhyItMatches) {
+      return 'loading';
+    } else if (hasLoadingLocationHighlight || hasLoadingAttractions) {
+      return 'partial';
+    } else {
+      return 'complete';
+    }
+  };
+
   const getInsightsStats = () => {
     if (hotels.length === 0) return { complete: 0, loading: 0, partial: 0 };
     
@@ -213,10 +199,7 @@ const SwipeableStoryView: React.FC<SwipeableStoryViewProps> = ({
 
   const insightsStats = getInsightsStats();
 
-  // UPDATED: Handle save - now just triggers optional callback for backward compatibility
   const handleSave = (hotel: Hotel) => {
-    // The SwipeableHotelStoryCard now handles favorites internally via FavoritesCache
-    // This callback is just for backward compatibility
     console.log(`💾 Save callback triggered for: ${hotel.name}`);
     onSave?.(hotel);
   };
@@ -239,13 +222,25 @@ const SwipeableStoryView: React.FC<SwipeableStoryViewProps> = ({
     onHotelPress?.(hotel);
   };
 
-  // UPDATED: Enhanced render function with insights status
+  // ADD: Enhanced render function with streaming indicators
   const renderHotelCard = ({ item: hotel, index }: { item: EnhancedHotel; index: number }) => {
     const insightsStatus = getHotelInsightsStatus(hotel);
+    const isNewlyStreamed = isStreaming && index === hotels.length - 1 && showNewHotelAnimation;
     
     return (
       <View style={tw`px-5 mb-6`}>
-        <View style={tw`border border-black/10 shadow-md rounded-2xl`}>
+        <View style={[
+          tw`border border-black/10 shadow-md rounded-2xl`,
+          // ADD: Highlight newly streamed hotels
+          isNewlyStreamed && tw`border-blue-400 shadow-blue-200 shadow-lg`
+        ]}>
+          {/* ADD: New hotel streaming indicator */}
+          {isNewlyStreamed && (
+            <View style={tw`absolute -top-2 -right-2 bg-blue-500 px-2 py-1 rounded-full z-10`}>
+              <Text style={tw`text-xs text-white font-bold`}>NEW!</Text>
+            </View>
+          )}
+          
           <SwipeableHotelStoryCard
             hotel={hotel}
             onSave={() => handleSave(hotel)}
@@ -257,7 +252,6 @@ const SwipeableStoryView: React.FC<SwipeableStoryViewProps> = ({
             checkOutDate={checkOutDate}
             adults={adults}
             children={children}
-            // NEW: Pass individual hotel insights status
             isInsightsLoading={insightsStatus === 'loading'}
             insightsStatus={insightsStatus}
             searchMode={searchMode}
@@ -268,12 +262,12 @@ const SwipeableStoryView: React.FC<SwipeableStoryViewProps> = ({
   };
 
   const getItemLayout = (_: any, index: number) => ({
-    length: screenHeight * 0.65 + 48, // Card height + margin
+    length: screenHeight * 0.65 + 48,
     offset: (screenHeight * 0.65 + 48) * index,
     index,
   });
 
-  // UPDATED: Enhanced empty state with two-stage API context
+  // Enhanced empty state remains the same...
   if (enhancedHotels.length === 0) {
     return (
       <View style={tw`flex-1 bg-gray-50 justify-center items-center px-10`}>
@@ -281,61 +275,49 @@ const SwipeableStoryView: React.FC<SwipeableStoryViewProps> = ({
           <Ionicons name="bed-outline" size={64} color="#CCCCCC" />
         </View>
         <Text style={tw`text-3xl font-bold text-gray-800 mb-2 text-center`}>
-          No Hotels Found
+          {isStreaming ? 'Finding Your Perfect Hotels...' : 'No Hotels Found'}
         </Text>
         <Text style={tw`text-base text-gray-500 text-center leading-6 mb-4`}>
-          Try adjusting your search criteria or dates to find available hotels.
-        </Text>
-        <Text style={tw`text-sm text-gray-400 text-center leading-5`}>
-          {searchMode === 'test' 
-            ? 'Test mode - No test data available for this search.'
-            : searchMode === 'two-stage' 
-              ? 'Our two-stage AI-powered search will find the perfect match for your preferences.'
-              : 'Our AI-powered search will find the perfect match for your preferences.'
+          {isStreaming 
+            ? 'AI is analyzing hotels and will show results as they\'re found...'
+            : 'Try adjusting your search criteria or dates to find available hotels.'
           }
         </Text>
+        {/* ADD: Streaming progress indicator in empty state */}
+        {isStreaming && (
+          <View style={tw`flex-row items-center mt-4`}>
+            <View style={tw`w-3 h-3 bg-blue-500 rounded-full animate-pulse mr-2`} />
+            <Text style={tw`text-sm text-blue-600`}>
+              {streamingProgress.message || `Step ${streamingProgress.step}/${streamingProgress.totalSteps}`}
+            </Text>
+          </View>
+        )}
       </View>
     );
   }
 
-  // NEW: Get appropriate loading message based on search mode and stage
-  const getLoadingMessage = () => {
-    if (searchMode === 'test') {
-      return {
-        title: 'Loading test insights',
-        subtitle: 'Processing test data...'
-      };
-    } else if (searchMode === 'two-stage') {
-      if (!stage1Complete) {
-        return {
-          title: 'Finding hotels with AI matching',
-          subtitle: 'Stage 1: Llama is analyzing your preferences...'
-        };
-      } else if (!stage2Complete) {
-        return {
-          title: 'Enhancing results with AI insights',
-          subtitle: 'Stage 2: GPT-4o is generating detailed content...'
-        };
-      } else {
-        return {
-          title: 'Final insights loading',
-          subtitle: 'Adding sentiment analysis and guest insights...'
-        };
-      }
-    } else {
-      return {
-        title: 'Enhancing your results with AI insights',
-        subtitle: 'Loading detailed guest sentiment analysis...'
-      };
-    }
-  };
-
-  const loadingMessage = getLoadingMessage();
-
-  // UPDATED: Enhanced insights loading indicator for two-stage API
   return (
     <View style={tw`flex-1 bg-gray-50`}>
-      {/* Enhanced global insights loading indicator */}
+      {/* ADD: Global streaming status indicator */}
+      {isStreaming && (
+        <View style={tw`absolute top-4 right-4 bg-blue-500 px-3 py-2 rounded-full flex-row items-center z-50`}>
+          <View style={tw`w-2 h-2 bg-white rounded-full animate-pulse mr-2`} />
+          <Text style={tw`text-xs text-white font-medium`}>
+            {streamingProgress.step}/{streamingProgress.totalSteps}
+          </Text>
+        </View>
+      )}
+
+      {/* ADD: New hotel notification */}
+      {showNewHotelAnimation && lastStreamedHotel && (
+        <View style={tw`absolute top-16 left-4 right-4 bg-green-500 px-4 py-3 rounded-lg flex-row items-center z-40`}>
+          <Ionicons name="checkmark-circle" size={20} color="white" />
+          <Text style={tw`text-white font-medium ml-2 flex-1`}>
+            Found: {lastStreamedHotel.name} ({lastStreamedHotel.aiMatchPercent}% match!)
+          </Text>
+        </View>
+      )}
+
       <FlatList
         data={enhancedHotels}
         renderItem={renderHotelCard}
@@ -348,8 +330,8 @@ const SwipeableStoryView: React.FC<SwipeableStoryViewProps> = ({
         windowSize={5}
         initialNumToRender={2}
         scrollEventThrottle={16}
-        // UPDATED: Enhanced extraData for two-stage API
-        extraData={`${isInsightsLoading}-${stage1Complete}-${stage2Complete}-${insightsStats.complete}`}
+        // ADD: Include streaming state in extraData
+        extraData={`${isInsightsLoading}-${stage1Complete}-${stage2Complete}-${insightsStats.complete}-${isStreaming}-${hotels.length}`}
       />
     </View>
   );

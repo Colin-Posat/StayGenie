@@ -686,7 +686,7 @@ const LocationSlide: React.FC<{ hotel: EnhancedHotel; insightsStatus?: string }>
 }) => {
   const getLocationImage = () => {
     if (hotel.latitude && hotel.longitude) {
-      const zoom = 13;
+      const zoom = 12;
       const width = 600;
       const height = 400;
       return `https://maps.locationiq.com/v3/staticmap?key=pk.79c544ae745ee83f91a7523c99939210&center=${hotel.latitude},${hotel.longitude}&zoom=${zoom}&size=${width}x${height}&markers=icon:large-red-cutout|${hotel.latitude},${hotel.longitude}`;
