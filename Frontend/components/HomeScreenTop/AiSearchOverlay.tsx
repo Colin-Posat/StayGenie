@@ -1,4 +1,4 @@
-// AISearchOverlay.tsx - Fixed for mobile display issues
+// AISearchOverlay.tsx - Fixed to prevent auto-refetch on manual typing
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   View,
@@ -72,9 +72,13 @@ const AISearchOverlay: React.FC<AISearchOverlayProps> = ({
   const [isListening, setIsListening] = useState(false);
   const [isVisible, setIsVisible] = useState(visible);
   
+  // REMOVED: isInternallyLoading and internal suggestions fetching
   const [isInternallyLoading, setIsInternallyLoading] = useState(false);
   const isLoadingSuggestions = isExternallyLoading || isInternallyLoading;
   const [suggestionsError, setSuggestionsError] = useState<string | null>(null);
+
+  // Track if suggestions have been loaded for this session
+  const [suggestionsLoaded, setSuggestionsLoaded] = useState(false);
 
   // Animated values for loading dots
   const dot1Anim = useRef(new Animated.Value(0)).current;
@@ -125,21 +129,95 @@ const AISearchOverlay: React.FC<AISearchOverlayProps> = ({
       console.log('🤖 Using pre-loaded AI suggestions:', preloadedSuggestions.length);
       setSuggestions(preloadedSuggestions);
       setSuggestionsError(externalSuggestionsError);
+      setSuggestionsLoaded(true);
     }
   }, [preloadedSuggestions, externalSuggestionsError]);
 
-  // Fetch AI suggestions from backend
-  const fetchAISuggestions = useCallback(async (searchQuery: string) => {
-    if (preloadedSuggestions.length > 0 && searchQuery === currentSearch) {
-      console.log('🤖 Skipping fetch - using pre-loaded suggestions');
-      return;
+  // UPDATED: Only fetch suggestions ONCE when overlay opens (if no preloaded suggestions)
+  useEffect(() => {
+    if (visible && preloadedSuggestions.length === 0 && !suggestionsLoaded) {
+      console.log('🤖 Fetching suggestions once for overlay session...');
+      fetchAISuggestionsOnce(currentSearch);
     }
+  }, [visible, preloadedSuggestions.length, suggestionsLoaded]);
 
+  // REMOVED: Auto-fetch on search text changes
+  // No longer fetch new suggestions when user types manually
+
+  // Reset when overlay opens
+  useEffect(() => {
+    if (visible) {
+      setOriginalSearch(currentSearch);
+      setSearchText(currentSearch);
+      setUsedSuggestions(new Set());
+      
+      // Reset suggestions loaded state if we're starting fresh
+      if (preloadedSuggestions.length === 0) {
+        setSuggestionsLoaded(false);
+      }
+    } else {
+      // Reset suggestions loaded state when overlay closes
+      setSuggestionsLoaded(false);
+    }
+  }, [visible, currentSearch, preloadedSuggestions.length]);
+
+  // Handle visibility animations
+  useEffect(() => {
+    if (visible) {
+      setIsVisible(true);
+      Animated.parallel([
+        Animated.timing(fadeAnim, {
+          toValue: 1,
+          duration: 300,
+          useNativeDriver: true,
+        }),
+        Animated.spring(slideAnim, {
+          toValue: 0,
+          tension: 80,
+          friction: 8,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    } else {
+      Animated.parallel([
+        Animated.timing(fadeAnim, {
+          toValue: 0,
+          duration: 300,
+          useNativeDriver: true,
+        }),
+        Animated.spring(slideAnim, {
+          toValue: screenHeight,
+          tension: 100,
+          friction: 8,
+          useNativeDriver: true,
+        }),
+      ]).start(({ finished }) => {
+        if (finished) {
+          setIsVisible(false);
+        }
+      });
+    }
+  }, [visible, fadeAnim, slideAnim]);
+
+  // UPDATED: Simple search text change handler (no auto-fetch)
+  const handleSearchTextChange = useCallback((text: string) => {
+    setSearchText(text);
+    // No auto-fetching - user can manually refetch if needed
+  }, []);
+
+  // NEW: Manual refresh function for suggestions
+  const handleRefreshSuggestions = useCallback(async () => {
+    console.log('🔄 Manual refresh of AI suggestions requested...');
+    await fetchAISuggestionsOnce(searchText);
+  }, [searchText]);
+
+  // UPDATED: Renamed and simplified fetch function (called only once per session)
+  const fetchAISuggestionsOnce = useCallback(async (searchQuery: string) => {
     try {
       setIsInternallyLoading(true);
       setSuggestionsError(null);
       
-      console.log('🤖 Fetching new AI suggestions for:', searchQuery);
+      console.log('🤖 Fetching AI suggestions once for overlay session:', searchQuery);
 
       const response = await fetch(`${BASE_URL}/api/hotels/ai-suggestions`, {
         method: 'POST',
@@ -159,8 +237,9 @@ const AISearchOverlay: React.FC<AISearchOverlayProps> = ({
       const data = await response.json();
       
       if (data.success && data.suggestions) {
-        console.log(`✅ Received ${data.suggestions.length} fresh AI suggestions`);
+        console.log(`✅ Received ${data.suggestions.length} AI suggestions for overlay session`);
         setSuggestions(data.suggestions);
+        setSuggestionsLoaded(true);
         
         if (data.metadata?.model) {
           console.log(`🤖 Suggestions generated by: ${data.metadata.model}`);
@@ -175,10 +254,11 @@ const AISearchOverlay: React.FC<AISearchOverlayProps> = ({
       
       const fallbackSuggestions = generateFallbackSuggestions(searchQuery);
       setSuggestions(fallbackSuggestions);
+      setSuggestionsLoaded(true);
     } finally {
       setIsInternallyLoading(false);
     }
-  }, [searchContext, preloadedSuggestions, currentSearch]);
+  }, [searchContext]);
 
   // Generate fallback suggestions
   const generateFallbackSuggestions = useCallback((searchQuery: string): AISuggestion[] => {
@@ -252,93 +332,6 @@ const AISearchOverlay: React.FC<AISearchOverlayProps> = ({
     }));
   }, []);
 
-  // Only fetch suggestions when overlay opens IF no pre-loaded suggestions
-  useEffect(() => {
-    if (visible && preloadedSuggestions.length === 0) {
-      fetchAISuggestions(currentSearch);
-    }
-  }, [visible, fetchAISuggestions, preloadedSuggestions.length]);
-
-  const [isManualTyping, setIsManualTyping] = useState(false);
-  const typingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-
-  // Fetch new suggestions when search text changes (debounced)
-  useEffect(() => {
-    if (visible && searchText !== currentSearch && isManualTyping) {
-      const timeoutId = setTimeout(() => {
-        fetchAISuggestions(searchText);
-        setIsManualTyping(false);
-      }, 1000);
-
-      return () => clearTimeout(timeoutId);
-    }
-  }, [searchText, currentSearch, visible, isManualTyping, fetchAISuggestions]);
-
-  // Reset when overlay opens
-  useEffect(() => {
-    if (visible) {
-      setOriginalSearch(currentSearch);
-      setSearchText(currentSearch);
-      setUsedSuggestions(new Set());
-      setIsManualTyping(false);
-      
-      if (typingTimeoutRef.current) {
-        clearTimeout(typingTimeoutRef.current);
-      }
-    }
-  }, [visible, currentSearch]);
-
-  // Handle visibility animations
-  useEffect(() => {
-    if (visible) {
-      setIsVisible(true);
-      Animated.parallel([
-        Animated.timing(fadeAnim, {
-          toValue: 1,
-          duration: 300,
-          useNativeDriver: true,
-        }),
-        Animated.spring(slideAnim, {
-          toValue: 0,
-          tension: 80,
-          friction: 8,
-          useNativeDriver: true,
-        }),
-      ]).start();
-    } else {
-      Animated.parallel([
-        Animated.timing(fadeAnim, {
-          toValue: 0,
-          duration: 300,
-          useNativeDriver: true,
-        }),
-        Animated.spring(slideAnim, {
-          toValue: screenHeight,
-          tension: 100,
-          friction: 8,
-          useNativeDriver: true,
-        }),
-      ]).start(({ finished }) => {
-        if (finished) {
-          setIsVisible(false);
-        }
-      });
-    }
-  }, [visible, fadeAnim, slideAnim]);
-
-  const handleSearchTextChange = useCallback((text: string) => {
-    setSearchText(text);
-    setIsManualTyping(true);
-    
-    if (typingTimeoutRef.current) {
-      clearTimeout(typingTimeoutRef.current);
-    }
-    
-    typingTimeoutRef.current = setTimeout(() => {
-      setIsManualTyping(false);
-    }, 2000);
-  }, []);
-
   const handleSuggestionSelect = useCallback((suggestion: AISuggestion) => {
     const updatedSearch = searchText.trim() 
       ? `${searchText} ${suggestion.text}`
@@ -346,11 +339,6 @@ const AISearchOverlay: React.FC<AISearchOverlayProps> = ({
     
     setSearchText(updatedSearch);
     setUsedSuggestions(prev => new Set(prev).add(suggestion.id));
-    setIsManualTyping(false);
-    
-    if (typingTimeoutRef.current) {
-      clearTimeout(typingTimeoutRef.current);
-    }
   }, [searchText]);
 
   const handleApply = useCallback(() => {
@@ -449,13 +437,12 @@ const AISearchOverlay: React.FC<AISearchOverlayProps> = ({
           />
         </View>
         <Text style={tw`text-sm font-medium text-gray-700`}>
-          {isExternallyLoading ? 'AI is crafting suggestions...' : 'Refreshing suggestions...'}
+          {isExternallyLoading ? 'AI is crafting suggestions...' : 'Loading suggestions...'}
         </Text>
         <Ionicons name="sparkles" size={16} color="#3B82F6" style={tw`ml-2`} />
       </View>
     </View>
   );
-
 
   if (!isVisible) {
     return null;
@@ -559,7 +546,6 @@ const AISearchOverlay: React.FC<AISearchOverlayProps> = ({
               </View>
             </View>
 
-
             {/* AI Suggestions */}
             <View style={tw`mb-6`}>
               <View style={tw`flex-row items-center justify-between mb-4`}>
@@ -572,6 +558,18 @@ const AISearchOverlay: React.FC<AISearchOverlayProps> = ({
                     <View style={tw`w-2 h-2 rounded-full bg-green-400 ml-2`} />
                   )}
                 </View>
+                
+                {/* NEW: Manual refresh button */}
+                {suggestionsLoaded && !isLoadingSuggestions && (
+                  <TouchableOpacity
+                    onPress={handleRefreshSuggestions}
+                    style={tw`flex-row items-center px-3 py-1.5 rounded-lg bg-gray-100`}
+                    activeOpacity={0.7}
+                  >
+                    <Ionicons name="refresh" size={14} color="#6B7280" />
+                    <Text style={tw`text-xs text-gray-600 ml-1`}>Refresh</Text>
+                  </TouchableOpacity>
+                )}
               </View>
               
               {/* Loading State */}
@@ -586,7 +584,7 @@ const AISearchOverlay: React.FC<AISearchOverlayProps> = ({
                 </View>
               )}
               
-              {/* Suggestions List - Fixed layout */}
+              {/* Suggestions List */}
               {!isLoadingSuggestions && availableSuggestions.length > 0 && (
                 <View style={tw`gap-2`}>
                   {availableSuggestions.map((suggestion) => (
@@ -624,12 +622,19 @@ const AISearchOverlay: React.FC<AISearchOverlayProps> = ({
               )}
               
               {/* Empty State */}
-              {availableSuggestions.length === 0 && !isLoadingSuggestions && (
+              {availableSuggestions.length === 0 && !isLoadingSuggestions && suggestionsLoaded && (
                 <View style={tw`py-8 items-center`}>
                   <Ionicons name="checkmark-circle" size={32} color="#10B981" />
                   <Text style={tw`text-sm text-gray-500 mt-2 text-center`}>
                     All suggestions applied!
                   </Text>
+                  <TouchableOpacity
+                    onPress={handleRefreshSuggestions}
+                    style={tw`mt-3 px-4 py-2 rounded-lg bg-gray-100`}
+                    activeOpacity={0.7}
+                  >
+                    <Text style={tw`text-xs text-gray-600`}>Get new suggestions</Text>
+                  </TouchableOpacity>
                 </View>
               )}
             </View>

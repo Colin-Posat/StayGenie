@@ -10,6 +10,7 @@ const router = express.Router();
 
 // Hotel routes
 router.post('/hotels/search-and-match', hotelSearchAndMatchController); // Stage 1 - Search + Llama matching
+router.get('/hotels/search-and-match/stream', hotelSearchAndMatchController); // NEW: SSE (mobile)
 router.post('/hotels/ai-insights', aiInsightsController); // Stage 2 - GPT content + sentiment insights
 router.post('/hotels/budget-relevance', hotelBudgetRelevanceController); // NEW: Budget-aware relevance search
 

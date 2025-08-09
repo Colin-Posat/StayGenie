@@ -16,6 +16,8 @@ import AISearchOverlay from '../components/HomeScreenTop/AiSearchOverlay';
 import LoadingScreen from '../components/HomeScreenTop/LoadingScreen';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type { StackNavigationProp } from '@react-navigation/stack';
+import EventSource from 'react-native-sse';
+
 
 // Import test data
 import { testAISuggestions, generateTestSearchResponse } from '../components/HomeScreenTop/TestModeData';
@@ -587,12 +589,16 @@ const convertStreamedHotelToDisplay = (streamedHotel: any, index: number): Hotel
   };
 };
 
-// UPDATED: Simplified executeStreamingSearch for real-time insights
+// FINAL FIX: Remove all custom event listeners - everything goes through 'message'
+
 const executeStreamingSearch = async (userInput: string) => {
   if (!userInput.trim()) return;
 
+  let eventSource: any = null;
+  let timeoutId: NodeJS.Timeout | null = null;
+
   try {
-    console.log('🌊 Starting Real-time Streaming Search with Immediate AI Insights...');
+    console.log('🌊 Starting SSE Real-time Streaming Search...');
     setIsSearching(true);
     setIsStreamingSearch(true);
     setFirstHotelFound(false);
@@ -603,63 +609,163 @@ const executeStreamingSearch = async (userInput: string) => {
     setStage1Results(null);
     setStage2Results(null);
 
-    const response = await fetch(`${BASE_URL}/api/hotels/search-and-match`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Accept': 'text/event-stream',
-      },
-      body: JSON.stringify({ 
-        userInput: userInput,
-        enableStreaming: true
-        // No need for includeStage1Data since we're doing real-time insights
-      }),
+    const searchParams = new URLSearchParams({
+      userInput: userInput,
+      q: userInput
     });
 
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
+    const sseUrl = `${BASE_URL}/api/hotels/search-and-match/stream?${searchParams.toString()}`;
+    console.log('🔗 SSE URL:', sseUrl);
 
-    const reader = response.body?.getReader();
-    const decoder = new TextDecoder();
+    // Create EventSource - use any to bypass TypeScript issues
+    eventSource = new (EventSource as any)(sseUrl, {
+      headers: {
+        'Cache-Control': 'no-cache',
+      },
+      polyfill: true,
+      withCredentials: false,
+    });
 
-    if (!reader) {
-      throw new Error('No response body');
-    }
+    // ONLY USE STANDARD SSE EVENTS - no custom event names
 
-    let buffer = '';
+    // Connection opened
+    eventSource.addEventListener('open', () => {
+      console.log('✅ SSE Connection opened');
+    });
 
-    while (true) {
-      const { done, value } = await reader.read();
-      
-      if (done) {
-        console.log('✅ Real-time streaming complete');
-        break;
-      }
-
-      buffer += decoder.decode(value, { stream: true });
-      
-      const lines = buffer.split('\n');
-      buffer = lines.pop() || '';
-
-      for (const line of lines) {
-        if (line.startsWith('data: ')) {
-          try {
-            const data = JSON.parse(line.slice(6));
-            await handleStreamingUpdate(data, userInput);
-          } catch (parseError) {
-            console.warn('Failed to parse streaming data:', parseError);
-          }
+    // ALL messages come through here - this is the key fix
+    eventSource.addEventListener('message', (event: any) => {
+      try {
+        const data = JSON.parse(event.data);
+        const eventType = data.type || 'message';
+        
+        console.log('📡 SSE Message received:', eventType);
+        
+        // Route based on data.type instead of using custom event listeners
+        switch (eventType) {
+          case 'connected':
+            console.log('🔌 SSE Connected:', data.message);
+            break;
+            
+          case 'progress':
+            handleStreamingUpdate({ type: 'progress', ...data }, userInput);
+            break;
+            
+          case 'hotel_found':
+            handleStreamingUpdate({ type: 'hotel_found', ...data }, userInput);
+            break;
+            
+          case 'hotel_enhanced':
+            handleStreamingUpdate({ type: 'hotel_enhanced', ...data }, userInput);
+            break;
+            
+          case 'complete':
+            handleStreamingUpdate({ type: 'complete', ...data }, userInput);
+            
+            // Close connection on completion
+            console.log('✅ Search completed, closing SSE connection');
+            if (eventSource) {
+              eventSource.close();
+              eventSource = null;
+            }
+            setIsStreamingSearch(false);
+            
+            if (timeoutId) {
+              clearTimeout(timeoutId);
+              timeoutId = null;
+            }
+            break;
+            
+          case 'error':
+            console.error('❌ Server error:', data.message);
+            if (eventSource) {
+              eventSource.close();
+              eventSource = null;
+            }
+            setIsSearching(false);
+            setIsStreamingSearch(false);
+            Alert.alert('Search Error', data.message || 'An error occurred', [{ text: 'OK' }]);
+            break;
+            
+          default:
+            // Handle any other message types
+            console.log('📝 Unknown SSE message type:', eventType, data);
+            break;
         }
+
+      } catch (parseError) {
+        console.warn('⚠️ Failed to parse SSE data:', parseError, 'Raw data:', event.data);
       }
-    }
+    });
+
+    // Connection error
+    eventSource.addEventListener('error', (error: any) => {
+      console.error('❌ SSE Connection error:', error);
+      
+      if (eventSource) {
+        eventSource.close();
+        eventSource = null;
+      }
+      
+      setIsSearching(false);
+      setIsStreamingSearch(false);
+      
+      Alert.alert(
+        'Connection Error',
+        'Lost connection to search service. Please try again.',
+        [{ text: 'OK' }]
+      );
+    });
+
+    // Set timeout for safety (30 seconds)
+    timeoutId = setTimeout(() => {
+      console.warn('⏰ SSE search timeout after 30 seconds');
+      
+      if (eventSource) {
+        eventSource.close();
+        eventSource = null;
+      }
+      
+      setIsSearching(false);
+      setIsStreamingSearch(false);
+      
+      Alert.alert('Search Timeout', 'Search took too long. Please try again.', [{ text: 'OK' }]);
+    }, 30000);
 
   } catch (error: any) {
-    console.error('💥 Real-time streaming search failed:', error);
-    Alert.alert('Search Failed', error.message, [{ text: 'OK' }]);
-  } finally {
+    console.error('💥 SSE streaming search failed:', error);
+    
+    if (eventSource) {
+      eventSource.close();
+      eventSource = null;
+    }
+    
+    if (timeoutId) {
+      clearTimeout(timeoutId);
+    }
+    
+    setIsSearching(false);
     setIsStreamingSearch(false);
+    
+    Alert.alert('Search Failed', error.message, [{ text: 'OK' }]);
   }
+
+  // Store cleanup function
+  (global as any).cleanupSSESearch = () => {
+    console.log('🧹 Cleaning up SSE connection');
+    
+    if (eventSource) {
+      eventSource.close();
+      eventSource = null;
+    }
+    
+    if (timeoutId) {
+      clearTimeout(timeoutId);
+      timeoutId = null;
+    }
+    
+    setIsStreamingSearch(false);
+  };
 };
 
   // TEST MODE: Load pre-loaded AI suggestions
@@ -1430,6 +1536,22 @@ const executeSearch = async (userInput: string) => {
     }
   }, [params?.searchQuery]);
 
+  useEffect(() => {
+  return () => {
+    // Clean up SSE connection when component unmounts
+    if ((global as any).cleanupSSESearch) {
+      (global as any).cleanupSSESearch();
+    }
+    
+    if (sentimentPollingRef.current) {
+      clearInterval(sentimentPollingRef.current);
+    }
+    if (pollingTimeoutRef.current) {
+      clearTimeout(pollingTimeoutRef.current);
+    }
+  };
+}, []);
+
   // Event handlers
   const handleAiSearch = useCallback(() => {
     console.log('AI search button pressed');
@@ -1736,18 +1858,25 @@ const handleHotelPress = useCallback((hotel: Hotel) => {
   );
 }, [handleViewDetails]);
 
-  const handleBackPress = useCallback(() => {
-    console.log('Back button pressed - returning to initial search');
-    if (sentimentPollingRef.current) {
-      clearInterval(sentimentPollingRef.current);
-      sentimentPollingRef.current = null;
-    }
-    if (pollingTimeoutRef.current) {
-      clearTimeout(pollingTimeoutRef.current);
-      pollingTimeoutRef.current = null;
-    }
-    navigation.navigate('InitialSearch');
-  }, [navigation]);
+const handleBackPress = useCallback(() => {
+  console.log('Back button pressed - cleaning up and returning to initial search');
+  
+  // Clean up SSE connection
+  if ((global as any).cleanupSSESearch) {
+    (global as any).cleanupSSESearch();
+  }
+  
+  if (sentimentPollingRef.current) {
+    clearInterval(sentimentPollingRef.current);
+    sentimentPollingRef.current = null;
+  }
+  if (pollingTimeoutRef.current) {
+    clearTimeout(pollingTimeoutRef.current);
+    pollingTimeoutRef.current = null;
+  }
+  
+  navigation.navigate('InitialSearch');
+}, [navigation]);
 
   // Show loading screen while searching
   if (isSearching) {

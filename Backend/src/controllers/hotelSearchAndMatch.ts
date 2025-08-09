@@ -379,12 +379,12 @@ const gptHotelMatchingSSE = async (
   sendUpdate: (type: string, data: any) => void,
   hotelMetadataMap: Map<string, Record<string, unknown>>,
   hotelsWithRates: any[],
-  userInput: string // Added userInput parameter
+  userInput: string
 ): Promise<Array<{ hotelName: string; aiMatchPercent: number; hotelData: HotelSummaryForAI }>> => {
   
   const hasSpecificPreferences = parsedQuery.aiSearch && parsedQuery.aiSearch.trim() !== '';
   
-  // Budget context (same as before)
+  // Budget context (unchanged)
   let budgetContext = '';
   let budgetGuidance = '';
   
@@ -406,7 +406,7 @@ const gptHotelMatchingSSE = async (
 
   console.log(`🤖 GPT-4o Mini Real-time Stream - Processing ${hotelSummaries.length} hotels`);
   
-  // Create hotel summary (same as before)
+  // Create hotel summary (unchanged)
   const hotelSummary = hotelSummaries.map((hotel, index) => {
     const priceMatch = hotel.pricePerNight.match(/(\d+)/);
     const numericPrice = priceMatch ? parseInt(priceMatch[1]) : 999999;
@@ -429,7 +429,7 @@ const gptHotelMatchingSSE = async (
     return `${index + 1}: ${hotel.name} | $${numericPrice}/night | ${hotel.starRating}⭐ | ${locationInfo} | ${hotel.topAmenities.slice(0,2).join(',')} | ${shortDescription}`;
   }).join('\n');
   
-  // Same prompt as before
+  // Same prompt as before (unchanged)
   const prompt = hasSpecificPreferences ? 
     `USER REQUEST: "${parsedQuery.aiSearch}"
 STAY: ${nights} nights${budgetContext}
@@ -493,12 +493,9 @@ Use exact hotel names from the list. Number 1 = HIGHEST quality, Number 15 = 15t
     stream: true,
   });
 
-  // Store hotels with their ranking numbers
   let buffer = '';
   const rankedHotels = new Map<number, { hotelName: string; aiMatchPercent: number; hotelData: HotelSummaryForAI }>();
   let hotelsStreamed = 0;
-  
-  // Track promises for immediate insights processing
   const insightPromises: Promise<void>[] = [];
   
   try {
@@ -520,14 +517,13 @@ Use exact hotel names from the list. Number 1 = HIGHEST quality, Number 15 = 15t
           
           console.log(`✅ Ranked hotel #${parsed.rank}: ${parsed.hotelName} (${parsed.aiMatchPercent}%)`);
           
-          // Find matching hotel with rates
           const matchingHotel = hotelsWithRates.find((hotel: any) => {
             const hotelId = hotel.hotelId || hotel.id || hotel.hotel_id;
             return hotelId === parsed.hotelData.hotelId;
           });
 
           if (matchingHotel) {
-            // 🔥 IMMEDIATELY process this hotel with AI insights in parallel
+            // Process hotel with immediate insights (this will stream via SSE)
             const insightPromise = processHotelWithImmediateInsights(
               { ...matchingHotel, aiMatchPercent: parsed.aiMatchPercent },
               parsed.rank,
@@ -536,7 +532,24 @@ Use exact hotel names from the list. Number 1 = HIGHEST quality, Number 15 = 15t
               nights,
               hotelMetadataMap,
               sendUpdate
-            );
+            ).catch(error => {
+              console.error(`❌ Insight processing failed for ${parsed.hotelName}:`, error);
+              // Send fallback data even if insights fail (SSE compatible)
+              sendUpdate('hotel_enhanced', {
+                hotelIndex: parsed.rank,
+                hotelId: parsed.hotelData.hotelId,
+                hotel: {
+                  name: parsed.hotelName,
+                  aiMatchPercent: parsed.aiMatchPercent,
+                  whyItMatches: "Great choice with excellent amenities",
+                  funFacts: ["Quality accommodations", "Convenient location"],
+                  nearbyAttractions: ["City center", "Local attractions"],
+                  locationHighlight: "Well-located property",
+                  guestInsights: "Consistently rated well by guests"
+                },
+                message: `${parsed.hotelName} ready (insights unavailable)`
+              });
+            });
             
             insightPromises.push(insightPromise);
             hotelsStreamed++;
@@ -545,7 +558,7 @@ Use exact hotel names from the list. Number 1 = HIGHEST quality, Number 15 = 15t
       }
     }
     
-    // Process remaining buffer
+    // Process remaining buffer (unchanged)
     if (buffer.trim()) {
       const remainingLines = buffer.split('\n');
       for (const line of remainingLines) {
@@ -572,7 +585,23 @@ Use exact hotel names from the list. Number 1 = HIGHEST quality, Number 15 = 15t
                 nights,
                 hotelMetadataMap,
                 sendUpdate
-              );
+              ).catch(error => {
+                console.error(`❌ Insight processing failed for ${parsed.hotelName}:`, error);
+                sendUpdate('hotel_enhanced', {
+                  hotelIndex: parsed.rank,
+                  hotelId: parsed.hotelData.hotelId,
+                  hotel: {
+                    name: parsed.hotelName,
+                    aiMatchPercent: parsed.aiMatchPercent,
+                    whyItMatches: "Great choice with excellent amenities",
+                    funFacts: ["Quality accommodations", "Convenient location"],
+                    nearbyAttractions: ["City center", "Local attractions"],
+                    locationHighlight: "Well-located property",
+                    guestInsights: "Consistently rated well by guests"
+                  },
+                  message: `${parsed.hotelName} ready (insights unavailable)`
+                });
+              });
               
               insightPromises.push(insightPromise);
               hotelsStreamed++;
@@ -582,18 +611,21 @@ Use exact hotel names from the list. Number 1 = HIGHEST quality, Number 15 = 15t
       }
     }
     
-    // Wait for all insight processing to complete (optional - can be removed for true async)
+    // Wait for all insight processing to complete
     console.log(`⏳ Waiting for ${insightPromises.length} AI insight processes to complete...`);
     await Promise.allSettled(insightPromises);
     console.log(`✅ All AI insight processes completed`);
     
   } catch (streamError) {
-    console.error('❌ Streaming error:', streamError);
-    sendUpdate('error', { message: 'AI matching encountered an error' });
+    console.error('❌ SSE Streaming error:', streamError);
+    sendUpdate('error', { 
+      message: 'AI matching encountered an error',
+      details: streamError instanceof Error ? streamError.message : 'Unknown streaming error'
+    });
     throw streamError;
   }
 
-  // Return hotels in GPT's intended ranking order
+  // Return hotels in GPT's intended ranking order (unchanged)
   const orderedMatches: Array<{ hotelName: string; aiMatchPercent: number; hotelData: HotelSummaryForAI }> = [];
   
   for (let rank = 1; rank <= 15; rank++) {
@@ -1316,40 +1348,82 @@ const applyHardPriceFilter = (
 
 export const hotelSearchAndMatchController = async (req: Request, res: Response) => {
   const logger = new PerformanceLogger();
-  
-  const { userInput, enableStreaming = false, includeStage1Data = false } = req.body;
 
-  if (!userInput) {
+  // NEW: Detect if this is a GET request (SSE) or POST request (legacy)
+  const isSSERequest = req.method === 'GET';
+  const userInput = isSSERequest
+    ? String(req.query.q ?? req.query.userInput ?? '')
+    : req.body.userInput;
+
+  if (!userInput?.trim()) {
     return res.status(400).json({ error: 'userInput is required' });
   }
 
-  // SET UP SSE headers if streaming enabled
-  if (enableStreaming) {
-    res.writeHead(200, {
-      'Content-Type': 'text/event-stream',
-      'Cache-Control': 'no-cache',
-      'Connection': 'keep-alive',
-      'Access-Control-Allow-Origin': '*',
-      'Access-Control-Allow-Headers': 'Cache-Control'
+  // NEW: SSE Setup for GET requests
+  if (isSSERequest) {
+    console.log('🌊 Setting up SSE connection for mobile streaming...');
+    
+    // Set SSE headers
+    res.setHeader('Content-Type', 'text/event-stream');
+    res.setHeader('Cache-Control', 'no-cache');
+    res.setHeader('Connection', 'keep-alive');
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Headers', 'Cache-Control');
+    res.setHeader('X-Accel-Buffering', 'no'); // Disable nginx buffering
+    
+    // Flush headers immediately
+    if (typeof (res as any).flushHeaders === 'function') {
+      (res as any).flushHeaders();
+    }
+
+    // Set up heartbeat to keep connection alive
+    const heartbeat = setInterval(() => {
+      if (!res.destroyed) {
+        res.write(': heartbeat\n\n');
+      }
+    }, 15000);
+
+    // Clean up on client disconnect
+    req.on('close', () => {
+      console.log('🔌 SSE client disconnected');
+      clearInterval(heartbeat);
+      if (!res.destroyed) {
+        try { res.end(); } catch (e) { /* ignore */ }
+      }
     });
+
+    req.on('error', () => {
+      console.log('❌ SSE connection error');
+      clearInterval(heartbeat);
+      if (!res.destroyed) {
+        try { res.end(); } catch (e) { /* ignore */ }
+      }
+    });
+
+    // Send initial connection confirmation
+    res.write('data: {"type":"connected","message":"Real-time search connected"}\n\n');
   }
 
   // Helper function for sending updates
   const sendUpdate = (type: string, data: any) => {
-    if (enableStreaming) {
-      res.write(`data: ${JSON.stringify({ type, ...data })}\n\n`);
+    if (isSSERequest && !res.destroyed) {
+      try {
+        const message = JSON.stringify({ type, ...data });
+        res.write(`data: ${message}\n\n`);
+      } catch (error) {
+        console.error('❌ Error sending SSE update:', error);
+      }
     }
   };
 
-  // NEW: Store Stage 1 data for insights
-  let stage1DataForInsights: any = null;
-  
   try {
-
-    console.log('🚀 OPTIMIZED Hotel Search and Match Starting for:', userInput);
+    console.log(`🚀 ${isSSERequest ? 'SSE' : 'POST'} Hotel Search Starting:`, userInput);
     const searchId = randomUUID();
 
-    // STEP 1: Parse user input - ADD streaming update
+    // Always use streaming for SSE requests
+    const enableStreaming = isSSERequest;
+
+    // STEP 1: Parse user input
     sendUpdate('progress', { message: 'Understanding your request...', step: 1, totalSteps: 8 });
     
     logger.startStep('1-ParseQuery', { userInput });
@@ -1360,7 +1434,7 @@ export const hotelSearchAndMatchController = async (req: Request, res: Response)
 
     // Validate parsed data
     if (!parsedQuery.checkin || !parsedQuery.checkout || !parsedQuery.countryCode || !parsedQuery.cityName) {
-      if (enableStreaming) {
+      if (isSSERequest) {
         sendUpdate('error', { 
           message: 'Could not understand your search request. Please try again with clearer details.',
           parsed: parsedQuery
@@ -1378,7 +1452,7 @@ export const hotelSearchAndMatchController = async (req: Request, res: Response)
 
     const nights = Math.ceil((new Date(parsedQuery.checkout).getTime() - new Date(parsedQuery.checkin).getTime()) / (1000 * 60 * 60 * 24));
 
-    // STEP 2: Fetch hotels with ALL metadata - ADD streaming update
+    // STEP 2: Fetch hotels with ALL metadata
     sendUpdate('progress', { 
       message: `Searching for hotels in ${parsedQuery.cityName}...`, 
       step: 2, 
@@ -1403,7 +1477,7 @@ export const hotelSearchAndMatchController = async (req: Request, res: Response)
     logger.endStep('2-FetchHotelsWithMetadata', { hotelCount: hotels?.length || 0 });
 
     if (!hotels || !Array.isArray(hotels) || hotels.length === 0) {
-      if (enableStreaming) {
+      if (isSSERequest) {
         sendUpdate('error', {
           message: `No hotels found in ${parsedQuery.cityName}, ${parsedQuery.countryCode}. Try a different city.`,
           searchParams: parsedQuery
@@ -1439,7 +1513,7 @@ export const hotelSearchAndMatchController = async (req: Request, res: Response)
     
     logger.endStep('3-BuildMetadataMap', { metadataEntries: hotelMetadataMap.size });
 
-    // STEP 4: Fetch rates for all hotels - ADD streaming update
+    // STEP 4: Fetch rates for all hotels
     const hotelIds = hotels.map((hotel: any) => 
       hotel.id || hotel.hotelId || hotel.hotel_id || hotel.code
     ).filter(Boolean);
@@ -1496,7 +1570,7 @@ export const hotelSearchAndMatchController = async (req: Request, res: Response)
     logger.endStep('4-FetchRates', { hotelsWithRates: hotelsWithRates.length });
 
     if (hotelsWithRates.length === 0) {
-      if (enableStreaming) {
+      if (isSSERequest) {
         sendUpdate('error', {
           message: 'No hotels available for your dates. Try different dates or destination.',
           searchParams: parsedQuery
@@ -1553,7 +1627,7 @@ export const hotelSearchAndMatchController = async (req: Request, res: Response)
     logger.endStep('5-BuildAISummaries', { summariesBuilt: hotelSummariesForAI.length });
 
     if (hotelSummariesForAI.length === 0) {
-      if (enableStreaming) {
+      if (isSSERequest) {
         sendUpdate('error', {
           message: 'Found hotels but could not process any for recommendations.',
           searchParams: parsedQuery
@@ -1589,7 +1663,7 @@ export const hotelSearchAndMatchController = async (req: Request, res: Response)
       removedCount: hotelSummariesForAI.length - priceFilteredHotels.length
     });
 
-    // STEP 7: GPT AI Matching - CHOOSE streaming or regular based on enableStreaming
+    // STEP 7: GPT AI Matching - Use streaming version for SSE requests
     sendUpdate('progress', { 
       message: 'AI is analyzing hotels for your perfect matches...', 
       step: 7, 
@@ -1598,26 +1672,27 @@ export const hotelSearchAndMatchController = async (req: Request, res: Response)
 
     logger.startStep('7-GPTMatching', { hotelCount: priceFilteredHotels.length });
     
-    // MODIFY THIS: Use streaming or regular GPT matching
     let gptMatches;
-    if (enableStreaming) {
-    gptMatches = await gptHotelMatchingSSE(
-      priceFilteredHotels, 
-      parsedQuery, 
-      nights,
-      sendUpdate,
-      hotelMetadataMap,
-      hotelsWithRates,
-      userInput // Pass userInput for immediate insights
-    );
+    if (isSSERequest) {
+      // Use streaming GPT matching for SSE
+      gptMatches = await gptHotelMatchingSSE(
+        priceFilteredHotels, 
+        parsedQuery, 
+        nights,
+        sendUpdate,
+        hotelMetadataMap,
+        hotelsWithRates,
+        userInput
+      );
     } else {
+      // Use regular GPT matching for POST requests
       gptMatches = await gptHotelMatching(priceFilteredHotels, parsedQuery, nights);
     }
     
     logger.endStep('7-GPTMatching', { matches: gptMatches.length });
 
     if (gptMatches.length === 0) {
-      if (enableStreaming) {
+      if (isSSERequest) {
         sendUpdate('error', { message: 'AI matching system failed to find suitable hotels' });
         res.end();
         return;
@@ -1671,7 +1746,6 @@ export const hotelSearchAndMatchController = async (req: Request, res: Response)
           country: enrichedHotelSummary.country,
           latitude: enrichedHotelSummary.latitude,
           longitude: enrichedHotelSummary.longitude,
-          // NEW: Add refundable info to summarized data
           isRefundable: enrichedHotelSummary.isRefundable,
           refundableInfo: enrichedHotelSummary.refundableInfo
         }
@@ -1680,82 +1754,28 @@ export const hotelSearchAndMatchController = async (req: Request, res: Response)
 
     logger.endStep('8-BuildEnrichedData', { enrichedHotels: enrichedHotels.length });
 
-    // NEW: Prepare Stage 1 data structure for AI insights
-    if (enableStreaming && includeStage1Data) {
-      stage1DataForInsights = {
-        searchParams: {
-          checkin: parsedQuery.checkin,
-          checkout: parsedQuery.checkout,
-          countryCode: parsedQuery.countryCode,
-          cityName: parsedQuery.cityName,
-          language: parsedQuery.language || 'en',
-          adults: parsedQuery.adults || 2,
-          children: parsedQuery.children || 0,
-          aiSearch: userInput,
-          nights: nights,
-          currency: 'USD',
-          minCost: parsedQuery.minCost || null,
-          maxCost: parsedQuery.maxCost || null
-        },
-        hotels: enrichedHotels.map(hotel => ({
-          hotelId: hotel?.hotelId ?? null,
-          name: hotel?.name ?? null,
-          aiMatchPercent: hotel?.aiMatchPercent ?? null,
-          starRating: hotel?.starRating ?? null,
-          images: hotel?.images ?? [],
-          pricePerNight: hotel?.pricePerNight ?? null,
-          reviewCount: hotel?.reviewCount ?? null,
-          address: hotel?.address ?? null,
-          amenities: hotel?.amenities ?? hotel?.topAmenities ?? [],
-          description: hotel?.description ?? 'Quality accommodation',
-          coordinates: {
-        latitude: hotel?.latitude ?? hotel?.coordinates?.latitude ?? null,
-        longitude: hotel?.longitude ?? hotel?.coordinates?.longitude ?? null
-          },
-          priceRange: hotel?.priceRange ?? null,
-          totalRooms: hotel?.totalRooms ?? 1,
-          hasAvailability: hotel?.hasAvailability !== false,
-          roomTypes: hotel?.roomTypes ?? [],
-          city: hotel?.city ?? 'Unknown City',
-          country: hotel?.country ?? 'Unknown Country',
-          latitude: hotel?.latitude ?? hotel?.coordinates?.latitude ?? null,
-          longitude: hotel?.longitude ?? hotel?.coordinates?.longitude ?? null,
-          topAmenities: hotel?.topAmenities ?? [],
-          isRefundable: hotel?.isRefundable ?? false,
-          refundableTag: hotel?.refundableTag ?? null,
-          refundableInfo: hotel?.refundableInfo ?? 'No refund information available',
-          summarizedInfo: hotel?.summarizedInfo ?? null
-        })),
-        matchedHotelsCount: enrichedHotels.length,
-        searchId: searchId,
-        aiMatchingCompleted: true
-      };
-
-      console.log(`📦 Stage 1 data prepared for insights: ${stage1DataForInsights.hotels.length} hotels`);
-    }
-
     // Final response
     const performanceReport = logger.getDetailedReport();
-    console.log(`🚀 Hotel Search and Match Complete in ${performanceReport.totalTime}ms ✅`);
+    console.log(`🚀 ${isSSERequest ? 'SSE' : 'POST'} Hotel Search Complete in ${performanceReport.totalTime}ms ✅`);
 
-    // MODIFIED: Send response based on streaming mode
-    if (enableStreaming) {
+    if (isSSERequest) {
+      // SSE completion
       sendUpdate('complete', {
-        message: `Found ${TARGET_HOTEL_COUNT} perfect hotels for you!`,
+        message: `Found ${enrichedHotels.length} perfect hotels for you!`,
         searchId: searchId,
         totalHotels: enrichedHotels.length,
         performance: {
           totalTimeMs: performanceReport.totalTime,
-          optimization: 'Streamed results with real-time updates'
-        },
-        // NEW: Include Stage 1 data if requested
-        ...(includeStage1Data && stage1DataForInsights && {
-          stage1Data: stage1DataForInsights
-        })
+          optimization: 'Real-time SSE streaming'
+        }
       });
-      res.end();
+      
+      // Close SSE connection
+      if (!res.destroyed) {
+        res.end();
+      }
     } else {
-      // Regular response for non-streaming requests
+      // Regular JSON response for POST requests
       return res.status(200).json({
         searchParams: {
           ...parsedQuery,
@@ -1780,37 +1800,38 @@ export const hotelSearchAndMatchController = async (req: Request, res: Response)
     }
 
   } catch (error) {
-    console.error('Error in hotel search and match:', error);
+    console.error('❌ Error in hotel search and match:', error);
     const errorReport = logger.getDetailedReport();
     
-    if (enableStreaming) {
+    if (isSSERequest) {
       sendUpdate('error', {
         message: error instanceof Error ? error.message : 'An unexpected error occurred',
-        step: 'unknown'
+        details: error instanceof Error ? error.stack : undefined
       });
-      res.end();
-      return;
-    }
-
-    // Regular error handling for non-streaming requests
-    if (axios.isAxiosError(error)) {
-      if (error.response) {
-        return res.status(error.response.status).json({
-          error: 'API error',
-          message: error.response.data?.message || error.response.data?.error?.description || 'Unknown API error',
-          details: error.response.data,
-          step: error.config?.url?.includes('/parse') ? 'parsing' : 
-                error.config?.url?.includes('/data/hotels') ? 'hotel_search' : 
-                error.config?.url?.includes('openai') ? 'gpt_matching' : 'rates_search',
-          performance: errorReport
-        });
+      if (!res.destroyed) {
+        res.end();
       }
-    }
+    } else {
+      // Regular error handling for POST requests
+      if (axios.isAxiosError(error)) {
+        if (error.response) {
+          return res.status(error.response.status).json({
+            error: 'API error',
+            message: error.response.data?.message || error.response.data?.error?.description || 'Unknown API error',
+            details: error.response.data,
+            step: error.config?.url?.includes('/parse') ? 'parsing' : 
+                  error.config?.url?.includes('/data/hotels') ? 'hotel_search' : 
+                  error.config?.url?.includes('openai') ? 'gpt_matching' : 'rates_search',
+            performance: errorReport
+          });
+        }
+      }
 
-    return res.status(500).json({ 
-      error: 'Hotel search and match failed',
-      message: error instanceof Error ? error.message : 'Unknown error',
-      performance: errorReport
-    });
+      return res.status(500).json({ 
+        error: 'Hotel search and match failed',
+        message: error instanceof Error ? error.message : 'Unknown error',
+        performance: errorReport
+      });
+    }
   }
 };
