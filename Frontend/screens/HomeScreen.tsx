@@ -292,7 +292,7 @@ interface Hotel {
 }
 
 // Base URL
-const BASE_URL = 'http://localhost:3003';
+const BASE_URL = 'https://staygenie-wwpa.onrender.com';
 
 
 const HomeScreen = () => {
@@ -376,12 +376,6 @@ const handleStreamingUpdate = async (data: any, userInput?: string) => {
           setFirstHotelFound(true);
           setIsSearching(false); // ⚡ IMMEDIATELY dismiss main loading screen
           setDisplayHotels([newHotel]); // Show just the first hotel
-          
-          Alert.alert(
-            'Perfect Match Found! 🎯',
-            `${newHotel.name} (${newHotel.aiMatchPercent}% match)\n\n🌊 More hotels streaming in with AI insights...`,
-            [{ text: 'View Hotel' }]
-          );
         } else {
           // ✨ LIVE UPDATES - Add subsequent hotels to existing list
           console.log(`🔥 Hotel ${data.hotelIndex}/${data.totalExpected} streaming in: ${newHotel.name} (${newHotel.aiMatchPercent}% match)`);
@@ -463,12 +457,6 @@ const handleStreamingUpdate = async (data: any, userInput?: string) => {
         setCurrentSearchId(data.searchId);
       }
 
-      // Show completion notification
-      Alert.alert(
-        'Enhanced Results Ready! ✨',
-        `All ${data.totalHotels} hotels found with real-time AI insights!\n\n⚡ Lightning fast (${data.performance?.totalTimeMs}ms)`,
-        [{ text: 'Explore Hotels' }]
-      );
       break;
 
     case 'error':
@@ -1898,22 +1886,29 @@ const handleBackPress = useCallback(() => {
           >
             <Ionicons name="arrow-back" size={20} color="#374151" />
           </TouchableOpacity>
-          
-          <TouchableOpacity
-           style={tw`flex-1 flex-row items-center justify-center gap-3 px-6 py-3 rounded-2xl bg-gray-900 shadow-xl`}
-            onPress={handleAiSearch}
-            activeOpacity={0.8}
-            disabled={isSearching}
-          >
-            <Ionicons
-              name="sparkles"
-              size={18}
-              color="#1df9ff"
-            />
-            <Text style={[tw`text-base font-bold text-white`]}>
-              Refine Search
-            </Text>
-          </TouchableOpacity>
+<TouchableOpacity
+  style={[
+    tw`flex-1 py-4 px-8 rounded-2xl flex-row items-center justify-center shadow-lg`,
+    { 
+      backgroundColor: '#1df9ff', // Solid turquoise background like Explore Hotels
+      shadowColor: '#1df9ff',
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: 0.3,
+      shadowRadius: 12,
+      elevation: 8,
+    }
+  ]}
+  onPress={handleAiSearch}
+  activeOpacity={0.9}
+  disabled={isSearching}
+>
+  <Ionicons name="sparkles" size={20} color="#FFFFFF" />
+  
+  <Text style={tw`text-white font-semibold text-base ml-3`}>
+    Refine Search
+  </Text>
+</TouchableOpacity>
+
         </View>
 
         {/* SEARCH RESULTS HEADER WITH PERFORMANCE INDICATORS */}
@@ -1922,9 +1917,9 @@ const handleBackPress = useCallback(() => {
     <View style={tw`flex-row items-center justify-between`}>
       <Text style={tw`text-xs text-gray-500 flex-1`}>
         {isStreamingSearch 
-          ? `🌊 Live results for "${searchQuery}" (${displayHotels.length}/5 found)`
+          ? `Live results for "${searchQuery}" (${displayHotels.length}/15 found)`
           : displayHotels.length > 0
-            ? `✅ ${displayHotels.length} hotels found for "${searchQuery}"`
+            ? `${displayHotels.length} hotels found for "${searchQuery}"`
             : `Results for "${searchQuery}"`
         }
       </Text>

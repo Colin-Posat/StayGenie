@@ -1665,7 +1665,7 @@ export const hotelSearchAndMatchController = async (req: Request, res: Response)
 
     // STEP 7: GPT AI Matching - Use streaming version for SSE requests
     sendUpdate('progress', { 
-      message: 'AI is analyzing hotels for your perfect matches...', 
+      message: '', 
       step: 7, 
       totalSteps: 8
     });
