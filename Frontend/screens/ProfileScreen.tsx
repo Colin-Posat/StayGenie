@@ -1,4 +1,4 @@
-// ProfileScreen.tsx - Matches app's sleek design language
+// ProfileScreen.tsx - Revamped with Firebase authentication
 import React, { useState, useRef, useEffect } from 'react';
 import {
   View,
@@ -7,90 +7,38 @@ import {
   SafeAreaView,
   StatusBar,
   ScrollView,
-  Image,
   Animated,
   Switch,
   Platform,
+  Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import tw from 'twrnc';
+import { useAuth } from '../contexts/AuthContext';
+import EmailSignUpModal from '../components/SignupLogin/EmailSignUpModal';
+import EmailSignInModal from '../components/SignupLogin/EmailSignInModal';
 
-// Profile avatar component with floating animation
-const ProfileAvatar: React.FC<{ size?: number }> = ({ size = 80 }) => {
-  const floatAnimation = useRef(new Animated.Value(0)).current;
+// Consistent color constants (matching other screens)
+const TURQUOISE = '#1df9ff';
+const TURQUOISE_LIGHT = '#5dfbff';
+const TURQUOISE_DARK = '#00d4e6';
+const BLACK = "#000000";
 
-  useEffect(() => {
-    Animated.loop(
-      Animated.sequence([
-        Animated.timing(floatAnimation, {
-          toValue: -4,
-          duration: 2000,
-          useNativeDriver: true,
-        }),
-        Animated.timing(floatAnimation, {
-          toValue: 0,
-          duration: 2000,
-          useNativeDriver: true,
-        }),
-      ])
-    ).start();
-  }, []);
-
-  return (
-    <Animated.View
-      style={[
-        tw`relative`,
-        {
-          transform: [{ translateY: floatAnimation }],
-        }
-      ]}
-    >
-      <View style={[
-        tw`bg-gradient-to-br from-blue-400 to-purple-500 rounded-3xl items-center justify-center shadow-lg`,
-        { 
-          width: size, 
-          height: size,
-          shadowColor: '#000',
-          shadowOffset: { width: 0, height: 8 },
-          shadowOpacity: 0.15,
-          shadowRadius: 20,
-          elevation: 10,
-        }
-      ]}>
-        <Text style={tw`text-white font-bold text-2xl`}>
-          JD
-        </Text>
-      </View>
-      
-      {/* Online status indicator */}
-      <View style={[
-        tw`absolute bg-green-400 rounded-full border-3 border-white`,
-        {
-          width: size * 0.25,
-          height: size * 0.25,
-          right: size * 0.05,
-          bottom: size * 0.05,
-        }
-      ]} />
-    </Animated.View>
-  );
-};
-
-// Enhanced section header component
+// Enhanced section header component (consistent with FavoritesScreen)
 const SectionHeader: React.FC<{ title: string; subtitle?: string }> = ({ title, subtitle }) => (
-  <View style={tw`mb-4`}>
-    <Text style={tw`text-lg font-bold text-black mb-1`}>
+  <View style={tw`mb-4 px-6`}>
+    <Text style={tw`text-xl font-bold text-gray-900 mb-1`}>
       {title}
     </Text>
     {subtitle && (
-      <Text style={tw`text-sm text-gray-500`}>
+      <Text style={tw`text-sm text-gray-600`}>
         {subtitle}
       </Text>
     )}
   </View>
 );
 
-// Menu item component matching your app's style
+// Menu item component matching consistent app style
 const MenuItem: React.FC<{
   icon: string;
   title: string;
@@ -103,6 +51,7 @@ const MenuItem: React.FC<{
   showArrow?: boolean;
   iconColor?: string;
   badge?: string;
+  isDestructive?: boolean;
 }> = ({
   icon,
   title,
@@ -113,29 +62,51 @@ const MenuItem: React.FC<{
   switchValue = false,
   onSwitchChange,
   showArrow = true,
-  iconColor = "#666666",
-  badge
+  iconColor,
+  badge,
+  isDestructive = false
 }) => {
+  const defaultIconColor = isDestructive ? '#EF4444' : TURQUOISE_DARK;
+  const finalIconColor = iconColor || defaultIconColor;
+
   return (
     <TouchableOpacity
-      style={tw`bg-white rounded-2xl p-4 mb-3 border border-gray-100 shadow-sm flex-row items-center`}
+      style={[
+        tw`mx-6 mb-3 p-4 rounded-2xl flex-row items-center shadow-sm`,
+        { 
+          backgroundColor: '#FFFFFF',
+          borderWidth: 1,
+          borderColor: isDestructive ? '#FEE2E2' : TURQUOISE + '20',
+        }
+      ]}
       onPress={onPress}
-      activeOpacity={0.7}
+      activeOpacity={0.8}
       disabled={hasSwitch}
     >
       {/* Icon container */}
-      <View style={tw`w-10 h-10 bg-gray-50 rounded-xl items-center justify-center mr-4`}>
-        <Ionicons name={icon as any} size={20} color={iconColor} />
+      <View style={[
+        tw`w-12 h-12 rounded-xl items-center justify-center mr-4`,
+        { 
+          backgroundColor: isDestructive ? '#FEE2E2' : TURQUOISE + '15',
+        }
+      ]}>
+        <Ionicons name={icon as any} size={22} color={finalIconColor} />
       </View>
 
       {/* Content */}
       <View style={tw`flex-1`}>
         <View style={tw`flex-row items-center`}>
-          <Text style={tw`text-base font-semibold text-black`}>
+          <Text style={[
+            tw`text-base font-semibold`,
+            { color: isDestructive ? '#EF4444' : BLACK }
+          ]}>
             {title}
           </Text>
           {badge && (
-            <View style={tw`bg-red-500 rounded-full px-2 py-0.5 ml-2`}>
+            <View style={[
+              tw`rounded-full px-2.5 py-1 ml-2`,
+              { backgroundColor: TURQUOISE }
+            ]}>
               <Text style={tw`text-white text-xs font-bold`}>
                 {badge}
               </Text>
@@ -148,7 +119,7 @@ const MenuItem: React.FC<{
           </Text>
         )}
         {value && (
-          <Text style={tw`text-sm text-blue-600 mt-0.5 font-medium`}>
+          <Text style={[tw`text-sm mt-0.5 font-medium`, { color: TURQUOISE_DARK }]}>
             {value}
           </Text>
         )}
@@ -159,40 +130,20 @@ const MenuItem: React.FC<{
         <Switch
           value={switchValue}
           onValueChange={onSwitchChange}
-          trackColor={{ false: '#E5E7EB', true: '#000000' }}
+          trackColor={{ false: '#E5E7EB', true: TURQUOISE }}
           thumbColor={switchValue ? '#FFFFFF' : '#F3F4F6'}
           ios_backgroundColor="#E5E7EB"
         />
       ) : showArrow ? (
-        <Ionicons name="chevron-forward" size={20} color="#C6C6C6" />
+        <Ionicons 
+          name="chevron-forward" 
+          size={20} 
+          color={isDestructive ? '#EF4444' : TURQUOISE_DARK} 
+        />
       ) : null}
     </TouchableOpacity>
   );
 };
-
-// Stats card component
-const StatsCard: React.FC<{
-  title: string;
-  value: string;
-  subtitle: string;
-  icon: string;
-  iconColor: string;
-}> = ({ title, value, subtitle, icon, iconColor }) => (
-  <View style={tw`bg-white rounded-2xl p-4 border border-gray-100 shadow-sm flex-1 mx-1`}>
-    <View style={tw`flex-row items-center justify-between mb-2`}>
-      <Text style={tw`text-sm font-medium text-gray-600`}>
-        {title}
-      </Text>
-      <Ionicons name={icon as any} size={18} color={iconColor} />
-    </View>
-    <Text style={tw`text-2xl font-bold text-black mb-1`}>
-      {value}
-    </Text>
-    <Text style={tw`text-xs text-gray-500`}>
-      {subtitle}
-    </Text>
-  </View>
-);
 
 // Main Profile Screen
 const ProfileScreen = () => {
@@ -200,6 +151,11 @@ const ProfileScreen = () => {
   const [locationEnabled, setLocationEnabled] = useState(true);
   const [biometricEnabled, setBiometricEnabled] = useState(false);
   const [darkModeEnabled, setDarkModeEnabled] = useState(false);
+  const [showEmailSignUpModal, setShowEmailSignUpModal] = useState(false);
+  const [showEmailSignInModal, setShowEmailSignInModal] = useState(false);
+
+  // Firebase auth
+  const { user, isAuthenticated, signOut: firebaseSignOut, signInWithGoogle } = useAuth();
 
   const fadeAnimation = useRef(new Animated.Value(0)).current;
   const slideAnimation = useRef(new Animated.Value(30)).current;
@@ -220,7 +176,50 @@ const ProfileScreen = () => {
   }, []);
 
   const handleLogout = () => {
-    console.log('Logout pressed');
+    Alert.alert(
+      'Sign Out',
+      'Are you sure you want to sign out?',
+      [
+        { text: 'Cancel', style: 'cancel' },
+        { 
+          text: 'Sign Out', 
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await firebaseSignOut();
+              console.log('✅ Successfully signed out');
+            } catch (error: any) {
+              console.log('❌ Sign out error:', error.message);
+              Alert.alert('Error', 'Failed to sign out');
+            }
+          }
+        }
+      ]
+    );
+  };
+
+  const handleGoogleSignUp = async () => {
+    try {
+      await signInWithGoogle();
+      console.log('✅ Google sign up successful');
+    } catch (error: any) {
+      console.log('❌ Google sign up error:', error.message);
+      Alert.alert('Sign Up Failed', 'Failed to sign up with Google. Please try again.');
+    }
+  };
+
+  const handleSwitchToSignUp = () => {
+    setShowEmailSignInModal(false);
+    setTimeout(() => {
+      setShowEmailSignUpModal(true);
+    }, 300);
+  };
+
+  const handleSwitchToSignIn = () => {
+    setShowEmailSignUpModal(false);
+    setTimeout(() => {
+      setShowEmailSignInModal(true);
+    }, 300);
   };
 
   const handleEditProfile = () => {
@@ -236,22 +235,25 @@ const ProfileScreen = () => {
         contentContainerStyle={tw`pb-8`}
         showsVerticalScrollIndicator={false}
       >
-        {/* Header */}
-        <View style={tw`px-6 pt-4 pb-6 bg-white border-b border-gray-100`}>
+        {/* Header with profile info */}
+        <View style={tw`px-6 pt-6 pb-8 bg-white`}>
           <View style={tw`flex-row items-center justify-between mb-6`}>
-            <Text style={tw`text-2xl font-bold text-black`}>
+            <Text style={tw`text-2xl font-bold text-gray-900`}>
               Profile
             </Text>
             <TouchableOpacity
-              style={tw`w-10 h-10 bg-gray-100 rounded-xl items-center justify-center`}
+              style={[
+                tw`w-12 h-12 rounded-xl items-center justify-center`,
+                { backgroundColor: TURQUOISE + '15' }
+              ]}
               onPress={handleEditProfile}
-              activeOpacity={0.7}
+              activeOpacity={0.8}
             >
-              <Ionicons name="create-outline" size={20} color="#666666" />
+              <Ionicons name="create-outline" size={20} color={TURQUOISE_DARK} />
             </TouchableOpacity>
           </View>
 
-          {/* Profile Info */}
+          {/* Profile section with user info */}
           <Animated.View
             style={[
               tw``,
@@ -261,182 +263,274 @@ const ProfileScreen = () => {
               }
             ]}
           >
-            <Text style={tw`text-xl font-bold text-black mb-1`}>
-              John Doe
-            </Text>
-            
-            <Text style={tw`text-sm text-gray-500`}>
-              john.doe@example.com
-            </Text>
+            {isAuthenticated && user ? (
+              <>
+                <Text style={tw`text-xl font-bold text-gray-900 mb-1`}>
+                  {user.name}
+                </Text>
+                <Text style={tw`text-sm text-gray-500`}>
+                  {user.email}
+                </Text>
+                <View style={tw`flex-row items-center mt-2`}>
+                  <View style={[tw`w-2 h-2 rounded-full mr-2`, { backgroundColor: TURQUOISE }]} />
+                  <Text style={tw`text-xs text-gray-500`}>
+                    {user.favoriteHotels.length} favorite hotel{user.favoriteHotels.length !== 1 ? 's' : ''}
+                  </Text>
+                </View>
+              </>
+            ) : (
+              <>
+                <Text style={tw`text-xl font-bold text-gray-900 mb-1`}>
+                  Guest User
+                </Text>
+                <Text style={tw`text-sm text-gray-500 mb-4`}>
+                  Create an account to save your favorite hotels and get personalized recommendations
+                </Text>
+
+                {/* Sign Up with Email Button */}
+                <TouchableOpacity
+                  style={[
+                    tw`p-4 rounded-xl mb-3 flex-row items-center justify-center`,
+                    { backgroundColor: TURQUOISE }
+                  ]}
+                  onPress={() => setShowEmailSignUpModal(true)}
+                  activeOpacity={0.8}
+                >
+                  <Ionicons name="mail-outline" size={20} color="white" />
+                  <Text style={tw`text-white font-semibold text-base ml-3`}>
+                    Sign Up with Email
+                  </Text>
+                </TouchableOpacity>
+
+                {/* Sign Up with Google Button */}
+                <TouchableOpacity
+                  style={[
+                    tw`p-4 rounded-xl flex-row items-center justify-center border`,
+                    { 
+                      backgroundColor: '#FFFFFF',
+                      borderColor: '#E5E7EB',
+                    }
+                  ]}
+                  onPress={handleGoogleSignUp}
+                  activeOpacity={0.8}
+                >
+                  <Ionicons name="logo-google" size={20} color="#4285F4" />
+                  <Text style={tw`text-gray-900 font-semibold text-base ml-3`}>
+                    Sign Up with Google
+                  </Text>
+                </TouchableOpacity>
+
+                {/* Already have account link */}
+                <TouchableOpacity
+                  style={tw`mt-3 items-center`}
+                  onPress={() => setShowEmailSignInModal(true)}
+                  activeOpacity={0.8}
+                >
+                  <Text style={[tw`text-sm`, { color: TURQUOISE_DARK }]}>
+                    Already have an account? Sign In
+                  </Text>
+                </TouchableOpacity>
+              </>
+            )}
           </Animated.View>
         </View>
 
         {/* Search Preferences Section */}
-        <View style={tw`px-6 pb-6`}>
-          <SectionHeader 
-            title="Search Preferences" 
-            subtitle="Your hotel discovery settings"
-          />
-          
-          <MenuItem
-            icon="star-outline"
-            title="Saved Searches"
-            subtitle="Quick access to recent searches"
-            badge="5"
-            onPress={() => console.log('Saved searches pressed')}
-          />
-          
-          <MenuItem
-            icon="location-outline"
-            title="Preferred Locations"
-            subtitle="Cities you search often"
-            onPress={() => console.log('Locations pressed')}
-          />
-          
-          <MenuItem
-            icon="options-outline"
-            title="Default Filters"
-            subtitle="Set your go-to preferences"
-            onPress={() => console.log('Filters pressed')}
-          />
-        </View>
+        <SectionHeader 
+          title="Search Preferences" 
+          subtitle="Your hotel discovery settings"
+        />
+        
+        <MenuItem
+          icon="star-outline"
+          title="Recent Searches"
+          subtitle="Quick access to recent searches"
+          onPress={() => console.log('Saved searches pressed')}
+        />
+        
+        <MenuItem
+          icon="location-outline"
+          title="Preferred Locations"
+          subtitle="Cities you search often"
+          onPress={() => console.log('Locations pressed')}
+        />
+        
+        <MenuItem
+          icon="options-outline"
+          title="Default Filters"
+          subtitle="Set your go-to preferences"
+          onPress={() => console.log('Filters pressed')}
+        />
 
         {/* Account Section */}
-        <View style={tw`px-6 pb-6`}>
-          <SectionHeader 
-            title="Account" 
-            subtitle="Manage your account settings"
-          />
-          
-          <MenuItem
-            icon="person-outline"
-            title="Personal Information"
-            subtitle="Update your details"
-            onPress={() => console.log('Personal info pressed')}
-          />
-          
-          <MenuItem
-            icon="shield-checkmark-outline"
-            title="Privacy & Security"
-            subtitle="Control your privacy"
-            onPress={() => console.log('Privacy pressed')}
-          />
-          
-          <MenuItem
-            icon="heart-outline"
-            title="Favorites"
-            subtitle="Your saved hotels"
-            badge="12"
-            onPress={() => console.log('Favorites pressed')}
-          />
-        </View>
+        <SectionHeader 
+          title="Account" 
+          subtitle="Manage your account settings"
+        />
+        
+        <MenuItem
+          icon="person-outline"
+          title="Personal Information"
+          subtitle="Update your details"
+          onPress={() => console.log('Personal info pressed')}
+        />
+        
+        <MenuItem
+          icon="shield-checkmark-outline"
+          title="Privacy & Security"
+          subtitle="Control your privacy"
+          onPress={() => console.log('Privacy pressed')}
+        />
+        
+        <MenuItem
+          icon="heart-outline"
+          title="Favorites"
+          subtitle={isAuthenticated ? "Your saved hotels" : "Sign in to save favorites"}
+          badge={isAuthenticated && user ? user.favoriteHotels.length.toString() : undefined}
+          onPress={() => {
+            if (isAuthenticated) {
+              console.log('Navigate to favorites');
+            } else {
+              console.log('Navigate to sign in');
+            }
+          }}
+        />
 
         {/* Preferences Section */}
-        <View style={tw`px-6 pb-6`}>
-          <SectionHeader 
-            title="Preferences" 
-            subtitle="Customize your experience"
-          />
-          
-          <MenuItem
-            icon="notifications-outline"
-            title="Push Notifications"
-            subtitle="Hotel recommendations & updates"
-            hasSwitch={true}
-            switchValue={notificationsEnabled}
-            onSwitchChange={setNotificationsEnabled}
-            showArrow={false}
-          />
-          
-          <MenuItem
-            icon="location-outline"
-            title="Location Services"
-            subtitle="For better hotel recommendations"
-            hasSwitch={true}
-            switchValue={locationEnabled}
-            onSwitchChange={setLocationEnabled}
-            showArrow={false}
-          />
-          
-          <MenuItem
-            icon="moon-outline"
-            title="Dark Mode"
-            subtitle="Coming soon"
-            hasSwitch={true}
-            switchValue={darkModeEnabled}
-            onSwitchChange={setDarkModeEnabled}
-            showArrow={false}
-          />
-        </View>
+        <SectionHeader 
+          title="Preferences" 
+          subtitle="Customize your experience"
+        />
+        
+        <MenuItem
+          icon="notifications-outline"
+          title="Push Notifications"
+          subtitle="Hotel recommendations & updates"
+          hasSwitch={true}
+          switchValue={notificationsEnabled}
+          onSwitchChange={setNotificationsEnabled}
+          showArrow={false}
+        />
+        
+        <MenuItem
+          icon="location-outline"
+          title="Location Services"
+          subtitle="For better hotel recommendations"
+          hasSwitch={true}
+          switchValue={locationEnabled}
+          onSwitchChange={setLocationEnabled}
+          showArrow={false}
+        />
+        
+        <MenuItem
+          icon="finger-print-outline"
+          title="Biometric Login"
+          subtitle="Use Face ID or Touch ID"
+          hasSwitch={true}
+          switchValue={biometricEnabled}
+          onSwitchChange={setBiometricEnabled}
+          showArrow={false}
+        />
+        
+        <MenuItem
+          icon="moon-outline"
+          title="Dark Mode"
+          subtitle="Coming soon"
+          hasSwitch={true}
+          switchValue={darkModeEnabled}
+          onSwitchChange={setDarkModeEnabled}
+          showArrow={false}
+        />
 
         {/* Support Section */}
-        <View style={tw`px-6 pb-6`}>
-          <SectionHeader 
-            title="Support" 
-            subtitle="Get help when you need it"
-          />
-          
-          <MenuItem
-            icon="help-circle-outline"
-            title="Help Center"
-            subtitle="FAQs and guides"
-            onPress={() => console.log('Help pressed')}
-          />
-          
-          <MenuItem
-            icon="chatbubble-outline"
-            title="Contact Support"
-            subtitle="Get help with hotel searches"
-            onPress={() => console.log('Support pressed')}
-          />
-          
-          <MenuItem
-            icon="star-outline"
-            title="Rate Our App"
-            subtitle="Share your feedback"
-            onPress={() => console.log('Rate pressed')}
-          />
-        </View>
+        <SectionHeader 
+          title="Support" 
+          subtitle="Get help when you need it"
+        />
+        
+        <MenuItem
+          icon="help-circle-outline"
+          title="Help Center"
+          subtitle="FAQs and guides"
+          onPress={() => console.log('Help pressed')}
+        />
+        
+        <MenuItem
+          icon="chatbubble-outline"
+          title="Contact Support"
+          subtitle="Get help with hotel searches"
+          onPress={() => console.log('Support pressed')}
+        />
+        
+        <MenuItem
+          icon="star-outline"
+          title="Rate Our App"
+          subtitle="Share your feedback"
+          onPress={() => console.log('Rate pressed')}
+        />
 
         {/* About Section */}
-        <View style={tw`px-6 pb-6`}>
-          <SectionHeader title="About" />
-          
-          <MenuItem
-            icon="document-text-outline"
-            title="Terms of Service"
-            onPress={() => console.log('Terms pressed')}
-          />
-          
-          <MenuItem
-            icon="shield-outline"
-            title="Privacy Policy"
-            onPress={() => console.log('Privacy policy pressed')}
-          />
-          
-          <MenuItem
-            icon="information-circle-outline"
-            title="App Version"
-            value="1.2.4"
-            showArrow={false}
-          />
-        </View>
+        <SectionHeader title="About" />
+        
+        <MenuItem
+          icon="document-text-outline"
+          title="Terms of Service"
+          onPress={() => console.log('Terms pressed')}
+        />
+        
+        <MenuItem
+          icon="shield-outline"
+          title="Privacy Policy"
+          onPress={() => console.log('Privacy policy pressed')}
+        />
+        
+        <MenuItem
+          icon="information-circle-outline"
+          title="App Version"
+          value="1.2.4"
+          showArrow={false}
+        />
 
-        {/* Logout Button */}
-        <View style={tw`px-6 pb-6`}>
-          <TouchableOpacity
-            style={tw`bg-red-50 border border-red-200 rounded-2xl p-4 flex-row items-center justify-center`}
-            onPress={handleLogout}
-            activeOpacity={0.7}
-          >
-            <Ionicons name="log-out-outline" size={20} color="#EF4444" />
-            <Text style={tw`text-red-600 font-semibold text-base ml-3`}>
-              Sign Out
-            </Text>
-          </TouchableOpacity>
-        </View>
+        {/* Logout Button (only shown when authenticated) */}
+        {isAuthenticated && (
+          <View style={tw`px-6 pt-4 pb-6`}>
+            <TouchableOpacity
+              style={[
+                tw`p-4 rounded-2xl flex-row items-center justify-center shadow-sm border`,
+                { 
+                  backgroundColor: '#FEF2F2',
+                  borderColor: '#FECACA',
+                }
+              ]}
+              onPress={handleLogout}
+              activeOpacity={0.8}
+            >
+              <Ionicons name="log-out-outline" size={20} color="#EF4444" />
+              <Text style={tw`text-red-600 font-semibold text-base ml-3`}>
+                Sign Out
+              </Text>
+            </TouchableOpacity>
+          </View>
+        )}
 
       </ScrollView>
+
+      {/* Email Sign Up Modal */}
+      <EmailSignUpModal
+        visible={showEmailSignUpModal}
+        onClose={() => setShowEmailSignUpModal(false)}
+        onSwitchToSignIn={handleSwitchToSignIn}
+      />
+
+      {/* Email Sign In Modal */}
+      <EmailSignInModal
+        visible={showEmailSignInModal}
+        onClose={() => setShowEmailSignInModal(false)}
+        onSwitchToSignUp={handleSwitchToSignUp}
+        onForgotPassword={() => {
+          console.log('Forgot password pressed');
+        }}
+      />
     </SafeAreaView>
   );
 };

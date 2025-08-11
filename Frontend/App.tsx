@@ -4,6 +4,7 @@ import { createStackNavigator } from '@react-navigation/stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'react-native';
+import { AuthProvider } from './contexts/AuthContext';
 
 // Import your screen components
 import InitialSearchScreen from './screens/InitialSearchScreen';
@@ -14,7 +15,7 @@ import ProfileScreen from './screens/ProfileScreen';
 const Tab = createBottomTabNavigator();
 const Stack = createStackNavigator();
 
-// Stack Navigator for Find Tab (Initial Search + Results)
+// Stack Navigator for Find Tab (Initial Search + Results) with fade transition
 const FindStackNavigator = () => {
   return (
     <Stack.Navigator
@@ -29,6 +30,31 @@ const FindStackNavigator = () => {
       <Stack.Screen 
         name="Results" 
         component={ExploreScreen}
+        options={{
+          // Fade transition configuration
+          transitionSpec: {
+            open: {
+              animation: 'timing',
+              config: {
+                duration: 400,
+              },
+            },
+            close: {
+              animation: 'timing',
+              config: {
+                duration: 300,
+              },
+            },
+          },
+          cardStyleInterpolator: ({ current }) => ({
+            cardStyle: {
+              opacity: current.progress,
+            },
+          }),
+          // Alternative: Simple fade animation (uncomment to use instead)
+          // animation: 'fade',
+          // animationDuration: 400,
+        }}
       />
     </Stack.Navigator>
   );
@@ -109,8 +135,10 @@ const TabNavigator = () => {
 // Main App Component
 export default function App() {
   return (
+    <AuthProvider>
     <NavigationContainer>
       <TabNavigator />
     </NavigationContainer>
+    </AuthProvider>
   );
 }

@@ -1,4 +1,4 @@
-// SwipeableHotelStoryCard.tsx - Updated with Deep Link Button
+// SwipeableHotelStoryCard.tsx - Updated with Firebase authentication favorites
 import React, { useState, useRef, useEffect } from 'react';
 import {
   View,
@@ -13,8 +13,11 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import tw from 'twrnc';
-import FavoritesCache from '../../utils/FavoritesCache';
+import { useAuth} from '../../contexts/AuthContext';
 import { formatLocationDisplay, getCountryName } from '../../utils/countryMapping';
+import EmailSignUpModal from '../SignupLogin/EmailSignUpModal';
+import EmailSignInModal from '../SignupLogin/EmailSignInModal';
+import AnimatedHeartButton from './AnimatedHeartButton';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 const CARD_WIDTH = screenWidth - 40;
@@ -82,7 +85,7 @@ interface Hotel {
   refundableTag?: string | null;
   refundableInfo?: string;
 
-  // NEW: Fields needed for deep linking
+  // Fields needed for deep linking
   placeId?: string; // Google Place ID for destination
 }
 
@@ -106,12 +109,12 @@ interface SwipeableHotelStoryCardProps {
   isInsightsLoading?: boolean;
   insightsStatus?: 'loading' | 'partial' | 'complete';
   searchMode?: 'test' | 'two-stage' | 'legacy';
-  // NEW: Props for deep linking
-  placeId?: string; // Google Place ID for the destination
-  occupancies?: any[]; // Room and guest configuration
+  // Props for deep linking
+  placeId?: string;
+  occupancies?: any[];
 }
 
-// NEW: Helper function to generate hotel deep link URL
+// Helper function to generate hotel deep link URL
 const generateHotelDeepLink = (
   hotel: EnhancedHotel,
   checkInDate?: Date,
@@ -124,12 +127,10 @@ const generateHotelDeepLink = (
   let url = `${DEEP_LINK_BASE_URL}/hotels/${hotel.id}`;
   const params = new URLSearchParams();
 
-  // Add place ID if available
   if (placeId) {
     params.append('placeId', placeId);
   }
 
-  // Add dates if available
   if (checkInDate) {
     params.append('checkin', checkInDate.toISOString().split('T')[0]);
   }
@@ -137,7 +138,6 @@ const generateHotelDeepLink = (
     params.append('checkout', checkOutDate.toISOString().split('T')[0]);
   }
 
-  // Add occupancies - encode room and guest configuration
   if (occupancies && occupancies.length > 0) {
     try {
       const occupanciesString = btoa(JSON.stringify(occupancies));
@@ -146,7 +146,6 @@ const generateHotelDeepLink = (
       console.warn('Failed to encode occupancies:', error);
     }
   } else if (adults || children) {
-    // Create default occupancy structure
     const defaultOccupancy = [{ adults, children: children > 0 ? [children] : [] }];
     try {
       const occupanciesString = btoa(JSON.stringify(defaultOccupancy));
@@ -156,7 +155,6 @@ const generateHotelDeepLink = (
     }
   }
 
-  // Add meal plan preferences if hotel has them
   if (hotel.tags?.includes('All Inclusive')) {
     params.append('needAllInclusive', '1');
   }
@@ -164,7 +162,6 @@ const generateHotelDeepLink = (
     params.append('needBreakfast', '1');
   }
 
-  // Add free cancellation if hotel supports it
   if (hotel.isRefundable) {
     params.append('needFreeCancellation', '1');
   }
@@ -173,115 +170,12 @@ const generateHotelDeepLink = (
   return queryString ? `${url}?${queryString}` : url;
 };
 
-// Animated Heart Button Component with cache integration
+// NEW: Updated Heart Button with Firebase auth integration
 interface AnimatedHeartButtonProps {
   hotel: EnhancedHotel;
   size?: number;
+  onShowSignUpModal?: () => void;
 }
-
-const AnimatedHeartButton: React.FC<AnimatedHeartButtonProps> = ({ hotel, size = 28 }) => {
-  const [isLiked, setIsLiked] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const scaleAnim = useRef(new Animated.Value(1)).current;
-  const bounceAnim = useRef(new Animated.Value(1)).current;
-  const favoritesCache = FavoritesCache.getInstance();
-
-  useEffect(() => {
-    const checkFavoriteStatus = async () => {
-      try {
-        const isFavorited = await favoritesCache.isFavorited(hotel.id);
-        setIsLiked(isFavorited);
-      } catch (error) {
-        console.error('Error checking favorite status:', error);
-      }
-    };
-
-    checkFavoriteStatus();
-  }, [hotel.id, favoritesCache]);
-
-  const animateHeart = () => {
-    Animated.sequence([
-      Animated.timing(scaleAnim, {
-        toValue: 1.4,
-        duration: 150,
-        useNativeDriver: true,
-      }),
-      Animated.timing(scaleAnim, {
-        toValue: 1,
-        duration: 150,
-        useNativeDriver: true,
-      }),
-    ]).start();
-
-    Animated.sequence([
-      Animated.timing(bounceAnim, {
-        toValue: 0.9,
-        duration: 100,
-        useNativeDriver: true,
-      }),
-      Animated.timing(bounceAnim, {
-        toValue: 1,
-        duration: 100,
-        useNativeDriver: true,
-      }),
-    ]).start();
-  };
-
-  const handlePress = async () => {
-    if (isLoading) return;
-    
-    setIsLoading(true);
-    animateHeart();
-    
-    try {
-      const newStatus = await favoritesCache.toggleFavorite(hotel);
-      setIsLiked(newStatus);
-      
-      if (newStatus) {
-        console.log(`❤️ Added "${hotel.name}" to favorites`);
-      } else {
-        console.log(`💔 Removed "${hotel.name}" from favorites`);
-      }
-    } catch (error) {
-      console.error('Error toggling favorite:', error);
-      Alert.alert('Error', 'Failed to update favorites. Please try again.');
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  return (
-    <View style={tw`relative`}>
-      <Animated.View style={{ transform: [{ scale: bounceAnim }] }}>
-        <TouchableOpacity
-          onPress={handlePress}
-          activeOpacity={0.6}
-          disabled={isLoading}
-          style={[
-            tw`border border-black/10 bg-gray-100 py-2.5 px-4 rounded-lg items-center justify-center`,
-            isLoading && tw`opacity-60`
-          ]}
-        >
-          <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
-            {isLoading ? (
-              <Ionicons
-                name="sync"
-                size={size}
-                color="#666666"
-              />
-            ) : (
-              <Ionicons
-                name={isLiked ? "heart" : "heart-outline"}
-                size={size}
-                color={isLiked ? "#FF3040" : "#262626"}
-              />
-            )}
-          </Animated.View>
-        </TouchableOpacity>
-      </Animated.View>
-    </View>
-  );
-};
 
 const getRatingColor = (rating: number): string => {
   if (rating >= 8.0) return "#1df9ff";
@@ -305,11 +199,11 @@ const isStage1Data = (hotel: Hotel): boolean => {
 
 const generateAIInsight = (hotel: Hotel, insightsStatus?: string): string => {
   if (insightsStatus === 'loading' || isStage1Data(hotel)) {
-    return "Loading AI insights..."; // Simple loading text
+    return "Loading AI insights...";
   }
   
   if (insightsStatus === 'partial') {
-    return "✨ Generating detailed insights..."; // Simple partial text
+    return "✨ Generating detailed insights...";
   }
   
   if (hotel.whyItMatches && !hotel.whyItMatches.includes('progress') && !hotel.whyItMatches.includes('loading')) {
@@ -347,6 +241,7 @@ const generateAIInsight = (hotel: Hotel, insightsStatus?: string): string => {
 
   return "Quality hotel choice with excellent amenities and service";
 };
+
 const generateReviewSummary = (hotel: Hotel, insightsStatus?: string): string => {
   if (insightsStatus === 'loading' || (hotel.guestInsights && hotel.guestInsights.includes('Loading'))) {
     return "Loading detailed guest sentiment analysis...";
@@ -799,7 +694,6 @@ const AmenitiesSlide: React.FC<{
     outputRange: [12, -12],
   });
 
-  // Parse guest insights to extract ratings
   const parseRatings = (guestInsights?: string) => {
     const defaultRatings = {
       cleanliness: 6.0,
@@ -1047,8 +941,46 @@ const SwipeableHotelStoryCard: React.FC<SwipeableHotelStoryCardProps> = ({
   occupancies
 }) => {
   const [currentSlide, setCurrentSlide] = useState(0);
+  const [showEmailSignUpModal, setShowEmailSignUpModal] = useState(false);
+  const [showEmailSignInModal, setShowEmailSignInModal] = useState(false);
+  const [pendingFavorite, setPendingFavorite] = useState(false); // Track if we need to favorite after login
   const scrollViewRef = useRef<ScrollView>(null);
   const prevHotelId = useRef(hotel.id);
+
+  // Particle animation for heart button
+  const particleAnim = useRef(new Animated.Value(0)).current;
+  const bounceAnim = useRef(new Animated.Value(1)).current;
+const { isAuthenticated, addFavoriteHotel, isFavoriteHotel, toggleFavoriteHotel, requireAuth } = useAuth();
+
+  useEffect(() => {
+    // Animate particles when favorite changes
+    if (isAuthenticated && isFavoriteHotel(hotel.id)) {
+      Animated.sequence([
+        Animated.timing(particleAnim, {
+          toValue: 1,
+          duration: 600,
+          useNativeDriver: true,
+        }),
+        Animated.timing(particleAnim, {
+          toValue: 0,
+          duration: 400,
+          useNativeDriver: true,
+        }),
+      ]).start();
+      Animated.sequence([
+        Animated.timing(bounceAnim, {
+          toValue: 1.2,
+          duration: 120,
+          useNativeDriver: true,
+        }),
+        Animated.timing(bounceAnim, {
+          toValue: 1,
+          duration: 120,
+          useNativeDriver: true,
+        }),
+      ]).start();
+    }
+  }, [isAuthenticated, hotel.id, isFavoriteHotel(hotel.id)]);
 
   useEffect(() => {
     if (prevHotelId.current !== hotel.id) {
@@ -1061,7 +993,91 @@ const SwipeableHotelStoryCard: React.FC<SwipeableHotelStoryCardProps> = ({
     }
   }, [hotel.id]);
 
-  // NEW: Handler for deep link button
+  // NEW: Effect to handle favoriting after successful login/signup
+  useEffect(() => {
+    const handlePostAuthFavorite = async () => {
+      if (isAuthenticated && pendingFavorite) {
+        try {
+          await addFavoriteHotel({
+            id: hotel.id,
+            name: hotel.name,
+            location: hotel.location,
+            image: hotel.image || hotel.images?.[0],
+            images: hotel.images,
+            price: hotel.price,
+            rating: hotel.rating,
+            reviews: hotel.reviews,
+            // Rich hotel data for favorites
+            city: hotel.city,
+            country: hotel.country,
+            latitude: hotel.latitude,
+            longitude: hotel.longitude,
+            aiExcerpt: hotel.aiExcerpt,
+            whyItMatches: hotel.whyItMatches,
+            funFacts: hotel.funFacts,
+            aiMatchPercent: hotel.aiMatchPercent,
+            matchType: hotel.matchType,
+            tags: hotel.tags,
+            features: hotel.features,
+            topAmenities: hotel.topAmenities,
+            nearbyAttractions: hotel.nearbyAttractions,
+            locationHighlight: hotel.locationHighlight,
+            pricePerNight: hotel.pricePerNight,
+            guestInsights: hotel.guestInsights,
+            sentimentPros: hotel.sentimentPros,
+            sentimentCons: hotel.sentimentCons,
+            isRefundable: hotel.isRefundable,
+            refundableTag: hotel.refundableTag,
+            fullDescription: hotel.fullDescription,
+            fullAddress: hotel.fullAddress,
+          });
+          console.log(`❤️ Successfully favorited "${hotel.name}" after authentication`);
+          setPendingFavorite(false);
+          
+          // Close any open modals
+          setShowEmailSignUpModal(false);
+          setShowEmailSignInModal(false);
+        } catch (error) {
+          console.error('Error favoriting hotel after auth:', error);
+          Alert.alert('Error', 'Failed to add hotel to favorites. Please try again.');
+          setPendingFavorite(false);
+        }
+      }
+    };
+
+    handlePostAuthFavorite();
+  }, [isAuthenticated, pendingFavorite, addFavoriteHotel, hotel]);
+
+  const handleShowSignUpModal = () => {
+    console.log('🔒 User not authenticated - showing sign up modal');
+    setPendingFavorite(true); // Mark that we want to favorite this hotel after auth
+    setShowEmailSignUpModal(true);
+  };
+
+  const handleSwitchToSignIn = () => {
+    setShowEmailSignUpModal(false);
+    setTimeout(() => {
+      setShowEmailSignInModal(true);
+    }, 300);
+  };
+
+  const handleSwitchToSignUp = () => {
+    setShowEmailSignInModal(false);
+    setTimeout(() => {
+      setShowEmailSignUpModal(true);
+    }, 300);
+  };
+
+  const handleCloseSignUpModal = () => {
+    setShowEmailSignUpModal(false);
+    setPendingFavorite(false); // Cancel pending favorite if modal is closed
+  };
+
+  const handleCloseSignInModal = () => {
+    setShowEmailSignInModal(false);
+    setPendingFavorite(false); // Cancel pending favorite if modal is closed
+  };
+
   const handleDeepLink = async () => {
     try {
       const deepLinkUrl = generateHotelDeepLink(
@@ -1293,50 +1309,69 @@ const SwipeableHotelStoryCard: React.FC<SwipeableHotelStoryCardProps> = ({
         </ScrollView>
       </TouchableOpacity>
       
-      {/* UPDATED: Action Section with new deep link button */}
-      <View style={tw`bg-white rounded-b-2xl`}>
-        
-        {/* UPDATED: Three-button layout with deep link button */}
-        <View style={tw`flex-row items-center px-4 py-3 gap-2`}>
-          {/* Heart/Save Button */}
-          <AnimatedHeartButton
-  hotel={hotel}
-  size={24}
-/>
-          
-          {/* View Details Button - Maps */}
-          <TouchableOpacity
-            style={tw`border border-black/10 flex-1 bg-gray-100 py-3 rounded-lg items-center justify-center`}
-            onPress={handleViewDetails}
-            activeOpacity={0.7}
-          >
-            <View style={tw`flex-row items-center`}>
-              <Ionicons name="map" size={16} color="#374151" />
-              <Text style={tw`text-gray-800 text-sm font-medium ml-1.5`}>
-                Details
-              </Text>
-            </View>
-          </TouchableOpacity>
 
-          {/* NEW: Book Now Button - Deep Link */}
-<TouchableOpacity
-  style={[tw`border border-black/10 flex-1 py-3 rounded-lg items-center justify-center  bg-gray-100`]}
-  onPress={handleDeepLink}
-  activeOpacity={0.7}
->
-  <View style={tw`flex-row items-center`}>
-    <Image 
-      source={require('../../assets/images/logo.png')} 
-      style={{ width: 16, height: 16 }} 
-      resizeMode="contain"
+{/* Action Section - Three-button layout with heart button back on the left */}
+<View style={tw`bg-white rounded-b-2xl`}>
+  
+  {/* Action Buttons - Three-button layout with original grey styling */}
+  <View style={tw`flex-row items-center px-4 py-3 gap-2`}>
+    {/* Heart/Save Button */}
+    <AnimatedHeartButton
+      hotel={hotel}
+      size={24}
+      onShowSignUpModal={handleShowSignUpModal}
     />
-    <Text style={tw`text-black text-sm font-medium ml-1.5`}>
-      Book Now
-    </Text>
-  </View>
-</TouchableOpacity>
-        </View>
+    
+    {/* View Details Button - Original grey styling */}
+    <TouchableOpacity
+      style={tw`border border-black/10 flex-1 bg-gray-100 py-3 rounded-lg items-center justify-center`}
+      onPress={handleViewDetails}
+      activeOpacity={0.7}
+    >
+      <View style={tw`flex-row items-center`}>
+        <Ionicons name="map" size={16} color="#374151" />
+        <Text style={tw`text-gray-800 text-sm font-medium ml-1.5`}>
+          Details
+        </Text>
       </View>
+    </TouchableOpacity>
+
+    {/* Book Now Button - Original grey styling */}
+    <TouchableOpacity
+      style={tw`border border-black/10 flex-1 py-3 rounded-lg items-center justify-center bg-gray-100`}
+      onPress={handleDeepLink}
+      activeOpacity={0.7}
+    >
+      <View style={tw`flex-row items-center`}>
+        <Image 
+          source={require('../../assets/images/logo.png')} 
+          style={{ width: 16, height: 16 }} 
+          resizeMode="contain"
+        />
+        <Text style={tw`text-black text-sm font-medium ml-1.5`}>
+          Book Now
+        </Text>
+      </View>
+    </TouchableOpacity>
+  </View>
+</View>
+
+      {/* Email Sign Up Modal */}
+      <EmailSignUpModal
+        visible={showEmailSignUpModal}
+        onClose={handleCloseSignUpModal}
+        onSwitchToSignIn={handleSwitchToSignIn}
+      />
+
+      {/* Email Sign In Modal */}
+      <EmailSignInModal
+        visible={showEmailSignInModal}
+        onClose={handleCloseSignInModal}
+        onSwitchToSignUp={handleSwitchToSignUp}
+        onForgotPassword={() => {
+          console.log('Forgot password pressed');
+        }}
+      />
     </View>
   );
 };

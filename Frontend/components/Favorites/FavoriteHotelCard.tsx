@@ -1,4 +1,4 @@
-// FavoriteHotelCard.tsx - Clean turquoise design with enhanced UX
+// FavoriteHotelCard.tsx - Clean turquoise design with enhanced UX + Action Buttons
 import React, { useRef, useEffect, useState } from 'react';
 import {
   View,
@@ -8,6 +8,8 @@ import {
   Animated,
   ScrollView,
   Easing,
+  Alert,
+  Linking,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import tw from 'twrnc';
@@ -19,12 +21,106 @@ const TURQUOISE = '#1df9ff';
 const TURQUOISE_LIGHT = '#5dfbff';
 const TURQUOISE_DARK = '#00d4e6';
 
+// Base deep link URL
+const DEEP_LINK_BASE_URL = 'https://colin-posat-1t6gl.nuitee.link';
+
 interface FavoriteHotelCardProps {
   hotel: FavoritedHotel;
   onPress: (hotel: FavoritedHotel) => void;
   onRemove: (hotel: FavoritedHotel) => void;
   index: number;
+  // Optional props for deep linking
+  checkInDate?: Date;
+  checkOutDate?: Date;
+  adults?: number;
+  children?: number;
+  placeId?: string;
+  occupancies?: any[];
 }
+
+// Helper function to generate hotel deep link URL
+const generateHotelDeepLink = (
+  hotel: FavoritedHotel,
+  checkInDate?: Date,
+  checkOutDate?: Date,
+  adults: number = 2,
+  children: number = 0,
+  placeId?: string,
+  occupancies?: any[]
+): string => {
+  let url = `${DEEP_LINK_BASE_URL}/hotels/${hotel.id}`;
+  const params = new URLSearchParams();
+
+  if (placeId || hotel.placeId) {
+    params.append('placeId', placeId || hotel.placeId!);
+  }
+
+  if (checkInDate) {
+    params.append('checkin', checkInDate.toISOString().split('T')[0]);
+  }
+  if (checkOutDate) {
+    params.append('checkout', checkOutDate.toISOString().split('T')[0]);
+  }
+
+  if (occupancies && occupancies.length > 0) {
+    try {
+      const occupanciesString = btoa(JSON.stringify(occupancies));
+      params.append('occupancies', occupanciesString);
+    } catch (error) {
+      console.warn('Failed to encode occupancies:', error);
+    }
+  } else if (adults || children) {
+    const defaultOccupancy = [{ adults, children: children > 0 ? [children] : [] }];
+    try {
+      const occupanciesString = btoa(JSON.stringify(defaultOccupancy));
+      params.append('occupancies', occupanciesString);
+    } catch (error) {
+      console.warn('Failed to encode default occupancy:', error);
+    }
+  }
+
+  if (hotel.tags?.includes('All Inclusive')) {
+    params.append('needAllInclusive', '1');
+  }
+  if (hotel.tags?.includes('Breakfast Included')) {
+    params.append('needBreakfast', '1');
+  }
+
+  if (hotel.isRefundable) {
+    params.append('needFreeCancellation', '1');
+  }
+
+  const queryString = params.toString();
+  return queryString ? `${url}?${queryString}` : url;
+};
+
+// Helper function to generate Google Maps link
+const generateGoogleMapsLink = (hotel: FavoritedHotel, checkin?: Date, checkout?: Date, adults: number = 2, children: number = 0): string => {
+  let query = '';
+
+  const locationText = hotel.city && hotel.country 
+    ? `${hotel.name} ${hotel.city} ${hotel.country}`
+    : hotel.fullAddress 
+    ? `${hotel.name} ${hotel.fullAddress}`
+    : `${hotel.name} ${hotel.location}`;
+  query = encodeURIComponent(locationText);
+  
+  let url = `https://www.google.com/maps/search/?api=1&query=${query}`;
+  
+  if (checkin && checkout) {
+    const checkinStr = checkin.toISOString().split('T')[0];
+    const checkoutStr = checkout.toISOString().split('T')[0];
+    
+    url += `&hotel_dates=${checkinStr},${checkoutStr}`;
+    url += `&hotel_adults=${adults}`;
+    
+    if (children > 0) {
+      url += `&hotel_children=${children}`;
+    }
+  }
+  
+  return url;
+};
 
 // Clean confirmation modal with turquoise accents
 interface ConfirmationModalProps {
@@ -323,7 +419,13 @@ const FavoriteHotelCard: React.FC<FavoriteHotelCardProps> = ({
   hotel,
   onPress,
   onRemove,
-  index
+  index,
+  checkInDate,
+  checkOutDate,
+  adults = 2,
+  children = 0,
+  placeId,
+  occupancies
 }) => {
   const fadeAnimation = useRef(new Animated.Value(0)).current;
   const chevronRotateAnimation = useRef(new Animated.Value(0)).current;
@@ -374,6 +476,81 @@ const FavoriteHotelCard: React.FC<FavoriteHotelCardProps> = ({
   const handleCardLayout = (event: any) => {
     const { width, height, x, y } = event.nativeEvent.layout;
     setCardLayout({ width, height, x, y });
+  };
+
+  // Handle View Details (Google Maps)
+  const handleViewDetails = async () => {
+    try {
+      const mapsLink = generateGoogleMapsLink(
+        hotel,
+        checkInDate,
+        checkOutDate,
+        adults,
+        children
+      );
+
+      console.log(`🗺️ Opening Google Maps for: ${hotel.name}`);
+
+      const canOpen = await Linking.canOpenURL(mapsLink);
+      
+      if (canOpen) {
+        await Linking.openURL(mapsLink);
+      } else {
+        let fallbackQuery = '';
+        if (hotel.latitude && hotel.longitude) {
+          fallbackQuery = `${hotel.latitude},${hotel.longitude}`;
+        } else if (hotel.city && hotel.country) {
+          fallbackQuery = encodeURIComponent(`${hotel.name} ${hotel.city} ${hotel.country}`);
+        } else {
+          fallbackQuery = encodeURIComponent(`${hotel.name} ${hotel.location}`);
+        }
+        const fallbackUrl = `https://www.google.com/maps/search/?api=1&query=${fallbackQuery}`;
+        await Linking.openURL(fallbackUrl);
+      }
+    } catch (error) {
+      console.error('Error opening Google Maps:', error);
+      Alert.alert(
+        'Unable to Open Maps',
+        'Could not open Google Maps. Please check your internet connection and try again.',
+        [{ text: 'OK' }]
+      );
+    }
+  };
+
+  // Handle Book Now (Deep Link)
+  const handleBookNow = async () => {
+    try {
+      const deepLinkUrl = generateHotelDeepLink(
+        hotel,
+        checkInDate,
+        checkOutDate,
+        adults,
+        children,
+        placeId,
+        occupancies
+      );
+
+      console.log(`🔗 Opening hotel booking: ${hotel.name}`);
+
+      const canOpen = await Linking.canOpenURL(deepLinkUrl);
+      
+      if (canOpen) {
+        await Linking.openURL(deepLinkUrl);
+      } else {
+        Alert.alert(
+          'Unable to Open Booking',
+          'Could not open the hotel booking page. Please check your internet connection and try again.',
+          [{ text: 'OK' }]
+        );
+      }
+    } catch (error) {
+      console.error('Error opening booking link:', error);
+      Alert.alert(
+        'Error',
+        'Failed to open hotel booking page. Please try again.',
+        [{ text: 'OK' }]
+      );
+    }
   };
 
   const getDisplayPrice = () => {
@@ -493,6 +670,48 @@ const FavoriteHotelCard: React.FC<FavoriteHotelCardProps> = ({
         >
           <Ionicons name="close" size={14} color="#6B7280" />
         </TouchableOpacity>
+
+        {/* NEW: Action Buttons Section */}
+        <View style={tw`border-t border-gray-50 px-4 py-3`}>
+          <View style={tw`flex-row gap-2`}>
+            {/* View Details Button */}
+            <TouchableOpacity
+              style={[
+                tw`flex-1 py-2.5 rounded-lg border flex-row items-center justify-center`,
+                { 
+                  backgroundColor: TURQUOISE + '10',
+                  borderColor: TURQUOISE + '30',
+                }
+              ]}
+              onPress={handleViewDetails}
+              activeOpacity={0.7}
+            >
+              <Ionicons name="map-outline" size={16} color={TURQUOISE_DARK} />
+              <Text style={[tw`ml-2 font-medium text-sm`, { color: TURQUOISE_DARK }]}>
+                View Details
+              </Text>
+            </TouchableOpacity>
+
+            {/* Book Now Button */}
+            <TouchableOpacity
+              style={[
+                tw`flex-1 py-2.5 rounded-lg flex-row items-center justify-center shadow-sm`,
+                { backgroundColor: TURQUOISE }
+              ]}
+              onPress={handleBookNow}
+              activeOpacity={0.8}
+            >
+              <Image 
+                source={require('../../assets/images/logo.png')} 
+                style={{ width: 16, height: 16, tintColor: '#FFFFFF' }} 
+                resizeMode="contain"
+              />
+              <Text style={tw`text-white font-semibold text-sm ml-2`}>
+                Book Now
+              </Text>
+            </TouchableOpacity>
+          </View>
+        </View>
 
         {/* Clean Expandable Dropdown Toggle */}
         <TouchableOpacity

@@ -1888,7 +1888,7 @@ const handleBackPress = useCallback(() => {
           </TouchableOpacity>
 <TouchableOpacity
   style={[
-    tw`flex-1 py-4 px-8 rounded-2xl flex-row items-center justify-center shadow-lg`,
+    tw`flex-1 py-3 px-8 rounded-2xl flex-row items-center justify-center shadow-lg`,
     { 
       backgroundColor: '#1df9ff', // Solid turquoise background like Explore Hotels
       shadowColor: '#1df9ff',

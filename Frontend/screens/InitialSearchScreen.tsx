@@ -249,12 +249,18 @@ const InitialSearchScreen: React.FC<InitialSearchScreenProps> = ({
     }
   };
 
-  const handleRecommendationPress = (recommendation: SearchRecommendation) => {
-    setSearchQuery(recommendation.query);
-    if (navigation) {
-      navigation.navigate('Results', { searchQuery: recommendation.query });
-    }
-  };
+
+const handleRecommendationPress = (recommendation: SearchRecommendation) => {
+  // Don't populate the search bar - go directly to loading
+  // setSearchQuery(recommendation.query); // Remove this line
+  
+  if (navigation) {
+    navigation.navigate('Results', { searchQuery: recommendation.query });
+  }
+  
+  // Call onSearchStart if provided
+  onSearchStart?.(recommendation.query);
+};
 
   const handleHotelPress = (hotel: BeautifulHotel) => {
     console.log('Hotel card tapped - opening Google Maps for:', hotel.name);
@@ -569,7 +575,7 @@ const InitialSearchScreen: React.FC<InitialSearchScreenProps> = ({
         </View>
       </View>
     </SafeAreaView>
-  );
+  ); 
 };
 
 export default InitialSearchScreen;
