@@ -25,6 +25,11 @@ const CARD_HEIGHT = screenHeight * 0.55;
 
 // Base deep link URL
 const DEEP_LINK_BASE_URL = 'https://colin-posat-1t6gl.nuitee.link';
+// Turquoise color constants
+const TURQUOISE = '#1df9ff';
+const TURQUOISE_LIGHT = '#5dfbff';
+const TURQUOISE_DARK = '#00d4e6';
+const BLACK = "#000000";
 
 interface Hotel {
   id: string;
@@ -77,6 +82,14 @@ interface Hotel {
   sentimentPros?: string[];
   sentimentCons?: string[];
   
+  // NEW: Category ratings
+  categoryRatings?: {
+    cleanliness: number;
+    service: number;
+    location: number;
+    roomQuality: number;
+  };
+  
   // Room availability
   roomTypes?: any[];
 
@@ -88,6 +101,7 @@ interface Hotel {
   // Fields needed for deep linking
   placeId?: string; // Google Place ID for destination
 }
+
 
 interface EnhancedHotel extends Hotel {
   images: string[];
@@ -694,45 +708,47 @@ const AmenitiesSlide: React.FC<{
     outputRange: [12, -12],
   });
 
-  const parseRatings = (guestInsights?: string) => {
-    const defaultRatings = {
-      cleanliness: 6.0,
-      service: 6.0,
-      location: 6.0,
-      roomQuality: 6.0
-    };
-
-    if (!guestInsights || insightsStatus === 'loading') {
-      return defaultRatings;
-    }
-
-    try {
-      const lines = guestInsights.split('\n');
-      const ratings = { ...defaultRatings };
-
-      lines.forEach(line => {
-        if (line.includes('Cleanliness:')) {
-          const match = line.match(/(\d+\.?\d*)/);
-          if (match) ratings.cleanliness = parseFloat(match[1]);
-        } else if (line.includes('Service:')) {
-          const match = line.match(/(\d+\.?\d*)/);
-          if (match) ratings.service = parseFloat(match[1]);
-        } else if (line.includes('Location:')) {
-          const match = line.match(/(\d+\.?\d*)/);
-          if (match) ratings.location = parseFloat(match[1]);
-        } else if (line.includes('Room Quality:')) {
-          const match = line.match(/(\d+\.?\d*)/);
-          if (match) ratings.roomQuality = parseFloat(match[1]);
-        }
-      });
-
-      return ratings;
-    } catch (error) {
-      console.warn('Failed to parse ratings:', error);
-      return defaultRatings;
-    }
+const parseRatings = (guestInsights?: string) => {
+  const defaultRatings = {
+    cleanliness: 6.0,
+    service: 6.0,
+    location: 6.0,
+    roomQuality: 6.0
   };
 
+  if (!guestInsights || insightsStatus === 'loading') {
+    return defaultRatings;
+  }
+
+  try {
+    const lines = guestInsights.split('\n');
+    const ratings = { ...defaultRatings };
+
+    lines.forEach(line => {
+      if (line.includes('Cleanliness:')) {
+        const match = line.match(/(\d+\.?\d*)/);
+        if (match) ratings.cleanliness = parseFloat(match[1]);
+      } else if (line.includes('Service:')) {
+        const match = line.match(/(\d+\.?\d*)/);
+        if (match) ratings.service = parseFloat(match[1]);
+      } else if (line.includes('Location:')) {
+        const match = line.match(/(\d+\.?\d*)/);
+        if (match) ratings.location = parseFloat(match[1]);
+      } else if (line.includes('Room Quality:')) {
+        const match = line.match(/(\d+\.?\d*)/);
+        if (match) ratings.roomQuality = parseFloat(match[1]);
+      }
+    });
+
+    // Store the parsed ratings in the hotel object for later use
+    hotel.categoryRatings = ratings;
+
+    return ratings;
+  } catch (error) {
+    console.warn('Failed to parse ratings:', error);
+    return defaultRatings;
+  }
+};
   const ratings = parseRatings(hotel.guestInsights);
 
   const getRatingColor = (rating: number): string => {
@@ -998,60 +1014,61 @@ const { isAuthenticated, addFavoriteHotel, isFavoriteHotel, toggleFavoriteHotel,
     }
   }, [hotel.id]);
 
-  // NEW: Effect to handle favoriting after successful login/signup
-  useEffect(() => {
-    const handlePostAuthFavorite = async () => {
-      if (isAuthenticated && pendingFavorite) {
-        try {
-          await addFavoriteHotel({
-            id: hotel.id,
-            name: hotel.name,
-            location: hotel.location,
-            image: hotel.image || hotel.images?.[0],
-            images: hotel.images,
-            price: hotel.price,
-            rating: hotel.rating,
-            reviews: hotel.reviews,
-            // Rich hotel data for favorites
-            city: hotel.city,
-            country: hotel.country,
-            latitude: hotel.latitude,
-            longitude: hotel.longitude,
-            aiExcerpt: hotel.aiExcerpt,
-            whyItMatches: hotel.whyItMatches,
-            funFacts: hotel.funFacts,
-            aiMatchPercent: hotel.aiMatchPercent,
-            matchType: hotel.matchType,
-            tags: hotel.tags,
-            features: hotel.features,
-            topAmenities: hotel.topAmenities,
-            nearbyAttractions: hotel.nearbyAttractions,
-            locationHighlight: hotel.locationHighlight,
-            pricePerNight: hotel.pricePerNight,
-            guestInsights: hotel.guestInsights,
-            sentimentPros: hotel.sentimentPros,
-            sentimentCons: hotel.sentimentCons,
-            isRefundable: hotel.isRefundable,
-            refundableTag: hotel.refundableTag,
-            fullDescription: hotel.fullDescription,
-            fullAddress: hotel.fullAddress,
-          });
-          console.log(`❤️ Successfully favorited "${hotel.name}" after authentication`);
-          setPendingFavorite(false);
-          
-          // Close any open modals
-          setShowEmailSignUpModal(false);
-          setShowEmailSignInModal(false);
-        } catch (error) {
-          console.error('Error favoriting hotel after auth:', error);
-          Alert.alert('Error', 'Failed to add hotel to favorites. Please try again.');
-          setPendingFavorite(false);
-        }
+useEffect(() => {
+  const handlePostAuthFavorite = async () => {
+    if (isAuthenticated && pendingFavorite) {
+      try {
+        await addFavoriteHotel({
+          id: hotel.id,
+          name: hotel.name,
+          location: hotel.location,
+          image: hotel.image || hotel.images?.[0],
+          images: hotel.images,
+          price: hotel.price,
+          rating: hotel.rating,
+          reviews: hotel.reviews,
+          // Rich hotel data for favorites
+          city: hotel.city,
+          country: hotel.country,
+          latitude: hotel.latitude,
+          longitude: hotel.longitude,
+          aiExcerpt: hotel.aiExcerpt,
+          whyItMatches: hotel.whyItMatches,
+          funFacts: hotel.funFacts,
+          aiMatchPercent: hotel.aiMatchPercent,
+          matchType: hotel.matchType,
+          tags: hotel.tags,
+          features: hotel.features,
+          topAmenities: hotel.topAmenities,
+          nearbyAttractions: hotel.nearbyAttractions,
+          locationHighlight: hotel.locationHighlight,
+          pricePerNight: hotel.pricePerNight,
+          guestInsights: hotel.guestInsights,
+          sentimentPros: hotel.sentimentPros,
+          sentimentCons: hotel.sentimentCons,
+          isRefundable: hotel.isRefundable,
+          refundableTag: hotel.refundableTag,
+          fullDescription: hotel.fullDescription,
+          fullAddress: hotel.fullAddress,
+          // NEW: Add category ratings
+          categoryRatings: hotel.categoryRatings,
+        });
+        console.log(`❤️ Successfully favorited "${hotel.name}" after authentication`);
+        setPendingFavorite(false);
+        
+        // Close any open modals
+        setShowEmailSignUpModal(false);
+        setShowEmailSignInModal(false);
+      } catch (error) {
+        console.error('Error favoriting hotel after auth:', error);
+        Alert.alert('Error', 'Failed to add hotel to favorites. Please try again.');
+        setPendingFavorite(false);
       }
-    };
+    }
+  };
 
-    handlePostAuthFavorite();
-  }, [isAuthenticated, pendingFavorite, addFavoriteHotel, hotel]);
+  handlePostAuthFavorite();
+}, [isAuthenticated, pendingFavorite, addFavoriteHotel, hotel]);
 
   const handleShowSignUpModal = () => {
     console.log('🔒 User not authenticated - showing sign up modal');
@@ -1315,10 +1332,9 @@ const { isAuthenticated, addFavoriteHotel, isFavoriteHotel, toggleFavoriteHotel,
       </TouchableOpacity>
       
 
-{/* Action Section - Three-button layout with heart button back on the left */}
 <View style={tw`bg-white rounded-b-2xl`}>
   
-  {/* Action Buttons - Three-button layout with original grey styling */}
+  {/* Action Buttons - Updated styling to match collapse all button */}
   <View style={tw`flex-row items-center px-4 py-3 gap-2`}>
     {/* Heart/Save Button */}
     <AnimatedHeartButton
@@ -1327,36 +1343,44 @@ const { isAuthenticated, addFavoriteHotel, isFavoriteHotel, toggleFavoriteHotel,
       onShowSignUpModal={handleShowSignUpModal}
     />
     
-    {/* View Details Button - Original grey styling */}
+    {/* View Details Button - Updated styling */}
     <TouchableOpacity
-      style={tw`border border-black/10 flex-1 bg-gray-100 py-3 rounded-lg items-center justify-center`}
+      style={[
+        tw`py-2.5 px-4 rounded-xl border-2 flex-row items-center flex-1 justify-center`,
+        { 
+          backgroundColor: TURQUOISE + '10',
+          borderColor: TURQUOISE + '30',
+        }
+      ]}
       onPress={handleViewDetails}
-      activeOpacity={0.7}
+      activeOpacity={0.8}
     >
-      <View style={tw`flex-row items-center`}>
-        <Ionicons name="map" size={16} color="#374151" />
-        <Text style={tw`text-gray-800 text-sm font-medium ml-1.5`}>
-          Details
-        </Text>
-      </View>
+      <Ionicons name="map" size={16} color={TURQUOISE_DARK} />
+      <Text style={[tw`ml-2 font-medium text-sm`, { color: BLACK }]}>
+        Details
+      </Text>
     </TouchableOpacity>
 
-    {/* Book Now Button - Original grey styling */}
+    {/* Book Now Button - Updated styling */}
     <TouchableOpacity
-      style={tw`border border-black/10 flex-1 py-3 rounded-lg items-center justify-center bg-gray-100`}
+      style={[
+        tw`py-2.5 px-4 rounded-xl border-2 flex-row items-center flex-1 justify-center`,
+        { 
+          backgroundColor: TURQUOISE + '10',
+          borderColor: TURQUOISE + '30',
+        }
+      ]}
       onPress={handleDeepLink}
-      activeOpacity={0.7}
+      activeOpacity={0.8}
     >
-      <View style={tw`flex-row items-center`}>
-        <Image 
-          source={require('../../assets/images/logo.png')} 
-          style={{ width: 16, height: 16 }} 
-          resizeMode="contain"
-        />
-        <Text style={tw`text-black text-sm font-medium ml-1.5`}>
-          Book Now
-        </Text>
-      </View>
+      <Image 
+        source={require('../../assets/images/logo.png')} 
+        style={{ width: 16, height: 16 }} 
+        resizeMode="contain"
+      />
+      <Text style={[tw`ml-2 font-medium text-sm`, { color: BLACK }]}>
+        Book Now
+      </Text>
     </TouchableOpacity>
   </View>
 </View>

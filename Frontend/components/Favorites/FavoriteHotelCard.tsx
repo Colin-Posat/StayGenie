@@ -361,6 +361,90 @@ const FavoriteDropdown: React.FC<FavoriteDropdownProps> = ({
     "Eco-friendly with LEED Gold certification"
   ];
 
+  // NEW: Get category ratings with fallbacks
+  const getRatings = () => {
+    if (hotel.categoryRatings) {
+      return hotel.categoryRatings;
+    }
+    
+    // Fallback: try to parse from guestInsights if available
+    if (hotel.guestInsights) {
+      try {
+        const defaultRatings = {
+          cleanliness: 6.0,
+          service: 6.0,
+          location: 6.0,
+          roomQuality: 6.0
+        };
+
+        const lines = hotel.guestInsights.split('\n');
+        const ratings = { ...defaultRatings };
+
+        interface GuestInsightRatings {
+          cleanliness: number;
+          service: number;
+          location: number;
+          roomQuality: number;
+        }
+
+        interface GuestInsightLineMatch {
+          [key: string]: RegExp;
+        }
+
+        const ratingLineMatchers: GuestInsightLineMatch = {
+          cleanliness: /Cleanliness:/,
+          service: /Service:/,
+          location: /Location:/,
+          roomQuality: /Room Quality:/,
+        };
+
+        lines.forEach((line: string) => {
+          if (ratingLineMatchers.cleanliness.test(line)) {
+            const match: RegExpMatchArray | null = line.match(/(\d+\.?\d*)/);
+            if (match) (ratings as GuestInsightRatings).cleanliness = parseFloat(match[1]);
+          } else if (ratingLineMatchers.service.test(line)) {
+            const match: RegExpMatchArray | null = line.match(/(\d+\.?\d*)/);
+            if (match) (ratings as GuestInsightRatings).service = parseFloat(match[1]);
+          } else if (ratingLineMatchers.location.test(line)) {
+            const match: RegExpMatchArray | null = line.match(/(\d+\.?\d*)/);
+            if (match) (ratings as GuestInsightRatings).location = parseFloat(match[1]);
+          } else if (ratingLineMatchers.roomQuality.test(line)) {
+            const match: RegExpMatchArray | null = line.match(/(\d+\.?\d*)/);
+            if (match) (ratings as GuestInsightRatings).roomQuality = parseFloat(match[1]);
+          }
+        });
+
+        return ratings;
+      } catch (error) {
+        console.warn('Failed to parse ratings from guestInsights:', error);
+      }
+    }
+    
+    // Ultimate fallback: mock ratings based on overall rating
+    const baseRating = hotel.rating || 6.0;
+    return {
+      cleanliness: Math.min(10, baseRating + 0.2),
+      service: Math.min(10, baseRating - 0.1),
+      location: Math.min(10, baseRating + 0.3),
+      roomQuality: Math.min(10, baseRating - 0.2)
+    };
+  };
+
+  const ratings = getRatings();
+
+  const getRatingColor = (rating: number): string => {
+    if (rating >= 8.0) return TURQUOISE;
+    if (rating >= 7.0) return TURQUOISE + 'E6';
+    if (rating >= 6.0) return TURQUOISE + 'CC';
+    if (rating >= 5.0) return TURQUOISE + 'B3';
+    if (rating >= 4.0) return TURQUOISE + '99';
+    return TURQUOISE + '80';
+  };
+
+  const getRatingTextColor = (rating: number): string => {
+    return "#FFFFFF";
+  };
+
   return (
     <View style={tw`bg-white`}>
       <AccordionSection
@@ -373,6 +457,116 @@ const FavoriteDropdown: React.FC<FavoriteDropdownProps> = ({
           <Text style={tw`text-gray-800 text-sm leading-5`}>
             {mockAIReason}
           </Text>
+        </View>
+      </AccordionSection>
+
+      {/* NEW: Category Ratings Section */}
+      <AccordionSection
+        title="Guest Ratings"
+        icon="star"
+        isExpanded={expandedSections.ratings}
+        onToggle={() => toggleSection('ratings')}
+      >
+        <View style={tw`gap-2`}>
+          <View style={tw`flex-row gap-2`}>
+            <View style={tw`flex-1 bg-gray-50 border border-gray-100 rounded-lg p-2 flex-row items-center`}>
+              <View 
+                style={[
+                  tw`w-7 h-7 rounded-full items-center justify-center`,
+                  { backgroundColor: getRatingColor(ratings.cleanliness) }
+                ]}
+              >
+                <Text 
+                  style={[
+                    tw`text-xs font-bold`,
+                    { 
+                      color: getRatingTextColor(ratings.cleanliness),
+                      textShadowColor: '#000000',
+                      textShadowOffset: { width: 0.5, height: 0.5 },
+                      textShadowRadius: 1
+                    }
+                  ]}
+                >
+                  {ratings.cleanliness.toFixed(1)}
+                </Text>
+              </View>
+              <Text style={tw`text-gray-800 text-xs font-medium ml-2 flex-1`}>Cleanliness</Text>
+            </View>
+
+            <View style={tw`flex-1 bg-gray-50 border border-gray-100 rounded-lg p-2 flex-row items-center`}>
+              <View 
+                style={[
+                  tw`w-7 h-7 rounded-full items-center justify-center`,
+                  { backgroundColor: getRatingColor(ratings.service) }
+                ]}
+              >
+                <Text 
+                  style={[
+                    tw`text-xs font-bold`,
+                    { 
+                      color: getRatingTextColor(ratings.service),
+                      textShadowColor: '#000000',
+                      textShadowOffset: { width: 0.5, height: 0.5 },
+                      textShadowRadius: 1
+                    }
+                  ]}
+                >
+                  {ratings.service.toFixed(1)}
+                </Text>
+              </View>
+              <Text style={tw`text-gray-800 text-xs font-medium ml-2 flex-1`}>Service</Text>
+            </View>
+          </View>
+
+          <View style={tw`flex-row gap-2`}>
+            <View style={tw`flex-1 bg-gray-50 border border-gray-100 rounded-lg p-2 flex-row items-center`}>
+              <View 
+                style={[
+                  tw`w-7 h-7 rounded-full items-center justify-center`,
+                  { backgroundColor: getRatingColor(ratings.location) }
+                ]}
+              >
+                <Text 
+                  style={[
+                    tw`text-xs font-bold`,
+                    { 
+                      color: getRatingTextColor(ratings.location),
+                      textShadowColor: '#000000',
+                      textShadowOffset: { width: 0.5, height: 0.5 },
+                      textShadowRadius: 1
+                    }
+                  ]}
+                >
+                  {ratings.location.toFixed(1)}
+                </Text>
+              </View>
+              <Text style={tw`text-gray-800 text-xs font-medium ml-2 flex-1`}>Location</Text>
+            </View>
+
+            <View style={tw`flex-1 bg-gray-50 border border-gray-100 rounded-lg p-2 flex-row items-center`}>
+              <View 
+                style={[
+                  tw`w-7 h-7 rounded-full items-center justify-center`,
+                  { backgroundColor: getRatingColor(ratings.roomQuality) }
+                ]}
+              >
+                <Text 
+                  style={[
+                    tw`text-xs font-bold`,
+                    { 
+                      color: getRatingTextColor(ratings.roomQuality),
+                      textShadowColor: '#000000',
+                      textShadowOffset: { width: 0.5, height: 0.5 },
+                      textShadowRadius: 1
+                    }
+                  ]}
+                >
+                  {ratings.roomQuality.toFixed(1)}
+                </Text>
+              </View>
+              <Text style={tw`text-gray-800 text-xs font-medium ml-2 flex-1`}>Rooms</Text>
+            </View>
+          </View>
         </View>
       </AccordionSection>
 
@@ -396,7 +590,7 @@ const FavoriteDropdown: React.FC<FavoriteDropdownProps> = ({
 
       <AccordionSection
         title="Hotel Highlights"
-        icon="star"
+        icon="information-circle"
         isExpanded={expandedSections.funFacts}
         onToggle={() => toggleSection('funFacts')}
       >

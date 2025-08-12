@@ -28,8 +28,6 @@ const TURQUOISE = '#1df9ff';
 const TURQUOISE_LIGHT = '#5dfbff';
 const TURQUOISE_DARK = '#00d4e6';
 const BLACK = "#000000";
-
-// Updated interfaces to match Firebase data structure
 interface FavoritedHotel {
   id: string;
   name: string;
@@ -70,6 +68,13 @@ interface FavoritedHotel {
   refundableTag?: string | null;
   fullDescription?: string;
   fullAddress?: string;
+  // NEW: Category ratings
+  categoryRatings?: {
+    cleanliness: number;
+    service: number;
+    location: number;
+    roomQuality: number;
+  };
   [key: string]: any;
 }
 
