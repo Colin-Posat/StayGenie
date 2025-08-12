@@ -940,6 +940,10 @@ const SwipeableHotelStoryCard: React.FC<SwipeableHotelStoryCardProps> = ({
   placeId,
   occupancies
 }) => {
+
+  const [showFavoritePopup, setShowFavoritePopup] = useState(false);
+const popupAnimation = useRef(new Animated.Value(0)).current;
+
   const [currentSlide, setCurrentSlide] = useState(0);
   const [showEmailSignUpModal, setShowEmailSignUpModal] = useState(false);
   const [showEmailSignInModal, setShowEmailSignInModal] = useState(false);
@@ -981,6 +985,7 @@ const { isAuthenticated, addFavoriteHotel, isFavoriteHotel, toggleFavoriteHotel,
       ]).start();
     }
   }, [isAuthenticated, hotel.id, isFavoriteHotel(hotel.id)]);
+  
 
   useEffect(() => {
     if (prevHotelId.current !== hotel.id) {

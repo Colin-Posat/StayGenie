@@ -203,6 +203,7 @@ const AnimatedHeartButton: React.FC<AnimatedHeartButtonProps> = ({
           // Animate heart change after successful toggle
           animateHeart();
           
+          
           if (newStatus) {
             console.log(`❤️ Added "${hotel.name}" to favorites`);
           } else {
