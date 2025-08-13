@@ -1,5 +1,5 @@
-// Frontend/src/contexts/AuthContext.tsx - Updated with favorites management
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+// Frontend/src/contexts/AuthContext.tsx - Updated with favorites change notifications
+import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
 import { Platform } from 'react-native';
 import { 
   User as FirebaseUser,
@@ -91,7 +91,10 @@ export interface FavoriteHotel {
   [key: string]: any;
 }
 
-// Auth context interface - Updated with new favorite methods
+// NEW: Add favorites change listener type
+type FavoritesChangeListener = () => void;
+
+// Auth context interface - Updated with change notifications
 interface AuthContextType {
   // State
   user: User | null;
@@ -114,6 +117,10 @@ interface AuthContextType {
   getFavoriteHotels: () => string[];
   getFavoriteHotelsData: () => Promise<FavoriteHotel[]>;
   
+  // NEW: Change notification system
+  onFavoritesChange: (listener: FavoritesChangeListener) => () => void;
+  notifyFavoritesChanged: () => void;
+  
   // UI helpers
   requireAuth: (action: () => void, showSignUpModal: () => void) => void;
 }
@@ -126,6 +133,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [user, setUser] = useState<User | null>(null);
   const [firebaseUser, setFirebaseUser] = useState<FirebaseUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  
+  // NEW: Store favorites change listeners
+  const [favoritesChangeListeners, setFavoritesChangeListeners] = useState<Set<FavoritesChangeListener>>(new Set());
 
   const isAuthenticated = !!user && !!firebaseUser;
 
@@ -135,6 +145,32 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const cleanUsername = username.replace(/[^a-zA-Z]/g, '');
     return cleanUsername.charAt(0).toUpperCase() + cleanUsername.slice(1) || 'User';
   };
+
+  // NEW: Notify all listeners that favorites have changed
+  const notifyFavoritesChanged = useCallback(() => {
+    console.log('🔔 Notifying favorites changed to', favoritesChangeListeners.size, 'listeners');
+    favoritesChangeListeners.forEach(listener => {
+      try {
+        listener();
+      } catch (error) {
+        console.error('Error in favorites change listener:', error);
+      }
+    });
+  }, [favoritesChangeListeners]);
+
+  // NEW: Add favorites change listener
+  const onFavoritesChange = useCallback((listener: FavoritesChangeListener): (() => void) => {
+    setFavoritesChangeListeners(prev => new Set([...prev, listener]));
+    
+    // Return cleanup function
+    return () => {
+      setFavoritesChangeListeners(prev => {
+        const newSet = new Set(prev);
+        newSet.delete(listener);
+        return newSet;
+      });
+    };
+  }, []);
 
   // Listen for authentication state changes
   useEffect(() => {
@@ -322,7 +358,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
-  // NEW: Add favorite hotel with complete data stored in Firestore
+  // UPDATED: Add favorite hotel with change notification
   const addFavoriteHotel = async (hotel: FavoriteHotel): Promise<void> => {
     if (!firebaseUser || !user) {
       throw new Error('Must be signed in to add favorites');
@@ -353,13 +389,16 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
       console.log(`✅ Added "${hotel.name}" to favorites with complete data`);
       
+      // NEW: Notify listeners that favorites changed
+      notifyFavoritesChanged();
+      
     } catch (error) {
       console.error('Add favorite error:', error);
       throw new Error('Failed to add favorite');
     }
   };
 
-  // NEW: Remove favorite hotel (both from array and subcollection)
+  // UPDATED: Remove favorite hotel with change notification
   const removeFavoriteHotel = async (hotelId: string): Promise<void> => {
     if (!firebaseUser || !user) {
       throw new Error('Must be signed in to remove favorites');
@@ -390,13 +429,16 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
       console.log(`✅ Removed hotel ${hotelId} from favorites`);
       
+      // NEW: Notify listeners that favorites changed
+      notifyFavoritesChanged();
+      
     } catch (error) {
       console.error('Remove favorite error:', error);
       throw new Error('Failed to remove favorite');
     }
   };
 
-  // NEW: Toggle favorite hotel
+  // UPDATED: Toggle favorite hotel with change notification
   const toggleFavoriteHotel = async (hotel: FavoriteHotel): Promise<boolean> => {
     if (!firebaseUser || !user) {
       throw new Error('Must be signed in to toggle favorites');
@@ -420,18 +462,18 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
-  // NEW: Check if hotel is favorited
+  // Check if hotel is favorited
   const isFavoriteHotel = (hotelId: string): boolean => {
     if (!user) return false;
     return user.favoriteHotels.includes(hotelId);
   };
 
-  // NEW: Get all favorite hotel IDs
+  // Get all favorite hotel IDs
   const getFavoriteHotels = (): string[] => {
     return user?.favoriteHotels || [];
   };
 
-  // NEW: Get complete favorite hotels data from Firestore
+  // Get complete favorite hotels data from Firestore
   const getFavoriteHotelsData = async (): Promise<FavoriteHotel[]> => {
     if (!firebaseUser || !user) {
       return [];
@@ -458,7 +500,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
-  // NEW: Helper method to require authentication
+  // Helper method to require authentication
   const requireAuth = (action: () => void, showSignUpModal: () => void): void => {
     if (isAuthenticated) {
       action();
@@ -483,6 +525,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     isFavoriteHotel,
     getFavoriteHotels,
     getFavoriteHotelsData,
+    onFavoritesChange,
+    notifyFavoritesChanged,
     requireAuth,
   };
 

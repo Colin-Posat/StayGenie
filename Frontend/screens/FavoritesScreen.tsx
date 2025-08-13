@@ -1,3 +1,4 @@
+// FavoritesScreen.tsx - Optimized to preserve UI state
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   View,
@@ -28,6 +29,7 @@ const TURQUOISE = '#1df9ff';
 const TURQUOISE_LIGHT = '#5dfbff';
 const TURQUOISE_DARK = '#00d4e6';
 const BLACK = "#000000";
+
 interface FavoritedHotel {
   id: string;
   name: string;
@@ -38,7 +40,6 @@ interface FavoritedHotel {
   rating?: number;
   reviews?: number;
   addedAt?: string;
-  // Rich hotel data for better favorites display
   city?: string;
   country?: string;
   latitude?: number | null;
@@ -68,7 +69,6 @@ interface FavoritedHotel {
   refundableTag?: string | null;
   fullDescription?: string;
   fullAddress?: string;
-  // NEW: Category ratings
   categoryRatings?: {
     cleanliness: number;
     service: number;
@@ -78,16 +78,22 @@ interface FavoritedHotel {
   [key: string]: any;
 }
 
-// Updated city folder interface with country info
 interface CityFolder {
   city: string;
-  country: string; // Full country name
-  countryCode: string; // Store original country code for flag lookup
-  displayName: string; // City name for display
-  flagEmoji: string; // Flag emoji for the country
+  country: string;
+  countryCode: string;
+  displayName: string;
+  flagEmoji: string;
   hotels: FavoritedHotel[];
   isExpanded: boolean;
   count: number;
+}
+
+// Add interface for tracking expanded states
+interface UIState {
+  expandedFolders: Set<string>;
+  expandedCards: Set<string>;
+  lastDataHash: string;
 }
 
 // Clean empty state with turquoise accents
@@ -412,32 +418,49 @@ const ErrorState: React.FC<{ error: string; onRetry: () => void }> = ({ error, o
   </View>
 );
 
-// Main Favorites Screen Component - Updated for Firebase
+// Main Favorites Screen Component - Updated for Firebase with state preservation
 const FavoritesScreen = () => {
   const [cityFolders, setCityFolders] = useState<CityFolder[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [totalCount, setTotalCount] = useState(0);
   const [error, setError] = useState<string | null>(null);
+  
+  // NEW: Track UI state separately from data
+  const [uiState, setUIState] = useState<UIState>({
+    expandedFolders: new Set(),
+    expandedCards: new Set(),
+    lastDataHash: ''
+  });
+  
+  // NEW: Track if we need to refresh data vs just preserve UI
+  const [needsDataRefresh, setNeedsDataRefresh] = useState(true);
+  const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
+  const lastFocusTime = useRef<number>(0);
 
-  // Use Firebase auth context instead of cache
   const { 
     isAuthenticated, 
     getFavoriteHotelsData, 
     removeFavoriteHotel,
+    onFavoritesChange,
     isLoading: authLoading
   } = useAuth();
 
+  // Helper function to create a hash of the data to detect changes
+  const createDataHash = useCallback((hotels: FavoritedHotel[]): string => {
+    const hotelIds = hotels.map(h => h.id).sort().join(',');
+    return `${hotels.length}-${hotelIds}`;
+  }, []);
+
   // Group hotels by city, creating folders with country context and flags
-  const createCityFolders = useCallback((hotels: FavoritedHotel[]): CityFolder[] => {
+  const createCityFolders = useCallback((hotels: FavoritedHotel[], preserveExpansion = false): CityFolder[] => {
     const cityMap = new Map<string, { hotels: FavoritedHotel[]; country: string; countryCode: string }>();
     
-    // Group hotels by city-country combination to avoid conflicts
     hotels.forEach(hotel => {
       const city = hotel.city || 'Unknown City';
       const countryCode = hotel.country || 'Unknown';
       const country = getCountryName(countryCode, countryCode);
-      const cityCountryKey = `${city}, ${country}`; // Use as unique key
+      const cityCountryKey = `${city}, ${country}`;
       
       if (!cityMap.has(cityCountryKey)) {
         cityMap.set(cityCountryKey, { hotels: [], country, countryCode });
@@ -445,58 +468,82 @@ const FavoritesScreen = () => {
       cityMap.get(cityCountryKey)!.hotels.push(hotel);
     });
 
-    // Convert to city folders and sort
     const folders: CityFolder[] = Array.from(cityMap.entries())
       .map(([cityCountryKey, { hotels, country, countryCode }]) => {
-        const city = cityCountryKey.split(', ')[0]; // Extract city from key
+        const city = cityCountryKey.split(', ')[0];
+        const isExpanded = preserveExpansion ? uiState.expandedFolders.has(cityCountryKey) : false;
+        
         return {
           city,
           country,
           countryCode,
-          displayName: cityCountryKey, // Use full "City, Country" as display key for uniqueness
+          displayName: cityCountryKey,
           flagEmoji: getFlagEmoji(countryCode),
           hotels: hotels.sort((a, b) => {
-            // Sort by date added (newest first), then by name
             const dateA = new Date(a.addedAt || 0).getTime();
             const dateB = new Date(b.addedAt || 0).getTime();
             if (dateB !== dateA) return dateB - dateA;
             return a.name.localeCompare(b.name);
           }),
-          isExpanded: false, // Start collapsed
+          isExpanded,
           count: hotels.length,
         };
       })
-      .sort((a, b) => a.city.localeCompare(b.city)); // Sort cities alphabetically
+      .sort((a, b) => a.city.localeCompare(b.city));
 
     return folders;
-  }, []);
+  }, [uiState.expandedFolders]);
 
-  // Load and organize favorites from Firebase
-  const loadFavorites = useCallback(async () => {
+  // NEW: Optimized load function that preserves UI state
+  const loadFavorites = useCallback(async (forceRefresh = false) => {
     if (!isAuthenticated) {
       console.log('User not authenticated, clearing favorites data');
       setCityFolders([]);
       setTotalCount(0);
       setIsLoading(false);
+      setNeedsDataRefresh(true);
+      return;
+    }
+
+    // Skip loading if we don't need to refresh and it's not forced (but not on first load)
+    if (!needsDataRefresh && !forceRefresh && hasLoadedOnce) {
+      console.log('⚡ Skipping unnecessary data refresh');
+      setIsLoading(false);
       return;
     }
 
     try {
-      console.log('Loading favorites from Firebase...');
+      console.log('📱 Loading favorites from Firebase...');
       setIsLoading(true);
       setError(null);
       
       const favoriteHotels = await getFavoriteHotelsData();
-      const folders = createCityFolders(favoriteHotels);
+      const newDataHash = createDataHash(favoriteHotels);
       
-      console.log(`📱 Loaded ${favoriteHotels.length} favorites organized into ${folders.length} city folders`);
-      
-      if (Platform.OS === 'ios') {
-        LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
+      // Check if data actually changed (but not on first load)
+      if (newDataHash === uiState.lastDataHash && !forceRefresh && hasLoadedOnce) {
+        console.log('⚡ Data unchanged, preserving UI state');
+        setIsLoading(false);
+        setNeedsDataRefresh(false);
+        return;
       }
       
-      setCityFolders(folders);
+      const shouldPreserveExpansion = newDataHash !== uiState.lastDataHash && uiState.lastDataHash !== '' && hasLoadedOnce;
+      const newFolders = createCityFolders(favoriteHotels, shouldPreserveExpansion);
+      
+      console.log(`📱 Loaded ${favoriteHotels.length} favorites organized into ${newFolders.length} city folders`);
+      
+      setCityFolders(newFolders);
       setTotalCount(favoriteHotels.length);
+      setNeedsDataRefresh(false);
+      setHasLoadedOnce(true); // Mark that we've loaded at least once
+      
+      // Update data hash
+      setUIState(prev => ({
+        ...prev,
+        lastDataHash: newDataHash
+      }));
+      
     } catch (error) {
       console.error('❌ Error loading favorites:', error);
       setError(error instanceof Error ? error.message : 'Failed to load favorites');
@@ -505,15 +552,16 @@ const FavoritesScreen = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [isAuthenticated, getFavoriteHotelsData, createCityFolders]);
+  }, [isAuthenticated, getFavoriteHotelsData, createDataHash, needsDataRefresh, uiState.lastDataHash, createCityFolders, hasLoadedOnce]);
 
-  // Refresh handler
+  // NEW: Optimized refresh handler
   const handleRefresh = useCallback(async () => {
     if (!isAuthenticated) return;
     
-    console.log('Refreshing favorites...');
+    console.log('🔄 Manual refresh triggered');
     setIsRefreshing(true);
-    await loadFavorites();
+    setNeedsDataRefresh(true); // Force refresh on manual pull
+    await loadFavorites(true);
     setIsRefreshing(false);
     
     if (Platform.OS === 'ios') {
@@ -522,12 +570,26 @@ const FavoritesScreen = () => {
     }
   }, [loadFavorites, isAuthenticated]);
 
-  // Toggle city folder expansion using displayName as key
+  // NEW: Optimized toggle function that preserves state
   const toggleCityFolder = useCallback((displayName: string) => {
     if (Platform.OS === 'ios') {
       LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     }
     
+    setUIState(prev => {
+      const newExpandedFolders = new Set(prev.expandedFolders);
+      if (newExpandedFolders.has(displayName)) {
+        newExpandedFolders.delete(displayName);
+      } else {
+        newExpandedFolders.add(displayName);
+      }
+      return {
+        ...prev,
+        expandedFolders: newExpandedFolders
+      };
+    });
+    
+    // Update the folders state to reflect the UI change immediately
     setCityFolders(prev => 
       prev.map(folder => 
         folder.displayName === displayName 
@@ -539,40 +601,69 @@ const FavoritesScreen = () => {
     console.log(`📁 Toggled ${displayName} folder`);
   }, []);
 
-  // Expand all folders
+  // NEW: Optimized expand/collapse functions
   const expandAllFolders = useCallback(() => {
     if (Platform.OS === 'ios') {
       LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     }
     
+    const allFolderNames = new Set(cityFolders.map(f => f.displayName));
+    setUIState(prev => ({
+      ...prev,
+      expandedFolders: allFolderNames
+    }));
+    
     setCityFolders(prev => prev.map(folder => ({ ...folder, isExpanded: true })));
     console.log('📁 Expanded all folders');
-  }, []);
+  }, [cityFolders]);
 
-  // Collapse all folders
   const collapseAllFolders = useCallback(() => {
     if (Platform.OS === 'ios') {
       LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
     }
     
+    setUIState(prev => ({
+      ...prev,
+      expandedFolders: new Set()
+    }));
+    
     setCityFolders(prev => prev.map(folder => ({ ...folder, isExpanded: false })));
     console.log('📁 Collapsed all folders');
   }, []);
 
-  // Remove hotel from favorites using Firebase
+  // NEW: Optimized remove function that doesn't trigger notifications (since it's from this screen)
   const handleRemoveFavorite = useCallback(async (hotel: FavoritedHotel) => {
     if (!isAuthenticated) return;
     
     try {
       console.log(`🗑️ Removing ${hotel.name}...`);
+      
+      // Optimistically update UI first for immediate feedback
+      setCityFolders(prev => {
+        const newFolders = prev.map(folder => ({
+          ...folder,
+          hotels: folder.hotels.filter(h => h.id !== hotel.id),
+          count: folder.hotels.filter(h => h.id !== hotel.id).length
+        })).filter(folder => folder.count > 0); // Remove empty folders
+        
+        return newFolders;
+      });
+      
+      setTotalCount(prev => prev - 1);
+      
+      // Remove from backend without triggering our own listener
       await removeFavoriteHotel(hotel.id);
-      await loadFavorites(); // Reload to update the UI
+      
       console.log(`✅ Removed ${hotel.name}`);
     } catch (error) {
       console.error('❌ Error removing favorite:', error);
       Alert.alert('Error', 'Failed to remove hotel from favorites');
+      
+      // Revert optimistic update on error
+      setNeedsDataRefresh(true);
+      await loadFavorites(true);
     }
-  }, [removeFavoriteHotel, loadFavorites, isAuthenticated]);
+  }, [removeFavoriteHotel, isAuthenticated, loadFavorites]);
 
   const handleHotelPress = useCallback((hotel: FavoritedHotel) => {
     console.log('🏨 Hotel pressed:', hotel.name);
@@ -584,20 +675,45 @@ const FavoritesScreen = () => {
     // Navigation logic here
   }, []);
 
-  // Check if any folders are expanded
   const hasExpandedFolders = cityFolders.some(folder => folder.isExpanded);
 
-  // Auto-reload on focus when authenticated
+  // NEW: Listen for favorites changes from other parts of the app (optimized)
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    
+    const unsubscribe = onFavoritesChange(() => {
+      console.log('🔔 Favorites changed notification received');
+      setNeedsDataRefresh(true);
+      // Don't auto-refresh here, let the focus effect handle it
+    });
+    
+    return unsubscribe;
+  }, [isAuthenticated, onFavoritesChange]);
+
+  // NEW: Smart focus effect that only refreshes when needed
   useFocusEffect(
     useCallback(() => {
       if (!authLoading) {
+        const currentTime = Date.now();
+        const timeSinceLastFocus = currentTime - lastFocusTime.current;
+        
         console.log('📱 Screen focused');
-        const timer = setTimeout(() => {
-          loadFavorites();
-        }, 100);
-        return () => clearTimeout(timer);
+        
+        // On first load or if it's been more than 5 seconds since last focus
+        // or if we specifically need a data refresh
+        if (!hasLoadedOnce || timeSinceLastFocus > 5000 || needsDataRefresh) {
+          console.log('📱 Triggering data refresh on focus');
+          const timer = setTimeout(() => {
+            loadFavorites();
+          }, hasLoadedOnce ? 100 : 0); // No delay on first load
+          lastFocusTime.current = currentTime;
+          return () => clearTimeout(timer);
+        } else {
+          console.log('⚡ Skipping refresh - too recent');
+          setIsLoading(false);
+        }
       }
-    }, [loadFavorites, authLoading])
+    }, [loadFavorites, authLoading, needsDataRefresh, hasLoadedOnce])
   );
 
   // Show loading while auth is still loading
@@ -661,7 +777,6 @@ const FavoritesScreen = () => {
               }
             ]}
             onPress={() => {
-              // Navigate to sign in screen
               console.log('Navigate to sign in');
             }}
             activeOpacity={0.9}
@@ -713,17 +828,14 @@ const FavoritesScreen = () => {
         >
           {cityFolders.map((cityFolder) => (
             <View key={cityFolder.displayName} style={tw`mb-4`}>
-              {/* City Folder Header */}
               <CityFolderHeader
                 cityFolder={cityFolder}
                 onToggle={toggleCityFolder}
               />
 
-              {/* Hotels in this location (when expanded) */}
               {cityFolder.isExpanded && (
                 <View style={tw`px-6`}>
                   {cityFolder.hotels.map((hotel, index) => {
-                    // Ensure addedAt is always a string
                     const safeHotel = {
                       ...hotel,
                       addedAt: hotel.addedAt ?? '',
@@ -743,7 +855,6 @@ const FavoritesScreen = () => {
             </View>
           ))}
 
-          {/* Bottom spacing */}
           <View style={tw`h-6`} />
         </ScrollView>
       )}

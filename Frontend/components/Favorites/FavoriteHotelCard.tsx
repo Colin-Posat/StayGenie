@@ -588,23 +588,6 @@ const FavoriteDropdown: React.FC<FavoriteDropdownProps> = ({
         </View>
       </AccordionSection>
 
-      <AccordionSection
-        title="Hotel Highlights"
-        icon="information-circle"
-        isExpanded={expandedSections.funFacts}
-        onToggle={() => toggleSection('funFacts')}
-      >
-        <View style={tw`bg-gray-50 p-3 rounded-xl`}>
-          {mockFunFacts.map((fact: string, index: number) => (
-            <View key={index} style={tw`flex-row items-start ${index === 0 ? '' : 'mt-2'}`}>
-              <View style={[tw`w-1.5 h-1.5 rounded-full mr-2 mt-2`, { backgroundColor: TURQUOISE }]} />
-              <Text style={tw`text-gray-700 text-sm flex-1 leading-5`}>
-                {fact}
-              </Text>
-            </View>
-          ))}
-        </View>
-      </AccordionSection>
     </View>
   );
 };
@@ -865,48 +848,50 @@ const FavoriteHotelCard: React.FC<FavoriteHotelCardProps> = ({
           <Ionicons name="close" size={14} color="#6B7280" />
         </TouchableOpacity>
 
-        {/* NEW: Action Buttons Section */}
-        <View style={tw`border-t border-gray-50 px-4 py-3`}>
-          <View style={tw`flex-row gap-2`}>
-            {/* View Details Button */}
-            <TouchableOpacity
-              style={[
-                tw`flex-1 py-2.5 rounded-lg border flex-row items-center justify-center`,
-                { 
-                  backgroundColor: TURQUOISE + '10',
-                  borderColor: TURQUOISE + '30',
-                }
-              ]}
-              onPress={handleViewDetails}
-              activeOpacity={0.7}
-            >
-              <Ionicons name="map-outline" size={16} color={TURQUOISE_DARK} />
-              <Text style={[tw`ml-2 font-medium text-sm`, { color: TURQUOISE_DARK }]}>
-                View Details
-              </Text>
-            </TouchableOpacity>
+        {/* Action Buttons Section */}
+       <View style={tw`border-t border-gray-50 px-4 py-3`}>
+         <View style={tw`flex-row gap-2`}>
+           {/* View Details Button */}
+           <TouchableOpacity
+             style={[
+               tw`flex-1 py-3 rounded-xl border-2 flex-row items-center justify-center`,
+               { 
+                 backgroundColor: TURQUOISE + '10',
+                 borderColor: TURQUOISE + '30',
+               }
+             ]}
+             onPress={handleViewDetails}
+             activeOpacity={0.8}
+           >
+             <Ionicons name="map" size={16} color={TURQUOISE_DARK} />
+             <Text style={[tw`ml-2 font-medium text-sm`, { color: '#000000' }]}>
+               Map View
+             </Text>
+           </TouchableOpacity>
 
-            {/* Book Now Button */}
-            <TouchableOpacity
-              style={[
-                tw`flex-1 py-2.5 rounded-lg flex-row items-center justify-center shadow-sm`,
-                { backgroundColor: TURQUOISE }
-              ]}
-              onPress={handleBookNow}
-              activeOpacity={0.8}
-            >
-              <Image 
-                source={require('../../assets/images/logo.png')} 
-                style={{ width: 16, height: 16, tintColor: '#FFFFFF' }} 
-                resizeMode="contain"
-              />
-              <Text style={tw`text-white font-semibold text-sm ml-2`}>
-                Book Now
-              </Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-
+           {/* Book Now Button */}
+           <TouchableOpacity
+             style={[
+               tw`flex-1 py-3 rounded-xl border-2 flex-row items-center justify-center`,
+               { 
+                 backgroundColor: TURQUOISE + '10',
+                 borderColor: TURQUOISE + '30',
+               }
+             ]}
+             onPress={handleBookNow}
+             activeOpacity={0.8}
+           >
+             <Image 
+               source={require('../../assets/images/logo.png')} 
+               style={{ width: 16, height: 16 }} 
+               resizeMode="contain"
+             />
+             <Text style={[tw`ml-2 font-medium text-sm`, { color: '#000000' }]}>
+               Book Now
+             </Text>
+           </TouchableOpacity>
+         </View>
+       </View>
         {/* Clean Expandable Dropdown Toggle */}
         <TouchableOpacity
           style={tw`flex-row items-center justify-between px-4 py-3 border-t border-gray-50`}

@@ -1344,45 +1344,45 @@ useEffect(() => {
     />
     
     {/* View Details Button - Updated styling */}
-    <TouchableOpacity
-      style={[
-        tw`py-2.5 px-4 rounded-xl border-2 flex-row items-center flex-1 justify-center`,
-        { 
-          backgroundColor: TURQUOISE + '10',
-          borderColor: TURQUOISE + '30',
-        }
-      ]}
-      onPress={handleViewDetails}
-      activeOpacity={0.8}
-    >
-      <Ionicons name="map" size={16} color={TURQUOISE_DARK} />
-      <Text style={[tw`ml-2 font-medium text-sm`, { color: BLACK }]}>
-        Details
-      </Text>
-    </TouchableOpacity>
+<TouchableOpacity
+    style={[
+      tw`py-3 px-4 rounded-xl border-2 flex-row items-center flex-1 justify-center`,
+      { 
+        backgroundColor: TURQUOISE + '10',
+        borderColor: TURQUOISE + '30',
+      }
+    ]}
+    onPress={handleViewDetails}
+    activeOpacity={0.8}
+  >
+    <Ionicons name="map" size={16} color={TURQUOISE_DARK} />
+    <Text style={[tw`ml-2 font-medium text-sm`, { color: BLACK }]}>
+      Map View
+    </Text>
+  </TouchableOpacity>
 
-    {/* Book Now Button - Updated styling */}
-    <TouchableOpacity
-      style={[
-        tw`py-2.5 px-4 rounded-xl border-2 flex-row items-center flex-1 justify-center`,
-        { 
-          backgroundColor: TURQUOISE + '10',
-          borderColor: TURQUOISE + '30',
-        }
-      ]}
-      onPress={handleDeepLink}
-      activeOpacity={0.8}
-    >
-      <Image 
-        source={require('../../assets/images/logo.png')} 
-        style={{ width: 16, height: 16 }} 
-        resizeMode="contain"
-      />
-      <Text style={[tw`ml-2 font-medium text-sm`, { color: BLACK }]}>
-        Book Now
-      </Text>
-    </TouchableOpacity>
-  </View>
+  {/* Book Now Button - Updated with increased height */}
+  <TouchableOpacity
+    style={[
+      tw`py-3 px-4 rounded-xl border-2 flex-row items-center flex-1 justify-center`,
+      { 
+        backgroundColor: TURQUOISE + '10',
+        borderColor: TURQUOISE + '30',
+      }
+    ]}
+    onPress={handleDeepLink}
+    activeOpacity={0.8}
+  >
+    <Image 
+      source={require('../../assets/images/logo.png')} 
+      style={{ width: 16, height: 16 }} 
+      resizeMode="contain"
+    />
+    <Text style={[tw`ml-2 font-medium text-sm`, { color: BLACK }]}>
+      Book Now
+    </Text>
+  </TouchableOpacity>
+</View>
 </View>
 
       {/* Email Sign Up Modal */}
