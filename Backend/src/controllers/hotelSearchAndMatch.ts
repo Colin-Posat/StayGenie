@@ -371,7 +371,6 @@ const processHotelWithImmediateInsights = async (
   }
 };
 
-// UPDATED: Modified gptHotelMatchingSSE to use immediate insights processing
 const gptHotelMatchingSSE = async (
   hotelSummaries: HotelSummaryForAI[], 
   parsedQuery: ParsedSearchQuery, 
@@ -384,29 +383,7 @@ const gptHotelMatchingSSE = async (
   
   const hasSpecificPreferences = parsedQuery.aiSearch && parsedQuery.aiSearch.trim() !== '';
   
-  // Budget context (unchanged)
-  let budgetContext = '';
-  let budgetGuidance = '';
-  
-  if (parsedQuery.minCost || parsedQuery.maxCost) {
-    const minText = parsedQuery.minCost ? `${parsedQuery.minCost}` : '';
-    const maxText = parsedQuery.maxCost ? `${parsedQuery.maxCost}` : '';
-    
-    if (minText && maxText) {
-      budgetContext = `\n💰 BUDGET CONSTRAINT: ${minText} - ${maxText}/night`;
-      budgetGuidance = `IMPORTANT: Stay within the specified budget of ${minText}-${maxText}/night. `;
-    } else if (minText) {
-      budgetContext = `\n💰 MINIMUM BUDGET: ${minText}+ per night`;
-      budgetGuidance = `IMPORTANT: Only select hotels ${minText}+ per night. `;
-    } else if (maxText) {
-      budgetContext = `\n💰 MAXIMUM BUDGET: Under ${maxText} per night`;
-      budgetGuidance = `IMPORTANT: Only select hotels under ${maxText} per night. `;
-    }
-  }
-
-  console.log(`🤖 GPT-4o Mini Real-time Stream - Processing ${hotelSummaries.length} hotels`);
-  
-  // Create hotel summary (unchanged)
+  // Build the hotel summary for GPT with better formatting
   const hotelSummary = hotelSummaries.map((hotel, index) => {
     const priceMatch = hotel.pricePerNight.match(/(\d+)/);
     const numericPrice = priceMatch ? parseInt(priceMatch[1]) : 999999;
@@ -429,7 +406,29 @@ const gptHotelMatchingSSE = async (
     return `${index + 1}: ${hotel.name} | $${numericPrice}/night | ${hotel.starRating}⭐ | ${locationInfo} | ${hotel.topAmenities.slice(0,2).join(',')} | ${shortDescription}`;
   }).join('\n');
   
-  // Same prompt as before (unchanged)
+  // FIXED: Better budget handling in prompts
+  let budgetGuidance = '';
+  let budgetContext = '';
+  
+  if (parsedQuery.minCost || parsedQuery.maxCost) {
+    const minText = parsedQuery.minCost ? `$${parsedQuery.minCost}` : '';
+    const maxText = parsedQuery.maxCost ? `$${parsedQuery.maxCost}` : '';
+    
+    if (minText && maxText) {
+      budgetContext = `\n💰 PREFERRED BUDGET: ${minText} - ${maxText}/night`;
+      budgetGuidance = `The user prefers hotels between ${minText}-${maxText}/night, but you can select slightly outside this range if the hotels offer exceptional value or match preferences well. `;
+    } else if (minText) {
+      budgetContext = `\n💰 PREFERRED MINIMUM: ${minText}+ per night`;
+      budgetGuidance = `The user prefers hotels ${minText}+ per night, but you can select slightly below if they offer great value. `;
+    } else if (maxText) {
+      budgetContext = `\n💰 PREFERRED MAXIMUM: Under ${maxText} per night`;
+      budgetGuidance = `The user prefers hotels under ${maxText} per night, but you can select slightly above if they offer exceptional value. `;
+    }
+  }
+
+  console.log(`🤖 GPT-4o Mini Real-time Stream - Processing ${hotelSummaries.length} hotels`);
+  
+  // FIXED: More flexible prompts that don't create impossible constraints
   const prompt = hasSpecificPreferences ? 
     `USER REQUEST: "${parsedQuery.aiSearch}"
 STAY: ${nights} nights${budgetContext}
@@ -440,20 +439,24 @@ STAY: ${nights} nights${budgetContext}
 3. Star rating and quality
 4. Value for money
 
-HOTELS:
+HOTELS AVAILABLE:
 ${hotelSummary}
 
-CRITICAL: Return the 15 BEST hotels in RANKING ORDER (best first, worst last).
-${budgetGuidance}
+CRITICAL INSTRUCTIONS:
+- You MUST select exactly 15 hotels from the list above using their exact names
+- Number them 1-15 in order of best match to worst match
+- ${budgetGuidance}
+- Even if no hotels perfectly match, select the 15 BEST AVAILABLE options
+- Use the exact hotel names from the numbered list above
 
 Format (exact numbering required):
-1. [exact hotel name] | [match percentage]%
-2. [exact hotel name] | [match percentage]%
-3. [exact hotel name] | [match percentage]%
+1. [exact hotel name from list] | [match percentage]%
+2. [exact hotel name from list] | [match percentage]%
+3. [exact hotel name from list] | [match percentage]%
 ...continue through...
-15. [exact hotel name] | [match percentage]%
+15. [exact hotel name from list] | [match percentage]%
 
-Use exact hotel names from the list. Number 1 = BEST match, Number 15 = 15th best.` :
+REMEMBER: Always select 15 hotels using exact names from the list above.` :
 
     `DESTINATION: ${parsedQuery.cityName}, ${parsedQuery.countryCode}
 STAY: ${nights} nights${budgetContext}
@@ -464,27 +467,31 @@ STAY: ${nights} nights${budgetContext}
 3. Star rating and amenities
 4. Price value proposition
 
-HOTELS:
+HOTELS AVAILABLE:
 ${hotelSummary}
 
-CRITICAL: Return the 15 BEST hotels in QUALITY RANKING ORDER (best first).
-${budgetGuidance}
+CRITICAL INSTRUCTIONS:
+- You MUST select exactly 15 hotels from the list above using their exact names
+- Number them 1-15 in order of best quality to lowest quality
+- ${budgetGuidance}
+- Select the 15 BEST QUALITY hotels available from the list
+- Use the exact hotel names from the numbered list above
 
 Format (exact numbering required):
-1. [exact hotel name] | [match percentage]%
-2. [exact hotel name] | [match percentage]%
-3. [exact hotel name] | [match percentage]%
+1. [exact hotel name from list] | [match percentage]%
+2. [exact hotel name from list] | [match percentage]%
+3. [exact hotel name from list] | [match percentage]%
 ...continue through...
-15. [exact hotel name] | [match percentage]%
+15. [exact hotel name from list] | [match percentage]%
 
-Use exact hotel names from the list. Number 1 = HIGHEST quality, Number 15 = 15th highest.`;
+REMEMBER: Always select 15 hotels using exact names from the list above.`;
 
   const stream = await openai.chat.completions.create({
     model: 'gpt-4o-mini',
     messages: [
       {
         role: 'system',
-        content: 'You are an expert hotel ranker. Return exactly 15 hotels in ranking order (1=best, 15=worst). Use the exact numbering format requested.'
+        content: 'You are an expert hotel ranker. You MUST return exactly 15 hotels using the exact names from the provided list. Never respond with messages like "No hotels available" - always select the best available options from the list provided.'
       },
       { role: 'user', content: prompt }
     ],
@@ -523,7 +530,7 @@ Use exact hotel names from the list. Number 1 = HIGHEST quality, Number 15 = 15t
           });
 
           if (matchingHotel) {
-            // Process hotel with immediate insights (this will stream via SSE)
+            // Process hotel with immediate insights
             const insightPromise = processHotelWithImmediateInsights(
               { ...matchingHotel, aiMatchPercent: parsed.aiMatchPercent },
               parsed.rank,
@@ -534,7 +541,7 @@ Use exact hotel names from the list. Number 1 = HIGHEST quality, Number 15 = 15t
               sendUpdate
             ).catch(error => {
               console.error(`❌ Insight processing failed for ${parsed.hotelName}:`, error);
-              // Send fallback data even if insights fail (SSE compatible)
+              // Send fallback data even if insights fail
               sendUpdate('hotel_enhanced', {
                 hotelIndex: parsed.rank,
                 hotelId: parsed.hotelData.hotelId,
@@ -558,7 +565,7 @@ Use exact hotel names from the list. Number 1 = HIGHEST quality, Number 15 = 15t
       }
     }
     
-    // Process remaining buffer (unchanged)
+    // Process remaining buffer
     if (buffer.trim()) {
       const remainingLines = buffer.split('\n');
       for (const line of remainingLines) {
@@ -611,6 +618,55 @@ Use exact hotel names from the list. Number 1 = HIGHEST quality, Number 15 = 15t
       }
     }
     
+    // FALLBACK: If GPT failed to parse correctly, use top hotels by rating
+    if (rankedHotels.size < 10) {
+      console.warn(`⚠️ GPT only returned ${rankedHotels.size} hotels, adding fallbacks...`);
+      
+      const usedHotelIds = new Set(Array.from(rankedHotels.values()).map(h => h.hotelData.hotelId));
+      const unusedHotels = hotelSummaries.filter(h => !usedHotelIds.has(h.hotelId));
+      
+      // Sort by star rating and add missing hotels
+      const fallbackHotels = unusedHotels
+        .sort((a, b) => b.starRating - a.starRating)
+        .slice(0, 15 - rankedHotels.size);
+      
+      for (let i = 0; i < fallbackHotels.length; i++) {
+        const nextRank = rankedHotels.size + i + 1;
+        if (nextRank <= 15) {
+          const hotel = fallbackHotels[i];
+          rankedHotels.set(nextRank, {
+            hotelName: hotel.name,
+            aiMatchPercent: hasSpecificPreferences ? 25 + (i * 3) : 50 + (i * 3),
+            hotelData: hotel
+          });
+          
+          console.log(`🔄 Added fallback hotel #${nextRank}: ${hotel.name}`);
+          
+          // Process fallback hotel too
+          const matchingHotel = hotelsWithRates.find((h: any) => {
+            const hotelId = h.hotelId || h.id || h.hotel_id;
+            return hotelId === hotel.hotelId;
+          });
+
+          if (matchingHotel) {
+            const insightPromise = processHotelWithImmediateInsights(
+              { ...matchingHotel, aiMatchPercent: hasSpecificPreferences ? 25 + (i * 3) : 50 + (i * 3) },
+              nextRank,
+              userInput,
+              parsedQuery,
+              nights,
+              hotelMetadataMap,
+              sendUpdate
+            ).catch(error => {
+              console.error(`❌ Fallback insight processing failed for ${hotel.name}:`, error);
+            });
+            
+            insightPromises.push(insightPromise);
+          }
+        }
+      }
+    }
+    
     // Wait for all insight processing to complete
     console.log(`⏳ Waiting for ${insightPromises.length} AI insight processes to complete...`);
     await Promise.allSettled(insightPromises);
@@ -625,13 +681,28 @@ Use exact hotel names from the list. Number 1 = HIGHEST quality, Number 15 = 15t
     throw streamError;
   }
 
-  // Return hotels in GPT's intended ranking order (unchanged)
+  // Return hotels in GPT's intended ranking order
   const orderedMatches: Array<{ hotelName: string; aiMatchPercent: number; hotelData: HotelSummaryForAI }> = [];
   
   for (let rank = 1; rank <= 15; rank++) {
     if (rankedHotels.has(rank)) {
       orderedMatches.push(rankedHotels.get(rank)!);
     }
+  }
+  
+  // Final safety check - if still no matches, return top hotels
+  if (orderedMatches.length === 0) {
+    console.error('🚨 CRITICAL: No hotels matched at all, using emergency fallback');
+    const emergencyMatches = hotelSummaries
+      .sort((a, b) => b.starRating - a.starRating)
+      .slice(0, 15)
+      .map((hotel, index) => ({
+        hotelName: hotel.name,
+        aiMatchPercent: hasSpecificPreferences ? 20 + (index * 2) : 45 + (index * 2),
+        hotelData: hotel
+      }));
+    
+    return emergencyMatches;
   }
   
   return orderedMatches.slice(0, 15);

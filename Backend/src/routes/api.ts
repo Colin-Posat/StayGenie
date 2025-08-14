@@ -4,7 +4,8 @@ import { hotelSearchAndMatchController } from '../controllers/hotelSearchAndMatc
 import { aiInsightsController } from '../controllers/aiInsightsController';
 import { parseSearchQuery } from '../controllers/parseController';
 import { generateSuggestions } from '../controllers/aiSuggestionsController';
-import { hotelBudgetRelevanceController } from '../controllers/hotelBudgetRelevanceController'; // NEW IMPORT
+import { hotelBudgetRelevanceController } from '../controllers/hotelBudgetRelevanceController';
+import { conversationalRefineController } from '../controllers/conversationalRefineController'; // NEW IMPORT
 
 const router = express.Router();
 
@@ -14,16 +15,17 @@ router.get('/hotels/search-and-match/stream', hotelSearchAndMatchController); //
 router.post('/hotels/ai-insights', aiInsightsController); // Stage 2 - GPT content + sentiment insights
 router.post('/hotels/budget-relevance', hotelBudgetRelevanceController); // NEW: Budget-aware relevance search
 
-// AI suggestions route
-router.post('/hotels/ai-suggestions', generateSuggestions);
+// AI features routes
+router.post('/hotels/ai-suggestions', generateSuggestions); // AI search suggestions
+router.post('/hotels/conversational-refine', conversationalRefineController); // NEW: Conversational search refinement
 
 // Query parsing route  
 router.post('/query/parse', parseSearchQuery);
 
 // Health check route
 router.get('/health', (req, res) => {
-  res.status(200).json({ 
-    status: 'OK',
+  res.status(200).json({
+     status: 'OK',
     timestamp: new Date().toISOString(),
     service: 'StayGenie Backend'
   });
@@ -31,13 +33,14 @@ router.get('/health', (req, res) => {
 
 // Test route to verify API is working
 router.get('/test', (req, res) => {
-  res.status(200).json({ 
-    message: 'StayGenie API is working!',
+  res.status(200).json({
+     message: 'StayGenie API is working!',
     endpoints: [
       'POST /api/hotels/search-and-match - Hotel search + Llama AI matching (Stage 1)',
       'POST /api/hotels/ai-insights - GPT content generation + sentiment insights (Stage 2)',
-      'POST /api/hotels/budget-relevance - NEW: Budget-aware relevance search with GPT scoring',
+      'POST /api/hotels/budget-relevance - Budget-aware relevance search with GPT scoring',
       'POST /api/hotels/ai-suggestions - Generate AI search suggestions',
+      'POST /api/hotels/conversational-refine - NEW: Conversational search refinement',
       'POST /api/query/parse - Parse natural language hotel search queries',
       'GET /api/health - Health check',
       'GET /api/test - Test endpoint'
@@ -58,6 +61,18 @@ router.get('/test', (req, res) => {
           'Returns up to 30 hotels in each category'
         ],
         benefits: 'Single endpoint, budget awareness, high relevance scoring'
+      },
+      conversationalRefineWorkflow: {
+        newFeature: 'Call /api/hotels/conversational-refine for chat-based search refinement',
+        features: [
+          'Real-time conversational search refinement',
+          'AI-powered query understanding and modification',
+          'Context-aware responses based on search history',
+          'Fallback rule-based processing when AI unavailable',
+          'Session-based conversation memory',
+          'Single source of truth for search query'
+        ],
+        benefits: 'Natural language search refinement, improved user experience, intelligent query building'
       }
     }
   });
