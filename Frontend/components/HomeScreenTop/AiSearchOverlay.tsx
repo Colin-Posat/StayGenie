@@ -54,8 +54,7 @@ interface ConversationalRefineOverlayProps {
   };
 }
 
-const BASE_URL = 'http://localhost:3003';
-//const BASE_URL = 'https://staygenie-wwpa.onrender.com';
+const BASE_URL = 'https://staygenie-wwpa.onrender.com';
 
 const ConversationalRefineOverlay: React.FC<ConversationalRefineOverlayProps> = ({
   visible,
@@ -68,6 +67,7 @@ const ConversationalRefineOverlay: React.FC<ConversationalRefineOverlayProps> = 
   const slideAnim = useRef(new Animated.Value(screenHeight)).current;
   
   const [searchText, setSearchText] = useState(currentSearch);
+  const [originalSearch, setOriginalSearch] = useState(currentSearch);
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [userInput, setUserInput] = useState('');
   const [isVisible, setIsVisible] = useState(visible);
@@ -77,11 +77,15 @@ const ConversationalRefineOverlay: React.FC<ConversationalRefineOverlayProps> = 
   const scrollViewRef = useRef<ScrollView>(null);
   const inputRef = useRef<TextInput>(null);
 
+  // Check if search has changed from original
+  const hasSearchChanged = searchText.trim() !== originalSearch.trim();
+
   // Handle visibility animations
   useEffect(() => {
     if (visible) {
       setIsVisible(true);
       setSearchText(currentSearch);
+      setOriginalSearch(currentSearch);
       
       // Initialize conversation
       initializeConversation();
@@ -278,9 +282,11 @@ const ConversationalRefineOverlay: React.FC<ConversationalRefineOverlayProps> = 
   }, []);
 
   const handleApplySearch = useCallback(() => {
-    onSearchUpdate(searchText);
-    onClose();
-  }, [searchText, onSearchUpdate, onClose]);
+    if (hasSearchChanged) {
+      onSearchUpdate(searchText);
+      onClose();
+    }
+  }, [searchText, onSearchUpdate, onClose, hasSearchChanged]);
 
   const TypingIndicator = () => (
     <View style={tw`flex-row items-center p-4`}>
@@ -481,16 +487,14 @@ const ConversationalRefineOverlay: React.FC<ConversationalRefineOverlayProps> = 
                     ]}
                     value={userInput}
                     onChangeText={setUserInput}
-                    placeholder="Refine your search (e.g., 'hotels under $200', '8/12 to 8/18')..."
+                    placeholder="Refine your search (e.g., 'under $200', '8/12 to 8/18')..."
                     placeholderTextColor="#94A3B8"
                     multiline={true}
-                    returnKeyType="send"
+                    returnKeyType="done"
                     onSubmitEditing={() => {
-                      if (userInput.trim()) {
-                        sendMessage(userInput);
-                      }
+                      inputRef.current?.blur(); // Dismiss keyboard
                     }}
-                    blurOnSubmit={false}
+                    blurOnSubmit={true}
                   />
                 </View>
                 
@@ -531,7 +535,7 @@ const ConversationalRefineOverlay: React.FC<ConversationalRefineOverlayProps> = 
               <View style={tw`flex-row gap-3`}>
                 <TouchableOpacity
                   style={[
-                    tw`py-4 px-6 rounded-2xl items-center border-2`,
+                    tw`py-3 px-6 rounded-2xl items-center border-2`,
                     { 
                       backgroundColor: '#FFFFFF',
                       borderColor: '#E5E7EB',
@@ -548,21 +552,25 @@ const ConversationalRefineOverlay: React.FC<ConversationalRefineOverlayProps> = 
                 
                 <TouchableOpacity
                   style={[
-                    tw`py-4 px-6 rounded-2xl items-center`,
+                    tw`py-3 px-6 rounded-2xl items-center`,
                     { 
-                      backgroundColor: TURQUOISE,
-                      shadowColor: TURQUOISE,
+                      backgroundColor: hasSearchChanged ? TURQUOISE : '#E5E7EB',
+                      shadowColor: hasSearchChanged ? TURQUOISE : 'transparent',
                       shadowOffset: { width: 0, height: 4 },
-                      shadowOpacity: 0.3,
+                      shadowOpacity: hasSearchChanged ? 0.3 : 0,
                       shadowRadius: 12,
-                      elevation: 8,
+                      elevation: hasSearchChanged ? 8 : 0,
                       flex: 0.6, // Larger apply button
                     }
                   ]}
                   onPress={handleApplySearch}
-                  activeOpacity={0.9}
+                  disabled={!hasSearchChanged}
+                  activeOpacity={hasSearchChanged ? 0.9 : 1}
                 >
-                  <Text style={tw`text-white text-base font-semibold`}>
+                  <Text style={[
+                    tw`text-base font-semibold`,
+                    { color: hasSearchChanged ? 'white' : '#9CA3AF' }
+                  ]}>
                     Apply Search
                   </Text>
                 </TouchableOpacity>
