@@ -138,7 +138,7 @@ const ConversationalRefineOverlay: React.FC<ConversationalRefineOverlayProps> = 
     const welcomeMessage: ChatMessage = {
       id: `ai_${Date.now()}`,
       type: 'ai',
-      text: `I found ${resultCount} hotels for "${currentSearch}". Want to refine your search with a price range, dates, or specific amenities?`,
+      text: `I found ${resultCount} hotels for "${currentSearch}". Tell me how you'd like to refine your search.`,
       timestamp: new Date(),
     };
     
@@ -481,7 +481,7 @@ const ConversationalRefineOverlay: React.FC<ConversationalRefineOverlayProps> = 
                     ]}
                     value={userInput}
                     onChangeText={setUserInput}
-                    placeholder="Type your refinement (e.g., 'under $200', 'with pool')..."
+                    placeholder="Refine your search (e.g., 'hotels under $200', '8/12 to 8/18')..."
                     placeholderTextColor="#94A3B8"
                     multiline={true}
                     returnKeyType="send"
@@ -523,30 +523,50 @@ const ConversationalRefineOverlay: React.FC<ConversationalRefineOverlayProps> = 
               </View>
             </View>
 
-            {/* Apply Search Button - Sticky Bottom */}
+            {/* Apply Search Button with Cancel - Sticky Bottom */}
             <View style={[
               tw`px-6 py-4 border-t`,
               { borderColor: TURQUOISE + '10' }
             ]}>
-              <TouchableOpacity
-                style={[
-                  tw`py-4 px-6 rounded-2xl items-center`,
-                  { 
-                    backgroundColor: TURQUOISE,
-                    shadowColor: TURQUOISE,
-                    shadowOffset: { width: 0, height: 4 },
-                    shadowOpacity: 0.3,
-                    shadowRadius: 12,
-                    elevation: 8,
-                  }
-                ]}
-                onPress={handleApplySearch}
-                activeOpacity={0.9}
-              >
-                <Text style={tw`text-white text-base font-semibold`}>
-                  Apply New Search
-                </Text>
-              </TouchableOpacity>
+              <View style={tw`flex-row gap-3`}>
+                <TouchableOpacity
+                  style={[
+                    tw`py-4 px-6 rounded-2xl items-center border-2`,
+                    { 
+                      backgroundColor: '#FFFFFF',
+                      borderColor: '#E5E7EB',
+                      flex: 0.4, // Smaller cancel button
+                    }
+                  ]}
+                  onPress={onClose}
+                  activeOpacity={0.8}
+                >
+                  <Text style={tw`text-gray-700 text-base font-semibold`}>
+                    Cancel
+                  </Text>
+                </TouchableOpacity>
+                
+                <TouchableOpacity
+                  style={[
+                    tw`py-4 px-6 rounded-2xl items-center`,
+                    { 
+                      backgroundColor: TURQUOISE,
+                      shadowColor: TURQUOISE,
+                      shadowOffset: { width: 0, height: 4 },
+                      shadowOpacity: 0.3,
+                      shadowRadius: 12,
+                      elevation: 8,
+                      flex: 0.6, // Larger apply button
+                    }
+                  ]}
+                  onPress={handleApplySearch}
+                  activeOpacity={0.9}
+                >
+                  <Text style={tw`text-white text-base font-semibold`}>
+                    Apply Search
+                  </Text>
+                </TouchableOpacity>
+              </View>
             </View>
           </View>
         </KeyboardAvoidingView>

@@ -2057,29 +2057,29 @@ const handleBackPress = useCallback(() => {
 
       {/* AI SEARCH OVERLAY */}
       <AISearchOverlay
-  visible={showAiOverlay}
-  onClose={handleCloseAiOverlay}
-  onSearchUpdate={handleSearchUpdate}
-  currentSearch={searchQuery}
-
-  searchContext={{
-    dates: {
-      checkin: checkInDate.toISOString().split('T')[0],
-      checkout: checkOutDate.toISOString().split('T')[0],
-    },
-    guests: {
-      adults: adults,
-      children: children,
-    },
-    ...((stage1Results?.searchParams || searchResults?.searchParams) && {
-      budget: {
-        min: (stage1Results?.searchParams || searchResults?.searchParams)!.minCost,
-        max: (stage1Results?.searchParams || searchResults?.searchParams)!.maxCost,
-        currency: (stage1Results?.searchParams || searchResults?.searchParams)!.currency,
-      }
-    })
-  }}
-/>
+        visible={showAiOverlay}
+        onClose={handleCloseAiOverlay}
+        onSearchUpdate={handleSearchUpdate}
+        currentSearch={searchQuery}
+        searchContext={{
+          location: (stage1Results?.searchParams || searchResults?.searchParams)?.cityName,
+          dates: {
+            checkin: checkInDate.toISOString().split('T')[0],
+            checkout: checkOutDate.toISOString().split('T')[0],
+          },
+          guests: {
+            adults: adults,
+            children: children,
+          },
+          budget: {
+            min: (stage1Results?.searchParams || searchResults?.searchParams)?.minCost,
+            max: (stage1Results?.searchParams || searchResults?.searchParams)?.maxCost,
+            currency: (stage1Results?.searchParams || searchResults?.searchParams)?.currency,
+          },
+          // Include result count for AI's opening message
+          resultCount: displayHotels.length || stage1Results?.matchedHotelsCount || searchResults?.aiRecommendationsCount || 0
+        }}
+      />
     </SafeAreaView>
   );
 };

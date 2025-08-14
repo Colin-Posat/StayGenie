@@ -181,6 +181,8 @@ IMPORTANT RULES:
 3. Be helpful but concise - don't over-explain
 4. Suggest only 1-2 refinements at a time
 5. Focus on practical refinements: price, dates, amenities, location specifics
+6. Always respond as if the user is directly telling you what they want
+7. Use encouraging language like "Got it!", "Perfect!", "Great choice!"
 
 Current search: "${currentSearch}"
 ${contextInfo}
@@ -253,8 +255,8 @@ const processFallbackRefinement = (
   
   const message = userMessage.toLowerCase().trim();
   let refinedSearch: string | undefined;
-  let response: string = '';
-  let suggestions: string[] = [];
+  let response: string = "I understand. Tell me what else you'd like to refine!"; // Default response
+  let suggestions: string[] = ['Add price range', 'Add amenities']; // Default suggestions
 
   // Price-related refinements
   if (message.includes('$') || message.includes('budget') || message.includes('price')) {
@@ -263,13 +265,13 @@ const processFallbackRefinement = (
       const price = priceMatch[1];
       
       if (message.includes('under') || message.includes('less than') || message.includes('below')) {
-        refinedSearch = `${currentSearch} under $${price}`;
-        response = `Perfect! Now searching for hotels under $${price}. Want to add dates or amenities?`;
+        refinedSearch = `${currentSearch} under ${price}`;
+        response = `Got it! I've updated your search to include hotels under ${price}. Tell me what else you'd like - maybe dates or amenities?`;
         suggestions = ['Add check-in dates', 'Include free breakfast'];
         
       } else if (message.includes('over') || message.includes('more than') || message.includes('above')) {
-        refinedSearch = `${currentSearch} over $${price}`;
-        response = `Got it! Looking for hotels over $${price}. Need anything else like free WiFi or parking?`;
+        refinedSearch = `${currentSearch} over ${price}`;
+        response = `Perfect! Now looking for hotels over ${price}. Tell me what other features you want!`;
         suggestions = ['Add free WiFi', 'Include parking'];
         
       } else if (message.includes('between') || message.includes('-')) {
@@ -286,7 +288,7 @@ const processFallbackRefinement = (
         suggestions = ['Add check-in dates', 'Include pool access'];
       }
     } else {
-      response = "I'd love to help with pricing! Try something like 'under $200' or 'between $150-300'.";
+      response = "I'd love to help with pricing! Tell me something like 'under $200' or 'between $150-300' and I'll add it to your search.";
       suggestions = ['Under $200', 'Between $150-300'];
     }
   }
@@ -327,12 +329,12 @@ const processFallbackRefinement = (
   // Amenity-related refinements
   else if (message.includes('breakfast')) {
     refinedSearch = `${currentSearch} with free breakfast`;
-    response = "Great choice! Added free breakfast. Want to include WiFi or parking too?";
+    response = "Excellent! I've added free breakfast to your search. Want to tell me about other amenities like WiFi or parking?";
     suggestions = ['Add free WiFi', 'Add parking'];
     
   } else if (message.includes('wifi') || message.includes('internet')) {
     refinedSearch = `${currentSearch} with free WiFi`;
-    response = "Free WiFi added! Any other amenities like breakfast or a pool?";
+    response = "Great! Free WiFi added to your search. Tell me what else you need - breakfast, pool, or something else?";
     suggestions = ['Add breakfast', 'Add pool access'];
     
   } else if (message.includes('pool')) {
@@ -350,7 +352,7 @@ const processFallbackRefinement = (
     
   } else if (message.includes('parking')) {
     refinedSearch = `${currentSearch} with free parking`;
-    response = "Free parking included! What else can I help you with?";
+    response = "Perfect! I've added free parking. Tell me what else would make your stay better!";
     suggestions = ['Add breakfast', 'Set price range'];
     
   } else if (message.includes('spa')) {
@@ -365,7 +367,7 @@ const processFallbackRefinement = (
     
   } else if (message.includes('cancel')) {
     refinedSearch = `${currentSearch} with free cancellation`;
-    response = "Smart choice! Free cancellation gives you flexibility. Anything else?";
+    response = "Smart choice! I've added free cancellation for flexibility. What else can I help you refine?";
     suggestions = ['Add breakfast', 'Set budget'];
   }
   
@@ -447,7 +449,7 @@ const processFallbackRefinement = (
       response = "I've added that to your search! Want to refine it further?";
       suggestions = ['Add price range', 'Add amenities'];
     } else {
-      response = "I can help you refine your search! Try adding price ranges (like 'under $200'), dates, or amenities (like 'with pool' or 'free breakfast').";
+      response = "I can help you refine your search! Tell me what you want - price ranges (like 'under $200'), dates, or amenities (like 'with pool' or 'free breakfast').";
       suggestions = ['Under $200', 'With free breakfast', 'Add dates'];
     }
   }
