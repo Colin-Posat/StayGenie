@@ -332,7 +332,7 @@ const generateInsightsFromSentiment = async (hotelName: string, sentimentData: H
   }
 };
 
-// Generate detailed AI content using GPT-4o Mini
+// Enhanced generateDetailedAIContent function with search-relevant nearby attractions
 const generateDetailedAIContent = async (
   hotel: HotelSummaryForInsights,
   userQuery?: string,
@@ -349,8 +349,9 @@ const generateDetailedAIContent = async (
   const hasSpecificPreferences = userQuery && userQuery.trim() !== '';
   const summary = hotel.summarizedInfo;
   
-const prompt = hasSpecificPreferences ? 
-  `USER REQUEST: "${userQuery}"
+  // Enhanced prompt that focuses on search-relevant attractions
+  const prompt = hasSpecificPreferences ? 
+    `USER SEARCH REQUEST: "${userQuery}"
 HOTEL: ${summary.name}
 FULL ADDRESS: ${summary.location}
 COORDINATES: ${summary.latitude}, ${summary.longitude}
@@ -362,37 +363,50 @@ RATING: ${summary.starRating} stars
 MATCH PERCENTAGE: ${hotel.aiMatchPercent}%
 
 TASK: Generate engaging content explaining why this hotel matches the user's request.
-Use the COORDINATES and FULL ADDRESS to identify real nearby attractions with accurate travel times.
+Use the COORDINATES and FULL ADDRESS to identify real nearby attractions that are RELEVANT to the user's search intent.
+
+SEARCH RELEVANCE INSTRUCTIONS:
+- Analyze the user's search "${userQuery}" for interests, activities, or preferences
+- If they mention business/work: prioritize business districts, conference centers, airports
+- If they mention romance/honeymoon: focus on romantic spots, fine dining, scenic views
+- If they mention family/kids: highlight family attractions, parks, kid-friendly activities  
+- If they mention culture/history: emphasize museums, historical sites, cultural landmarks
+- If they mention shopping: include shopping districts, markets, luxury stores
+- If they mention nightlife: feature entertainment districts, bars, clubs
+- If they mention beaches/nature: prioritize natural attractions, beaches, outdoor activities
+- If they mention specific activities (e.g., "skiing", "diving"): find related facilities nearby
 
 Return JSON:
 {
-  "whyItMatches": "25 words max - why it fits their specific request ${userQuery} and why its a great choice.",
-  "funFacts": ["fact1", "fact2"],
+  "whyItMatches": "25 words max - why it fits their specific request and why it's a great choice",
+  "funFacts": ["fact1", "fact2"],  
   "nearbyAttractions": [
-    "attraction name - brief description - X min by transportation_mode",
-    "attraction name - brief description - X min by transportation_mode"
+    "attraction name - brief description relevant to user search - X min by transportation_mode",
+    "attraction name - brief description relevant to user search - X min by transportation_mode"
   ],
-  "locationHighlight": "key location advantage based on coordinates/address"
+  "locationHighlight": "key location advantage that relates to user search"
 }
-CRITICAL:
-If what the user request in ${userQuery} is in the description mention it in the whyItMatches.
-Do not say anything on whyItMatches that is not mentioned in the decription ${summary.description} unless is is obvious or you are very sure about it.
-If something is not mentioned in the description, do not make it up. Instead say WHAT THE USER REQUESTED is not specifically mentioned.
-make sure it is still around 20 words and very engaging like a fun travel agent! 
-IMPORTANT: Make sure you mention what the user said in${userQuery} either saying it is or not metnioned in teh description but it should always link back to the users request. (WHEN MENTIONING THE QEURY PUT IT INTO WORDS THAT FIT INTO THE SENTENCE SMOOTHLY DONT JUST REPEAT THE EXACT USER QUERY)
-In Why is matches always start with the hotel name UNLESSS something is not mentioned in the description, then start with while then say WHAT THE USER REQUESTED is not specifically mentioned
 
-CRITICAL: nearbyAttractions MUST follow this EXACT format:
-"Attraction Name - brief description - X min by walk/metro/bus/taxi"
+CRITICAL REQUIREMENTS:
+1. If what the user requested in "${userQuery}" is in the description, mention it in whyItMatches
+2. Do not say anything in whyItMatches that is not mentioned in the description unless obvious
+3. If something is not mentioned in the description, say "WHAT THE USER REQUESTED is not specifically mentioned"
+4. Make it engaging like a fun travel agent (around 20 words)
+5. In whyItMatches, start with hotel name UNLESS something is not mentioned, then start with "While"
+6. When mentioning the query, put it into words that fit the sentence smoothly
 
-Examples:
-"Eiffel Tower - iconic Paris landmark - 15 min by metro"
-"Central Park - green oasis in Manhattan - 8 min by walk"
-"Times Square - bustling entertainment district - 12 min by subway"
+NEARBY ATTRACTIONS FORMAT:
+"Attraction Name - brief description that relates to "${userQuery}" - X min by walk/metro/bus/taxi"
 
-Use the hotel's coordinates (${summary.latitude}, ${summary.longitude}) and address to find real attractions nearby and calculate realistic travel times with specific transportation modes.` :
+Examples based on search intent:
+For business search: "Financial District - major business hub with corporate offices - 10 min by metro"
+For family search: "Children's Museum - interactive exhibits for kids - 15 min by walk"  
+For romantic search: "Sunset Viewpoint - romantic city views perfect for couples - 8 min by taxi"
+For cultural search: "National Gallery - world-class art collection - 12 min by bus"
 
-  `HOTEL: ${summary.name}
+Use coordinates (${summary.latitude}, ${summary.longitude}) to find REAL attractions that match the user's interests.` :
+
+    `HOTEL: ${summary.name}
 FULL ADDRESS: ${summary.location}
 COORDINATES: ${summary.latitude}, ${summary.longitude}
 LOCATION: ${summary.city}, ${summary.country}
@@ -402,42 +416,45 @@ PRICE: ${summary.pricePerNight}
 RATING: ${summary.starRating} stars
 
 TASK: Generate engaging content for this hotel recommendation.
-Use the COORDINATES and ADDRESS to identify real nearby attractions.
+Use the COORDINATES and ADDRESS to identify real nearby attractions suitable for general travelers.
 
 Return JSON:
 {
-  "whyItMatches": "20 words max - why it's a great choice based on location",
+  "whyItMatches": "20 words max - why it's a great choice based on location and amenities",
   "funFacts": ["fact1", "fact2"],
   "nearbyAttractions": [
     "attraction name - brief description - X min by transportation_mode",
-    "attraction name - brief description - X min by transportation_mode"
+    "attraction name - brief description - X min by transportation_mode"  
   ],
   "locationHighlight": "key location advantage"
 }
-CRITICAL:
-Do not say anything on whyItMatches that is not mentioned in the decription ${summary.description} unless is is obvious or you are very sure about it.
-If something is not mentioned in the description, do not make it up. Instead say WHAT THE USER REQUESTED is not specifically mentioned (MAKE SURE IT IS CLEAR WHAT IS NOT SPECIFIALLY MENTIONED).
-make sure it is still around 20 words and very engaging like a fun travel agent! 
 
-In Why is matches always start with the hotel name UNLESSS something is not mentioned in the description, then start with while then say WHAT THE USER REQUESTED is not specifically mentioned
+REQUIREMENTS:
+1. Do not say anything in whyItMatches not mentioned in description unless obvious
+2. If something is not mentioned, say "WHAT IS NOT MENTIONED is not specifically mentioned"
+3. Keep it engaging like a fun travel agent (around 20 words)
+4. Start with hotel name UNLESS something is not mentioned, then start with "While"
 
-CRITICAL: nearbyAttractions MUST follow this EXACT format:
+NEARBY ATTRACTIONS FORMAT:
 "Attraction Name - brief description - X min by walk/metro/bus/taxi"
 
 Examples:
 "Louvre Museum - world famous art collection - 10 min by metro"
-"Notre Dame Cathedral - historic Gothic architecture - 5 min by walk"
-"Champs-Élysées - luxury shopping avenue - 20 min by bus"
+"Central Park - green oasis perfect for relaxation - 5 min by walk"
+"Shopping District - luxury boutiques and local stores - 20 min by bus"
 
-Use coordinates (${summary.latitude}, ${summary.longitude}) to find real attractions and accurate travel times with specific transportation modes.`;
+Use coordinates (${summary.latitude}, ${summary.longitude}) for real attractions with accurate travel times.`;
 
   try {
     const completion = await openai.chat.completions.create({
       model: 'gpt-4o-mini',
       messages: [
         {
-          role: 'system',
-          content: 'You are a travel content expert. Generate engaging, accurate hotel descriptions. Reply ONLY with valid JSON. Make nearbyAttractions as "Attraction Name - brief description" format with descriptions being 5-8 words maximum.'
+          role: 'system', 
+          content: `You are a travel content expert who specializes in matching attractions to traveler interests. 
+          When a user has specific search preferences, prioritize nearby attractions that align with their interests.
+          Generate engaging, accurate hotel descriptions. Reply ONLY with valid JSON. 
+          Make nearbyAttractions descriptions 5-8 words maximum and ensure they relate to the user's search when possible.`
         },
         { role: 'user', content: prompt }
       ],
@@ -449,28 +466,28 @@ Use coordinates (${summary.latitude}, ${summary.longitude}) to find real attract
     const cleanContent = content.replace(/```json\n?|\n?```/g, '').trim();
     const parsedContent = JSON.parse(cleanContent);
     
-    console.log(`✅ GPT-4o Mini generated content for ${hotel.name}`);
+    console.log(`✅ GPT-4o Mini generated search-relevant content for ${hotel.name}`);
     
-    // Ensure nearbyAttractions has the correct format (string array with hyphen separator + travel time)
+    // Enhanced processing to ensure attractions are properly formatted and search-relevant
     const nearbyAttractions = Array.isArray(parsedContent.nearbyAttractions) 
       ? parsedContent.nearbyAttractions.map((attraction: any) => {
           if (typeof attraction === 'string') {
-            // Already in correct format or convert simple name to proper format
+            // Ensure proper format with search relevance
             if (attraction.includes(' - ') && attraction.split(' - ').length >= 3) {
               return attraction; // Already has description and travel time
             } else if (attraction.includes(' - ')) {
               return `${attraction} - 8 min walk`; // Has description, add travel time
             } else {
-              return `${attraction} - popular local attraction - 12 min walk`; // Add description and travel time
+              // Add search-relevant description based on user query
+              const searchRelevantDesc = hasSpecificPreferences ? 
+                getSearchRelevantDescription(userQuery!, attraction) : 
+                "popular local attraction";
+              return `${attraction} - ${searchRelevantDesc} - 12 min walk`;
             }
           }
-          // Handle object format by converting to string
           return `${attraction.name || "Local attraction"} - ${attraction.description || "worth visiting during stay"} - ${attraction.travelTime || "15 min walk"}`;
         })
-      : [
-          `${summary.city} Center - main city attractions and shopping - 8 min walk`,
-          "Local Landmarks - historic sites and cultural spots - 15 min walk"
-        ];
+      : getDefaultAttractionsBySearch(userQuery, summary.city);
     
     return {
       whyItMatches: parsedContent.whyItMatches || "Great choice for your stay",
@@ -482,19 +499,122 @@ Use coordinates (${summary.latitude}, ${summary.longitude}) to find real attract
   } catch (error) {
     console.warn(`⚠️ GPT-4o Mini failed for ${hotel.name}:`, error);
     
-    // Fallback content with proper structure
+    // Enhanced fallback content that considers search relevance
     return {
       whyItMatches: hasSpecificPreferences ? 
-        `Perfect match for your ${userQuery} requirements` : 
+        `Perfect match for your ${extractSearchIntent(userQuery!)} requirements` : 
         "Excellent choice with great amenities and location",
       funFacts: ["Modern facilities", "Excellent guest reviews"],
-      nearbyAttractions: [
-        `${summary.city} Center - main city attractions and shopping - 8 min walk`,
-        "Local Landmarks - historic sites and cultural spots - 15 min walk"
-      ],
+      nearbyAttractions: getDefaultAttractionsBySearch(userQuery, summary.city),
       locationHighlight: "Prime location"
     };
   }
+};
+
+// Helper function to generate search-relevant description
+const getSearchRelevantDescription = (userQuery: string, attractionName: string): string => {
+  const query = userQuery.toLowerCase();
+  
+  if (query.includes('business') || query.includes('work') || query.includes('meeting')) {
+    return "convenient for business travelers";
+  }
+  if (query.includes('romantic') || query.includes('honeymoon') || query.includes('couple')) {
+    return "perfect romantic setting";  
+  }
+  if (query.includes('family') || query.includes('kids') || query.includes('children')) {
+    return "great for families with children";
+  }
+  if (query.includes('culture') || query.includes('history') || query.includes('museum')) {
+    return "rich cultural experience";
+  }
+  if (query.includes('shopping') || query.includes('shop')) {
+    return "excellent shopping destination";
+  }
+  if (query.includes('nightlife') || query.includes('party') || query.includes('bar')) {
+    return "vibrant nightlife scene";
+  }
+  if (query.includes('beach') || query.includes('nature') || query.includes('outdoor')) {
+    return "beautiful natural attraction";
+  }
+  
+  return "popular local attraction";
+};
+
+// Helper function to extract search intent
+const extractSearchIntent = (userQuery: string): string => {
+  const query = userQuery.toLowerCase();
+  
+  if (query.includes('business') || query.includes('work')) return "business travel";
+  if (query.includes('romantic') || query.includes('honeymoon')) return "romantic getaway";
+  if (query.includes('family') || query.includes('kids')) return "family vacation";
+  if (query.includes('culture') || query.includes('history')) return "cultural experience";
+  if (query.includes('shopping')) return "shopping trip";
+  if (query.includes('nightlife') || query.includes('party')) return "nightlife experience";
+  if (query.includes('beach') || query.includes('nature')) return "nature experience";
+  
+  return "travel";
+};
+
+// Helper function to provide default attractions based on search context
+const getDefaultAttractionsBySearch = (userQuery?: string, city?: string): string[] => {
+  const baseCity = city || "City";
+  
+  if (!userQuery) {
+    return [
+      `${baseCity} Center - main city attractions and shopping - 8 min walk`,
+      "Local Landmarks - historic sites and cultural spots - 15 min walk"
+    ];
+  }
+  
+  const query = userQuery.toLowerCase();
+  
+  if (query.includes('business') || query.includes('work')) {
+    return [
+      `${baseCity} Business District - corporate offices and meeting venues - 10 min metro`,
+      "Convention Center - conference facilities and business services - 12 min taxi"
+    ];
+  }
+  
+  if (query.includes('romantic') || query.includes('honeymoon')) {
+    return [
+      `${baseCity} Scenic Overlook - romantic city views for couples - 15 min walk`,
+      "Fine Dining District - upscale restaurants and wine bars - 8 min taxi"
+    ];
+  }
+  
+  if (query.includes('family') || query.includes('kids')) {
+    return [
+      `${baseCity} Family Park - playgrounds and family activities - 10 min walk`, 
+      "Children's Entertainment Center - kid-friendly attractions and games - 20 min metro"
+    ];
+  }
+  
+  if (query.includes('culture') || query.includes('history')) {
+    return [
+      `${baseCity} Museum District - art galleries and cultural exhibits - 12 min bus`,
+      "Historic Old Town - traditional architecture and local heritage - 15 min walk"
+    ];
+  }
+  
+  if (query.includes('shopping')) {
+    return [
+      `${baseCity} Shopping Center - major retail stores and boutiques - 5 min walk`,
+      "Local Markets - traditional crafts and local specialties - 18 min metro"
+    ];
+  }
+  
+  if (query.includes('nightlife') || query.includes('party')) {
+    return [
+      `${baseCity} Entertainment District - bars clubs and live music - 10 min taxi`,
+      "Nightlife Quarter - vibrant evening scene and cocktail lounges - 15 min walk"
+    ];
+  }
+  
+  // Default fallback
+  return [
+    `${baseCity} Center - main city attractions and shopping - 8 min walk`,
+    "Popular Landmarks - must-see local attractions - 15 min walk"
+  ];
 };
 
 

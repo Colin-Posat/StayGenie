@@ -949,7 +949,7 @@ const main = async () => {
     process.exit(1);
   }
   
-  if (!process.env.BASE_URL) {
+  if (!process.env.) {
     console.warn('⚠️  BASE_URL not set, using default: http://localhost:3003');
   }
   

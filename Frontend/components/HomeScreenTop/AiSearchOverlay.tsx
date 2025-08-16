@@ -1,4 +1,4 @@
-// ConversationalRefineOverlay.tsx - Chat-based search refinement
+// ConversationalRefineOverlay.tsx - Chat-based search refinement with contextual suggestions
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   View,
@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import tw from 'twrnc';
+import ContextualSuggestionPills, { SuggestionPill } from '../AISearchOverlay/ContextualSuggestionPills';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
@@ -28,6 +29,12 @@ interface ChatMessage {
   text: string;
   timestamp: Date;
   isTyping?: boolean;
+}
+
+interface HighlightedTextPart {
+  text: string;
+  isHighlighted: boolean;
+  id: string;
 }
 
 interface ConversationalRefineOverlayProps {
@@ -50,11 +57,14 @@ interface ConversationalRefineOverlayProps {
       max?: number | null;
       currency?: string;
     };
+    amenities?: string[];
+    preferences?: string[];
     resultCount?: number;
   };
 }
 
 const BASE_URL = 'https://staygenie-wwpa.onrender.com';
+//const BASE_URL = 'http://localhost:3003';
 
 const ConversationalRefineOverlay: React.FC<ConversationalRefineOverlayProps> = ({
   visible,
@@ -68,17 +78,99 @@ const ConversationalRefineOverlay: React.FC<ConversationalRefineOverlayProps> = 
   
   const [searchText, setSearchText] = useState(currentSearch);
   const [originalSearch, setOriginalSearch] = useState(currentSearch);
+  const [searchParts, setSearchParts] = useState<HighlightedTextPart[]>([]);
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [userInput, setUserInput] = useState('');
   const [isVisible, setIsVisible] = useState(visible);
   const [isAITyping, setIsAITyping] = useState(false);
+  const [isSearchUpdating, setIsSearchUpdating] = useState(false);
   const [conversationId] = useState(() => `conv_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`);
   
   const scrollViewRef = useRef<ScrollView>(null);
   const inputRef = useRef<TextInput>(null);
+  const highlightTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   // Check if search has changed from original
   const hasSearchChanged = searchText.trim() !== originalSearch.trim();
+
+  // Initialize search parts
+  const initializeSearchParts = useCallback((text: string) => {
+    setSearchParts([{
+      text,
+      isHighlighted: false,
+      id: `part_${Date.now()}`
+    }]);
+  }, []);
+
+  // Highlight new text parts
+  const highlightNewText = useCallback((newText: string, speed: number = 1000) => {
+    const currentText = searchText;
+    
+    setIsSearchUpdating(true);
+    
+    // Find the difference between old and new text
+    if (newText.length > currentText.length) {
+      // Text was added
+      const addedText = newText.slice(currentText.length);
+      
+      // Update search text immediately
+      setSearchText(newText);
+      
+      // Create parts: existing text + new highlighted text
+      const parts: HighlightedTextPart[] = [];
+      
+      if (currentText.length > 0) {
+        parts.push({
+          text: currentText,
+          isHighlighted: false,
+          id: `existing_${Date.now()}`
+        });
+      }
+      
+      if (addedText.length > 0) {
+        parts.push({
+          text: addedText,
+          isHighlighted: true,
+          id: `new_${Date.now()}`
+        });
+      }
+      
+      setSearchParts(parts);
+      
+      // Remove highlight after delay
+      if (highlightTimeoutRef.current) {
+        clearTimeout(highlightTimeoutRef.current);
+      }
+      
+      highlightTimeoutRef.current = setTimeout(() => {
+        setSearchParts([{
+          text: newText,
+          isHighlighted: false,
+          id: `final_${Date.now()}`
+        }]);
+        setIsSearchUpdating(false);
+      }, speed);
+      
+    } else {
+      // Text was replaced or shortened
+      setSearchText(newText);
+      setSearchParts([{
+        text: newText,
+        isHighlighted: false,
+        id: `replaced_${Date.now()}`
+      }]);
+      setIsSearchUpdating(false);
+    }
+  }, [searchText]);
+
+  // Cleanup highlight timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (highlightTimeoutRef.current) {
+        clearTimeout(highlightTimeoutRef.current);
+      }
+    };
+  }, []);
 
   // Handle visibility animations
   useEffect(() => {
@@ -86,6 +178,7 @@ const ConversationalRefineOverlay: React.FC<ConversationalRefineOverlayProps> = 
       setIsVisible(true);
       setSearchText(currentSearch);
       setOriginalSearch(currentSearch);
+      initializeSearchParts(currentSearch);
       
       // Initialize conversation
       initializeConversation();
@@ -121,10 +214,13 @@ const ConversationalRefineOverlay: React.FC<ConversationalRefineOverlayProps> = 
           setIsVisible(false);
           setChatMessages([]);
           setUserInput('');
+          if (highlightTimeoutRef.current) {
+            clearTimeout(highlightTimeoutRef.current);
+          }
         }
       });
     }
-  }, [visible, fadeAnim, slideAnim, currentSearch]);
+  }, [visible, fadeAnim, slideAnim, currentSearch, initializeSearchParts]);
 
   // Auto-scroll to bottom when new messages arrive
   useEffect(() => {
@@ -142,12 +238,44 @@ const ConversationalRefineOverlay: React.FC<ConversationalRefineOverlayProps> = 
     const welcomeMessage: ChatMessage = {
       id: `ai_${Date.now()}`,
       type: 'ai',
-      text: `I found ${resultCount} hotels for "${currentSearch}". Tell me how you'd like to refine your search.`,
+      text: `I found ${resultCount} hotels for "${currentSearch}". Use the suggestions below or tell me how you'd like to refine your search.`,
       timestamp: new Date(),
     };
     
     setChatMessages([welcomeMessage]);
   }, [currentSearch, searchContext]);
+
+  const handlePillPress = useCallback((pill: SuggestionPill) => {
+    // Add the pill's query to the current search
+    const newSearch = searchText.trim() 
+      ? `${searchText} ${pill.query}`
+      : pill.query;
+    
+    // Highlight the new text
+    highlightNewText(newSearch, 1200);
+    
+    // Add a user message to chat showing what was added (just the pill text, no "Add:")
+    const userMessage: ChatMessage = {
+      id: `user_${Date.now()}`,
+      type: 'user',
+      text: pill.text,
+      timestamp: new Date(),
+    };
+    
+    setChatMessages(prev => [...prev, userMessage]);
+    
+    // Add AI acknowledgment
+    setTimeout(() => {
+      const aiMessage: ChatMessage = {
+        id: `ai_${Date.now()}`,
+        type: 'ai',
+        text: `Perfect! I've added "${pill.text}" to your search. Anything else you'd like to include?`,
+        timestamp: new Date(),
+      };
+      
+      setChatMessages(prev => [...prev, aiMessage]);
+    }, 800);
+  }, [searchText, highlightNewText]);
 
   const sendMessage = useCallback(async (message: string) => {
     if (!message.trim()) return;
@@ -187,12 +315,7 @@ const ConversationalRefineOverlay: React.FC<ConversationalRefineOverlayProps> = 
       const data = await response.json();
       
       if (data.success) {
-        // Update search text if AI refined it
-        if (data.refinedSearch && data.refinedSearch !== searchText) {
-          setSearchText(data.refinedSearch);
-        }
-
-        // Add AI response
+        // Add AI response first
         const aiMessage: ChatMessage = {
           id: `ai_${Date.now()}`,
           type: 'ai',
@@ -201,6 +324,13 @@ const ConversationalRefineOverlay: React.FC<ConversationalRefineOverlayProps> = 
         };
 
         setChatMessages(prev => [...prev, aiMessage]);
+
+        // Then highlight search text update if AI refined it
+        if (data.refinedSearch && data.refinedSearch !== searchText) {
+          setTimeout(() => {
+            highlightNewText(data.refinedSearch, 1500); // 1.5s highlight duration
+          }, 500); // Wait 500ms after AI message appears
+        }
       } else {
         throw new Error(data.error || 'Failed to get AI response');
       }
@@ -218,15 +348,18 @@ const ConversationalRefineOverlay: React.FC<ConversationalRefineOverlayProps> = 
         timestamp: new Date(),
       };
 
-      if (fallbackResponse.refinedSearch) {
-        setSearchText(fallbackResponse.refinedSearch);
-      }
-
       setChatMessages(prev => [...prev, aiMessage]);
+
+      // Highlight fallback search update if needed
+      if (fallbackResponse.refinedSearch) {
+        setTimeout(() => {
+          highlightNewText(fallbackResponse.refinedSearch!, 1500);
+        }, 500);
+      }
     } finally {
       setIsAITyping(false);
     }
-  }, [conversationId, searchText, searchContext, chatMessages]);
+  }, [conversationId, searchText, searchContext, chatMessages, highlightNewText]);
 
   const generateFallbackResponse = useCallback((userMessage: string, currentSearch: string) => {
     const message = userMessage.toLowerCase();
@@ -278,8 +411,10 @@ const ConversationalRefineOverlay: React.FC<ConversationalRefineOverlayProps> = 
   }, []);
 
   const handleSearchTextChange = useCallback((text: string) => {
+    // Allow manual editing
     setSearchText(text);
-  }, []);
+    initializeSearchParts(text);
+  }, [initializeSearchParts]);
 
   const handleApplySearch = useCallback(() => {
     if (hasSearchChanged) {
@@ -287,6 +422,31 @@ const ConversationalRefineOverlay: React.FC<ConversationalRefineOverlayProps> = 
       onClose();
     }
   }, [searchText, onSearchUpdate, onClose, hasSearchChanged]);
+
+  // Render highlighted text
+  const renderHighlightedText = () => {
+    return (
+      <View style={tw`flex-row flex-wrap`}>
+        {searchParts.map((part) => (
+          <Animated.Text
+            key={part.id}
+            style={[
+              tw`text-base font-medium`,
+              {
+                color: part.isHighlighted ? TURQUOISE_DARK : '#111827',
+                backgroundColor: part.isHighlighted ? TURQUOISE + '20' : 'transparent',
+                borderRadius: part.isHighlighted ? 4 : 0,
+                paddingHorizontal: part.isHighlighted ? 2 : 0,
+                lineHeight: Platform.OS === 'ios' ? 22 : 24,
+              }
+            ]}
+          >
+            {part.text}
+          </Animated.Text>
+        ))}
+      </View>
+    );
+  };
 
   const TypingIndicator = () => (
     <View style={tw`flex-row items-center p-4`}>
@@ -400,46 +560,68 @@ const ConversationalRefineOverlay: React.FC<ConversationalRefineOverlayProps> = 
               ]} />
             </View>
             
-            {/* Header with editable search bar */}
+            {/* Header with highlighted search bar */}
             <View style={tw`px-6 pt-4 pb-4 border-b border-gray-100`}>
               <Text style={tw`text-lg font-bold text-gray-900 mb-3`}>
                 Refine Your Search
               </Text>
               
-              {/* Editable Search Bar - Single Source of Truth */}
+              {/* Search Bar with Highlighted Text */}
               <View style={[
                 tw`rounded-2xl border-2 bg-white`,
                 { 
-                  borderColor: TURQUOISE + '30',
+                  borderColor: isSearchUpdating ? TURQUOISE : TURQUOISE + '30',
                   shadowColor: TURQUOISE,
                   shadowOffset: { width: 0, height: 2 },
-                  shadowOpacity: 0.05,
+                  shadowOpacity: isSearchUpdating ? 0.15 : 0.05,
                   shadowRadius: 4,
-                  elevation: 2,
+                  elevation: isSearchUpdating ? 4 : 2,
                 }
               ]}>
                 <View style={tw`p-4`}>
                   <View style={tw`flex-row items-center`}>
-                    <Ionicons name="search" size={18} color={TURQUOISE_DARK} style={tw`mr-3`} />
-                    <TextInput
-                      style={[
-                        tw`flex-1 text-base text-gray-900 font-medium`,
-                        { 
-                          lineHeight: Platform.OS === 'ios' ? 22 : 24,
-                          paddingVertical: 0,
-                          minHeight: 22,
-                          maxHeight: 80,
-                        }
-                      ]}
-                      value={searchText}
-                      onChangeText={handleSearchTextChange}
-                      placeholder="Your search query will appear here..."
-                      placeholderTextColor="#94A3B8"
-                      multiline={true}
-                      scrollEnabled={false}
-                      returnKeyType="done"
-                      blurOnSubmit={true}
+                    <Ionicons 
+                      name={isSearchUpdating ? "sparkles" : "search"} 
+                      size={18} 
+                      color={isSearchUpdating ? TURQUOISE : TURQUOISE_DARK} 
+                      style={tw`mr-3`} 
                     />
+                    <View style={tw`flex-1`}>
+                      {searchParts.length > 0 ? (
+                        renderHighlightedText()
+                      ) : (
+                        <TextInput
+                          style={[
+                            tw`text-base font-medium`,
+                            { 
+                              color: '#111827',
+                              lineHeight: Platform.OS === 'ios' ? 22 : 24,
+                              paddingVertical: 0,
+                              minHeight: 22,
+                              maxHeight: 80,
+                            }
+                          ]}
+                          value={searchText}
+                          onChangeText={handleSearchTextChange}
+                          placeholder="Your search query will appear here..."
+                          placeholderTextColor="#94A3B8"
+                          multiline={true}
+                          scrollEnabled={false}
+                          returnKeyType="done"
+                          blurOnSubmit={true}
+                        />
+                      )}
+                    </View>
+                    {isSearchUpdating && (
+                      <View style={tw`ml-2`}>
+                        <Text style={[
+                          tw`text-xs font-medium`,
+                          { color: TURQUOISE_DARK }
+                        ]}>
+                          Updated!
+                        </Text>
+                      </View>
+                    )}
                   </View>
                 </View>
               </View>
@@ -467,6 +649,14 @@ const ConversationalRefineOverlay: React.FC<ConversationalRefineOverlayProps> = 
               tw`px-4 py-4 border-t`,
               { borderColor: TURQUOISE + '10' }
             ]}>
+              {/* Contextual Suggestion Pills - Above Input */}
+              <ContextualSuggestionPills
+                searchContext={searchContext}
+                currentSearch={searchText}
+                onPillPress={handlePillPress}
+                maxPills={6}
+              />
+
               <View style={tw`flex-row items-end gap-3`}>
                 <View style={[
                   tw`flex-1 rounded-2xl border`,
@@ -512,6 +702,7 @@ const ConversationalRefineOverlay: React.FC<ConversationalRefineOverlayProps> = 
                   ]}
                   onPress={() => {
                     if (userInput.trim()) {
+                      inputRef.current?.blur(); // Close keyboard
                       sendMessage(userInput);
                     }
                   }}
@@ -525,7 +716,7 @@ const ConversationalRefineOverlay: React.FC<ConversationalRefineOverlayProps> = 
                   />
                 </TouchableOpacity>
               </View>
-            </View>
+                          </View>
 
             {/* Apply Search Button with Cancel - Sticky Bottom */}
             <View style={[

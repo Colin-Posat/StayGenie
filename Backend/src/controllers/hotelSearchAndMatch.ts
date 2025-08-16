@@ -189,6 +189,7 @@ const extractRefundablePolicy = (hotel: HotelWithRates): { isRefundable: boolean
 };
 
 // Helper functions
+// Alternative: Keep the function name but change behavior
 const getTop3Amenities = (hotelInfo: any): string[] => {
   const amenities: string[] = [];
   
@@ -199,24 +200,19 @@ const getTop3Amenities = (hotelInfo: any): string[] => {
         if (typeof amenity === 'object' && amenity !== null && 'name' in amenity) return (amenity as any).name;
         return null;
       })
-      .filter(Boolean)
-      .slice(0, 3);
+      .filter(Boolean);  // ✅ GET ALL AMENITIES NOW
     
     amenities.push(...amenityNames);
   }
   
-  // Fill remaining slots with defaults if needed
-  const defaultAmenities = ['Wi-Fi', 'Air Conditioning', 'Private Bathroom'];
-  while (amenities.length < 3) {
-    const defaultAmenity = defaultAmenities[amenities.length];
-    if (defaultAmenity && !amenities.includes(defaultAmenity)) {
-      amenities.push(defaultAmenity);
-    } else {
-      break;
-    }
+  // Only add defaults if NO amenities were found
+  if (amenities.length === 0) {
+    const defaultAmenities = ['Wi-Fi', 'Air Conditioning', 'Private Bathroom'];
+    amenities.push(...defaultAmenities);
   }
   
-  return amenities.slice(0, 3);
+  // Remove duplicates and return ALL amenities
+  return [...new Set(amenities)];
 };
 
 const processHotelWithImmediateInsights = async (
@@ -401,7 +397,6 @@ const gptHotelMatchingSSE = async (
       .replace(/&gt;/g, '>')
       .replace(/&quot;/g, '"')
       .trim()
-      .substring(0, 100) + (hotel.description.length > 100 ? '...' : '');
     
     return `${index + 1}: ${hotel.name} | $${numericPrice}/night | ${hotel.starRating}⭐ | ${locationInfo} | ${hotel.topAmenities.slice(0,2).join(',')} | ${shortDescription}`;
   }).join('\n');
