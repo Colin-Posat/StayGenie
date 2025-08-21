@@ -150,8 +150,16 @@ export const parseSearchQuery = async (req: Request, res: Response) => {
     const formattedCheckin = checkin.toISOString().split('T')[0];
     const formattedCheckout = checkout.toISOString().split('T')[0];
 
+    // Get current month and year for better date parsing
+    const currentMonth = today.getMonth() + 1; // 1-12
+    const currentYear = today.getFullYear();
+    const monthNames = ['January', 'February', 'March', 'April', 'May', 'June', 
+                       'July', 'August', 'September', 'October', 'November', 'December'];
+
     const prompt = `
-Today is ${formattedToday}. You are a travel assistant converting user hotel search requests into structured JSON. Output only a valid JSON object with:
+Today is ${formattedToday} (${monthNames[today.getMonth()]} ${today.getDate()}, ${today.getFullYear()}). Current month: ${currentMonth}, Year: ${currentYear}.
+
+You are a travel assistant converting user hotel search requests into structured JSON. Output only a valid JSON object with:
 
 {
   "checkin": "YYYY-MM-DD",            // Default: ${formattedCheckin}
@@ -166,10 +174,74 @@ Today is ${formattedToday}. You are a travel assistant converting user hotel sea
   "aiSearch": "All other preferences, descriptors, trip purpose, vibe, hotel style, etc."
 }
 
+**COMPREHENSIVE DATE PARSING RULES:**
+
+**1. Explicit Dates (HIGHEST PRIORITY):**
+- "March 15" → 2025-03-15 (assume current year if not specified)
+- "March 15, 2025" → 2025-03-15
+- "3/15" or "3/15/25" → 2025-03-15
+- "15th March" → 2025-03-15
+- "Mar 15" → 2025-03-15
+- If year not specified, use ${currentYear} if month >= ${currentMonth}, otherwise use ${currentYear + 1}
+
+**2. Relative Date References:**
+- "tomorrow" → ${new Date(today.getTime() + 86400000).toISOString().split('T')[0]}
+- "next week" → ${new Date(today.getTime() + 7*86400000).toISOString().split('T')[0]}
+- "next month" → ${new Date(today.getFullYear(), today.getMonth() + 1, today.getDate()).toISOString().split('T')[0]}
+- "in 2 weeks" → ${new Date(today.getTime() + 14*86400000).toISOString().split('T')[0]}
+- "in 3 days" → ${new Date(today.getTime() + 3*86400000).toISOString().split('T')[0]}
+
+**3. Seasonal/Holiday References:**
+- "Christmas" → 2025-12-25
+- "New Year's" → 2025-12-31 (or 2026-01-01 if after December)
+- "Valentine's Day" → 2026-02-14 (if current date is after Feb 14, 2025)
+- "Easter" → 2025-04-20 (calculate based on year)
+- "Thanksgiving" → 2025-11-27 (4th Thursday of November)
+- "Memorial Day weekend" → 2025-05-24
+- "Labor Day weekend" → 2025-09-01
+- "4th of July" → 2025-07-04
+
+**4. Month/Season References:**
+- "in March" → First reasonable date in March (if current date < March 1, use current year, else next year)
+- "spring" → March 20 of appropriate year
+- "summer" → June 21 of appropriate year
+- "fall/autumn" → September 22 of appropriate year
+- "winter" → December 21 of appropriate year
+
+**5. Day of Week References:**
+- "this Friday" → Next upcoming Friday
+- "next Tuesday" → Tuesday of next week
+- "weekend" → Next upcoming Saturday
+
+**6. Duration Parsing for Checkout:**
+- If only check-in specified:
+  - "3 nights" → checkout = checkin + 3 days
+  - "1 week" → checkout = checkin + 7 days
+  - "2 weeks" → checkout = checkin + 14 days
+  - "long weekend" → checkout = checkin + 3 days
+  - No duration specified → checkout = checkin + 3 days (default)
+
+**7. Range Parsing:**
+- "March 15-18" → checkin: 2025-03-15, checkout: 2025-03-18
+- "March 15 to March 20" → checkin: 2025-03-15, checkout: 2025-03-20
+- "weekend of March 15" → checkin: 2025-03-15, checkout: 2025-03-17
+
+**8. Special Cases:**
+- "ASAP" or "as soon as possible" → tomorrow
+- "flexible dates" → use defaults but note flexibility in aiSearch
+- "end of month" → last day of current/next month
+- "beginning of month" → 1st-3rd of current/next month
+
+**CRITICAL DATE VALIDATION:**
+- ALL dates must be in the future (>= tomorrow: ${new Date(today.getTime() + 86400000).toISOString().split('T')[0]})
+- Checkout MUST be after checkin
+- If parsed dates are invalid/in past, fall back to defaults
+- Maximum reasonable stay: 30 days (adjust if longer)
+
  **City Selection Rules**
 1. Use user-provided city if available.
 2. If only a country/region is mentioned, infer a city that best fits the user's theme (e.g., mountains, food, beaches).
-   - Example: “ski in Japan” → Niseko, not Tokyo.
+   - Example: "ski in Japan" → Niseko, not Tokyo.
 3. Avoid regions (e.g., "Swiss Alps") — pick a bookable city/town (e.g., Zermatt).
 4. Capital/largest cities only if no preference/hint is given.
 
@@ -207,6 +279,12 @@ Today is ${formattedToday}. You are a travel assistant converting user hotel sea
 - Infer context: honeymoon=romantic luxury, business=reliable mid-range, family=family-friendly
 - Default if unclear: "well-reviewed, good-value hotels"
 
+**EXAMPLES:**
+- "Paris next Friday for 4 nights" → checkin: [next Friday date], checkout: [+4 days]
+- "Tokyo in March" → checkin: 2025-03-01 (or appropriate March date), checkout: 2025-03-04
+- "Christmas in London" → checkin: 2025-12-25, checkout: 2025-12-28
+- "Vegas this weekend" → checkin: [next Saturday], checkout: [next Monday]
+
 Output ONLY the JSON object - no explanations or extra text.
 
 User input: "${userInput}"
@@ -239,7 +317,6 @@ User input: "${userInput}"
 
     const parseTime = Date.now() - parseStartTime;
     console.log(`✅ Query parsed and validated in ${parseTime}ms:`, parsed);
-
 
     res.json(parsed);
 
