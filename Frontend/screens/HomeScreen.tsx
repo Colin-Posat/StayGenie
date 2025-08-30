@@ -2002,22 +2002,30 @@ const handleBackPress = useCallback(() => {
   style={[
     tw`flex-1 py-3 px-8 rounded-2xl flex-row items-center justify-center shadow-lg`,
     { 
-      backgroundColor: '#1df9ff', // Solid turquoise background like Explore Hotels
-      shadowColor: '#1df9ff',
+      backgroundColor: (isSearching || isStreamingSearch) ? '#94A3B8' : '#1df9ff', // Grey when disabled, turquoise when enabled
+      shadowColor: (isSearching || isStreamingSearch) ? '#94A3B8' : '#1df9ff',
       shadowOffset: { width: 0, height: 4 },
-      shadowOpacity: 0.3,
+      shadowOpacity: (isSearching || isStreamingSearch) ? 0.1 : 0.3, // Reduce shadow when disabled
       shadowRadius: 12,
       elevation: 8,
+      opacity: (isSearching || isStreamingSearch) ? 0.6 : 1.0, // Make it more transparent when disabled
     }
   ]}
   onPress={handleAiSearch}
   activeOpacity={0.9}
-  disabled={isSearching}
+  disabled={isSearching || isStreamingSearch} // This is the key line - disable when searching
 >
-  <Ionicons name="sparkles" size={20} color="#FFFFFF" />
+  <Ionicons 
+    name="sparkles" 
+    size={20} 
+    color={(isSearching || isStreamingSearch) ? "#64748B" : "#FFFFFF"} // Grey icon when disabled
+  />
   
-  <Text style={tw`text-white font-semibold text-base ml-3`}>
-    Refine Search
+  <Text style={[
+    tw`font-semibold text-base ml-3`,
+    { color: (isSearching || isStreamingSearch) ? '#64748B' : '#FFFFFF' } // Grey text when disabled
+  ]}>
+    {(isSearching || isStreamingSearch) ? 'Searching...' : 'Refine Search'}
   </Text>
 </TouchableOpacity>
 
@@ -2029,9 +2037,9 @@ const handleBackPress = useCallback(() => {
     <View style={tw`flex-row items-center justify-between`}>
       <Text style={tw`text-xs text-gray-500 flex-1`}>
         {isStreamingSearch 
-          ? `Live results for "${searchQuery}" (${displayHotels.length}/15 found)`
+          ? `(${displayHotels.length}/15) Hotels Found For "${searchQuery}" `
           : displayHotels.length > 0
-            ? `${displayHotels.length} hotels found for "${searchQuery}"`
+            ? `${displayHotels.length} Hotels Found For "${searchQuery}"`
             : `Results for "${searchQuery}"`
         }
       </Text>

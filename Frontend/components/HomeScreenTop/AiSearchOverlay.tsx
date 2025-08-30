@@ -1,4 +1,4 @@
-// ConversationalRefineOverlay.tsx - Chat-based search refinement with contextual suggestions
+// ConversationalRefineOverlay.tsx - Chat-based search refinement with improved suggestion pills
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   View,
@@ -13,7 +13,6 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import tw from 'twrnc';
-import ContextualSuggestionPills, { SuggestionPill } from '../AISearchOverlay/ContextualSuggestionPills';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
@@ -22,6 +21,24 @@ const TURQUOISE = '#1df9ff';
 const TURQUOISE_LIGHT = '#5dfbff';
 const TURQUOISE_DARK = '#00d4e6';
 const TURQUOISE_GLOW = '#1df9ff';
+const TURQUOISE_SUBTLE = '#f0feff';
+const TURQUOISE_BORDER = '#b3f7ff';
+
+// Enhanced suggestion pills with icons and better variety
+const ENHANCED_SUGGESTIONS = [
+  { text: 'Under $200', query: 'under $200', icon: 'card' as const },
+  { text: 'Free Breakfast', query: 'free breakfast', icon: 'restaurant' as const },
+  { text: 'Pool', query: 'pool', icon: 'water' as const },
+  { text: 'Free Parking', query: 'free parking', icon: 'car' as const },
+  { text: 'Pet Friendly', query: 'pet friendly', icon: 'paw' as const },
+  { text: 'Free WiFi', query: 'free wifi', icon: 'wifi' as const },
+  { text: 'Spa Services', query: 'with spa', icon: 'flower' as const },
+  { text: 'Gym Access', query: 'with gym', icon: 'fitness' as const },
+  { text: 'Free Cancellation', query: 'free cancellation', icon: 'checkmark-circle' as const },
+  { text: 'Downtown', query: 'downtown area', icon: 'business' as const },
+  { text: 'Near Beach', query: 'near beach', icon: 'sunny' as const },
+  { text: 'King Bed', query: 'king bed room', icon: 'bed' as const },
+];
 
 interface ChatMessage {
   id: string;
@@ -92,6 +109,29 @@ const ConversationalRefineOverlay: React.FC<ConversationalRefineOverlayProps> = 
 
   // Check if search has changed from original
   const hasSearchChanged = searchText.trim() !== originalSearch.trim();
+
+  // Get contextual suggestions based on current search
+  const getContextualSuggestions = useCallback(() => {
+    const search = searchText.toLowerCase();
+    const usedSuggestions = new Set<string>();
+    const suggestions = [];
+
+    // Filter out already used suggestions
+    for (const suggestion of ENHANCED_SUGGESTIONS) {
+      const isAlreadyUsed = search.includes(suggestion.query.toLowerCase()) ||
+                           search.includes(suggestion.text.toLowerCase());
+      
+      if (!isAlreadyUsed && !usedSuggestions.has(suggestion.query)) {
+        suggestions.push(suggestion);
+        usedSuggestions.add(suggestion.query);
+        
+        // Limit to 6-8 suggestions for better UX
+        if (suggestions.length >= 8) break;
+      }
+    }
+
+    return suggestions;
+  }, [searchText]);
 
   // Initialize search parts
   const initializeSearchParts = useCallback((text: string) => {
@@ -245,20 +285,83 @@ const ConversationalRefineOverlay: React.FC<ConversationalRefineOverlayProps> = 
     setChatMessages([welcomeMessage]);
   }, [currentSearch, searchContext]);
 
-  const handlePillPress = useCallback((pill: SuggestionPill) => {
+  // Enhanced suggestion pill component with contextual suggestions
+  const EnhancedSuggestionPills = ({ 
+    onPillPress 
+  }: { 
+    onPillPress: (suggestion: { text: string; query: string; icon: string }) => void 
+  }) => {
+    const suggestions = getContextualSuggestions();
+
+    if (suggestions.length === 0) {
+      return null;
+    }
+
+    return (
+      <ScrollView 
+        horizontal 
+        showsHorizontalScrollIndicator={false}
+        style={tw`mb-3`}
+        contentContainerStyle={tw`pl-0 pr-4 gap-2`}
+        scrollEnabled={!isSearchUpdating}
+      >
+        {suggestions.map((suggestion, index) => (
+          <TouchableOpacity
+            key={index}
+            style={[
+              tw`flex-row items-center px-3 py-2 rounded-full`,
+              {
+                minHeight: 36,
+                backgroundColor: TURQUOISE_SUBTLE,
+                borderColor: TURQUOISE_BORDER,
+                borderWidth: 1,
+                opacity: isSearchUpdating ? 0.7 : 1,
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 1 },
+                shadowOpacity: 0.08,
+                shadowRadius: 2,
+                elevation: 2,
+              }
+            ]}
+            onPress={() => onPillPress(suggestion)}
+            activeOpacity={0.7}
+            disabled={isSearchUpdating}
+          >
+            <Ionicons
+              name={suggestion.icon}
+              size={14}
+              color="#4B5563"
+              style={tw`mr-1`}
+            />
+            <Text
+              style={[
+                tw`text-xs font-medium`,
+                { color: '#4B5563' }
+              ]}
+              numberOfLines={1}
+            >
+              {suggestion.text}
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </ScrollView>
+    );
+  };
+
+  const handlePillPress = useCallback((suggestion: { text: string; query: string; icon: string }) => {
     // Add the pill's query to the current search
     const newSearch = searchText.trim() 
-      ? `${searchText} ${pill.query}`
-      : pill.query;
+      ? `${searchText} ${suggestion.query}`
+      : suggestion.query;
     
     // Highlight the new text
     highlightNewText(newSearch, 1200);
     
-    // Add a user message to chat showing what was added (just the pill text, no "Add:")
+    // Add a user message to chat showing what was added
     const userMessage: ChatMessage = {
       id: `user_${Date.now()}`,
       type: 'user',
-      text: pill.text,
+      text: suggestion.text,
       timestamp: new Date(),
     };
     
@@ -269,7 +372,7 @@ const ConversationalRefineOverlay: React.FC<ConversationalRefineOverlayProps> = 
       const aiMessage: ChatMessage = {
         id: `ai_${Date.now()}`,
         type: 'ai',
-        text: `Perfect! I've added "${pill.text}" to your search. Anything else you'd like to include?`,
+        text: `Perfect! I've added "${suggestion.text}" to your search. Anything else you'd like to include?`,
         timestamp: new Date(),
       };
       
@@ -649,13 +752,8 @@ const ConversationalRefineOverlay: React.FC<ConversationalRefineOverlayProps> = 
               tw`px-4 py-4 border-t`,
               { borderColor: TURQUOISE + '10' }
             ]}>
-              {/* Contextual Suggestion Pills - Above Input */}
-              <ContextualSuggestionPills
-                searchContext={searchContext}
-                currentSearch={searchText}
-                onPillPress={handlePillPress}
-                maxPills={6}
-              />
+              {/* Enhanced Contextual Suggestion Pills - Above Input */}
+              <EnhancedSuggestionPills onPillPress={handlePillPress} />
 
               <View style={tw`flex-row items-end gap-3`}>
                 <View style={[
@@ -716,7 +814,7 @@ const ConversationalRefineOverlay: React.FC<ConversationalRefineOverlayProps> = 
                   />
                 </TouchableOpacity>
               </View>
-                          </View>
+            </View>
 
             {/* Apply Search Button with Cancel - Sticky Bottom */}
             <View style={[
