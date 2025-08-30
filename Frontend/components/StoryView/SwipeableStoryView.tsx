@@ -1,10 +1,11 @@
-// SwipeableStoryView.tsx - Updated with Streaming Support
-import React, { useState, useEffect } from 'react'; // ADD useEffect import
+// SwipeableStoryView.tsx - Updated with Grey Placeholder Support
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
   FlatList,
   Dimensions,
+  Animated,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import tw from 'twrnc';
@@ -26,7 +27,9 @@ interface SwipeableStoryViewProps {
   stage1Complete?: boolean;
   stage2Complete?: boolean;
   searchMode?: 'test' | 'two-stage' | 'legacy';
-  // ADD: New streaming props
+  // NEW: Placeholder support
+  showPlaceholders?: boolean;
+  // Streaming props
   isStreaming?: boolean;
   streamingProgress?: {
     step: number;
@@ -35,10 +38,10 @@ interface SwipeableStoryViewProps {
   };
 }
 
-const SwipeableStoryView: React.FC<SwipeableStoryViewProps> = ({ 
-  hotels = [], 
-  onHotelPress, 
-  onViewDetails, 
+const SwipeableStoryView: React.FC<SwipeableStoryViewProps> = ({
+  hotels = [],
+  onHotelPress,
+  onViewDetails,
   onSave,
   checkInDate,
   checkOutDate,
@@ -48,30 +51,30 @@ const SwipeableStoryView: React.FC<SwipeableStoryViewProps> = ({
   stage1Complete = false,
   stage2Complete = false,
   searchMode = 'two-stage',
-  // ADD: Streaming props with defaults
+  // NEW: Placeholder prop
+  showPlaceholders = false,
+  // Streaming props with defaults
   isStreaming = false,
   streamingProgress = { step: 0, totalSteps: 8, message: '' }
 }) => {
-  // ADD: Local state for streaming animation and effects
+  // Streaming state
   const [streamingHotelsCount, setStreamingHotelsCount] = useState(0);
   const [lastStreamedHotel, setLastStreamedHotel] = useState<Hotel | null>(null);
   const [showNewHotelAnimation, setShowNewHotelAnimation] = useState(false);
 
-  // ADD: useEffect to track streaming hotels and trigger animations
+  // Track streaming hotels and trigger animations
   useEffect(() => {
     if (isStreaming) {
-      // Update streaming count when hotels array changes during streaming
-      const currentCount = hotels.length;
+      const currentCount = hotels.filter(h => !h.isPlaceholder).length;
       
       if (currentCount > streamingHotelsCount) {
-        const newHotel = hotels[currentCount - 1];
+        const newHotel = hotels.find(h => !h.isPlaceholder);
         console.log(`🌊 New hotel streamed in: ${newHotel?.name} (${currentCount} total)`);
         
         setStreamingHotelsCount(currentCount);
-        setLastStreamedHotel(newHotel);
+        setLastStreamedHotel(newHotel || null);
         setShowNewHotelAnimation(true);
         
-        // Hide animation after 2 seconds
         const timer = setTimeout(() => {
           setShowNewHotelAnimation(false);
         }, 2000);
@@ -79,24 +82,78 @@ const SwipeableStoryView: React.FC<SwipeableStoryViewProps> = ({
         return () => clearTimeout(timer);
       }
     } else {
-      // Reset streaming state when streaming stops
       setStreamingHotelsCount(hotels.length);
       setShowNewHotelAnimation(false);
     }
   }, [hotels.length, isStreaming, streamingHotelsCount]);
 
-  // ADD: useEffect to handle streaming completion
+  // Handle streaming completion
   useEffect(() => {
     if (!isStreaming && streamingHotelsCount > 0) {
       console.log(`✅ Streaming completed with ${hotels.length} hotels`);
-      // Could trigger completion animation here
     }
   }, [isStreaming, streamingHotelsCount, hotels.length]);
 
-  // Existing functions (enhanceHotel, getHotelInsightsStatus, etc.) remain the same...
+  // NEW: Generate placeholder card
+  const renderPlaceholderCard = (index: number) => {
+    return (
+      <View style={tw`px-5 mb-6`}>
+        <View style={[
+          tw`bg-white rounded-3xl overflow-hidden shadow-sm border border-gray-100`,
+          { height: screenHeight * 0.65 }
+        ]}>
+          {/* Grey placeholder image with subtle animation */}
+          <View style={[
+            tw`bg-gray-200 relative`,
+            { height: '60%' }
+          ]}>
+            {/* Animated shimmer effect */}
+            <View style={tw`absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent animate-pulse`} />
+            
+            {/* Placeholder search icon */}
+            <View style={tw`absolute inset-0 justify-center items-center`}>
+              <Ionicons name="search" size={40} color="#D1D5DB" />
+            </View>
+          </View>
+          
+          {/* Placeholder content */}
+          <View style={tw`p-6 flex-1`}>
+            {/* Placeholder hotel name */}
+            <View style={tw`bg-gray-200 h-7 rounded-lg mb-4 animate-pulse`} />
+            
+            {/* Placeholder rating and price row */}
+            <View style={tw`flex-row justify-between items-center mb-4`}>
+              <View style={tw`bg-gray-200 h-5 w-24 rounded animate-pulse`} />
+              <View style={tw`bg-gray-200 h-6 w-20 rounded animate-pulse`} />
+            </View>
+            
+            {/* Placeholder description lines */}
+            <View style={tw`mb-4`}>
+              <View style={tw`bg-gray-200 h-4 rounded mb-2 animate-pulse`} />
+              <View style={tw`bg-gray-200 h-4 w-4/5 rounded mb-2 animate-pulse`} />
+              <View style={tw`bg-gray-200 h-4 w-3/5 rounded animate-pulse`} />
+            </View>
+            
+            {/* Placeholder tags */}
+            <View style={tw`flex-row gap-2 mb-6`}>
+              <View style={tw`bg-gray-200 h-7 w-16 rounded-full animate-pulse`} />
+              <View style={tw`bg-gray-200 h-7 w-20 rounded-full animate-pulse`} />
+              <View style={tw`bg-gray-200 h-7 w-14 rounded-full animate-pulse`} />
+            </View>
+            
+            {/* Placeholder buttons */}
+            <View style={tw`flex-row gap-3 mt-auto`}>
+              <View style={tw`flex-1 bg-gray-200 h-12 rounded-2xl animate-pulse`} />
+              <View style={tw`flex-1 bg-gray-200 h-12 rounded-2xl animate-pulse`} />
+            </View>
+          </View>
+        </View>
+      </View>
+    );
+  };
 
+  // Enhanced hotel processing
   const enhanceHotel = (hotel: Hotel): EnhancedHotel => {
-    // Your existing enhanceHotel logic remains exactly the same
     const generateImages = (hotel: Hotel): string[] => {
       if (hotel.images && hotel.images.length > 0) {
         console.log(`✅ Using API images for ${hotel.name}:`, hotel.images.length, 'images');
@@ -156,19 +213,20 @@ const SwipeableStoryView: React.FC<SwipeableStoryViewProps> = ({
     const enhancedHotel: EnhancedHotel = {
       ...hotel,
       images: generateImages(hotel),
-      mapImage: hotel.latitude && hotel.longitude 
+      mapImage: hotel.latitude && hotel.longitude
         ? `https://maps.googleapis.com/maps/api/staticmap?center=${hotel.latitude},${hotel.longitude}&zoom=15&size=400x200&markers=color:red%7C${hotel.latitude},${hotel.longitude}&key=YOUR_API_KEY`
         : "https://maps.googleapis.com/maps/api/staticmap?center=",
-      nearbyAttractions: hotel.nearbyAttractions && hotel.nearbyAttractions.length > 0 
-        ? hotel.nearbyAttractions 
+      nearbyAttractions: hotel.nearbyAttractions && hotel.nearbyAttractions.length > 0
+        ? hotel.nearbyAttractions
         : ["Exploring nearby attractions..."],
     };
 
     return enhancedHotel;
   };
 
-  // Enhanced hotels with existing logic
-  const enhancedHotels = hotels.map(enhanceHotel);
+  // Process hotels - filter out placeholders for enhancement
+  const realHotels = hotels.filter(h => !h.isPlaceholder);
+  const enhancedHotels = realHotels.map(enhanceHotel);
 
   const getHotelInsightsStatus = (hotel: Hotel): 'loading' | 'partial' | 'complete' => {
     const hasLoadingGuestInsights = hotel.guestInsights?.includes('Loading') ?? false;
@@ -186,10 +244,10 @@ const SwipeableStoryView: React.FC<SwipeableStoryViewProps> = ({
   };
 
   const getInsightsStats = () => {
-    if (hotels.length === 0) return { complete: 0, loading: 0, partial: 0 };
+    if (realHotels.length === 0) return { complete: 0, loading: 0, partial: 0 };
     
     const stats = { complete: 0, loading: 0, partial: 0 };
-    hotels.forEach(hotel => {
+    realHotels.forEach(hotel => {
       const status = getHotelInsightsStatus(hotel);
       stats[status]++;
     });
@@ -222,19 +280,24 @@ const SwipeableStoryView: React.FC<SwipeableStoryViewProps> = ({
     onHotelPress?.(hotel);
   };
 
-  // ADD: Enhanced render function with streaming indicators
-  const renderHotelCard = ({ item: hotel, index }: { item: EnhancedHotel; index: number }) => {
+  // NEW: Render placeholder or real hotel card
+  const renderHotelCard = ({ item: hotel, index }: { item: EnhancedHotel | any; index: number }) => {
+    // If showing placeholders and this is a placeholder hotel, render grey placeholder
+    if (showPlaceholders && hotels[index]?.isPlaceholder) {
+      return renderPlaceholderCard(index);
+    }
+
+    // Render real hotel card
     const insightsStatus = getHotelInsightsStatus(hotel);
-    const isNewlyStreamed = isStreaming && index === hotels.length - 1 && showNewHotelAnimation;
+    const isNewlyStreamed = isStreaming && index === realHotels.length - 1 && showNewHotelAnimation;
     
     return (
       <View style={tw`px-5 mb-6`}>
         <View style={[
           tw`border border-black/10 shadow-md rounded-2xl`,
-          // ADD: Highlight newly streamed hotels
           isNewlyStreamed && tw`border-blue-400 shadow-blue-200 shadow-lg`
         ]}>
-          {/* ADD: New hotel streaming indicator */}
+          {/* New hotel streaming indicator */}
           {isNewlyStreamed && (
             <View style={tw`absolute -top-2 -right-2 bg-blue-500 px-2 py-1 rounded-full z-10`}>
               <Text style={tw`text-xs text-white font-bold`}>NEW!</Text>
@@ -261,14 +324,16 @@ const SwipeableStoryView: React.FC<SwipeableStoryViewProps> = ({
     );
   };
 
+
+
   const getItemLayout = (_: any, index: number) => ({
     length: screenHeight * 0.65 + 48,
     offset: (screenHeight * 0.65 + 48) * index,
     index,
   });
 
-  // Enhanced empty state remains the same...
-  if (enhancedHotels.length === 0) {
+  // Empty state - show when no hotels and not showing placeholders
+  if (enhancedHotels.length === 0 && !showPlaceholders) {
     return (
       <View style={tw`flex-1 bg-gray-50 justify-center items-center px-10`}>
         <View style={tw`w-32 h-32 rounded-full bg-gray-100 justify-center items-center mb-6`}>
@@ -283,7 +348,7 @@ const SwipeableStoryView: React.FC<SwipeableStoryViewProps> = ({
             : 'Try adjusting your search criteria or dates to find available hotels.'
           }
         </Text>
-        {/* ADD: Streaming progress indicator in empty state */}
+        {/* Streaming progress indicator in empty state */}
         {isStreaming && (
           <View style={tw`flex-row items-center mt-4`}>
             <View style={tw`w-3 h-3 bg-blue-500 rounded-full animate-pulse mr-2`} />
@@ -296,19 +361,16 @@ const SwipeableStoryView: React.FC<SwipeableStoryViewProps> = ({
     );
   }
 
+  // NEW: Determine what to render - placeholders or real hotels
+  const dataToRender = showPlaceholders 
+    ? Array.from({ length: 10 }, (_, i) => ({ isPlaceholder: true, id: `placeholder-${i}` }))
+    : enhancedHotels;
+
   return (
     <View style={tw`flex-1 bg-gray-50`}>
-      {/* ADD: Global streaming status indicator */}
-      {isStreaming && (
-        <View style={tw`absolute top-4 right-4 bg-blue-500 px-3 py-2 rounded-full flex-row items-center z-50`}>
-          <View style={tw`w-2 h-2 bg-white rounded-full animate-pulse mr-2`} />
-          <Text style={tw`text-xs text-white font-medium`}>
-            {streamingProgress.step}/{streamingProgress.totalSteps}
-          </Text>
-        </View>
-      )}
 
-      {/* ADD: New hotel notification */}
+
+      {/* New hotel notification */}
       {showNewHotelAnimation && lastStreamedHotel && (
         <View style={tw`absolute top-16 left-4 right-4 bg-green-500 px-4 py-3 rounded-lg flex-row items-center z-40`}>
           <Ionicons name="checkmark-circle" size={20} color="white" />
@@ -319,9 +381,17 @@ const SwipeableStoryView: React.FC<SwipeableStoryViewProps> = ({
       )}
 
       <FlatList
-        data={enhancedHotels}
-        renderItem={renderHotelCard}
-        keyExtractor={(item) => `hotel-${item.id}`}
+        data={dataToRender as (EnhancedHotel | { isPlaceholder: boolean; id: string })[]}
+        renderItem={({ item, index }) => 
+          showPlaceholders 
+            ? renderPlaceholderCard(index)
+            : renderHotelCard({ item, index })
+        }
+        keyExtractor={(item, index) => 
+          showPlaceholders 
+            ? `placeholder-${index}` 
+            : `hotel-${item.id}`
+        }
         showsVerticalScrollIndicator={false}
         contentContainerStyle={tw`py-2`}
         getItemLayout={getItemLayout}
@@ -330,8 +400,7 @@ const SwipeableStoryView: React.FC<SwipeableStoryViewProps> = ({
         windowSize={5}
         initialNumToRender={2}
         scrollEventThrottle={16}
-        // ADD: Include streaming state in extraData
-        extraData={`${isInsightsLoading}-${stage1Complete}-${stage2Complete}-${insightsStats.complete}-${isStreaming}-${hotels.length}`}
+        extraData={`${isInsightsLoading}-${stage1Complete}-${stage2Complete}-${insightsStats.complete}-${isStreaming}-${hotels.length}-${showPlaceholders}`}
       />
     </View>
   );

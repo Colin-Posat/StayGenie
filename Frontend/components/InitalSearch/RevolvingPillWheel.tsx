@@ -29,6 +29,7 @@ interface RevolvingPillWheelProps {
   onPress: (recommendation: SearchRecommendation) => void;
   pixelsPerSecond?: number;
   pauseOnInteraction?: boolean;
+  resetTrigger?: number; // NEW: Add reset trigger
 }
 
 const RevolvingPillWheel: React.FC<RevolvingPillWheelProps> = ({
@@ -36,6 +37,7 @@ const RevolvingPillWheel: React.FC<RevolvingPillWheelProps> = ({
   onPress,
   pixelsPerSecond = 30,
   pauseOnInteraction = true,
+  resetTrigger = 0, // NEW: Default value
 }) => {
   const scrollX = useRef(new Animated.Value(0)).current;
   const animationRef = useRef<Animated.CompositeAnimation | null>(null);
@@ -48,6 +50,26 @@ const RevolvingPillWheel: React.FC<RevolvingPillWheelProps> = ({
     ...recommendations,
     ...recommendations,
   ];
+
+  // NEW: Reset function to clear all states immediately
+  const resetPillWheel = () => {
+    console.log('Resetting pill wheel state immediately');
+    setPressedIndex(null);
+    setIsPaused(false);
+    
+    // Reset animation to start position
+    scrollX.setValue(0);
+    
+    // Restart animation
+    startAnimation();
+  };
+
+  // NEW: Watch for reset trigger and reset immediately
+  useEffect(() => {
+    if (resetTrigger > 0) {
+      resetPillWheel();
+    }
+  }, [resetTrigger]);
 
   const startAnimation = () => {
     // Stop any existing animation

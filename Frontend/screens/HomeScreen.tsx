@@ -8,6 +8,7 @@ import {
   StatusBar,
   Platform,
   Alert,
+  Animated,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import tw from 'twrnc';
@@ -289,6 +290,8 @@ interface Hotel {
   isRefundable?: boolean;
   refundableTag?: string | null;
   refundableInfo?: string;
+
+  isPlaceholder?: boolean;
 }
 
 const BASE_URL = 'https://staygenie-wwpa.onrender.com';
@@ -296,13 +299,18 @@ const BASE_URL = 'https://staygenie-wwpa.onrender.com';
 
 
 
+import { Dimensions } from 'react-native';
+
 const HomeScreen = () => {
+  const screenSlideOut = useRef(new Animated.Value(0)).current;
+  const contentFadeOut = useRef(new Animated.Value(1)).current;
+  const scaleTransition = useRef(new Animated.Value(1)).current;
   const route = useRoute();
   const params = route.params as RouteParams;
   const navigation = useNavigation<HomeScreenNavigationProp>();
+  const width = Dimensions.get('window').width;
 
-  
-
+  const [showPlaceholders, setShowPlaceholders] = useState(false);
   // State management
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearching, setIsSearching] = useState(false);
@@ -405,6 +413,30 @@ const [aiSuggestionsLoaded, setAiSuggestionsLoaded] = useState(false);
   }
 }, []);
 
+const generatePlaceholderHotels = useCallback((count: number = 10): Hotel[] => {
+  return Array.from({ length: count }, (_, index) => ({
+    id: `placeholder-${index}`,
+    name: '', // Empty for grey placeholder
+    image: '', // Empty for grey placeholder
+    images: [],
+    price: 0,
+    originalPrice: 0,
+    priceComparison: '',
+    rating: 0,
+    reviews: 0,
+    safetyRating: 0,
+    transitDistance: '',
+    tags: [],
+    location: '',
+    features: [],
+    aiExcerpt: '',
+    whyItMatches: '',
+    funFacts: [],
+    aiMatchPercent: 0,
+    isPlaceholder: true, // This identifies it as a placeholder
+  }));
+}, []);
+
 const handleStreamingUpdate = async (data: any, userInput?: string) => {
   console.log('📡 Streaming update received:', data.type);
 
@@ -425,14 +457,15 @@ const handleStreamingUpdate = async (data: any, userInput?: string) => {
         if (!firstHotelFound && data.hotelIndex === 1) {
           console.log('🎯 FIRST HOTEL FOUND - Showing immediately!');
           setFirstHotelFound(true);
-          setIsSearching(false); // ⚡ IMMEDIATELY dismiss main loading screen
+          setShowPlaceholders(false);
           setDisplayHotels([newHotel]); // Show just the first hotel
         } else {
           // ✨ LIVE UPDATES - Add subsequent hotels to existing list
           console.log(`🔥 Hotel ${data.hotelIndex}/${data.totalExpected} streaming in: ${newHotel.name} (${newHotel.aiMatchPercent}% match)`);
           
           setDisplayHotels(prevHotels => {
-            const updatedHotels = [...prevHotels];
+            const realHotels = prevHotels.filter(h => !h.isPlaceholder);
+            const updatedHotels = [...realHotels];
             const existingIndex = updatedHotels.findIndex(h => h.id === newHotel.id);
             
             if (existingIndex >= 0) {
@@ -512,6 +545,7 @@ const handleStreamingUpdate = async (data: any, userInput?: string) => {
 
     case 'error':
       console.error('❌ Streaming error:', data.message);
+      setShowPlaceholders(false);
       setIsSearching(false);
       Alert.alert('Search Error', data.message, [{ text: 'OK' }]);
       break;
@@ -638,10 +672,16 @@ const executeStreamingSearch = async (userInput: string) => {
 
   try {
     console.log('🌊 Starting SSE Real-time Streaming Search...');
-    setIsSearching(true);
+    setShowPlaceholders(true);
     setIsStreamingSearch(true);
     setFirstHotelFound(false);
     setStreamingProgress({ step: 0, totalSteps: 8, message: 'Starting search...' });
+
+    const placeholderHotels = generatePlaceholderHotels(10);
+    setDisplayHotels(placeholderHotels);
+
+    setStage1Results(null);
+    setStage2Results(null);
     
     // Clear previous results
     setDisplayHotels([]);
@@ -773,6 +813,9 @@ const executeStreamingSearch = async (userInput: string) => {
 
   } catch (error: any) {
     console.error('💥 SSE streaming search failed:', error);
+
+    setShowPlaceholders(false);
+    setDisplayHotels([]);
     
     if (eventSource) {
       eventSource.close();
@@ -1323,7 +1366,10 @@ const convertRecommendationToDisplayHotel = (recommendation: HotelRecommendation
       console.log('🚀 Starting Two-Stage Optimized Hotel Search...');
       console.log('📝 User Input:', userInput);
       
-      setIsSearching(true);
+      setShowPlaceholders(true);
+
+      const placeholderHotels = generatePlaceholderHotels(10);
+      setDisplayHotels(placeholderHotels);
 
       // Create search context for AI suggestions
       const searchContext = {
@@ -1361,6 +1407,9 @@ console.log('🤖 AI suggestions loading completed!');
       const basicHotels: Hotel[] = stage1Response.hotels.map((hotel: Stage1Hotel, index: number) => 
         convertStage1HotelToDisplay(hotel, index)
       );
+
+      setDisplayHotels(basicHotels);
+    setShowPlaceholders(false);
       
       // Show hotels immediately after Stage 1
       setDisplayHotels(basicHotels);
@@ -1401,6 +1450,9 @@ console.log('🤖 AI suggestions loading completed!');
 
     } catch (error: any) {
       console.error('💥 Two-stage search failed:', error);
+
+      setShowPlaceholders(false);
+    setDisplayHotels([]);
       
       let errorMessage = 'Please try again with a different query. ';
       
@@ -1561,6 +1613,7 @@ const executeSearch = async (userInput: string) => {
     }
   }
 };
+
 
   // Handle search query from InitialSearchScreen
   useEffect(() => {
@@ -1810,14 +1863,6 @@ const handleViewDetails = useCallback((hotel: Hotel) => {
     }
   }
   
-  Alert.alert(
-    'Hotel Details',
-    detailsMessage,
-    [
-      { text: 'Close', style: 'cancel' },
-      { text: TEST_MODE ? 'Test Book' : 'Book Now', style: 'default', onPress: () => handleBookNow(hotel) }
-    ]
-  );
 }, [handleBookNow]);
 
 const handleHotelPress = useCallback((hotel: Hotel) => {
@@ -1883,24 +1928,16 @@ const handleHotelPress = useCallback((hotel: Hotel) => {
     alertMessage += `🏨 ${hotel.hasAvailability ? 'Available' : 'Limited availability'}`;
   }
   
-  Alert.alert(
-    hotel.name,
-    alertMessage || 'Hotel details',
-    [
-      { text: 'Close', style: 'cancel' },
-      { text: 'Full Details', onPress: () => handleViewDetails(hotel) }
-    ]
-  );
+
 }, [handleViewDetails]);
 
 const handleBackPress = useCallback(() => {
-  console.log('Back button pressed - cleaning up and returning to initial search');
+  console.log('Back button pressed - starting transition animation');
   
-  // Clean up SSE connection
+  // Cleanup first
   if ((global as any).cleanupSSESearch) {
     (global as any).cleanupSSESearch();
   }
-  
   if (sentimentPollingRef.current) {
     clearInterval(sentimentPollingRef.current);
     sentimentPollingRef.current = null;
@@ -1910,17 +1947,45 @@ const handleBackPress = useCallback(() => {
     pollingTimeoutRef.current = null;
   }
   
-  navigation.navigate('InitialSearch');
+  // Animate out (opposite direction - slide to the right)
+  Animated.parallel([
+    Animated.timing(screenSlideOut, {
+      toValue: width, // Slide to the right (opposite of InitialSearch)
+      duration: 400,
+      useNativeDriver: true,
+    }),
+    Animated.timing(contentFadeOut, {
+      toValue: 0,
+      duration: 300,
+      useNativeDriver: true,
+    }),
+    Animated.timing(scaleTransition, {
+      toValue: 0.95,
+      duration: 400,
+      useNativeDriver: true,
+    }),
+  ]).start(() => {
+    navigation.goBack();
+    
+  });
 }, [navigation]);
-
-  // Show loading screen while searching
-  if (isSearching) {
-    return <LoadingScreen searchQuery={searchQuery} />;
-  }
 
   return (
     <SafeAreaView style={tw`flex-1 bg-gray-50`}>
       <StatusBar barStyle="dark-content" backgroundColor="#F9FAFB" />
+
+      <Animated.View
+      style={[
+        tw`flex-1`,
+        {
+          opacity: contentFadeOut,
+          transform: [
+            { translateX: screenSlideOut },
+            { scale: scaleTransition },
+          ],
+        },
+      ]}
+    >
 
       {/* SLEEK HEADER */}
       <View style={tw`px-5 pt-3 pb-4 bg-gray-50`}>
@@ -2040,19 +2105,20 @@ const handleBackPress = useCallback(() => {
       {/* CONTENT VIEW - Story View */}
       <View style={tw`flex-1 bg-gray-50`}>
         <SwipeableStoryView
-          hotels={displayHotels}
-          onHotelPress={handleHotelPress}
-          onViewDetails={handleViewDetails}
-          checkInDate={checkInDate}
-          checkOutDate={checkOutDate}
-          adults={adults}
-          children={children}
-          // NEW: Two-stage API props
-          isInsightsLoading={isInsightsLoading}
-          stage1Complete={!!stage1Results}
-          stage2Complete={!!stage2Results}
-          searchMode={TEST_MODE ? 'test' : stage1Results ? 'two-stage' : 'legacy'}
-        />
+        hotels={displayHotels}
+        onHotelPress={handleHotelPress}
+        onViewDetails={handleViewDetails}
+        checkInDate={checkInDate}
+        checkOutDate={checkOutDate}
+        adults={adults}
+        children={children}
+        // NEW: Add placeholder prop
+        showPlaceholders={showPlaceholders}
+        isInsightsLoading={isInsightsLoading}
+        stage1Complete={!!stage1Results}
+        stage2Complete={!!stage2Results}
+        searchMode={TEST_MODE ? 'test' : stage1Results ? 'two-stage' : 'legacy'}
+      />
       </View>
 
       {/* AI SEARCH OVERLAY */}
@@ -2080,6 +2146,7 @@ const handleBackPress = useCallback(() => {
           resultCount: displayHotels.length || stage1Results?.matchedHotelsCount || searchResults?.aiRecommendationsCount || 0
         }}
       />
+      </Animated.View>
     </SafeAreaView>
   );
 };

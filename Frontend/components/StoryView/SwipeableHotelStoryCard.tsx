@@ -31,6 +31,8 @@ const TURQUOISE_LIGHT = '#5dfbff';
 const TURQUOISE_DARK = '#00d4e6';
 const BLACK = "#000000";
 
+// Updated Hotel interface types for SwipeableHotelStoryCard.tsx
+
 interface Hotel {
   id: string;
   name: string;
@@ -82,7 +84,7 @@ interface Hotel {
   sentimentPros?: string[];
   sentimentCons?: string[];
   
-  // NEW: Category ratings
+  // Category ratings
   categoryRatings?: {
     cleanliness: number;
     service: number;
@@ -92,16 +94,18 @@ interface Hotel {
   
   // Room availability
   roomTypes?: any[];
-
+  
   // Refundable policy fields
   isRefundable?: boolean;
   refundableTag?: string | null;
   refundableInfo?: string;
-
+  
   // Fields needed for deep linking
   placeId?: string; // Google Place ID for destination
+  
+  // NEW: Placeholder support
+  isPlaceholder?: boolean;
 }
-
 
 interface EnhancedHotel extends Hotel {
   images: string[];
@@ -127,6 +131,7 @@ interface SwipeableHotelStoryCardProps {
   placeId?: string;
   occupancies?: any[];
 }
+
 
 // Helper function to generate hotel deep link URL
 const generateHotelDeepLink = (

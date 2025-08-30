@@ -7,6 +7,8 @@ import {
   Dimensions,
   Alert,
   Linking,
+  ActivityIndicator,
+  Image,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import tw from 'twrnc';
@@ -59,6 +61,73 @@ export interface BeautifulHotel {
     lat: number;
     lng: number;
   }; // derived from latitude/longitude if needed
+}
+
+// Custom hook for intersection observer style lazy loading
+const useLazyLoading = (threshold: number = 150) => {
+  const [isVisible, setIsVisible] = useState(false);
+  const [hasLoaded, setHasLoaded] = useState(false);
+  const elementRef = useRef<View>(null);
+
+  useEffect(() => {
+    let timeoutId: NodeJS.Timeout;
+
+    const checkVisibility = () => {
+      if (elementRef.current && !hasLoaded) {
+        elementRef.current.measure((x, y, width, height, pageX, pageY) => {
+          const screenHeight = Dimensions.get('window').height;
+          const isInViewport = pageY < screenHeight + threshold && pageY + height > -threshold;
+          
+          if (isInViewport) {
+            setIsVisible(true);
+            setHasLoaded(true);
+          }
+        });
+      }
+    };
+
+    // Check visibility on mount and periodically
+    const checkLoop = () => {
+      checkVisibility();
+      if (!hasLoaded) {
+        timeoutId = setTimeout(checkLoop, 100);
+      }
+    };
+
+    // Start checking after component mounts
+    timeoutId = setTimeout(checkLoop, 50);
+
+    return () => {
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+      }
+    };
+  }, [threshold, hasLoaded]);
+
+  return { isVisible, elementRef, hasLoaded };
+};
+
+// Image cache for React Native Image component
+class ImageCache {
+  private static cache = new Map<string, boolean>();
+  
+  static isImageCached(uri: string): boolean {
+    return this.cache.has(uri);
+  }
+  
+  static markImageCached(uri: string): void {
+    this.cache.set(uri, true);
+  }
+  
+  static preloadImages(uris: string[]): void {
+    uris.forEach(uri => {
+      Image.prefetch(uri).then(() => {
+        this.markImageCached(uri);
+      }).catch(error => {
+        console.warn('Failed to preload image:', uri, error);
+      });
+    });
+  }
 }
 
 // Animated Heart Button Component for Grid Cards
@@ -187,6 +256,59 @@ const GridHeartButton: React.FC<GridHeartButtonProps> = ({ hotel, size = 20 }) =
   );
 };
 
+// Lazy Loading Image Component
+interface LazyImageProps {
+  source: { uri: string };
+  style: any;
+  resizeMode: 'cover' | 'contain' | 'stretch' | 'repeat' | 'center';
+  onLoadStart?: () => void;
+  onLoad?: () => void;
+  onError?: () => void;
+  isVisible: boolean;
+}
+
+const LazyImage: React.FC<LazyImageProps> = ({
+  source,
+  style,
+  resizeMode,
+  onLoadStart,
+  onLoad,
+  onError,
+  isVisible
+}) => {
+  const [shouldLoad, setShouldLoad] = useState(false);
+
+  useEffect(() => {
+    if (isVisible) {
+      // Add a small delay to prevent loading all images at once
+      const timer = setTimeout(() => {
+        setShouldLoad(true);
+      }, Math.random() * 100); // Random delay 0-100ms
+
+      return () => clearTimeout(timer);
+    }
+  }, [isVisible]);
+
+  if (!shouldLoad) {
+    return <View style={style} />;
+  }
+
+  return (
+    <Image
+      source={source}
+      style={style}
+      resizeMode={resizeMode}
+      onLoadStart={onLoadStart}
+      onLoad={() => {
+        ImageCache.markImageCached(source.uri);
+        onLoad?.();
+      }}
+      onError={onError}
+      fadeDuration={300}
+    />
+  );
+};
+
 // Square Hotel Card Component for Grid
 interface BeautifulHotelCardProps {
   hotel: BeautifulHotel;
@@ -195,6 +317,7 @@ interface BeautifulHotelCardProps {
   checkOutDate?: Date;
   adults?: number;
   children?: number;
+  index?: number; // For staggered loading
 }
 
 const BeautifulHotelCard: React.FC<BeautifulHotelCardProps> = ({ 
@@ -203,50 +326,60 @@ const BeautifulHotelCard: React.FC<BeautifulHotelCardProps> = ({
   checkInDate,
   checkOutDate,
   adults = 2,
-  children = 0
+  children = 0,
+  index = 0
 }) => {
   const panAnimation = useRef(new Animated.Value(0)).current;
   const scaleAnimation = useRef(new Animated.Value(1.05)).current;
+  const [imageLoading, setImageLoading] = useState(true);
+  const [imageError, setImageError] = useState(false);
+  
+  // Lazy loading hook with staggered threshold based on index
+  const threshold = 150 + (index * 50); // Stagger loading based on position
+  const { isVisible, elementRef, hasLoaded } = useLazyLoading(threshold);
 
   useEffect(() => {
-    const panningAnimation = Animated.loop(
-      Animated.sequence([
-        Animated.timing(panAnimation, {
-          toValue: 1,
-          duration: 8000,
-          useNativeDriver: true,
-        }),
-        Animated.timing(panAnimation, {
-          toValue: 0,
-          duration: 8000,
-          useNativeDriver: true,
-        }),
-      ])
-    );
+    // Only start animations if image is visible and loaded
+    if (isVisible && !imageLoading && !imageError) {
+      const panningAnimation = Animated.loop(
+        Animated.sequence([
+          Animated.timing(panAnimation, {
+            toValue: 1,
+            duration: 8000,
+            useNativeDriver: true,
+          }),
+          Animated.timing(panAnimation, {
+            toValue: 0,
+            duration: 8000,
+            useNativeDriver: true,
+          }),
+        ])
+      );
 
-    const scalingAnimation = Animated.loop(
-      Animated.sequence([
-        Animated.timing(scaleAnimation, {
-          toValue: 1.1,
-          duration: 10000,
-          useNativeDriver: true,
-        }),
-        Animated.timing(scaleAnimation, {
-          toValue: 1.05,
-          duration: 10000,
-          useNativeDriver: true,
-        }),
-      ])
-    );
+      const scalingAnimation = Animated.loop(
+        Animated.sequence([
+          Animated.timing(scaleAnimation, {
+            toValue: 1.1,
+            duration: 10000,
+            useNativeDriver: true,
+          }),
+          Animated.timing(scaleAnimation, {
+            toValue: 1.05,
+            duration: 10000,
+            useNativeDriver: true,
+          }),
+        ])
+      );
 
-    panningAnimation.start();
-    scalingAnimation.start();
+      panningAnimation.start();
+      scalingAnimation.start();
 
-    return () => {
-      panningAnimation.stop();
-      scalingAnimation.stop();
-    };
-  }, [panAnimation, scaleAnimation]);
+      return () => {
+        panningAnimation.stop();
+        scalingAnimation.stop();
+      };
+    }
+  }, [panAnimation, scaleAnimation, isVisible, imageLoading, imageError]);
 
   const translateX = panAnimation.interpolate({
     inputRange: [0, 1],
@@ -357,6 +490,7 @@ const BeautifulHotelCard: React.FC<BeautifulHotelCardProps> = ({
 
   return (
     <TouchableOpacity
+      ref={elementRef}
       onPress={handleCardPress}
       activeOpacity={0.95}
       style={[
@@ -364,31 +498,76 @@ const BeautifulHotelCard: React.FC<BeautifulHotelCardProps> = ({
         { width: cardWidth, height: cardHeight }
       ]}
     >
-      {/* Image with Ken Burns effect */}
-      <View style={tw`flex-1 relative overflow-hidden`}>
-        <Animated.Image 
-          source={{ uri: hotel.image }} 
-          style={[
-            {
-              position: 'absolute',
-              width: '110%',
-              height: '110%',
-              left: '-5%',
-              top: '-5%',
-            },
-            {
-              transform: [
-                { translateX },
-                { translateY },
-                { scale: scaleAnimation }
-              ],
-            }
-          ]} 
-          resizeMode="cover"
-        />
+      {/* Image with Ken Burns effect and lazy loading */}
+      <View style={tw`flex-1 relative overflow-hidden bg-gray-200`}>
+        {isVisible ? (
+          !imageError ? (
+            <Animated.View
+              style={[
+                {
+                  position: 'absolute',
+                  width: '110%',
+                  height: '110%',
+                  left: '-5%',
+                  top: '-5%',
+                },
+                {
+                  transform: [
+                    { translateX },
+                    { translateY },
+                    { scale: scaleAnimation }
+                  ],
+                }
+              ]}
+            >
+              <LazyImage
+                source={{ uri: hotel.image }}
+                style={{ width: '100%', height: '100%' }}
+                resizeMode="cover"
+                onLoadStart={() => setImageLoading(true)}
+                onLoad={() => setImageLoading(false)}
+                onError={() => {
+                  setImageLoading(false);
+                  setImageError(true);
+                }}
+                isVisible={isVisible}
+              />
+            </Animated.View>
+          ) : (
+            // Error placeholder
+            <View style={tw`flex-1 items-center justify-center bg-gray-300`}>
+              <Ionicons name="image-outline" size={32} color="#9CA3AF" />
+              <Text style={tw`text-gray-500 text-xs mt-2`}>Image unavailable</Text>
+            </View>
+          )
+        ) : (
+          // Lazy loading placeholder with subtle animation
+          <View style={tw`flex-1 bg-gray-100 items-center justify-center`}>
+            <Animated.View 
+              style={[
+                tw`w-8 h-8 bg-gray-300 rounded`,
+                {
+                  opacity: panAnimation.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [0.3, 0.6]
+                  })
+                }
+              ]} 
+            />
+          </View>
+        )}
+
+        {/* Loading indicator */}
+        {imageLoading && !imageError && isVisible && (
+          <View style={tw`absolute inset-0 items-center justify-center bg-gray-100/80`}>
+            <ActivityIndicator size="small" color="#666" />
+          </View>
+        )}
         
-        {/* Gradient overlay */}
-        <View style={tw`absolute bottom-0 left-0 right-0 h-20 bg-gradient-to-t from-black/70 to-transparent`} />
+        {/* Gradient overlay - only show when image is loaded */}
+        {!imageLoading && !imageError && isVisible && (
+          <View style={tw`absolute bottom-0 left-0 right-0 h-20 bg-gradient-to-t from-black/70 to-transparent`} />
+        )}
 
         {/* Price Badge - Top Right */}
         <View style={tw`absolute top-2 right-2`}>
@@ -403,7 +582,6 @@ const BeautifulHotelCard: React.FC<BeautifulHotelCardProps> = ({
             </View>
           </View>
         </View>
-
 
         {/* Favorite Button - Bottom Right */}
         <View style={tw`absolute bottom-2 right-2`}>
@@ -423,6 +601,12 @@ const BeautifulHotelCard: React.FC<BeautifulHotelCardProps> = ({
       </View>
     </TouchableOpacity>
   );
+};
+
+// Preload function for critical images (use in parent component)
+export const preloadHotelImages = (hotels: BeautifulHotel[], count: number = 4) => {
+  const criticalImages = hotels.slice(0, count).map(hotel => hotel.image);
+  ImageCache.preloadImages(criticalImages);
 };
 
 export default BeautifulHotelCard;
