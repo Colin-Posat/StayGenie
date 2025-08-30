@@ -1,4 +1,4 @@
-// FavoritesScreen.tsx - Optimized to preserve UI state
+// FavoritesScreen.tsx - Updated with sign up buttons matching ProfileScreen
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   View,
@@ -21,6 +21,8 @@ import { useAuth } from '../contexts/AuthContext';
 import FavoriteHotelCard from '../components/Favorites/FavoriteHotelCard';
 import { getCountryName } from '../utils/countryMapping';
 import { getFlagEmoji } from '../utils/flagMapping';
+import EmailSignUpModal from '../components/SignupLogin/EmailSignUpModal';
+import EmailSignInModal from '../components/SignupLogin/EmailSignInModal';
 
 const { width } = Dimensions.get('window');
 
@@ -418,22 +420,24 @@ const ErrorState: React.FC<{ error: string; onRetry: () => void }> = ({ error, o
   </View>
 );
 
-// Main Favorites Screen Component - Updated for Firebase with state preservation
+// Main Favorites Screen Component - Updated with sign up functionality
 const FavoritesScreen = () => {
   const [cityFolders, setCityFolders] = useState<CityFolder[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [totalCount, setTotalCount] = useState(0);
   const [error, setError] = useState<string | null>(null);
+  const [showEmailSignUpModal, setShowEmailSignUpModal] = useState(false);
+  const [showEmailSignInModal, setShowEmailSignInModal] = useState(false);
   
-  // NEW: Track UI state separately from data
+  // Track UI state separately from data
   const [uiState, setUIState] = useState<UIState>({
     expandedFolders: new Set(),
     expandedCards: new Set(),
     lastDataHash: ''
   });
   
-  // NEW: Track if we need to refresh data vs just preserve UI
+  // Track if we need to refresh data vs just preserve UI
   const [needsDataRefresh, setNeedsDataRefresh] = useState(true);
   const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
   const lastFocusTime = useRef<number>(0);
@@ -443,7 +447,8 @@ const FavoritesScreen = () => {
     getFavoriteHotelsData, 
     removeFavoriteHotel,
     onFavoritesChange,
-    isLoading: authLoading
+    isLoading: authLoading,
+    signInWithGoogle
   } = useAuth();
 
   // Helper function to create a hash of the data to detect changes
@@ -494,7 +499,7 @@ const FavoritesScreen = () => {
     return folders;
   }, [uiState.expandedFolders]);
 
-  // NEW: Optimized load function that preserves UI state
+  // Optimized load function that preserves UI state
   const loadFavorites = useCallback(async (forceRefresh = false) => {
     if (!isAuthenticated) {
       console.log('User not authenticated, clearing favorites data');
@@ -554,7 +559,7 @@ const FavoritesScreen = () => {
     }
   }, [isAuthenticated, getFavoriteHotelsData, createDataHash, needsDataRefresh, uiState.lastDataHash, createCityFolders, hasLoadedOnce]);
 
-  // NEW: Optimized refresh handler
+  // Optimized refresh handler
   const handleRefresh = useCallback(async () => {
     if (!isAuthenticated) return;
     
@@ -570,7 +575,7 @@ const FavoritesScreen = () => {
     }
   }, [loadFavorites, isAuthenticated]);
 
-  // NEW: Optimized toggle function that preserves state
+  // Optimized toggle function that preserves state
   const toggleCityFolder = useCallback((displayName: string) => {
     if (Platform.OS === 'ios') {
       LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
@@ -601,7 +606,7 @@ const FavoritesScreen = () => {
     console.log(`📁 Toggled ${displayName} folder`);
   }, []);
 
-  // NEW: Optimized expand/collapse functions
+  // Optimized expand/collapse functions
   const expandAllFolders = useCallback(() => {
     if (Platform.OS === 'ios') {
       LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
@@ -631,7 +636,7 @@ const FavoritesScreen = () => {
     console.log('📁 Collapsed all folders');
   }, []);
 
-  // NEW: Optimized remove function that doesn't trigger notifications (since it's from this screen)
+  // Optimized remove function that doesn't trigger notifications (since it's from this screen)
   const handleRemoveFavorite = useCallback(async (hotel: FavoritedHotel) => {
     if (!isAuthenticated) return;
     
@@ -675,9 +680,34 @@ const FavoritesScreen = () => {
     // Navigation logic here
   }, []);
 
+  // Sign up handlers matching ProfileScreen
+  const handleGoogleSignUp = useCallback(async () => {
+    try {
+      await signInWithGoogle();
+      console.log('✅ Google sign up successful');
+    } catch (error: any) {
+      console.log('❌ Google sign up error:', error.message);
+      Alert.alert('Sign Up Failed', 'Failed to sign up with Google. Please try again.');
+    }
+  }, [signInWithGoogle]);
+
+  const handleSwitchToSignUp = useCallback(() => {
+    setShowEmailSignInModal(false);
+    setTimeout(() => {
+      setShowEmailSignUpModal(true);
+    }, 300);
+  }, []);
+
+  const handleSwitchToSignIn = useCallback(() => {
+    setShowEmailSignUpModal(false);
+    setTimeout(() => {
+      setShowEmailSignInModal(true);
+    }, 300);
+  }, []);
+
   const hasExpandedFolders = cityFolders.some(folder => folder.isExpanded);
 
-  // NEW: Listen for favorites changes from other parts of the app (optimized)
+  // Listen for favorites changes from other parts of the app (optimized)
   useEffect(() => {
     if (!isAuthenticated) return;
     
@@ -690,7 +720,7 @@ const FavoritesScreen = () => {
     return unsubscribe;
   }, [isAuthenticated, onFavoritesChange]);
 
-  // NEW: Smart focus effect that only refreshes when needed
+  // Smart focus effect that only refreshes when needed
   useFocusEffect(
     useCallback(() => {
       if (!authLoading) {
@@ -726,7 +756,7 @@ const FavoritesScreen = () => {
     );
   }
 
-  // Show message for unauthenticated users
+  // Show message for unauthenticated users with sign up options
   if (!isAuthenticated) {
     return (
       <SafeAreaView style={tw`flex-1 bg-white`}>
@@ -756,37 +786,75 @@ const FavoritesScreen = () => {
             </View>
 
             <Text style={tw`text-2xl font-bold text-gray-900 text-center mb-3`}>
-              Sign In Required
+              Sign Up Required
             </Text>
 
             <Text style={tw`text-base text-gray-600 text-center leading-6 mb-8 max-w-sm`}>
-              Sign in to save and organize your favorite hotels by city.
+              Create an account to save and organize your favorite hotels by city.
             </Text>
           </View>
 
+          {/* Sign Up with Email Button */}
           <TouchableOpacity
             style={[
-              tw`py-4 px-8 rounded-2xl flex-row items-center shadow-lg`,
+              tw`p-4 rounded-xl mb-3 flex-row items-center justify-center w-full`,
+              { backgroundColor: TURQUOISE }
+            ]}
+            onPress={() => setShowEmailSignUpModal(true)}
+            activeOpacity={0.8}
+          >
+            <Ionicons name="mail-outline" size={20} color="white" />
+            <Text style={tw`text-white font-semibold text-base ml-3`}>
+              Sign Up with Email
+            </Text>
+          </TouchableOpacity>
+
+          {/* Sign Up with Google Button */}
+          <TouchableOpacity
+            style={[
+              tw`p-4 rounded-xl flex-row items-center justify-center border w-full mb-3`,
               { 
-                backgroundColor: TURQUOISE,
-                shadowColor: TURQUOISE,
-                shadowOffset: { width: 0, height: 4 },
-                shadowOpacity: 0.3,
-                shadowRadius: 12,
-                elevation: 8,
+                backgroundColor: '#FFFFFF',
+                borderColor: '#E5E7EB',
               }
             ]}
-            onPress={() => {
-              console.log('Navigate to sign in');
-            }}
-            activeOpacity={0.9}
+            onPress={handleGoogleSignUp}
+            activeOpacity={0.8}
           >
-            <Ionicons name="log-in" size={20} color="#FFFFFF" />
-            <Text style={tw`text-white font-semibold text-base ml-3`}>
-              Sign In
+            <Ionicons name="logo-google" size={20} color="#4285F4" />
+            <Text style={tw`text-gray-900 font-semibold text-base ml-3`}>
+              Sign Up with Google
+            </Text>
+          </TouchableOpacity>
+
+          {/* Already have account link */}
+          <TouchableOpacity
+            style={tw`mt-3 items-center`}
+            onPress={() => setShowEmailSignInModal(true)}
+            activeOpacity={0.8}
+          >
+            <Text style={[tw`text-sm`, { color: TURQUOISE_DARK }]}>
+              Already have an account? Sign In
             </Text>
           </TouchableOpacity>
         </View>
+
+        {/* Email Sign Up Modal */}
+        <EmailSignUpModal
+          visible={showEmailSignUpModal}
+          onClose={() => setShowEmailSignUpModal(false)}
+          onSwitchToSignIn={handleSwitchToSignIn}
+        />
+
+        {/* Email Sign In Modal */}
+        <EmailSignInModal
+          visible={showEmailSignInModal}
+          onClose={() => setShowEmailSignInModal(false)}
+          onSwitchToSignUp={handleSwitchToSignUp}
+          onForgotPassword={() => {
+            console.log('Forgot password pressed');
+          }}
+        />
       </SafeAreaView>
     );
   }
@@ -858,6 +926,23 @@ const FavoritesScreen = () => {
           <View style={tw`h-6`} />
         </ScrollView>
       )}
+
+      {/* Email Sign Up Modal */}
+      <EmailSignUpModal
+        visible={showEmailSignUpModal}
+        onClose={() => setShowEmailSignUpModal(false)}
+        onSwitchToSignIn={handleSwitchToSignIn}
+      />
+
+      {/* Email Sign In Modal */}
+      <EmailSignInModal
+        visible={showEmailSignInModal}
+        onClose={() => setShowEmailSignInModal(false)}
+        onSwitchToSignUp={handleSwitchToSignUp}
+        onForgotPassword={() => {
+          console.log('Forgot password pressed');
+        }}
+      />
     </SafeAreaView>
   );
 };
