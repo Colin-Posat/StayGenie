@@ -296,17 +296,17 @@ const processHotelWithImmediateInsights = async (
 
       if (insightsResponse.data?.recommendations?.[0]) {
         const aiRecommendation = insightsResponse.data.recommendations[0];
-        
-        // Enhanced hotel data with AI insights
-        const enhancedHotelData = {
-          ...basicHotelData,
-          whyItMatches: aiRecommendation.whyItMatches || "Great choice with excellent amenities",
-          funFacts: aiRecommendation.funFacts || ["Modern facilities", "Excellent service"],
-          nearbyAttractions: aiRecommendation.nearbyAttractions || [`${enrichedHotelSummary.city} center`, "Local landmarks"],
-          locationHighlight: aiRecommendation.locationHighlight || "Prime location",
-          guestInsights: aiRecommendation.guestInsights || "Guests appreciate the quality and service",
-          thirdImageHd: aiRecommendation.thirdImageHd || null
-        };
+        console.log(`HOTEL SEARCH AND MATCH SHIT: ${aiRecommendation.allHotelInfo}`);
+          const enhancedHotelData = {
+            ...basicHotelData,
+            whyItMatches: aiRecommendation.whyItMatches || "Great choice with excellent amenities",
+            funFacts: aiRecommendation.funFacts || ["Modern facilities", "Excellent service"],
+            nearbyAttractions: aiRecommendation.nearbyAttractions || [`${enrichedHotelSummary.city} center`, "Local landmarks"],
+            locationHighlight: aiRecommendation.locationHighlight || "Prime location",
+            guestInsights: aiRecommendation.guestInsights || "Guests appreciate the quality and service",
+            thirdImageHd: aiRecommendation.thirdImageHd || null,
+            allHotelInfo: aiRecommendation.allHotelInfo || 'Detailed information not available' // ADD THIS
+          };
 
         // Stream enhanced hotel data with AI insights
         sendUpdate('hotel_enhanced', {

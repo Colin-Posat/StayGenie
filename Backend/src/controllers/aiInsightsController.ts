@@ -1,6 +1,6 @@
 // src/controllers/aiInsightsController.ts
 import { Request, Response } from 'express';
-import axios from 'axios';
+import axios, { all } from 'axios';
 import OpenAI from 'openai';
 import Groq from 'groq-sdk';
 import pLimit from 'p-limit';
@@ -19,6 +19,7 @@ export interface AIRecommendation {
   guestInsights: string;
   sentimentData: any;
   thirdImageHd: string | null; // ADD THIS
+  allHotelInfo: string;
 }
 
 // Load environment variables
@@ -259,7 +260,6 @@ interface HotelSummaryForInsights {
     longitude: number | null; // ADD THIS
   };
 }
-// Fetch hotel details including sentiment data from LiteAPI
 const getHotelSentimentOptimized = async (hotelId: string): Promise<HotelSentimentData | null> => {
   try {
     console.log(`🎭 Fetching hotel details with sentiment analysis for hotel ID: ${hotelId}`);
@@ -281,8 +281,29 @@ const getHotelSentimentOptimized = async (hotelId: string): Promise<HotelSentime
     console.log(`✅ Got hotel details with sentiment data for hotel ${hotelId}`);
     
     return hotelData;
-  } catch (error) {
-    console.warn(`Failed to get hotel details for ${hotelId}:`, error);
+  } catch (error: any) {
+    // Handle rate limiting specifically
+    if (error.response?.status === 429) {
+      console.warn(`⏰ Rate limited for hotel ${hotelId} - waiting and retrying...`);
+      
+      // Wait 2 seconds and retry once
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      try {
+        const retryResponse = await liteApiInstance.get('/data/hotel', {
+          params: { hotelId: hotelId },
+          timeout: SENTIMENT_FETCH_TIMEOUT
+        });
+        
+        console.log(`✅ Retry successful for hotel ${hotelId}`);
+        return retryResponse.data;
+      } catch (retryError) {
+        console.warn(`❌ Retry also failed for hotel ${hotelId}`);
+        return null;
+      }
+    }
+    
+    console.warn(`Failed to get hotel details for ${hotelId}:`, error.response?.status || error.message);
     return null;
   }
 };
@@ -305,6 +326,178 @@ const getThirdHotelImageHd = (hotelDetailsData: HotelSentimentData | null): stri
     console.warn('Error extracting third hotel image:', error);
     return null;
   }
+};
+import fs from 'fs';
+
+const writeHotelInfoToFile = (hotelName: string, hotelId: string, allHotelInfo: string): void => {
+  try {
+    // Create a logs directory if it doesn't exist
+    const logsDir = path.join(__dirname, '../../logs/hotel-info');
+    if (!fs.existsSync(logsDir)) {
+      fs.mkdirSync(logsDir, { recursive: true });
+    }
+
+    // Clean hotel name for filename
+    const cleanHotelName = hotelName.replace(/[^a-zA-Z0-9\s]/g, '').replace(/\s+/g, '_');
+    const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
+    const filename = `${cleanHotelName}_${hotelId}_${timestamp}.txt`;
+    const filepath = path.join(logsDir, filename);
+
+    // Write the consolidated info to file
+    fs.writeFileSync(filepath, allHotelInfo, 'utf8');
+    
+    console.log(`📁 Hotel info written to: ${filepath}`);
+    console.log(`📊 File size: ${allHotelInfo.length} characters`);
+    
+  } catch (error) {
+    console.error(`❌ Failed to write hotel info to file for ${hotelName}:`, error);
+  }
+};
+
+const consolidateAllHotelInfo = (hotelDetailsData: HotelSentimentData | null): string => {
+  console.log('🔍 Starting consolidateAllHotelInfo processing...');
+  
+  if (!hotelDetailsData?.data) {
+    console.log('❌ No hotel details data available for consolidation');
+    return 'Detailed hotel information not available';
+  }
+
+  const hotel = hotelDetailsData.data;
+  console.log(`📝 Consolidating info for hotel: ${hotel.name} (ID: ${hotel.id})`);
+  
+  let allInfo = '';
+  let sectionsProcessed = 0;
+
+  // Hotel Description
+  if (hotel.hotelDescription) {
+    console.log('✅ Processing hotel description...');
+    const cleanDescription = hotel.hotelDescription.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').trim();
+    allInfo += 'HOTEL DESCRIPTION:\n';
+    allInfo += cleanDescription + '\n\n';
+    sectionsProcessed++;
+    console.log(`   Description length: ${cleanDescription.length} characters`);
+  } else {
+    console.log('⚠️ No hotel description found');
+  }
+
+  // Important Information
+  if (hotel.hotelImportantInformation) {
+    console.log('✅ Processing important information...');
+    allInfo += 'IMPORTANT INFORMATION:\n';
+    allInfo += hotel.hotelImportantInformation.trim() + '\n\n';
+    sectionsProcessed++;
+    console.log(`   Important info length: ${hotel.hotelImportantInformation.length} characters`);
+  } else {
+    console.log('⚠️ No important information found');
+  }
+
+  // All Amenities/Facilities
+  if (hotel.hotelFacilities && hotel.hotelFacilities.length > 0) {
+    console.log(`✅ Processing ${hotel.hotelFacilities.length} hotel facilities...`);
+    allInfo += 'HOTEL FACILITIES & AMENITIES:\n';
+    hotel.hotelFacilities.forEach(facility => {
+      allInfo += `• ${facility}\n`;
+    });
+    allInfo += '\n';
+    sectionsProcessed++;
+  } else {
+    console.log('⚠️ No hotel facilities found');
+  }
+
+  // Additional structured facilities
+  if (hotel.facilities && hotel.facilities.length > 0) {
+    console.log(`✅ Processing ${hotel.facilities.length} additional facilities...`);
+    allInfo += 'ADDITIONAL FACILITIES:\n';
+    hotel.facilities.forEach(facility => {
+      allInfo += `• ${facility.name}\n`;
+    });
+    allInfo += '\n';
+    sectionsProcessed++;
+  } else {
+    console.log('⚠️ No additional facilities found');
+  }
+
+  // Policies
+  if (hotel.policies && hotel.policies.length > 0) {
+    console.log(`✅ Processing ${hotel.policies.length} hotel policies...`);
+    allInfo += 'HOTEL POLICIES:\n';
+    hotel.policies.forEach(policy => {
+      allInfo += `${policy.name.toUpperCase()}:\n`;
+      allInfo += policy.description.trim() + '\n\n';
+      console.log(`   Policy processed: ${policy.name}`);
+    });
+    sectionsProcessed++;
+  } else {
+    console.log('⚠️ No hotel policies found');
+  }
+
+  // Sentiment Analysis
+  if (hotel.sentiment_analysis) {
+    console.log('✅ Processing sentiment analysis...');
+    const sentiment = hotel.sentiment_analysis;
+    
+    allInfo += 'GUEST SENTIMENT ANALYSIS:\n';
+    
+    if (sentiment.pros && sentiment.pros.length > 0) {
+      console.log(`   Found ${sentiment.pros.length} positive points`);
+      allInfo += 'What Guests Love:\n';
+      sentiment.pros.forEach(pro => {
+        allInfo += `• ${pro}\n`;
+      });
+      allInfo += '\n';
+    }
+    
+    if (sentiment.cons && sentiment.cons.length > 0) {
+      console.log(`   Found ${sentiment.cons.length} areas for improvement`);
+      allInfo += 'Areas for Improvement:\n';
+      sentiment.cons.forEach(con => {
+        allInfo += `• ${con}\n`;
+      });
+      allInfo += '\n';
+    }
+    
+    if (sentiment.categories && sentiment.categories.length > 0) {
+      console.log(`   Found ${sentiment.categories.length} rating categories`);
+      allInfo += 'Category Ratings:\n';
+      sentiment.categories.forEach(category => {
+        allInfo += `• ${category.name}: ${category.rating}/10 - ${category.description}\n`;
+      });
+      allInfo += '\n';
+    }
+    sectionsProcessed++;
+  } else {
+    console.log('⚠️ No sentiment analysis found');
+  }
+
+  // Hotel Contact & Basic Info
+  console.log('✅ Processing basic information...');
+  allInfo += 'BASIC INFORMATION:\n';
+  allInfo += `Name: ${hotel.name}\n`;
+  allInfo += `Address: ${hotel.address}\n`;
+  allInfo += `City: ${hotel.city}\n`;
+  allInfo += `Country: ${hotel.country}\n`;
+  allInfo += `Star Rating: ${hotel.starRating} stars\n`;
+  allInfo += `Guest Rating: ${hotel.rating}/10 (${hotel.reviewCount} reviews)\n`;
+  
+  if (hotel.checkinCheckoutTimes) {
+    allInfo += `Check-in: ${hotel.checkinCheckoutTimes.checkin}\n`;
+    allInfo += `Check-out: ${hotel.checkinCheckoutTimes.checkout}\n`;
+    console.log('   Check-in/out times added');
+  }
+  sectionsProcessed++;
+
+  const finalLength = allInfo.trim().length;
+  console.log(`🎉 Consolidation complete for ${hotel.name}:`);
+  console.log(`   Sections processed: ${sectionsProcessed}`);
+  console.log(`   Final text length: ${finalLength} characters`);
+  console.log(`   First 200 chars: ${allInfo.substring(0, 200)}...`);
+
+  const finalInfo = allInfo.trim();
+  
+  // Write to file for inspection
+  writeHotelInfoToFile(hotel.name, hotel.id, finalInfo);
+
+  return allInfo.trim();
 };
 
 // Generate guest insights from sentiment data - CLEAN RATINGS FORMAT
@@ -647,7 +840,6 @@ const getDefaultAttractionsBySearch = (userQuery?: string, city?: string): strin
 };
 
 
-// New combined function that handles hotel details fetching and insight generation in parallel
 const fetchHotelDetailsAndGenerateInsights = async (
   hotel: HotelSummaryForInsights,
   delayMs: number = 0
@@ -656,9 +848,9 @@ const fetchHotelDetailsAndGenerateInsights = async (
   guestInsights: string;
   sentimentData: HotelSentimentData | null;
   thirdImageHd: string | null;
+  allHotelInfo: string; // ADD THIS
 }> => {
   
-  // Stagger requests to avoid rate limiting
   if (delayMs > 0) {
     await new Promise(resolve => setTimeout(resolve, delayMs));
   }
@@ -666,12 +858,10 @@ const fetchHotelDetailsAndGenerateInsights = async (
   try {
     console.log(`🎭 Starting hotel details fetch and insights for ${hotel.name}`);
     
-    // Fetch hotel details (which includes sentiment data)
     const hotelDetailsData = await getHotelSentimentOptimized(hotel.hotelId);
-    
-    // Generate insights from sentiment data (this happens immediately after hotel details fetch)
     const guestInsights = await generateInsightsFromSentiment(hotel.name, hotelDetailsData);
     const thirdImageHd = getThirdHotelImageHd(hotelDetailsData);
+    const allHotelInfo = consolidateAllHotelInfo(hotelDetailsData); // ADD THIS
 
     console.log(`✅ Completed hotel details and insights for ${hotel.name}`);
     
@@ -679,19 +869,19 @@ const fetchHotelDetailsAndGenerateInsights = async (
       hotelId: hotel.hotelId,
       guestInsights,
       sentimentData: hotelDetailsData,
-      thirdImageHd
+      thirdImageHd,
+      allHotelInfo // ADD THIS
     };
     
   } catch (error) {
     console.warn(`⚠️ Hotel details and insights failed for ${hotel.name}:`, error);
     
-    const fallbackInsights = "Guests appreciate the comfortable accommodations and convenient location. Some mention the check-in process could be faster.";
-    
     return {
       hotelId: hotel.hotelId,
-      guestInsights: fallbackInsights,
+      guestInsights: "Guests appreciate the comfortable accommodations and convenient location. Some mention the check-in process could be faster.",
       sentimentData: null,
-      thirdImageHd: null
+      thirdImageHd: null,
+      allHotelInfo: 'Detailed hotel information not available' // ADD THIS
     };
   }
 };
@@ -766,11 +956,24 @@ export const aiInsightsController = async (req: Request, res: Response) => {
     });
 
     // Promise 2: Fetch hotel details and generate insights for all hotels
-    const hotelDetailsInsightsPromises = validHotels.map(async (hotel, index) => {
-      // Use shorter delay since we're now combining hotel details fetch + insights generation
-      const delayMs = index * 200; 
-      return await fetchHotelDetailsAndGenerateInsights(hotel, delayMs);
-    });
+// Promise 2: Fetch hotel details and generate insights for all hotels
+const hotelDetailsInsightsPromises = validHotels.map(async (hotel, index) => {
+  // FIX: Handle single hotel requests differently
+  if (validHotels.length === 1) {
+    // Single hotel request (like from processHotelWithImmediateInsights)
+    console.log(`🔄 Processing single hotel request for: ${hotel.name}`);
+    return await fetchHotelDetailsAndGenerateInsights(hotel, 0);
+  } else if (index < 3) {
+    // First 3 hotels in multi-hotel request
+    console.log(`🔄 Processing top hotel ${index + 1} (${hotel.name}) sequentially`);
+    return await fetchHotelDetailsAndGenerateInsights(hotel, 0);
+  } else {
+    // Rest get normal delays
+    const delayMs = (index - 3) * 1000;
+    console.log(`⏰ Hotel ${index + 1} (${hotel.name}) will be processed after ${delayMs}ms delay`);
+    return await fetchHotelDetailsAndGenerateInsights(hotel, delayMs);
+  }
+});
 
     // Execute both sets of operations in parallel
     const [aiContentResults, hotelDetailsInsightsResults] = await Promise.all([
@@ -792,7 +995,9 @@ export const aiInsightsController = async (req: Request, res: Response) => {
     );
 
     const finalRecommendations: AIRecommendation[] = aiContentResults.map(aiContent => {
+      
       const hotelDetailsInsights = hotelDetailsInsightsMap.get(aiContent.hotelId);
+      console.log(`AI INSIGHTS SHIT: ${hotelDetailsInsights?.allHotelInfo}`);
       
       return {
         hotelId: aiContent.hotelId,
@@ -804,7 +1009,8 @@ export const aiInsightsController = async (req: Request, res: Response) => {
         locationHighlight: aiContent.locationHighlight,
         guestInsights: hotelDetailsInsights?.guestInsights || "Loading insights...",
         sentimentData: hotelDetailsInsights?.sentimentData || null,
-        thirdImageHd: hotelDetailsInsights?.thirdImageHd || null
+        thirdImageHd: hotelDetailsInsights?.thirdImageHd || null,
+        allHotelInfo: hotelDetailsInsights?.allHotelInfo || 'Detailed information not available'
       };
     });
 

@@ -293,6 +293,7 @@ interface Hotel {
 
   isPlaceholder?: boolean;
   thirdImageHd?: string | null;
+  allHotelInfo?: string;
 }
 
 //const BASE_URL = 'https://staygenie-wwpa.onrender.com';
@@ -586,6 +587,9 @@ const convertStreamedHotelToDisplay = (streamedHotel: any, index: number): Hotel
   const isAIEnhanced = streamedHotel.whyItMatches && 
                       !streamedHotel.whyItMatches.includes('Analyzing') && 
                       !streamedHotel.whyItMatches.includes('progress');
+  console.log(`HOTEL SEARCH AND MATCH SHIT: ${streamedHotel.allHotelInfo}`);
+
+  
 
   return {
     id: streamedHotel.hotelId || streamedHotel.id,
@@ -659,7 +663,8 @@ const convertStreamedHotelToDisplay = (streamedHotel: any, index: number): Hotel
     // Refundable policy
     isRefundable: streamedHotel.isRefundable,
     refundableTag: streamedHotel.refundableTag,
-    refundableInfo: streamedHotel.refundableInfo || streamedHotel.summarizedInfo?.refundableInfo
+    refundableInfo: streamedHotel.refundableInfo || streamedHotel.summarizedInfo?.refundableInfo,
+    allHotelInfo: streamedHotel.allHotelInfo || 'Detailed information not available'
   };
 };
 
@@ -973,228 +978,6 @@ const executeStreamingSearch = async (userInput: string) => {
     }));
   }, []);
 
-  // NEW: Convert Stage 1 hotel to display format (basic info with loading placeholders)
-  const convertStage1HotelToDisplay = (hotel: Stage1Hotel, index: number): Hotel => {
-  console.log('🔍 Converting Stage 1 hotel (basic data):', hotel.name);
-  
-  const getHotelImage = (hotel: Stage1Hotel): string => {
-    const defaultImage = "https://images.unsplash.com/photo-1564501049412-61c2a3083791?auto=format&fit=crop&w=800&q=80";
-    
-    if (hotel.images && hotel.images.length > 0) {
-      const firstImage = hotel.images[0];
-      if (firstImage && typeof firstImage === 'string' && firstImage.trim() !== '') {
-        if (firstImage.startsWith('http://') || firstImage.startsWith('https://') || firstImage.startsWith('//')) {
-          return firstImage;
-        }
-      }
-    }
-    
-    return defaultImage;
-  };
-
-  let price = 200;
-  let originalPrice = price * 1.15;
-  let priceComparison = "Standard rate";
-
-  if (hotel.pricePerNight) {
-    price = hotel.pricePerNight.amount;
-    originalPrice = Math.round(price * 1.15);
-    priceComparison = hotel.pricePerNight.display;
-    
-    if (hotel.pricePerNight.provider) {
-      priceComparison += ` (${hotel.pricePerNight.provider})`;
-    }
-  } else if (hotel.priceRange) {
-    price = hotel.priceRange.min;
-    originalPrice = Math.round(price * 1.15);
-    priceComparison = hotel.priceRange.display;
-  }
-
-  const generateTransitDistance = (city: string, topAmenities: string[]): string => {
-    const cityDistances: Record<string, string> = {
-      'Tokyo': '2 min walk to subway',
-      'Paris': '5 min walk to Metro',
-      'New York': '3 min walk to subway',
-      'London': '4 min walk to tube',
-      'Miami': '3 min walk to beach',
-      'Los Angeles': '5 min walk to metro',
-      'Vail': '2 min walk to ski lift',
-      'Chicago': '4 min walk to L train'
-    };
-    
-    return cityDistances[city] || '5 min walk to main area';
-  };
-
-  return {
-    // FIX: Use the actual hotel ID from the API instead of array index
-    id: hotel.hotelId, // Changed from: index + 1
-    name: hotel.name,
-    image: getHotelImage(hotel),
-    images: hotel.images || [],
-    price: Math.round(price),
-    originalPrice: Math.round(originalPrice),
-    priceComparison: priceComparison,
-    rating: hotel.starRating || 4.0,
-    reviews: hotel.reviewCount || Math.floor(Math.random() * 1000) + 100,
-    safetyRating: 8.5 + Math.random() * 1.5,
-    transitDistance: generateTransitDistance(hotel.city, hotel.topAmenities),
-    tags: hotel.topAmenities?.slice(0, 3) || hotel.amenities?.slice(0, 3) || ["Standard amenities"],
-    location: hotel.address,
-    features: hotel.amenities || ["Standard features"],
-    
-    // Stage 1: Show loading placeholders for AI content
-    aiExcerpt: "AI is analyzing this hotel for you...", 
-    whyItMatches: "AI match analysis in progress...", 
-    funFacts: ["Loading interesting facts..."], 
-    guestInsights: "Loading guest insights...", 
-    nearbyAttractions: ["Finding nearby attractions..."], 
-    locationHighlight: "Analyzing location advantages...", 
-    
-    // Basic data available immediately
-    aiMatchPercent: hotel.aiMatchPercent,
-    pricePerNight: hotel.pricePerNight,
-    roomTypes: hotel.roomTypes,
-    city: hotel.city,
-    country: hotel.country,
-    latitude: hotel.latitude,
-    longitude: hotel.longitude,
-    topAmenities: hotel.topAmenities,
-    matchType: "analyzing", // Will be updated in Stage 2
-    hasAvailability: hotel.hasAvailability,
-    totalRooms: hotel.totalRooms,
-    fullDescription: hotel.description,
-    fullAddress: hotel.address,
-    
-    // NEW: Refundable policy data from Stage 1
-    isRefundable: hotel.isRefundable,
-    refundableTag: hotel.refundableTag,
-    refundableInfo: hotel.refundableInfo
-  };
-};
-
-
-  // NEW: Update hotels with Stage 2 AI insights
-  const updateHotelsWithInsights = (stage2Results: Stage2InsightsResponse) => {
-  console.log('🎨 Updating hotels with AI insights...');
-  
-  setDisplayHotels(prevHotels => 
-    prevHotels.map(hotel => {
-      const aiRecommendation = stage2Results.recommendations.find(
-        rec => rec.hotelId === hotel.id.toString() || 
-               rec.hotelId === hotel.id || 
-               rec.hotelName === hotel.name
-      );
-      
-      if (aiRecommendation) {
-        console.log(`✨ Updating ${hotel.name} with AI insights`);
-        return {
-          ...hotel,
-          aiExcerpt: aiRecommendation.whyItMatches,
-          whyItMatches: aiRecommendation.whyItMatches,
-          funFacts: aiRecommendation.funFacts || hotel.funFacts,
-          guestInsights: aiRecommendation.guestInsights,
-          nearbyAttractions: aiRecommendation.nearbyAttractions,
-          locationHighlight: aiRecommendation.locationHighlight,
-          matchType: aiRecommendation.aiMatchPercent >= 85 ? 'excellent' : 
-                    aiRecommendation.aiMatchPercent >= 75 ? 'great' : 'good'
-        };
-      }
-      
-      return hotel;
-    })
-  );
-};
-
-  // NEW: Execute Stage 2 - AI Insights
-const executeStage2Insights = async (stage1Data: Stage1SearchResponse, userQuery?: string) => {
-  try {
-    console.log('🧠 Starting Stage 2: AI Insights Generation...');
-    console.log('📥 Stage 1 data received:', {
-      hotelCount: stage1Data.hotels?.length,
-      searchParams: stage1Data.searchParams,
-      searchId: stage1Data.searchId
-    });
-    
-    setIsInsightsLoading(true);
-
-    // Prepare hotels for insights - use the exact format your AI insights endpoint expects
-    const hotelsForInsights = stage1Data.hotels.map(hotel => ({
-      hotelId: hotel.hotelId,
-      name: hotel.name,
-      aiMatchPercent: hotel.aiMatchPercent,
-      summarizedInfo: {
-        name: hotel.name,
-        description: hotel.description?.substring(0, 1000) || hotel.summarizedInfo?.description?.substring(0, 1000) || 'Quality accommodation',
-        amenities: hotel.topAmenities || hotel.amenities || hotel.summarizedInfo?.amenities || [],
-        starRating: hotel.starRating,
-        reviewCount: hotel.reviewCount,
-        pricePerNight: hotel.pricePerNight?.display || hotel.summarizedInfo?.pricePerNight || 'Price not available',
-        location: hotel.address || hotel.summarizedInfo?.location || 'Location not available',
-        city: hotel.city,
-        country: hotel.country,
-        latitude: hotel.latitude,
-        longitude: hotel.longitude,
-        isRefundable: hotel.isRefundable || false,
-        refundableInfo: hotel.refundableInfo || 'No refund information available'
-      }
-    }));
-
-    console.log(`📦 Prepared ${hotelsForInsights.length} hotels for AI insights`);
-    console.log('🔍 Sample hotel for insights:', hotelsForInsights[0]);
-
-    const stage2Response: Stage2InsightsResponse = await makeRequest('/api/hotels/ai-insights', {
-      hotels: hotelsForInsights,
-      userQuery: userQuery,
-      nights: stage1Data.searchParams?.nights || 2
-    });
-
-    console.log('✅ Stage 2 Complete - AI insights generated!');
-    console.log(`🎨 Generated insights for ${stage2Response.processedHotels} hotels`);
-    console.log(`🤖 AI Models: ${stage2Response.aiModels.content} + ${stage2Response.aiModels.insights}`);
-
-    setStage2Results(stage2Response);
-    
-    // Update hotels with AI insights
-    updateHotelsWithInsights(stage2Response);
-
-    console.log('🎉 Stage 2 insights applied to displayed hotels');
-
-  } catch (error: any) {
-    console.error('❌ Stage 2 failed:', error);
-    
-    // Check if it's a payload size error
-    if (error.message.includes('too large') || error.message.includes('PayloadTooLargeError')) {
-      console.error('💥 Payload too large error - even compressed data exceeded server limits');
-      Alert.alert(
-        'Data Processing Issue',
-        'The search results are too large to enhance with AI insights. Using basic recommendations.',
-        [{ text: 'OK' }]
-      );
-    } else {
-      Alert.alert(
-        'AI Insights Unavailable',
-        `Using fallback insights. Hotel data is still accurate.\n\nError: ${error.message}`,
-        [{ text: 'OK' }]
-      );
-    }
-    
-    // Provide fallback insights
-    setDisplayHotels(prevHotels => 
-      prevHotels.map(hotel => ({
-        ...hotel,
-        aiExcerpt: "Great choice with excellent amenities and location",
-        whyItMatches: "Excellent choice with great amenities and location", 
-        funFacts: ["Modern facilities", "Excellent guest reviews"],
-        guestInsights: "Guests appreciate the comfortable accommodations and convenient location.",
-        nearbyAttractions: [`${hotel.city} center`, "Local landmarks"],
-        locationHighlight: "Prime location"
-      }))
-    );
-    
-  } finally {
-    setIsInsightsLoading(false);
-  }
-};
 
   // Convert recommendation to display format (legacy compatibility)
 const convertRecommendationToDisplayHotel = (recommendation: HotelRecommendation, index: number): Hotel => {
@@ -1358,219 +1141,7 @@ const convertRecommendationToDisplayHotel = (recommendation: HotelRecommendation
     }
   };
 
-  // NEW: Two-stage optimized search
-  const executeTwoStageOptimizedSearch = async (userInput: string) => {
-    if (!userInput.trim()) return;
-
-    try {
-      console.log('\n' + '='.repeat(80));
-      console.log('🚀 Starting Two-Stage Optimized Hotel Search...');
-      console.log('📝 User Input:', userInput);
-      
-      setShowPlaceholders(true);
-
-      const placeholderHotels = generatePlaceholderHotels(10);
-      setDisplayHotels(placeholderHotels);
-
-      // Create search context for AI suggestions
-      const searchContext = {
-        dates: {
-          checkin: checkInDate.toISOString().split('T')[0],
-          checkout: checkOutDate.toISOString().split('T')[0],
-        },
-        guests: {
-          adults: adults,
-          children: children,
-        }
-      };
-
-      // Start AI suggestions loading in parallel
-const aiSuggestionsPromise = loadAiSuggestionsForSearch(userInput, searchContext);
-
-      // STAGE 1: Hotel Search + Llama Matching
-      console.log('🏨 Stage 1: Starting hotel search and Llama matching...');
-      const stage1Response: Stage1SearchResponse = await makeRequest('/api/hotels/search-and-match', {
-        userInput: userInput
-      });
-
-      console.log('✅ Stage 1 Complete - Basic hotel data ready!');
-      console.log('📊 Stage 1 Performance:', stage1Response.performance);
-      console.log('🎯 Matched Hotels:', stage1Response.matchedHotelsCount);
-      console.log('🔍 Search ID:', stage1Response.searchId);
-
-      setStage1Results(stage1Response);
-      setCurrentSearchId(stage1Response.searchId);
-
-      await aiSuggestionsPromise;
-console.log('🤖 AI suggestions loading completed!');
-
-      // IMMEDIATELY Convert Stage 1 hotels to display format and show them
-      const basicHotels: Hotel[] = stage1Response.hotels.map((hotel: Stage1Hotel, index: number) => 
-        convertStage1HotelToDisplay(hotel, index)
-      );
-
-      setDisplayHotels(basicHotels);
-    setShowPlaceholders(false);
-      
-      // Show hotels immediately after Stage 1
-      setDisplayHotels(basicHotels);
-      setIsSearching(false); // Stop the main loading screen
-
-      // Update dates and guest info from search response
-      if (stage1Response.searchParams.checkin) {
-        setCheckInDate(new Date(stage1Response.searchParams.checkin));
-      }
-      if (stage1Response.searchParams.checkout) {
-        setCheckOutDate(new Date(stage1Response.searchParams.checkout));
-      }
-      if (stage1Response.searchParams.adults) {
-        setAdults(stage1Response.searchParams.adults);
-      }
-      if (stage1Response.searchParams.children) {
-        setChildren(stage1Response.searchParams.children);
-      }
-
-      // Show Stage 1 results immediately
-      const performanceText = `⚡ Fast search (${stage1Response.performance.totalTimeMs}ms)`;
-      Alert.alert(
-        'Hotels Found! 🎯', 
-        `Found ${stage1Response.matchedHotelsCount} AI-matched hotels.\n\n${performanceText}\n\n🧠 Now enhancing with AI insights...`,
-        [{ text: 'View Hotels' }]
-      );
-      
-
-      // STAGE 2: AI Insights Generation (in background after showing hotels)
-      console.log('🧠 Stage 2: Starting AI insights generation in background...');
-      
-      // Wait for AI suggestions to complete (if not already done)
-      await aiSuggestionsPromise;
-      console.log('🤖 AI suggestions pre-loading completed!');
-
-      // Execute Stage 2 insights in background
-      await executeStage2Insights(stage1Response, userInput);
-
-    } catch (error: any) {
-      console.error('💥 Two-stage search failed:', error);
-
-      setShowPlaceholders(false);
-    setDisplayHotels([]);
-      
-      let errorMessage = 'Please try again with a different query. ';
-      
-      if (error.message.includes('timeout')) {
-        errorMessage += 'The request timed out - try a more specific search.';
-      } else if (error.message.includes('No hotels found')) {
-        errorMessage += 'No hotels found for your criteria - try different dates or location.';
-      } else if (error.message.includes('ECONNREFUSED')) {
-        errorMessage += 'Make sure your backend server is running on localhost:3003.';
-      } else {
-        errorMessage += `Error: ${error.message}`;
-      }
-      
-      Alert.alert('Search Failed', errorMessage, [{ text: 'OK' }]);
-    } finally {
-      setIsSearching(false);
-    }
-  };
-
-  // PRODUCTION: Legacy single-stage search (for backward compatibility)
-  const executeLegacySearch = async (userInput: string) => {
-    if (!userInput.trim()) return;
-
-    try {
-      console.log('\n' + '='.repeat(80));
-      console.log('🚀 Starting Legacy Hotel Search...');
-      console.log('📝 User Input:', userInput);
-      
-      setIsSearching(true);
-const searchContext = {
-  dates: {
-    checkin: checkInDate.toISOString().split('T')[0],
-    checkout: checkOutDate.toISOString().split('T')[0],
-  },
-  guests: {
-    adults: adults,
-    children: children,
-  }
-};
-
-await loadAiSuggestionsForSearch(userInput, searchContext);
-
-      // START HOTEL SEARCH
-      const searchPromise = makeRequest('/api/hotels/search', {
-        userInput: userInput
-      });
-
-      // Wait for hotel search to complete (AI suggestions continue in background)
-      const searchResponse: OptimizedSearchResponse = await searchPromise;
-
-      console.log('✅ Legacy Search Complete!');
-      console.log('📊 Performance:', searchResponse.performance);
-      console.log('🎭 Insights Pending:', searchResponse.insightsPending);
-      console.log('🔍 Search ID:', searchResponse.searchId);
-
-      setSearchResults(searchResponse);
-      setCurrentSearchId(searchResponse.searchId);
-
-      // Convert recommendations to display format
-      const convertedHotels: Hotel[] = searchResponse.recommendations.map((rec: HotelRecommendation, index: number) => 
-        convertRecommendationToDisplayHotel(rec, index)
-      );
-      
-      setDisplayHotels(convertedHotels);
-
-      // Update dates and guest info from search response
-      if (searchResponse.searchParams.checkin) {
-        setCheckInDate(new Date(searchResponse.searchParams.checkin));
-      }
-      if (searchResponse.searchParams.checkout) {
-        setCheckOutDate(new Date(searchResponse.searchParams.checkout));
-      }
-      if (searchResponse.searchParams.adults) {
-        setAdults(searchResponse.searchParams.adults);
-      }
-      if (searchResponse.searchParams.children) {
-        setChildren(searchResponse.searchParams.children);
-      }
-
-      // Show initial results
-      const performanceText = searchResponse.performance.optimized 
-        ? `⚡ Fast search (${searchResponse.performance.totalTimeMs}ms)`
-        : `Standard search (${searchResponse.performance.totalTimeMs}ms)`;
-
-      Alert.alert(
-        'Results Ready! 🎯', 
-        `Found ${searchResponse.aiRecommendationsCount} AI-curated recommendations.\n\n${performanceText}`,
-        [{ text: 'View Results' }]
-      );
-
-      // Start sentiment polling if insights are pending (legacy behavior)
-      if (searchResponse.insightsPending && searchResponse.searchId) {
-        console.log('🎭 Starting legacy sentiment polling...');
-        // Add legacy sentiment polling logic here if needed
-      }
-
-
-    } catch (error: any) {
-      console.error('💥 Legacy search failed:', error);
-      
-      let errorMessage = 'Please try again with a different query. ';
-      
-      if (error.message.includes('timeout')) {
-        errorMessage += 'The request timed out - try a more specific search.';
-      } else if (error.message.includes('No hotels found')) {
-        errorMessage += 'No hotels found for your criteria - try different dates or location.';
-      } else if (error.message.includes('ECONNREFUSED')) {
-        errorMessage += 'Make sure your backend server is running on localhost:3003.';
-      } else {
-        errorMessage += `Error: ${error.message}`;
-      }
-      
-      Alert.alert('Search Failed', errorMessage, [{ text: 'OK' }]);
-    } finally {
-      setIsSearching(false);
-    }
-  };
+  
 
   const makeRequest = async (endpoint: string, data?: any) => {
   try {
@@ -1609,8 +1180,6 @@ const executeSearch = async (userInput: string) => {
     try {
       await executeStreamingSearch(userInput);
     } catch (error: any) {
-      console.warn('⚠️ Streaming failed, falling back to two-stage...', error);
-      await executeTwoStageOptimizedSearch(userInput);
     }
   }
 };

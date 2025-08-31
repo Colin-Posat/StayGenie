@@ -18,6 +18,7 @@ import { formatLocationDisplay, getCountryName } from '../../utils/countryMappin
 import EmailSignUpModal from '../SignupLogin/EmailSignUpModal';
 import EmailSignInModal from '../SignupLogin/EmailSignInModal';
 import AnimatedHeartButton from './AnimatedHeartButton';
+import HotelChatOverlay from '../../components/HomeScreenTop/HotelChatOverlay';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 const CARD_WIDTH = screenWidth - 40;
@@ -48,6 +49,7 @@ interface Hotel {
   location: string;
   features: string[];
   images?: string[];
+  allHotelInfo?: string;
   
   // AI-powered fields from two-stage API
   aiExcerpt?: string;
@@ -971,7 +973,7 @@ const SwipeableHotelStoryCard: React.FC<SwipeableHotelStoryCardProps> = ({
 
   const [showFavoritePopup, setShowFavoritePopup] = useState(false);
 const popupAnimation = useRef(new Animated.Value(0)).current;
-
+const [showHotelChat, setShowHotelChat] = useState(false);
   const [currentSlide, setCurrentSlide] = useState(0);
   const [showEmailSignUpModal, setShowEmailSignUpModal] = useState(false);
   const [showEmailSignInModal, setShowEmailSignInModal] = useState(false);
@@ -1369,31 +1371,49 @@ useEffect(() => {
   >
     <Ionicons name="map" size={16} color={TURQUOISE_DARK} />
     <Text style={[tw`ml-2 font-medium text-sm`, { color: BLACK }]}>
-      Map View
+      Map
     </Text>
   </TouchableOpacity>
 
-  {/* Book Now Button - Updated with increased height */}
-  <TouchableOpacity
-    style={[
-      tw`py-3 px-4 rounded-xl border-2 flex-row items-center flex-1 justify-center`,
-      { 
-        backgroundColor: TURQUOISE + '10',
-        borderColor: TURQUOISE + '30',
-      }
-    ]}
-    onPress={handleDeepLink}
-    activeOpacity={0.8}
-  >
-    <Image 
-      source={require('../../assets/images/logo.png')} 
-      style={{ width: 16, height: 16 }} 
-      resizeMode="contain"
-    />
-    <Text style={[tw`ml-2 font-medium text-sm`, { color: BLACK }]}>
-      Book Now
-    </Text>
-  </TouchableOpacity>
+{/* Ask Button - New */}
+<TouchableOpacity
+  style={[
+    tw`py-3 px-4 rounded-xl border-2 flex-row items-center flex-1 justify-center`,
+    { 
+      backgroundColor: TURQUOISE + '10',
+      borderColor: TURQUOISE + '30',
+    }
+  ]}
+  onPress={() => setShowHotelChat(true)} 
+  activeOpacity={0.8}
+>
+  <Ionicons name="chatbubble" size={16} color={TURQUOISE_DARK} />
+  <Text style={[tw`ml-2 font-medium text-sm`, { color: BLACK }]}>
+    Ask
+  </Text>
+</TouchableOpacity>
+
+{/* Book Button - Updated text */}
+<TouchableOpacity
+  style={[
+    tw`py-3 px-4 rounded-xl border-2 flex-row items-center flex-1 justify-center`,
+    { 
+      backgroundColor: TURQUOISE + '10',
+      borderColor: TURQUOISE + '30',
+    }
+  ]}
+  onPress={handleDeepLink}
+  activeOpacity={0.8}
+>
+  <Image 
+    source={require('../../assets/images/logo.png')} 
+    style={{ width: 16, height: 16 }} 
+    resizeMode="contain"
+  />
+  <Text style={[tw`ml-2 font-medium text-sm`, { color: BLACK }]}>
+    Book
+  </Text>
+</TouchableOpacity>
 </View>
 </View>
 
@@ -1413,7 +1433,13 @@ useEffect(() => {
           console.log('Forgot password pressed');
         }}
       />
+      <HotelChatOverlay
+  visible={showHotelChat}
+  onClose={() => setShowHotelChat(false)}
+  hotel={hotel}
+/>
     </View>
+    
   );
 };
 

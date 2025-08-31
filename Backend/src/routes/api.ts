@@ -5,7 +5,8 @@ import { aiInsightsController } from '../controllers/aiInsightsController';
 import { parseSearchQuery } from '../controllers/parseController';
 import { generateSuggestions } from '../controllers/aiSuggestionsController';
 import { hotelBudgetRelevanceController } from '../controllers/hotelBudgetRelevanceController';
-import { conversationalRefineController } from '../controllers/conversationalRefineController'; // NEW IMPORT
+import { conversationalRefineController } from '../controllers/conversationalRefineController';
+import { hotelChatController } from '../controllers/hotelChatController'; // NEW IMPORT
 
 const router = express.Router();
 
@@ -17,7 +18,8 @@ router.post('/hotels/budget-relevance', hotelBudgetRelevanceController); // NEW:
 
 // AI features routes
 router.post('/hotels/ai-suggestions', generateSuggestions); // AI search suggestions
-router.post('/hotels/conversational-refine', conversationalRefineController); // NEW: Conversational search refinement
+router.post('/hotels/conversational-refine', conversationalRefineController); // Conversational search refinement
+router.post('/hotels/chat', hotelChatController); // NEW: Hotel-specific AI chat
 
 // Query parsing route  
 router.post('/query/parse', parseSearchQuery);
@@ -40,7 +42,8 @@ router.get('/test', (req, res) => {
       'POST /api/hotels/ai-insights - GPT content generation + sentiment insights (Stage 2)',
       'POST /api/hotels/budget-relevance - Budget-aware relevance search with GPT scoring',
       'POST /api/hotels/ai-suggestions - Generate AI search suggestions',
-      'POST /api/hotels/conversational-refine - NEW: Conversational search refinement',
+      'POST /api/hotels/conversational-refine - Conversational search refinement',
+      'POST /api/hotels/chat - NEW: Hotel-specific AI chat assistant',
       'POST /api/query/parse - Parse natural language hotel search queries',
       'GET /api/health - Health check',
       'GET /api/test - Test endpoint'
@@ -63,7 +66,7 @@ router.get('/test', (req, res) => {
         benefits: 'Single endpoint, budget awareness, high relevance scoring'
       },
       conversationalRefineWorkflow: {
-        newFeature: 'Call /api/hotels/conversational-refine for chat-based search refinement',
+        feature: 'Call /api/hotels/conversational-refine for chat-based search refinement',
         features: [
           'Real-time conversational search refinement',
           'AI-powered query understanding and modification',
@@ -73,6 +76,18 @@ router.get('/test', (req, res) => {
           'Single source of truth for search query'
         ],
         benefits: 'Natural language search refinement, improved user experience, intelligent query building'
+      },
+      hotelChatWorkflow: {
+        newFeature: 'Call /api/hotels/chat for hotel-specific AI assistant',
+        features: [
+          'Hotel-specific knowledge base using allHotelInfo',
+          'Conversational AI assistant for hotel questions',
+          'Context-aware responses about amenities, location, policies',
+          'Fallback responses when AI is unavailable',
+          'Session-based conversation memory',
+          'Comprehensive hotel data integration'
+        ],
+        benefits: 'Personalized hotel assistance, detailed Q&A, enhanced user experience'
       }
     }
   });
