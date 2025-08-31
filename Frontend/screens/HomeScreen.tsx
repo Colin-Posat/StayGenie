@@ -292,10 +292,11 @@ interface Hotel {
   refundableInfo?: string;
 
   isPlaceholder?: boolean;
+  thirdImageHd?: string | null;
 }
 
-const BASE_URL = 'https://staygenie-wwpa.onrender.com';
-//const BASE_URL = 'http://localhost:3003';
+//const BASE_URL = 'https://staygenie-wwpa.onrender.com';
+const BASE_URL = 'http://localhost:3003';
 
 
 
@@ -601,7 +602,7 @@ const convertStreamedHotelToDisplay = (streamedHotel: any, index: number): Hotel
     tags: streamedHotel.topAmenities?.slice(0, 3) || ["Premium amenities"],
     location: streamedHotel.address || streamedHotel.summarizedInfo?.location || 'Prime location',
     features: streamedHotel.amenities || streamedHotel.topAmenities || ["Excellent features"],
-    
+    thirdImageHd: streamedHotel.thirdImageHd || null,
     // AI content - use enhanced if available, otherwise show loading
     aiExcerpt: isAIEnhanced 
       ? streamedHotel.whyItMatches 
@@ -2037,7 +2038,7 @@ const handleBackPress = useCallback(() => {
     <View style={tw`flex-row items-center justify-between`}>
       <Text style={tw`text-xs text-gray-500 flex-1`}>
         {isStreamingSearch 
-          ? `(${displayHotels.length}/15) Hotels Found For "${searchQuery}" `
+          ? `${displayHotels.length} Hotels Found For "${searchQuery}" `
           : displayHotels.length > 0
             ? `${displayHotels.length} Hotels Found For "${searchQuery}"`
             : `Results for "${searchQuery}"`

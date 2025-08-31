@@ -213,12 +213,16 @@ export interface HotelSummaryForAI {
 }
 
 export interface AIRecommendation {
+  hotelId: string;
   hotelName: string;
   aiMatchPercent: number;
   whyItMatches: string;
   funFacts: string[];
   nearbyAttractions: string[];
   locationHighlight: string;
+  guestInsights: string;
+  sentimentData: any;
+  thirdImageHd: string | null; // ADD THIS
 }
 
 // UPDATED: HotelRecommendation with refundable policy

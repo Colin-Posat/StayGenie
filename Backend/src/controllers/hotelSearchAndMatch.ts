@@ -304,7 +304,8 @@ const processHotelWithImmediateInsights = async (
           funFacts: aiRecommendation.funFacts || ["Modern facilities", "Excellent service"],
           nearbyAttractions: aiRecommendation.nearbyAttractions || [`${enrichedHotelSummary.city} center`, "Local landmarks"],
           locationHighlight: aiRecommendation.locationHighlight || "Prime location",
-          guestInsights: aiRecommendation.guestInsights || "Guests appreciate the quality and service"
+          guestInsights: aiRecommendation.guestInsights || "Guests appreciate the quality and service",
+          thirdImageHd: aiRecommendation.thirdImageHd || null
         };
 
         // Stream enhanced hotel data with AI insights

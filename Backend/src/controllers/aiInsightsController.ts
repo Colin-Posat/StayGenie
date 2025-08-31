@@ -7,10 +7,19 @@ import pLimit from 'p-limit';
 import { randomUUID } from 'crypto';
 import dotenv from 'dotenv';
 import path from 'path';
-import { 
-  AIRecommendation, 
-  ParsedSearchQuery
-} from '../types/hotel';
+
+export interface AIRecommendation {
+  hotelId: string;
+  hotelName: string;
+  aiMatchPercent: number;
+  whyItMatches: string;
+  funFacts: string[];
+  nearbyAttractions: string[];
+  locationHighlight: string;
+  guestInsights: string;
+  sentimentData: any;
+  thirdImageHd: string | null; // ADD THIS
+}
 
 // Load environment variables
 dotenv.config({ path: path.resolve(__dirname, '../../.env') });
@@ -274,6 +283,26 @@ const getHotelSentimentOptimized = async (hotelId: string): Promise<HotelSentime
     return hotelData;
   } catch (error) {
     console.warn(`Failed to get hotel details for ${hotelId}:`, error);
+    return null;
+  }
+};
+
+const getThirdHotelImageHd = (hotelDetailsData: HotelSentimentData | null): string | null => {
+  try {
+    if (!hotelDetailsData?.data?.hotelImages || !Array.isArray(hotelDetailsData.data.hotelImages)) {
+      return null;
+    }
+    
+    const images = hotelDetailsData.data.hotelImages;
+    
+    // Check if there's a 3rd image (index 2)
+    if (images.length >= 3 && images[2]) {
+      return images[2].urlHd || images[2].url || null;
+    }
+    
+    return null;
+  } catch (error) {
+    console.warn('Error extracting third hotel image:', error);
     return null;
   }
 };
@@ -626,6 +655,7 @@ const fetchHotelDetailsAndGenerateInsights = async (
   hotelId: string;
   guestInsights: string;
   sentimentData: HotelSentimentData | null;
+  thirdImageHd: string | null;
 }> => {
   
   // Stagger requests to avoid rate limiting
@@ -641,13 +671,15 @@ const fetchHotelDetailsAndGenerateInsights = async (
     
     // Generate insights from sentiment data (this happens immediately after hotel details fetch)
     const guestInsights = await generateInsightsFromSentiment(hotel.name, hotelDetailsData);
-    
+    const thirdImageHd = getThirdHotelImageHd(hotelDetailsData);
+
     console.log(`✅ Completed hotel details and insights for ${hotel.name}`);
     
     return {
       hotelId: hotel.hotelId,
       guestInsights,
-      sentimentData: hotelDetailsData
+      sentimentData: hotelDetailsData,
+      thirdImageHd
     };
     
   } catch (error) {
@@ -658,7 +690,8 @@ const fetchHotelDetailsAndGenerateInsights = async (
     return {
       hotelId: hotel.hotelId,
       guestInsights: fallbackInsights,
-      sentimentData: null
+      sentimentData: null,
+      thirdImageHd: null
     };
   }
 };
@@ -770,7 +803,8 @@ export const aiInsightsController = async (req: Request, res: Response) => {
         nearbyAttractions: aiContent.nearbyAttractions,
         locationHighlight: aiContent.locationHighlight,
         guestInsights: hotelDetailsInsights?.guestInsights || "Loading insights...",
-        sentimentData: hotelDetailsInsights?.sentimentData || null
+        sentimentData: hotelDetailsInsights?.sentimentData || null,
+        thirdImageHd: hotelDetailsInsights?.thirdImageHd || null
       };
     });
 

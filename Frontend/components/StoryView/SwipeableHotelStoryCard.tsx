@@ -91,6 +91,7 @@ interface Hotel {
     location: number;
     roomQuality: number;
   };
+  thirdImageHd?: string | null;
   
   // Room availability
   roomTypes?: any[];
@@ -770,14 +771,20 @@ const parseRatings = (guestInsights?: string) => {
   };
 
   const getAmenitiesImage = () => {
-    if (hotel.images && hotel.images.length > 2) {
-      return hotel.images[2];
-    }
-    if (hotel.images && hotel.images.length > 1) {
-      return hotel.images[1];
-    }
-    return hotel.images && hotel.images.length > 0 ? hotel.images[0] : hotel.image;
-  };
+  // NEW: Use thirdImageHd if available
+  if (hotel.thirdImageHd) {
+    return hotel.thirdImageHd;
+  }
+  
+  // Fallback to existing logic
+  if (hotel.images && hotel.images.length > 2) {
+    return hotel.images[2];
+  }
+  if (hotel.images && hotel.images.length > 1) {
+    return hotel.images[1];
+  }
+  return hotel.images && hotel.images.length > 0 ? hotel.images[0] : hotel.image;
+};
 
   return (
     <View style={tw`flex-1 relative overflow-hidden`}>
