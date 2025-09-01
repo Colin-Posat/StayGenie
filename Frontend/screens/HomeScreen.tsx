@@ -334,6 +334,7 @@ const [firstHotelFound, setFirstHotelFound] = useState(false);
   // Legacy state for backward compatibility
   const [searchResults, setSearchResults] = useState<OptimizedSearchResponse | null>(null);
   
+  const isBusy = isSearching || isStreamingSearch || isInsightsLoading;
   // AI Suggestions state
   const [aiSuggestions, setAiSuggestions] = useState<AISuggestion[]>([]);
 const [isLoadingAiSuggestions, setIsLoadingAiSuggestions] = useState(false);
@@ -2008,35 +2009,30 @@ const handleBackPress = useCallback(() => {
             <Ionicons name="arrow-back" size={20} color="#374151" />
           </TouchableOpacity>
 <TouchableOpacity
+  // keep visuals CONSTANT
   style={[
     tw`flex-1 py-3 px-8 rounded-2xl flex-row items-center justify-center shadow-lg`,
     { 
-      backgroundColor: (isSearching && !firstHotelFound) ? '#94A3B8' : '#1df9ff', // Only grey out if searching AND no hotel found yet
-      shadowColor: (isSearching && !firstHotelFound) ? '#94A3B8' : '#1df9ff',
+      backgroundColor: '#1df9ff',
+      shadowColor: '#1df9ff',
       shadowOffset: { width: 0, height: 4 },
-      shadowOpacity: (isSearching && !firstHotelFound) ? 0.1 : 0.3,
+      shadowOpacity: 0.3,
       shadowRadius: 12,
       elevation: 8,
-      opacity: (isSearching && !firstHotelFound) ? 0.6 : 1.0,
     }
   ]}
   onPress={handleAiSearch}
   activeOpacity={0.9}
-  disabled={isSearching && !firstHotelFound} // Only disable if searching AND no hotel found yet
+  disabled={isBusy}                    // blocks taps, no visual change
+  accessibilityState={{ disabled: isBusy }}  // a11y
 >
-  <Ionicons 
-    name="sparkles" 
-    size={20} 
-    color={(isSearching && !firstHotelFound) ? "#64748B" : "#FFFFFF"}
-  />
-  
-  <Text style={[
-    tw`font-semibold text-base ml-3`,
-    { color: (isSearching && !firstHotelFound) ? '#64748B' : '#FFFFFF' }
-  ]}>
-    {(isSearching && !firstHotelFound) ? 'Searching...' : 'Refine Search'}
+  <Ionicons name="sparkles" size={20} color="#FFFFFF" />
+  <Text style={tw`text-white font-semibold text-base ml-3`}>
+    {isBusy ? 'Searching…' : 'Refine Search'}
   </Text>
 </TouchableOpacity>
+
+
 
         </View>
 
