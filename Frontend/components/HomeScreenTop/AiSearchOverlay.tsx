@@ -278,7 +278,7 @@ const ConversationalRefineOverlay: React.FC<ConversationalRefineOverlayProps> = 
     const welcomeMessage: ChatMessage = {
       id: `ai_${Date.now()}`,
       type: 'ai',
-      text: `I found ${resultCount} hotels for "${currentSearch}". Use the suggestions below or tell me how you'd like to refine your search.`,
+      text: `Here are the top options for "${currentSearch}". Use the suggestions below or tell me how you'd like to refine your search.`,
       timestamp: new Date(),
     };
     

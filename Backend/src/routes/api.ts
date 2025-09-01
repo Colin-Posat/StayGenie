@@ -1,4 +1,4 @@
-// src/routes/api.ts
+// src/routes/api.ts - Updated with hotel details fetching endpoint
 import express from 'express';
 import { hotelSearchAndMatchController } from '../controllers/hotelSearchAndMatch';
 import { aiInsightsController } from '../controllers/aiInsightsController';
@@ -6,20 +6,23 @@ import { parseSearchQuery } from '../controllers/parseController';
 import { generateSuggestions } from '../controllers/aiSuggestionsController';
 import { hotelBudgetRelevanceController } from '../controllers/hotelBudgetRelevanceController';
 import { conversationalRefineController } from '../controllers/conversationalRefineController';
-import { hotelChatController } from '../controllers/hotelChatController'; // NEW IMPORT
+import { hotelChatController, fetchHotelDetailsForChatController } from '../controllers/hotelChatController'; // UPDATED IMPORT
 
 const router = express.Router();
 
 // Hotel routes
 router.post('/hotels/search-and-match', hotelSearchAndMatchController); // Stage 1 - Search + Llama matching
-router.get('/hotels/search-and-match/stream', hotelSearchAndMatchController); // NEW: SSE (mobile)
+router.get('/hotels/search-and-match/stream', hotelSearchAndMatchController); // SSE (mobile)
 router.post('/hotels/ai-insights', aiInsightsController); // Stage 2 - GPT content + sentiment insights
-router.post('/hotels/budget-relevance', hotelBudgetRelevanceController); // NEW: Budget-aware relevance search
+router.post('/hotels/budget-relevance', hotelBudgetRelevanceController); // Budget-aware relevance search
 
 // AI features routes
 router.post('/hotels/ai-suggestions', generateSuggestions); // AI search suggestions
 router.post('/hotels/conversational-refine', conversationalRefineController); // Conversational search refinement
-router.post('/hotels/chat', hotelChatController); // NEW: Hotel-specific AI chat
+
+// NEW: Hotel chat routes - fetch details first, then chat
+router.post('/hotels/fetch-details-for-chat', fetchHotelDetailsForChatController); // NEW: Fetch hotel details for chat context
+router.post('/hotels/chat', hotelChatController); // Hotel-specific AI chat
 
 // Query parsing route  
 router.post('/query/parse', parseSearchQuery);
@@ -43,7 +46,8 @@ router.get('/test', (req, res) => {
       'POST /api/hotels/budget-relevance - Budget-aware relevance search with GPT scoring',
       'POST /api/hotels/ai-suggestions - Generate AI search suggestions',
       'POST /api/hotels/conversational-refine - Conversational search refinement',
-      'POST /api/hotels/chat - NEW: Hotel-specific AI chat assistant',
+      'POST /api/hotels/fetch-details-for-chat - NEW: Fetch comprehensive hotel details for chat context',
+      'POST /api/hotels/chat - Hotel-specific AI chat assistant',
       'POST /api/query/parse - Parse natural language hotel search queries',
       'GET /api/health - Health check',
       'GET /api/test - Test endpoint'
@@ -78,16 +82,21 @@ router.get('/test', (req, res) => {
         benefits: 'Natural language search refinement, improved user experience, intelligent query building'
       },
       hotelChatWorkflow: {
-        newFeature: 'Call /api/hotels/chat for hotel-specific AI assistant',
+        newFeature: 'NEW Enhanced Hotel Chat Pipeline',
+        pipeline: [
+          'Step 1: Call /api/hotels/fetch-details-for-chat with hotelId to get comprehensive hotel data',
+          'Step 2: Call /api/hotels/chat with enriched hotelData (including allHotelInfo) for context-aware chat'
+        ],
         features: [
-          'Hotel-specific knowledge base using allHotelInfo',
-          'Conversational AI assistant for hotel questions',
-          'Context-aware responses about amenities, location, policies',
+          'Comprehensive hotel data fetching from LiteAPI /data/hotel endpoint',
+          'Full hotel description, amenities, policies, and sentiment analysis',
+          'Context-aware AI responses using complete hotel information',
+          'Conversational AI assistant for hotel-specific questions',
           'Fallback responses when AI is unavailable',
           'Session-based conversation memory',
-          'Comprehensive hotel data integration'
+          'Rate limiting and retry logic for API reliability'
         ],
-        benefits: 'Personalized hotel assistance, detailed Q&A, enhanced user experience'
+        benefits: 'Rich hotel context, personalized assistance, comprehensive Q&A, enhanced user experience'
       }
     }
   });

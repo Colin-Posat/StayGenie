@@ -1,0 +1,1010 @@
+HOTEL DATA EXPORT
+==================
+Hotel Name: Millennium Hotel Broadway Times Square
+Hotel ID: lp24b73
+Export Date: 2025-09-01T20:32:18.891Z
+Export Length: 45172 characters
+
+==================
+COMPLETE HOTEL INFORMATION
+==================
+
+=== BASIC HOTEL INFORMATION ===
+Hotel Name: Millennium Hotel Broadway Times Square
+Hotel ID: lp24b73
+Star Rating: 4 stars
+Hotel Type: Hotels (Type ID: 204)
+Guest Rating: 7.2/10 based on 7754 reviews
+Country: US
+City: New York
+Full Address: 145 West 44th Street
+GPS Coordinates: 40.7569, -73.98481
+Nearest Airport: LGA
+Email: info@highgate.com
+Children Allowed: Yes
+Pets Allowed: Yes
+
+=== CHECK-IN & CHECK-OUT TIMES ===
+Check-in Time: 4:00 PM
+Check-in Start Time: undefined
+Check-out Time: 11:00 AM
+
+=== HOTEL DESCRIPTION ===
+Central Location in Times Square and Midtown ManhattanExperience the heart of New York City at Millennium Hotel Broadway Times Square, situated just steps away from iconic Broadway theatres and popular attractions like Madame Tussauds.Luxurious Guestrooms with Stunning ViewsIndulge in rooms featuring floor-to-ceiling windows showcasing breathtaking views of the vibrant New York City skyline, offering a truly unforgettable stay.Versatile Event Spaces and Dedicated Concierge TeamWith 52,000 square feet of flexible function space and a dedicated concierge team, we ensure seamless event planning and personalized assistance for all your needs.Book now and elevate your NYC experience at Millennium Hotel Broadway Times Square.
+
+=== IMPORTANT HOTEL INFORMATION ===
+Guests are required to show a photo identification and credit card upon check-in. Please note that all Special Requests are subject to availability and additional charges may apply.
+In response to Coronavirus (COVID-19), additional safety and sanitation measures are in effect at this property.
+Please inform Millennium Hotel Broadway Times Square in advance of your expected arrival time. You can use the Special Requests box when booking, or contact the property directly with the contact details provided in your confirmation.
+A damage deposit of USD 250 is required on arrival. This will be collected by credit card. You should be reimbursed within 14 days of check-out. Your deposit will be refunded in full via credit card, subject to an inspection of the property.
+Please note, the credit card used to make the booking must be presented at check-in.
+
+When booking 3 rooms or more, different policies and additional supplements may apply.
+
+=== HOTEL FACILITIES & AMENITIES ===
+1. Fitness facilities (surcharge)
+2. Non-smoking rooms
+3. Air conditioning
+4. Family rooms
+5. Pets allowed
+6. Lift / Elevator
+7. Luggage storage
+8. Express check-in/check-out
+9. Safety deposit box
+10. Fax/photocopying
+11. Tour desk
+12. Facilities for disabled guests
+13. Ironing service
+14. Currency exchange
+15. Non-smoking throughout
+16. Concierge service
+17. Staff adhere to local safety protocols
+18. Guest rooms disinfected between stays
+19. Cleaning standards that are effective against Coronavirus
+20. Physical distancing rules followed
+21. Hand sanitizer in guest room and key areas
+22. Cashless payment available
+23. Fire extinguishers
+24. First aid kit available
+25. Sanitized tableware & silverware
+26. Guests can opt-out any cleaning services during stay
+27. Smoke alarms
+28. Shared stationery like menus, pens are removed
+29. Guest room sealed after cleaning
+30. Physical distancing in dining areas
+31. Food delivered to guest room
+32. CCTV outside property
+33. Process in place to check health of guests
+34. Access to health care professionals
+35. Screens / Barriers between staff and guests for safety
+36. Face masks for guests available
+37. 24-hour security
+38. Delivered food - securely covered
+39. Security alarm
+40. Key card access
+41. ATM/banking
+42. Television in common areas
+43. Front desk (limited hours)
+44. Express check-in
+45. Free wired internet
+46. Self parking (surcharge)
+47. Fitness facilities (surcharge)
+48. Internet access
+49. Housekeeping on request
+50. Reception hall
+51. Covered parking
+52. Garage
+
+=== DETAILED FACILITIES (with IDs) ===
+1. Fitness facilities (surcharge) (ID: 6848)
+2. Non-smoking rooms (ID: 16)
+3. Air conditioning (ID: 109)
+4. Family rooms (ID: 28)
+5. Pets allowed (ID: 4)
+6. Lift / Elevator (ID: 48)
+7. Luggage storage (ID: 91)
+8. Express check-in/check-out (ID: 49)
+9. Safety deposit box (ID: 51)
+10. Fax/photocopying (ID: 81)
+11. Tour desk (ID: 78)
+12. Facilities for disabled guests (ID: 25)
+13. Ironing service (ID: 44)
+14. Currency exchange (ID: 53)
+15. Non-smoking throughout (ID: 108)
+16. Concierge service (ID: 124)
+17. Staff adhere to local safety protocols (ID: 455)
+18. Guest rooms disinfected between stays (ID: 451)
+19. Cleaning standards that are effective against Coronavirus (ID: 449)
+20. Physical distancing rules followed (ID: 462)
+21. Hand sanitizer in guest room and key areas (ID: 457)
+22. Cashless payment available (ID: 461)
+23. Fire extinguishers (ID: 425)
+24. First aid kit available (ID: 459)
+25. Sanitized tableware & silverware (ID: 467)
+26. Guests can opt-out any cleaning services during stay (ID: 468)
+27. Smoke alarms (ID: 422)
+28. Shared stationery like menus, pens are removed (ID: 456)
+29. Guest room sealed after cleaning (ID: 452)
+30. Physical distancing in dining areas (ID: 453)
+31. Food delivered to guest room (ID: 454)
+32. CCTV outside property (ID: 424)
+33. Process in place to check health of guests (ID: 458)
+34. Access to health care professionals (ID: 486)
+35. Screens / Barriers between staff and guests for safety (ID: 464)
+36. Face masks for guests available (ID: 488)
+37. 24-hour security (ID: 418)
+38. Delivered food - securely covered (ID: 485)
+39. Security alarm (ID: 421)
+40. Key card access (ID: 420)
+41. ATM/banking (ID: 497)
+42. Television in common areas (ID: 521)
+43. Front desk (limited hours) (ID: 540)
+44. Express check-in (ID: 568)
+45. Free wired internet (ID: 584)
+46. Self parking (surcharge) (ID: 675)
+47. Fitness facilities (surcharge) (ID: 757)
+48. Internet access (ID: 761)
+49. Housekeeping on request (ID: 784)
+50. Reception hall (ID: 828)
+51. Covered parking (ID: 857)
+52. Garage (ID: 880)
+
+=== COMPLETE ROOM INFORMATION ===
+
+--- ROOM 1: Superior Room With Two Double Beds ---
+Room ID: 2327839
+Hotel ID: lp24b73
+Description: Featuring free toiletries, this quadruple room includes a private bathroom with a bath, a shower and a hairdryer. The air-conditioned quadruple room features a flat-screen TV, a tea and coffee maker, a wardrobe, a safe deposit box as well as city views. The unit has 2 beds.
+Room Size: 22 m2
+Maximum Adults: 4
+Maximum Children: 3
+Maximum Occupancy: 4
+Bed Configuration:
+  - 2x Double bed (131-150 cm wide)
+Room Amenities (27 total):
+  - Coffee/tea maker (ID: 64, Sort: 0)
+  - Shower (ID: 312, Sort: 0)
+  - Safety deposit box (ID: 293, Sort: 17)
+  - Air conditioning (ID: 11, Sort: 0)
+  - Hair dryer (ID: 148, Sort: 0)
+  - Desk (ID: 82, Sort: 0)
+  - Toilet (ID: 350, Sort: 10)
+  - Private bathroom (ID: 266, Sort: 0)
+  - Heating (ID: 156, Sort: 0)
+  - View (ID: 371, Sort: 31)
+  - Wardrobe or closet (ID: 377, Sort: 0)
+  - Landmark view (ID: 190, Sort: 40)
+  - Coffee machine (ID: 63, Sort: 46)
+  - City view (ID: 57, Sort: 39)
+  - Linen (ID: 197, Sort: 43)
+  - Upper floors accessible by elevator (ID: 366, Sort: 166)
+  - Upper floors accessible by stairs only (ID: 367, Sort: 167)
+  - Clothes rack (ID: 60, Sort: 72)
+  - Toilet paper (ID: 352, Sort: 0)
+  - Trash cans (ID: 361, Sort: 85)
+  - Socket near the bed (ID: 327, Sort: 89)
+  - Accessible by lift (ID: 5, Sort: 29)
+  - Key card access (ID: 182, Sort: 158)
+  - Window (ID: 386, Sort: 14)
+  - Free gym access (ID: 123, Sort: 194)
+  - Concierge services (ID: 70, Sort: 0)
+  - Hand sanitiser (ID: 149, Sort: 188)
+Room Photos Available: 12 images
+  Photo 1: https://static.cupid.travel/rooms-large-pictures/397320393.jpg
+  Photo 2: https://static.cupid.travel/rooms-large-pictures/397320334.jpg
+  Photo 3: https://static.cupid.travel/rooms-large-pictures/147664684.jpg
+  Photo 4: https://static.cupid.travel/rooms-large-pictures/397320346.jpg
+  Photo 5: https://static.cupid.travel/rooms-large-pictures/397320340.jpg
+  Photo 6: https://static.cupid.travel/rooms-large-pictures/397320344.jpg
+  Photo 7: https://static.cupid.travel/rooms-large-pictures/42104392.jpg
+  Photo 8: https://static.cupid.travel/rooms-large-pictures/397320381.jpg
+  Photo 9: https://static.cupid.travel/rooms-large-pictures/397320367.jpg
+  Photo 10: https://static.cupid.travel/rooms-large-pictures/397320358.jpg
+  Photo 11: https://static.cupid.travel/rooms-large-pictures/397320335.jpg
+  Photo 12: https://static.cupid.travel/rooms-large-pictures/397320361.jpg
+
+--- ROOM 2: Standard Room With Two Double Beds ---
+Room ID: 2327840
+Hotel ID: lp24b73
+Description: Offering free toiletries, this quadruple room includes a private bathroom with a bath, a shower and a hairdryer. This quadruple room is air-conditioned and has a flat-screen TV, a tea and coffee maker, a wardrobe and a safe deposit box. The unit has 2 beds.
+Room Size: 22 m2
+Maximum Adults: 4
+Maximum Children: 3
+Maximum Occupancy: 4
+Bed Configuration:
+  - 2x Double bed (131-150 cm wide)
+Room Amenities (25 total):
+  - Coffee/tea maker (ID: 64, Sort: 0)
+  - Shower (ID: 312, Sort: 0)
+  - Safety deposit box (ID: 293, Sort: 17)
+  - Air conditioning (ID: 11, Sort: 0)
+  - Hair dryer (ID: 148, Sort: 0)
+  - Desk (ID: 82, Sort: 0)
+  - Toilet (ID: 350, Sort: 10)
+  - Private bathroom (ID: 266, Sort: 0)
+  - Heating (ID: 156, Sort: 0)
+  - Wardrobe or closet (ID: 377, Sort: 0)
+  - Coffee machine (ID: 63, Sort: 46)
+  - Linen (ID: 197, Sort: 43)
+  - Upper floors accessible by elevator (ID: 366, Sort: 166)
+  - Upper floors accessible by stairs only (ID: 367, Sort: 167)
+  - Clothes rack (ID: 60, Sort: 72)
+  - Toilet paper (ID: 352, Sort: 0)
+  - Trash cans (ID: 361, Sort: 85)
+  - Cots (ID: 73, Sort: 86)
+  - Socket near the bed (ID: 327, Sort: 89)
+  - Accessible by lift (ID: 5, Sort: 29)
+  - Key card access (ID: 182, Sort: 158)
+  - Window (ID: 386, Sort: 14)
+  - Free gym access (ID: 123, Sort: 194)
+  - Concierge services (ID: 70, Sort: 0)
+  - Hand sanitiser (ID: 149, Sort: 188)
+Room Photos Available: 8 images
+  Photo 1: https://static.cupid.travel/rooms-large-pictures/397320340.jpg
+  Photo 2: https://static.cupid.travel/rooms-large-pictures/397320367.jpg
+  Photo 3: https://static.cupid.travel/rooms-large-pictures/397320381.jpg
+  Photo 4: https://static.cupid.travel/rooms-large-pictures/397320345.jpg
+  Photo 5: https://static.cupid.travel/rooms-large-pictures/42104392.jpg
+  Photo 6: https://static.cupid.travel/rooms-large-pictures/147664684.jpg
+  Photo 7: https://static.cupid.travel/rooms-large-pictures/397320354.jpg
+  Photo 8: https://static.cupid.travel/rooms-large-pictures/397320361.jpg
+
+--- ROOM 3: Deluxe Room With Two Double Beds And City View ---
+Room ID: 2327841
+Hotel ID: lp24b73
+Description: Featuring free toiletries, this quadruple room includes a private bathroom with a bath, a shower and a hairdryer. The air-conditioned quadruple room features a flat-screen TV, a tea and coffee maker, a wardrobe, a safe deposit box as well as city views. The unit has 2 beds.
+Room Size: 32 m2
+Maximum Adults: 4
+Maximum Children: 3
+Maximum Occupancy: 4
+Bed Configuration:
+  - 2x Double bed (131-150 cm wide)
+Room Amenities (26 total):
+  - Coffee/tea maker (ID: 64, Sort: 0)
+  - Shower (ID: 312, Sort: 0)
+  - Safety deposit box (ID: 293, Sort: 17)
+  - Air conditioning (ID: 11, Sort: 0)
+  - Hair dryer (ID: 148, Sort: 0)
+  - Desk (ID: 82, Sort: 0)
+  - Toilet (ID: 350, Sort: 10)
+  - Private bathroom (ID: 266, Sort: 0)
+  - Heating (ID: 156, Sort: 0)
+  - View (ID: 371, Sort: 31)
+  - Wardrobe or closet (ID: 377, Sort: 0)
+  - Coffee machine (ID: 63, Sort: 46)
+  - City view (ID: 57, Sort: 39)
+  - Linen (ID: 197, Sort: 43)
+  - Upper floors accessible by elevator (ID: 366, Sort: 166)
+  - Upper floors accessible by stairs only (ID: 367, Sort: 167)
+  - Clothes rack (ID: 60, Sort: 72)
+  - Toilet paper (ID: 352, Sort: 0)
+  - Trash cans (ID: 361, Sort: 85)
+  - Socket near the bed (ID: 327, Sort: 89)
+  - Accessible by lift (ID: 5, Sort: 29)
+  - Key card access (ID: 182, Sort: 158)
+  - Window (ID: 386, Sort: 14)
+  - Free gym access (ID: 123, Sort: 194)
+  - Concierge services (ID: 70, Sort: 0)
+  - Hand sanitiser (ID: 149, Sort: 188)
+Room Photos Available: 7 images
+  Photo 1: https://static.cupid.travel/rooms-large-pictures/397320367.jpg
+  Photo 2: https://static.cupid.travel/rooms-large-pictures/397320353.jpg
+  Photo 3: https://static.cupid.travel/rooms-large-pictures/397320361.jpg
+  Photo 4: https://static.cupid.travel/rooms-large-pictures/397320358.jpg
+  Photo 5: https://static.cupid.travel/rooms-large-pictures/397320340.jpg
+  Photo 6: https://static.cupid.travel/rooms-large-pictures/42104392.jpg
+  Photo 7: https://static.cupid.travel/rooms-large-pictures/147664684.jpg
+
+--- ROOM 4: Premier Double Room With Two Double Beds - Ball Drop View ---
+Room ID: 2327842
+Hotel ID: lp24b73
+Description: Featuring free toiletries, this quadruple room includes a private bathroom with a bath, a shower and a hairdryer. The air-conditioned quadruple room features a flat-screen TV, a tea and coffee maker, a wardrobe, a safe deposit box as well as city views. The unit has 2 beds.
+Room Size: 32 m2
+Maximum Adults: 4
+Maximum Children: 3
+Maximum Occupancy: 4
+Bed Configuration:
+  - 2x Double bed (131-150 cm wide)
+Room Amenities (27 total):
+  - Coffee/tea maker (ID: 64, Sort: 0)
+  - Shower (ID: 312, Sort: 0)
+  - Safety deposit box (ID: 293, Sort: 17)
+  - Air conditioning (ID: 11, Sort: 0)
+  - Hair dryer (ID: 148, Sort: 0)
+  - Desk (ID: 82, Sort: 0)
+  - Toilet (ID: 350, Sort: 10)
+  - Private bathroom (ID: 266, Sort: 0)
+  - Heating (ID: 156, Sort: 0)
+  - View (ID: 371, Sort: 31)
+  - Wardrobe or closet (ID: 377, Sort: 0)
+  - Landmark view (ID: 190, Sort: 40)
+  - Coffee machine (ID: 63, Sort: 46)
+  - City view (ID: 57, Sort: 39)
+  - Linen (ID: 197, Sort: 43)
+  - Upper floors accessible by elevator (ID: 366, Sort: 166)
+  - Upper floors accessible by stairs only (ID: 367, Sort: 167)
+  - Clothes rack (ID: 60, Sort: 72)
+  - Toilet paper (ID: 352, Sort: 0)
+  - Trash cans (ID: 361, Sort: 85)
+  - Socket near the bed (ID: 327, Sort: 89)
+  - Accessible by lift (ID: 5, Sort: 29)
+  - Key card access (ID: 182, Sort: 158)
+  - Window (ID: 386, Sort: 14)
+  - Free gym access (ID: 123, Sort: 194)
+  - Concierge services (ID: 70, Sort: 0)
+  - Hand sanitiser (ID: 149, Sort: 188)
+Room Photos Available: 8 images
+  Photo 1: https://static.cupid.travel/rooms-large-pictures/397320344.jpg
+  Photo 2: https://static.cupid.travel/rooms-large-pictures/397320381.jpg
+  Photo 3: https://static.cupid.travel/rooms-large-pictures/397320346.jpg
+  Photo 4: https://static.cupid.travel/rooms-large-pictures/397320354.jpg
+  Photo 5: https://static.cupid.travel/rooms-large-pictures/42104392.jpg
+  Photo 6: https://static.cupid.travel/rooms-large-pictures/147664684.jpg
+  Photo 7: https://static.cupid.travel/rooms-large-pictures/397320335.jpg
+  Photo 8: https://static.cupid.travel/rooms-large-pictures/397320361.jpg
+
+--- ROOM 5: Superior King Room ---
+Room ID: 2327843
+Hotel ID: lp24b73
+Description: Offering free toiletries, this double room includes a private bathroom with a bath, a shower and a hairdryer. The air-conditioned double room offers a flat-screen TV, a tea and coffee maker, a wardrobe, a safe deposit box as well as city views. The unit offers 1 bed.
+Room Size: 22 m2
+Maximum Adults: 2
+Maximum Children: 1
+Maximum Occupancy: 2
+Bed Configuration:
+  - 1x Extra-large double bed (Super-king size) (181-210 cm wide)
+Room Amenities (26 total):
+  - Coffee/tea maker (ID: 64, Sort: 0)
+  - Shower (ID: 312, Sort: 0)
+  - Safety deposit box (ID: 293, Sort: 17)
+  - Air conditioning (ID: 11, Sort: 0)
+  - Hair dryer (ID: 148, Sort: 0)
+  - Desk (ID: 82, Sort: 0)
+  - Toilet (ID: 350, Sort: 10)
+  - Private bathroom (ID: 266, Sort: 0)
+  - Heating (ID: 156, Sort: 0)
+  - View (ID: 371, Sort: 31)
+  - Wardrobe or closet (ID: 377, Sort: 0)
+  - Coffee machine (ID: 63, Sort: 46)
+  - City view (ID: 57, Sort: 39)
+  - Linen (ID: 197, Sort: 43)
+  - Upper floors accessible by elevator (ID: 366, Sort: 166)
+  - Upper floors accessible by stairs only (ID: 367, Sort: 167)
+  - Clothes rack (ID: 60, Sort: 72)
+  - Toilet paper (ID: 352, Sort: 0)
+  - Trash cans (ID: 361, Sort: 85)
+  - Socket near the bed (ID: 327, Sort: 89)
+  - Accessible by lift (ID: 5, Sort: 29)
+  - Key card access (ID: 182, Sort: 158)
+  - Window (ID: 386, Sort: 14)
+  - Free gym access (ID: 123, Sort: 194)
+  - Concierge services (ID: 70, Sort: 0)
+  - Hand sanitiser (ID: 149, Sort: 188)
+Room Photos Available: 4 images
+  Photo 1: https://static.cupid.travel/rooms-large-pictures/397320406.jpg
+  Photo 2: https://static.cupid.travel/rooms-large-pictures/219950616.jpg
+  Photo 3: https://static.cupid.travel/rooms-large-pictures/147664684.jpg
+  Photo 4: https://static.cupid.travel/rooms-large-pictures/397320335.jpg
+
+--- ROOM 6: Standard King Room ---
+Room ID: 2327844
+Hotel ID: lp24b73
+Description: Featuring free toiletries, this double room includes a private bathroom with a bath, a shower and a hairdryer. The air-conditioned double room features a flat-screen TV, a tea and coffee maker, a wardrobe and a safe deposit box. The unit has 1 bed.
+Room Size: 22 m2
+Maximum Adults: 2
+Maximum Children: 1
+Maximum Occupancy: 2
+Bed Configuration:
+  - 1x Extra-large double bed (Super-king size) (181-210 cm wide)
+Room Amenities (25 total):
+  - Coffee/tea maker (ID: 64, Sort: 0)
+  - Shower (ID: 312, Sort: 0)
+  - Safety deposit box (ID: 293, Sort: 17)
+  - TV (ID: 339, Sort: 0)
+  - Air conditioning (ID: 11, Sort: 0)
+  - Hair dryer (ID: 148, Sort: 0)
+  - Desk (ID: 82, Sort: 0)
+  - Toilet (ID: 350, Sort: 10)
+  - Private bathroom (ID: 266, Sort: 0)
+  - Heating (ID: 156, Sort: 0)
+  - Wardrobe or closet (ID: 377, Sort: 0)
+  - Coffee machine (ID: 63, Sort: 46)
+  - Linen (ID: 197, Sort: 43)
+  - Upper floors accessible by elevator (ID: 366, Sort: 166)
+  - Upper floors accessible by stairs only (ID: 367, Sort: 167)
+  - Clothes rack (ID: 60, Sort: 72)
+  - Toilet paper (ID: 352, Sort: 0)
+  - Trash cans (ID: 361, Sort: 85)
+  - Socket near the bed (ID: 327, Sort: 89)
+  - Accessible by lift (ID: 5, Sort: 29)
+  - Key card access (ID: 182, Sort: 158)
+  - Window (ID: 386, Sort: 14)
+  - Free gym access (ID: 123, Sort: 194)
+  - Concierge services (ID: 70, Sort: 0)
+  - Hand sanitiser (ID: 149, Sort: 188)
+Room Photos Available: 8 images
+  Photo 1: https://static.cupid.travel/rooms-large-pictures/397320399.jpg
+  Photo 2: https://static.cupid.travel/rooms-large-pictures/397320355.jpg
+  Photo 3: https://static.cupid.travel/rooms-large-pictures/397320382.jpg
+  Photo 4: https://static.cupid.travel/rooms-large-pictures/397320325.jpg
+  Photo 5: https://static.cupid.travel/rooms-large-pictures/397320361.jpg
+  Photo 6: https://static.cupid.travel/rooms-large-pictures/397320397.jpg
+  Photo 7: https://static.cupid.travel/rooms-large-pictures/397320349.jpg
+  Photo 8: https://static.cupid.travel/rooms-large-pictures/397320339.jpg
+
+--- ROOM 7: Deluxe Room With One King Bed And City View ---
+Room ID: 2327845
+Hotel ID: lp24b73
+Description: The spacious double room offers air conditioning, a tea and coffee maker, as well as a private bathroom boasting a bath and a shower. The unit has 1 bed.
+Room Size: 32 m2
+Maximum Adults: 2
+Maximum Children: 1
+Maximum Occupancy: 2
+Bed Configuration:
+  - 1x Extra-large double bed (Super-king size) (181-210 cm wide)
+Room Amenities (27 total):
+  - Coffee/tea maker (ID: 64, Sort: 0)
+  - Shower (ID: 312, Sort: 0)
+  - Safety deposit box (ID: 293, Sort: 17)
+  - Air conditioning (ID: 11, Sort: 0)
+  - Hair dryer (ID: 148, Sort: 0)
+  - Desk (ID: 82, Sort: 0)
+  - Toilet (ID: 350, Sort: 10)
+  - Private bathroom (ID: 266, Sort: 0)
+  - Heating (ID: 156, Sort: 0)
+  - View (ID: 371, Sort: 31)
+  - Wardrobe or closet (ID: 377, Sort: 0)
+  - Landmark view (ID: 190, Sort: 40)
+  - Coffee machine (ID: 63, Sort: 46)
+  - City view (ID: 57, Sort: 39)
+  - Linen (ID: 197, Sort: 43)
+  - Upper floors accessible by elevator (ID: 366, Sort: 166)
+  - Upper floors accessible by stairs only (ID: 367, Sort: 167)
+  - Clothes rack (ID: 60, Sort: 72)
+  - Toilet paper (ID: 352, Sort: 0)
+  - Trash cans (ID: 361, Sort: 85)
+  - Socket near the bed (ID: 327, Sort: 89)
+  - Accessible by lift (ID: 5, Sort: 29)
+  - Key card access (ID: 182, Sort: 158)
+  - Window (ID: 386, Sort: 14)
+  - Free gym access (ID: 123, Sort: 194)
+  - Concierge services (ID: 70, Sort: 0)
+  - Hand sanitiser (ID: 149, Sort: 188)
+Room Photos Available: 10 images
+  Photo 1: https://static.cupid.travel/rooms-large-pictures/397320422.jpg
+  Photo 2: https://static.cupid.travel/rooms-large-pictures/397320361.jpg
+  Photo 3: https://static.cupid.travel/rooms-large-pictures/397320387.jpg
+  Photo 4: https://static.cupid.travel/rooms-large-pictures/397320398.jpg
+  Photo 5: https://static.cupid.travel/rooms-large-pictures/397320357.jpg
+  Photo 6: https://static.cupid.travel/rooms-large-pictures/397320348.jpg
+  Photo 7: https://static.cupid.travel/rooms-large-pictures/397320386.jpg
+  Photo 8: https://static.cupid.travel/rooms-large-pictures/147664463.jpg
+  Photo 9: https://static.cupid.travel/rooms-large-pictures/147664684.jpg
+  Photo 10: https://static.cupid.travel/rooms-large-pictures/397320388.jpg
+
+--- ROOM 8: Premier King Room - Ball Drop View ---
+Room ID: 2327846
+Hotel ID: lp24b73
+Description: The spacious double room offers air conditioning, a tea and coffee maker, as well as a private bathroom featuring a bath and a shower. The double room features a wardrobe, a safe deposit box, a carpeted floor, a flat-screen TV, as well as city views. The unit offers 1 bed.
+Room Size: 32 m2
+Maximum Adults: 2
+Maximum Children: 1
+Maximum Occupancy: 2
+Bed Configuration:
+  - 1x Extra-large double bed (Super-king size) (181-210 cm wide)
+Room Amenities (27 total):
+  - Coffee/tea maker (ID: 64, Sort: 0)
+  - Shower (ID: 312, Sort: 0)
+  - Safety deposit box (ID: 293, Sort: 17)
+  - Air conditioning (ID: 11, Sort: 0)
+  - Hair dryer (ID: 148, Sort: 0)
+  - Desk (ID: 82, Sort: 0)
+  - Toilet (ID: 350, Sort: 10)
+  - Private bathroom (ID: 266, Sort: 0)
+  - Heating (ID: 156, Sort: 0)
+  - View (ID: 371, Sort: 31)
+  - Wardrobe or closet (ID: 377, Sort: 0)
+  - Landmark view (ID: 190, Sort: 40)
+  - Coffee machine (ID: 63, Sort: 46)
+  - City view (ID: 57, Sort: 39)
+  - Linen (ID: 197, Sort: 43)
+  - Upper floors accessible by elevator (ID: 366, Sort: 166)
+  - Upper floors accessible by stairs only (ID: 367, Sort: 167)
+  - Clothes rack (ID: 60, Sort: 72)
+  - Toilet paper (ID: 352, Sort: 0)
+  - Trash cans (ID: 361, Sort: 85)
+  - Socket near the bed (ID: 327, Sort: 89)
+  - Accessible by lift (ID: 5, Sort: 29)
+  - Key card access (ID: 182, Sort: 158)
+  - Window (ID: 386, Sort: 14)
+  - Free gym access (ID: 123, Sort: 194)
+  - Concierge services (ID: 70, Sort: 0)
+  - Hand sanitiser (ID: 149, Sort: 188)
+Room Photos Available: 6 images
+  Photo 1: https://static.cupid.travel/rooms-large-pictures/397320387.jpg
+  Photo 2: https://static.cupid.travel/rooms-large-pictures/397320361.jpg
+  Photo 3: https://static.cupid.travel/rooms-large-pictures/397320398.jpg
+  Photo 4: https://static.cupid.travel/rooms-large-pictures/397320352.jpg
+  Photo 5: https://static.cupid.travel/rooms-large-pictures/397320372.jpg
+  Photo 6: https://static.cupid.travel/rooms-large-pictures/397320390.jpg
+
+--- ROOM 9: One-Bedroom King Suite - Time Square View - Times Square View ---
+Room ID: 2327847
+Hotel ID: lp24b73
+Description: The spacious suite provides air conditioning, a tea and coffee maker, as well as a private bathroom featuring a bath and a shower.
+Room Size: 53 m2
+Maximum Adults: 4
+Maximum Children: 3
+Maximum Occupancy: 4
+Bed Configuration:
+  - 1x Extra-large double bed (Super-king size) (181-210 cm wide)
+Room Amenities (28 total):
+  - Coffee/tea maker (ID: 64, Sort: 0)
+  - Shower (ID: 312, Sort: 0)
+  - Safety deposit box (ID: 293, Sort: 17)
+  - Air conditioning (ID: 11, Sort: 0)
+  - Hair dryer (ID: 148, Sort: 0)
+  - Desk (ID: 82, Sort: 0)
+  - Seating Area (ID: 298, Sort: 59)
+  - Toilet (ID: 350, Sort: 10)
+  - Private bathroom (ID: 266, Sort: 0)
+  - Heating (ID: 156, Sort: 0)
+  - View (ID: 371, Sort: 31)
+  - Wardrobe or closet (ID: 377, Sort: 0)
+  - Coffee machine (ID: 63, Sort: 46)
+  - City view (ID: 57, Sort: 39)
+  - Linen (ID: 197, Sort: 43)
+  - Upper floors accessible by elevator (ID: 366, Sort: 166)
+  - Upper floors accessible by stairs only (ID: 367, Sort: 167)
+  - Clothes rack (ID: 60, Sort: 72)
+  - Toilet paper (ID: 352, Sort: 0)
+  - Trash cans (ID: 361, Sort: 85)
+  - Cots (ID: 73, Sort: 86)
+  - Socket near the bed (ID: 327, Sort: 89)
+  - Accessible by lift (ID: 5, Sort: 29)
+  - Key card access (ID: 182, Sort: 158)
+  - Window (ID: 386, Sort: 14)
+  - Free gym access (ID: 123, Sort: 194)
+  - Concierge services (ID: 70, Sort: 0)
+  - Hand sanitiser (ID: 149, Sort: 188)
+Room Photos Available: 13 images
+  Photo 1: https://static.cupid.travel/rooms-large-pictures/397320406.jpg
+  Photo 2: https://static.cupid.travel/rooms-large-pictures/397320363.jpg
+  Photo 3: https://static.cupid.travel/rooms-large-pictures/397320372.jpg
+  Photo 4: https://static.cupid.travel/rooms-large-pictures/42104380.jpg
+  Photo 5: https://static.cupid.travel/rooms-large-pictures/42104390.jpg
+  Photo 6: https://static.cupid.travel/rooms-large-pictures/397320360.jpg
+  Photo 7: https://static.cupid.travel/rooms-large-pictures/397320356.jpg
+  Photo 8: https://static.cupid.travel/rooms-large-pictures/397320408.jpg
+  Photo 9: https://static.cupid.travel/rooms-large-pictures/397320474.jpg
+  Photo 10: https://static.cupid.travel/rooms-large-pictures/397320460.jpg
+  Photo 11: https://static.cupid.travel/rooms-large-pictures/397320430.jpg
+  Photo 12: https://static.cupid.travel/rooms-large-pictures/397320361.jpg
+  Photo 13: https://static.cupid.travel/rooms-large-pictures/397320339.jpg
+
+--- ROOM 10: One-Bedroom King Suite ---
+Room ID: 2327848
+Hotel ID: lp24b73
+Description: The spacious suite offers air conditioning, a tea and coffee maker, as well as a private bathroom featuring a bath and a shower.
+Room Size: 53 m2
+Maximum Adults: 4
+Maximum Children: 3
+Maximum Occupancy: 4
+Bed Configuration:
+  - 1x Extra-large double bed (Super-king size) (181-210 cm wide)
+Room Amenities (26 total):
+  - Coffee/tea maker (ID: 64, Sort: 0)
+  - Shower (ID: 312, Sort: 0)
+  - Safety deposit box (ID: 293, Sort: 17)
+  - Air conditioning (ID: 11, Sort: 0)
+  - Hair dryer (ID: 148, Sort: 0)
+  - Desk (ID: 82, Sort: 0)
+  - Toilet (ID: 350, Sort: 10)
+  - Private bathroom (ID: 266, Sort: 0)
+  - Heating (ID: 156, Sort: 0)
+  - View (ID: 371, Sort: 31)
+  - Wardrobe or closet (ID: 377, Sort: 0)
+  - Coffee machine (ID: 63, Sort: 46)
+  - City view (ID: 57, Sort: 39)
+  - Linen (ID: 197, Sort: 43)
+  - Upper floors accessible by elevator (ID: 366, Sort: 166)
+  - Upper floors accessible by stairs only (ID: 367, Sort: 167)
+  - Clothes rack (ID: 60, Sort: 72)
+  - Toilet paper (ID: 352, Sort: 0)
+  - Trash cans (ID: 361, Sort: 85)
+  - Socket near the bed (ID: 327, Sort: 89)
+  - Accessible by lift (ID: 5, Sort: 29)
+  - Key card access (ID: 182, Sort: 158)
+  - Window (ID: 386, Sort: 14)
+  - Free gym access (ID: 123, Sort: 194)
+  - Concierge services (ID: 70, Sort: 0)
+  - Hand sanitiser (ID: 149, Sort: 188)
+Room Photos Available: 8 images
+  Photo 1: https://static.cupid.travel/rooms-large-pictures/397320408.jpg
+  Photo 2: https://static.cupid.travel/rooms-large-pictures/191362529.jpg
+  Photo 3: https://static.cupid.travel/rooms-large-pictures/397320460.jpg
+  Photo 4: https://static.cupid.travel/rooms-large-pictures/397320363.jpg
+  Photo 5: https://static.cupid.travel/rooms-large-pictures/397320430.jpg
+  Photo 6: https://static.cupid.travel/rooms-large-pictures/397320372.jpg
+  Photo 7: https://static.cupid.travel/rooms-large-pictures/397320360.jpg
+  Photo 8: https://static.cupid.travel/rooms-large-pictures/397320356.jpg
+
+--- ROOM 11: Superior Queen Room ---
+Room ID: 2327849
+Hotel ID: lp24b73
+Description: The double room provides air conditioning, a tea and coffee maker, as well as a private bathroom featuring a bath and a shower. The double room offers a flat-screen TV, a wardrobe, a safe deposit box, a carpeted floor as well as city views. The unit offers 1 bed.
+Room Size: 22 m2
+Maximum Adults: 2
+Maximum Children: 1
+Maximum Occupancy: 2
+Bed Configuration:
+  - 1x Large bed (King size) (151-180 cm wide)
+Room Amenities (26 total):
+  - Coffee/tea maker (ID: 64, Sort: 0)
+  - Shower (ID: 312, Sort: 0)
+  - Safety deposit box (ID: 293, Sort: 17)
+  - Air conditioning (ID: 11, Sort: 0)
+  - Hair dryer (ID: 148, Sort: 0)
+  - Desk (ID: 82, Sort: 0)
+  - Toilet (ID: 350, Sort: 10)
+  - Private bathroom (ID: 266, Sort: 0)
+  - Heating (ID: 156, Sort: 0)
+  - View (ID: 371, Sort: 31)
+  - Wardrobe or closet (ID: 377, Sort: 0)
+  - Coffee machine (ID: 63, Sort: 46)
+  - City view (ID: 57, Sort: 39)
+  - Linen (ID: 197, Sort: 43)
+  - Upper floors accessible by elevator (ID: 366, Sort: 166)
+  - Upper floors accessible by stairs only (ID: 367, Sort: 167)
+  - Clothes rack (ID: 60, Sort: 72)
+  - Toilet paper (ID: 352, Sort: 0)
+  - Trash cans (ID: 361, Sort: 85)
+  - Socket near the bed (ID: 327, Sort: 89)
+  - Accessible by lift (ID: 5, Sort: 29)
+  - Key card access (ID: 182, Sort: 158)
+  - Window (ID: 386, Sort: 14)
+  - Free gym access (ID: 123, Sort: 194)
+  - Concierge services (ID: 70, Sort: 0)
+  - Hand sanitiser (ID: 149, Sort: 188)
+Room Photos Available: 5 images
+  Photo 1: https://static.cupid.travel/rooms-large-pictures/397320349.jpg
+  Photo 2: https://static.cupid.travel/rooms-large-pictures/397320361.jpg
+  Photo 3: https://static.cupid.travel/rooms-large-pictures/397320357.jpg
+  Photo 4: https://static.cupid.travel/rooms-large-pictures/397320348.jpg
+  Photo 5: https://static.cupid.travel/rooms-large-pictures/397320386.jpg
+
+--- ROOM 12: Queen Room With Bath Tub - Hearing/Mobility Accessible ---
+Room ID: 2327850
+Hotel ID: lp24b73
+Description: Featuring free toiletries, this double room includes a private bathroom with a bath, a shower and a hairdryer. This double room is air-conditioned and has a flat-screen TV, a tea and coffee maker, a wardrobe and a safe deposit box. The unit has 1 bed.
+Room Size: 22 m2
+Maximum Adults: 2
+Maximum Children: 1
+Maximum Occupancy: 2
+Bed Configuration:
+  - 1x Large bed (King size) (151-180 cm wide)
+Room Amenities (24 total):
+  - Coffee/tea maker (ID: 64, Sort: 0)
+  - Shower (ID: 312, Sort: 0)
+  - Safety deposit box (ID: 293, Sort: 17)
+  - Air conditioning (ID: 11, Sort: 0)
+  - Hair dryer (ID: 148, Sort: 0)
+  - Desk (ID: 82, Sort: 0)
+  - Toilet (ID: 350, Sort: 10)
+  - Private bathroom (ID: 266, Sort: 0)
+  - Heating (ID: 156, Sort: 0)
+  - Wardrobe or closet (ID: 377, Sort: 0)
+  - Linen (ID: 197, Sort: 43)
+  - Upper floors accessible by elevator (ID: 366, Sort: 166)
+  - Upper floors accessible by stairs only (ID: 367, Sort: 167)
+  - Clothes rack (ID: 60, Sort: 72)
+  - Toilet paper (ID: 352, Sort: 0)
+  - Adapted bath (ID: 7, Sort: 170)
+  - Trash cans (ID: 361, Sort: 85)
+  - Socket near the bed (ID: 327, Sort: 89)
+  - Accessible by lift (ID: 5, Sort: 29)
+  - Key card access (ID: 182, Sort: 158)
+  - Window (ID: 386, Sort: 14)
+  - Free gym access (ID: 123, Sort: 194)
+  - Concierge services (ID: 70, Sort: 0)
+  - Hand sanitiser (ID: 149, Sort: 188)
+Room Photos Available: 9 images
+  Photo 1: https://static.cupid.travel/rooms-large-pictures/397320352.jpg
+  Photo 2: https://static.cupid.travel/rooms-large-pictures/397320357.jpg
+  Photo 3: https://static.cupid.travel/rooms-large-pictures/397320348.jpg
+  Photo 4: https://static.cupid.travel/rooms-large-pictures/397320325.jpg
+  Photo 5: https://static.cupid.travel/rooms-large-pictures/397320335.jpg
+  Photo 6: https://static.cupid.travel/rooms-large-pictures/397320361.jpg
+  Photo 7: https://static.cupid.travel/rooms-large-pictures/397320339.jpg
+  Photo 8: https://static.cupid.travel/rooms-large-pictures/397320349.jpg
+  Photo 9: https://static.cupid.travel/rooms-large-pictures/397320342.jpg
+
+--- ROOM 13: Queen Room With Roll-In Shower - Hearing/Mobility Accessible ---
+Room ID: 2327851
+Hotel ID: lp24b73
+Description: The double room provides air conditioning, a tea and coffee maker, as well as a private bathroom featuring a shower and a hairdryer. The unit offers 1 bed.
+Room Size: 22 m2
+Maximum Adults: 2
+Maximum Children: 1
+Maximum Occupancy: 2
+Bed Configuration:
+  - 1x Large bed (King size) (151-180 cm wide)
+Room Amenities (24 total):
+  - Coffee/tea maker (ID: 64, Sort: 0)
+  - Shower (ID: 312, Sort: 0)
+  - Safety deposit box (ID: 293, Sort: 17)
+  - Air conditioning (ID: 11, Sort: 0)
+  - Hair dryer (ID: 148, Sort: 0)
+  - Desk (ID: 82, Sort: 0)
+  - Toilet (ID: 350, Sort: 10)
+  - Private bathroom (ID: 266, Sort: 0)
+  - Heating (ID: 156, Sort: 0)
+  - Wardrobe or closet (ID: 377, Sort: 0)
+  - Coffee machine (ID: 63, Sort: 46)
+  - Linen (ID: 197, Sort: 43)
+  - Upper floors accessible by elevator (ID: 366, Sort: 166)
+  - Upper floors accessible by stairs only (ID: 367, Sort: 167)
+  - Clothes rack (ID: 60, Sort: 72)
+  - Toilet paper (ID: 352, Sort: 0)
+  - Trash cans (ID: 361, Sort: 85)
+  - Socket near the bed (ID: 327, Sort: 89)
+  - Accessible by lift (ID: 5, Sort: 29)
+  - Key card access (ID: 182, Sort: 158)
+  - Window (ID: 386, Sort: 14)
+  - Free gym access (ID: 123, Sort: 194)
+  - Concierge services (ID: 70, Sort: 0)
+  - Hand sanitiser (ID: 149, Sort: 188)
+Room Photos Available: 10 images
+  Photo 1: https://static.cupid.travel/rooms-large-pictures/397320399.jpg
+  Photo 2: https://static.cupid.travel/rooms-large-pictures/397320370.jpg
+  Photo 3: https://static.cupid.travel/rooms-large-pictures/397320349.jpg
+  Photo 4: https://static.cupid.travel/rooms-large-pictures/397320347.jpg
+  Photo 5: https://static.cupid.travel/rooms-large-pictures/397320342.jpg
+  Photo 6: https://static.cupid.travel/rooms-large-pictures/397320398.jpg
+  Photo 7: https://static.cupid.travel/rooms-large-pictures/397320371.jpg
+  Photo 8: https://static.cupid.travel/rooms-large-pictures/397320325.jpg
+  Photo 9: https://static.cupid.travel/rooms-large-pictures/397320339.jpg
+  Photo 10: https://static.cupid.travel/rooms-large-pictures/397320361.jpg
+
+--- ROOM 14: Standard Queen Room ---
+Room ID: 2327852
+Hotel ID: lp24b73
+Description: The double room provides air conditioning, a tea and coffee maker, as well as a private bathroom featuring a bath and a shower. The double room features a wardrobe, a safe deposit box, a carpeted floor, heating, as well as a flat-screen TV. The unit offers 1 bed.
+Room Size: 22 m2
+Maximum Adults: 2
+Maximum Children: 1
+Maximum Occupancy: 2
+Bed Configuration:
+  - 1x Large bed (King size) (151-180 cm wide)
+Room Amenities (26 total):
+  - Coffee/tea maker (ID: 64, Sort: 0)
+  - Shower (ID: 312, Sort: 0)
+  - Safety deposit box (ID: 293, Sort: 17)
+  - Air conditioning (ID: 11, Sort: 0)
+  - Hair dryer (ID: 148, Sort: 0)
+  - Desk (ID: 82, Sort: 0)
+  - Toilet (ID: 350, Sort: 10)
+  - Private bathroom (ID: 266, Sort: 0)
+  - Heating (ID: 156, Sort: 0)
+  - View (ID: 371, Sort: 31)
+  - Wardrobe or closet (ID: 377, Sort: 0)
+  - Coffee machine (ID: 63, Sort: 46)
+  - Linen (ID: 197, Sort: 43)
+  - Upper floors accessible by elevator (ID: 366, Sort: 166)
+  - Upper floors accessible by stairs only (ID: 367, Sort: 167)
+  - Clothes rack (ID: 60, Sort: 72)
+  - Toilet paper (ID: 352, Sort: 0)
+  - Trash cans (ID: 361, Sort: 85)
+  - Cots (ID: 73, Sort: 86)
+  - Socket near the bed (ID: 327, Sort: 89)
+  - Accessible by lift (ID: 5, Sort: 29)
+  - Key card access (ID: 182, Sort: 158)
+  - Window (ID: 386, Sort: 14)
+  - Free gym access (ID: 123, Sort: 194)
+  - Concierge services (ID: 70, Sort: 0)
+  - Hand sanitiser (ID: 149, Sort: 188)
+Room Photos Available: 9 images
+  Photo 1: https://static.cupid.travel/rooms-large-pictures/397320371.jpg
+  Photo 2: https://static.cupid.travel/rooms-large-pictures/397320342.jpg
+  Photo 3: https://static.cupid.travel/rooms-large-pictures/397320349.jpg
+  Photo 4: https://static.cupid.travel/rooms-large-pictures/397320399.jpg
+  Photo 5: https://static.cupid.travel/rooms-large-pictures/397320387.jpg
+  Photo 6: https://static.cupid.travel/rooms-large-pictures/397320397.jpg
+  Photo 7: https://static.cupid.travel/rooms-large-pictures/397320422.jpg
+  Photo 8: https://static.cupid.travel/rooms-large-pictures/397320339.jpg
+  Photo 9: https://static.cupid.travel/rooms-large-pictures/397320436.jpg
+
+=== HOTEL IMAGES ===
+Main Photo: https://static.cupid.travel/hotels/42104325.jpg
+Thumbnail: https://static.cupid.travel/hotels/thumbnail/42104325.jpg
+Total Images Available: 103
+Image 1: https://static.cupid.travel/hotels/42104325.jpg (DEFAULT)
+Image 2: https://static.cupid.travel/hotels/147664684.jpg
+Image 3: https://static.cupid.travel/hotels/42104378.jpg
+Image 4: https://static.cupid.travel/hotels/42104380.jpg
+Image 5: https://static.cupid.travel/hotels/42104390.jpg
+Image 6: https://static.cupid.travel/hotels/147664422.jpg
+Image 7: https://static.cupid.travel/hotels/219953525.jpg
+Image 8: https://static.cupid.travel/hotels/219950616.jpg
+Image 9: https://static.cupid.travel/hotels/160653791.jpg
+Image 10: https://static.cupid.travel/hotels/160652925.jpg
+Image 11: https://static.cupid.travel/hotels/147664641.jpg
+Image 12: https://static.cupid.travel/hotels/147664606.jpg
+Image 13: https://static.cupid.travel/hotels/147664581.jpg
+Image 14: https://static.cupid.travel/hotels/397320346.jpg
+Image 15: https://static.cupid.travel/hotels/147664463.jpg
+Image 16: https://static.cupid.travel/hotels/397320430.jpg
+Image 17: https://static.cupid.travel/hotels/42104389.jpg
+Image 18: https://static.cupid.travel/hotels/191362529.jpg
+Image 19: https://static.cupid.travel/hotels/42104393.jpg
+Image 20: https://static.cupid.travel/hotels/42104396.jpg
+Image 21: https://static.cupid.travel/hotels/42104316.jpg
+Image 22: https://static.cupid.travel/hotels/42104400.jpg
+Image 23: https://static.cupid.travel/hotels/13821583.jpg
+Image 24: https://static.cupid.travel/hotels/42104383.jpg
+Image 25: https://static.cupid.travel/hotels/42104394.jpg
+Image 26: https://static.cupid.travel/hotels/42104349.jpg
+Image 27: https://static.cupid.travel/hotels/42104308.jpg
+Image 28: https://static.cupid.travel/hotels/42104392.jpg
+Image 29: https://static.cupid.travel/hotels/42104311.jpg
+Image 30: https://static.cupid.travel/hotels/92361279.jpg
+Image 31: https://static.cupid.travel/hotels/42104322.jpg
+Image 32: https://static.cupid.travel/hotels/42104326.jpg
+Image 33: https://static.cupid.travel/hotels/42104369.jpg
+Image 34: https://static.cupid.travel/hotels/147664650.jpg
+Image 35: https://static.cupid.travel/hotels/42104341.jpg
+Image 36: https://static.cupid.travel/hotels/42104352.jpg
+Image 37: https://static.cupid.travel/hotels/42104366.jpg
+Image 38: https://static.cupid.travel/hotels/42104374.jpg
+Image 39: https://static.cupid.travel/hotels/42104387.jpg
+Image 40: https://static.cupid.travel/hotels/42104391.jpg
+Image 41: https://static.cupid.travel/hotels/397320406.jpg
+Image 42: https://static.cupid.travel/hotels/397320399.jpg
+Image 43: https://static.cupid.travel/hotels/397320408.jpg
+Image 44: https://static.cupid.travel/hotels/397320398.jpg
+Image 45: https://static.cupid.travel/hotels/397320390.jpg
+Image 46: https://static.cupid.travel/hotels/397320397.jpg
+Image 47: https://static.cupid.travel/hotels/397320450.jpg
+Image 48: https://static.cupid.travel/hotels/397320393.jpg
+Image 49: https://static.cupid.travel/hotels/397320388.jpg
+Image 50: https://static.cupid.travel/hotels/397320387.jpg
+Image 51: https://static.cupid.travel/hotels/397320381.jpg
+Image 52: https://static.cupid.travel/hotels/397320382.jpg
+Image 53: https://static.cupid.travel/hotels/397320386.jpg
+Image 54: https://static.cupid.travel/hotels/397320370.jpg
+Image 55: https://static.cupid.travel/hotels/397320372.jpg
+Image 56: https://static.cupid.travel/hotels/397320469.jpg
+Image 57: https://static.cupid.travel/hotels/397320474.jpg
+Image 58: https://static.cupid.travel/hotels/397320460.jpg
+Image 59: https://static.cupid.travel/hotels/397320454.jpg
+Image 60: https://static.cupid.travel/hotels/397320378.jpg
+Image 61: https://static.cupid.travel/hotels/397320422.jpg
+Image 62: https://static.cupid.travel/hotels/397320417.jpg
+Image 63: https://static.cupid.travel/hotels/397320367.jpg
+Image 64: https://static.cupid.travel/hotels/397320354.jpg
+Image 65: https://static.cupid.travel/hotels/397320475.jpg
+Image 66: https://static.cupid.travel/hotels/397320371.jpg
+Image 67: https://static.cupid.travel/hotels/397320360.jpg
+Image 68: https://static.cupid.travel/hotels/397320507.jpg
+Image 69: https://static.cupid.travel/hotels/397320499.jpg
+Image 70: https://static.cupid.travel/hotels/397320493.jpg
+Image 71: https://static.cupid.travel/hotels/397320485.jpg
+Image 72: https://static.cupid.travel/hotels/397320480.jpg
+Image 73: https://static.cupid.travel/hotels/397320358.jpg
+Image 74: https://static.cupid.travel/hotels/397320363.jpg
+Image 75: https://static.cupid.travel/hotels/397320356.jpg
+Image 76: https://static.cupid.travel/hotels/397320361.jpg
+Image 77: https://static.cupid.travel/hotels/397320355.jpg
+Image 78: https://static.cupid.travel/hotels/397320436.jpg
+Image 79: https://static.cupid.travel/hotels/397320357.jpg
+Image 80: https://static.cupid.travel/hotels/397320352.jpg
+Image 81: https://static.cupid.travel/hotels/397320353.jpg
+Image 82: https://static.cupid.travel/hotels/397320348.jpg
+Image 83: https://static.cupid.travel/hotels/397320345.jpg
+Image 84: https://static.cupid.travel/hotels/397320347.jpg
+Image 85: https://static.cupid.travel/hotels/397320522.jpg
+Image 86: https://static.cupid.travel/hotels/397320527.jpg
+Image 87: https://static.cupid.travel/hotels/397320340.jpg
+Image 88: https://static.cupid.travel/hotels/397320534.jpg
+Image 89: https://static.cupid.travel/hotels/397320339.jpg
+Image 90: https://static.cupid.travel/hotels/397320342.jpg
+Image 91: https://static.cupid.travel/hotels/397320537.jpg
+Image 92: https://static.cupid.travel/hotels/397320335.jpg
+Image 93: https://static.cupid.travel/hotels/397320334.jpg
+Image 94: https://static.cupid.travel/hotels/397320325.jpg
+Image 95: https://static.cupid.travel/hotels/397320558.jpg
+Image 96: https://static.cupid.travel/hotels/397320560.jpg
+Image 97: https://static.cupid.travel/hotels/397320564.jpg
+Image 98: https://static.cupid.travel/hotels/397320588.jpg
+Image 99: https://static.cupid.travel/hotels/397320589.jpg
+Image 100: https://static.cupid.travel/hotels/397320446.jpg
+Image 101: https://static.cupid.travel/hotels/397320615.jpg
+Image 102: https://static.cupid.travel/hotels/397320349.jpg
+Image 103: https://static.cupid.travel/hotels/397320344.jpg
+
+=== COMPREHENSIVE HOTEL POLICIES ===
+
+--- POLICY 1: INTERNET ---
+Policy Type: POLICY_HOTEL_INTERNET
+Description: WiFi is available in all areas and is free of charge.
+
+--- POLICY 2: CHILDREN AND EXTRA BED POLICY ---
+Policy Type: POLICY_CHILDREN
+Description: Children of any age are allowed.
+Children up to and including 2 years old stay for free when using an available cot.
+Children up to and including 12 years old stay for free when using an existing bed.
+You haven't added any extra beds.
+Any type of extra bed or child's cot/crib is upon request and needs to be confirmed by management.
+
+--- POLICY 3: PETS ---
+Policy Type: POLICY_HOTEL_PETS
+Description: Pets are allowed. Charges may be applicable.
+
+--- POLICY 4: GROUPS ---
+Policy Type: POLICY_HOTEL_GROUPS
+Description: When booking more than 9 rooms, different policies and additional supplements may apply.
+
+--- POLICY 5: PARKING ---
+Policy Type: POLICY_HOTEL_PARKING
+Description: Private parking is possible at a location nearby (reservation is not needed) and costs  USD 50 per  day.
+
+=== COMPREHENSIVE GUEST SENTIMENT ANALYSIS ===
+Last Updated: 2025-03-14T19:55:27Z
+
+WHAT GUESTS LOVE (6 points):
+1. Location
+2. Great city view
+3. Friendly staff
+4. Clean rooms
+5. Comfortable beds
+6. Great location right in Time Square
+
+AREAS FOR IMPROVEMENT (6 points):
+1. Limited parking
+2. Expensive breakfast
+3. No spa services
+4. Weak water pressure in showers
+5. Old shower
+6. Slow elevators
+
+DETAILED CATEGORY RATINGS (8 categories):
+1. CLEANLINESS: 6.7/10
+   Analysis: Mixed reviews on cleanliness, with some guests mentioning it as a con.
+
+2. SERVICE: 7.8/10
+   Analysis: Service received positive feedback, with occasional complaints about wait times.
+
+3. LOCATION: 9.4/10
+   Analysis: Highly praised location near key landmarks and public transport.
+
+4. ROOM QUALITY: 7.1/10
+   Analysis: Room quality varied, with some mentioning comfortable beds and others minor maintenance issues.
+
+5. AMENITIES: 6.8/10
+   Analysis: Mixed feedback on amenities, with positive mentions of gym and pool but some guests missing spa services.
+
+6. VALUE FOR MONEY: 5.8/10
+   Analysis: Mixed reviews on value for money, with some guests feeling the price was high for the services offered.
+
+7. FOOD AND BEVERAGE: 7.2/10
+   Analysis: Breakfast and restaurant services generally well-received, though some guests wished for more variety.
+
+8. OVERALL EXPERIENCE: 8.4/10
+   Analysis: Most guests had a positive overall experience and would recommend the hotel to others.
+
+=== ADDITIONAL METADATA ===
+Data Last Updated: 2025-09-01T20:32:18.890Z
+Total Sections Processed: 10
+
+=== DATA SUMMARY STATISTICS ===
+Total Facilities/Amenities: 104
+Total Room Types: 14
+Total Images Available: 103
+Total Policies: 5
+Total Sentiment Points: 12
+Guest Review Count: 7754
+Overall Rating: 7.2/10
+
+==================
+END OF EXPORT
+==================

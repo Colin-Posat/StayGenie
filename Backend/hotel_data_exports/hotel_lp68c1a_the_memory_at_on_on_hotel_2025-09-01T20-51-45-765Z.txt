@@ -1,0 +1,93 @@
+HOTEL DATA EXPORT
+==================
+Hotel Name: The Memory at On On Hotel
+Hotel ID: lp68c1a
+Export Date: 2025-09-01T20:51:45.765Z
+Export Length: 3610 characters
+
+==================
+COMPLETE HOTEL INFORMATION
+==================
+
+HOTEL DESCRIPTION:
+Welcome to The Memory at On On Hotel, where comfort meets the vibrant culture of Old Phuket Town!Modern AmenitiesEnjoy complimentary wireless internet access throughout your stay, along with convenient features such as 24-hour front desk service, dry cleaning/laundry, and luggage storage for a hassle-free experience.Comfortable AccommodationsRetreat to one of our 35 air-conditioned rooms, each equipped with refrigerators, LED televisions, and private bathrooms featuring rejuvenating rainfall showerheads. Relax in style with cable programming and complimentary toiletries at your fingertips.Prime LocationDiscover the local charm just steps away from notable attractions like the Phuket Weekend Market, Thavorn Museum, and Thai Hua Museum. Enjoy the vibrant atmosphere of Old Phuket Town while being a short drive from stunning beaches and entertainment options.Book your unforgettable stay today at The Memory at On On Hotel!
+
+IMPORTANT INFORMATION:
+* One child 12 years old or younger stays free when occupying the parent or guardian's room, using existing bedding.
+* Only registered guests are allowed in the guestrooms.
+* No pets and no service animals are allowed at this property.
+
+HOTEL FACILITIES & AMENITIES:
+• Free WiFi
+• 24-hour front desk
+• Luggage storage
+• Designated smoking area
+• Wheelchair accessible
+• Free airport transportation
+• ATM/banking
+• Gift shops or newsstand
+• Safe-deposit box at front desk
+• Tours/ticket assistance
+• Airport transportation - pickup (surcharge)
+
+ADDITIONAL FACILITIES:
+• Free WiFi
+• 24-hour front desk
+• Luggage storage
+• Designated smoking area
+• Wheelchair accessible
+• Free airport transportation
+• ATM/banking
+• Gift shops or newsstand
+• Safe-deposit box at front desk
+• Tours/ticket assistance
+• Airport transportation - pickup (surcharge)
+
+HOTEL POLICIES:
+PETS:
+Pets not allowed
+
+PETS:
+Service animals not allowed
+
+ACCESSIBILITY:
+No elevators
+
+GENERAL:
+Professional property host/manager
+
+GUEST SENTIMENT ANALYSIS:
+What Guests Love:
+• Friendly staff
+• Great location
+• Comfortable beds
+• Charming ambiance
+
+Areas for Improvement:
+• Room size limitations
+• Mixed reviews on value for money
+• Limited amenities like spa services
+
+Category Ratings:
+• Cleanliness: 8.3/10 - Guests consistently mentioned cleanliness as a positive aspect.
+• Service: 8.4/10 - Service was generally appreciated, with friendly and helpful staff mentioned frequently. Some guests mentioned wait times as a downside.
+• Location: 8.6/10 - The hotel is located in close proximity to key landmarks in Old Town Phuket, making it convenient for guests. Many guests appreciated the central location for exploring the area.
+• Room Quality: 8.1/10 - Rooms were stylish, comfortable, and clean. Some guests mentioned room size as a drawback.
+• Amenities: 7.7/10 - Amenities like snacks in the lobby and a charming ambiance were well-received. Some guests noted the lack of certain amenities like a spa.
+• Value for Money: 7.2/10 - Mixed reviews on value for money, with some guests finding the location justifying the price while others felt it was slightly expensive.
+• Food and Beverage: 7.2/10 - Breakfast and restaurant services were generally praised, though some guests suggested more variety in the menu.
+• Overall Experience: 8.6/10 - Most guests had a positive overall experience, highlighting the location, friendly staff, and unique ambiance.
+
+BASIC INFORMATION:
+Name: The Memory at On On Hotel
+Address: 19 Phangnga Road, Tambon Talad Yai
+City: Phuket
+Country: TH
+Star Rating: 3 stars
+Guest Rating: 0/10 (127 reviews)
+Check-in: 2:00 PM
+Check-out: 12:00 PM
+
+==================
+END OF EXPORT
+==================

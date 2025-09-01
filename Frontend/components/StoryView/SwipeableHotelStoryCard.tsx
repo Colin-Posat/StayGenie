@@ -1357,6 +1357,23 @@ useEffect(() => {
       onShowSignUpModal={handleShowSignUpModal}
     />
     
+    {/* Ask Button - New */}
+<TouchableOpacity
+  style={[
+    tw`py-3 px-4 rounded-xl border-2 flex-row items-center flex-1 justify-center`,
+    { 
+      backgroundColor: TURQUOISE + '10',
+      borderColor: TURQUOISE + '30',
+    }
+  ]}
+  onPress={() => setShowHotelChat(true)} 
+  activeOpacity={0.8}
+>
+  <Ionicons name="chatbubble" size={16} color={TURQUOISE_DARK} />
+  <Text style={[tw`ml-2 font-medium text-sm`, { color: BLACK }]}>
+    Ask
+  </Text>
+</TouchableOpacity>
     {/* View Details Button - Updated styling */}
 <TouchableOpacity
     style={[
@@ -1375,23 +1392,7 @@ useEffect(() => {
     </Text>
   </TouchableOpacity>
 
-{/* Ask Button - New */}
-<TouchableOpacity
-  style={[
-    tw`py-3 px-4 rounded-xl border-2 flex-row items-center flex-1 justify-center`,
-    { 
-      backgroundColor: TURQUOISE + '10',
-      borderColor: TURQUOISE + '30',
-    }
-  ]}
-  onPress={() => setShowHotelChat(true)} 
-  activeOpacity={0.8}
->
-  <Ionicons name="chatbubble" size={16} color={TURQUOISE_DARK} />
-  <Text style={[tw`ml-2 font-medium text-sm`, { color: BLACK }]}>
-    Ask
-  </Text>
-</TouchableOpacity>
+
 
 {/* Book Button - Updated text */}
 <TouchableOpacity

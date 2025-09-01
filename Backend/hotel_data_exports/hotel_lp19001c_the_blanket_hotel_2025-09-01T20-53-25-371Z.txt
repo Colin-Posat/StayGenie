@@ -1,0 +1,112 @@
+HOTEL DATA EXPORT
+==================
+Hotel Name: The Blanket Hotel
+Hotel ID: lp19001c
+Export Date: 2025-09-01T20:53:25.371Z
+Export Length: 3701 characters
+
+==================
+COMPLETE HOTEL INFORMATION
+==================
+
+HOTEL DESCRIPTION:
+Discover a charming oasis in the heart of Phuket at The Blanket Hotel, where comfort and convenience meet local charm.Modern ComfortsUnwind in one of our 29 air-conditioned rooms, conveniently equipped with refrigerators, flat-screen TVs, and complimentary Wi-Fi to keep you connected. Enjoy all the comforts of home with amenities designed for your relaxation.Culinary DelightsSavor delectable local and international cuisine at The Blanket Cafe, our vibrant bar/lounge. Whether you’re looking for a hearty breakfast or a quick snack, we’ve got you covered with a daily breakfast menu and a cozy coffee shop/cafe.Prime LocationNestled within walking distance of cultural gems like the Phuket Baba Museum and the bustling Phuket Weekend Market, you'll find endless opportunities for exploration right at your doorstep.Don’t miss out on this unforgettable experience; book your stay at The Blanket Hotel today!
+
+IMPORTANT INFORMATION:
+* Only registered guests are allowed in the guestrooms.
+* Cashless payment methods are available for all transactions.
+
+HOTEL FACILITIES & AMENITIES:
+• Free WiFi
+• Luggage storage
+• Designated smoking area
+• Concierge service
+• Wheelchair accessible
+• Breakfast available (surcharge)
+• Television in common areas
+• Safe-deposit box at front desk
+• Multilingual staff
+• Front desk (limited hours)
+• Limo or town car service available
+• Tours/ticket assistance
+• Parking (limited spaces)
+• Free self parking
+• Water dispenser
+• Art gallery on site
+• Accessible shuttle
+• No accessible shuttle
+
+ADDITIONAL FACILITIES:
+• Free WiFi
+• Luggage storage
+• Designated smoking area
+• Concierge service
+• Wheelchair accessible
+• Breakfast available (surcharge)
+• Television in common areas
+• Safe-deposit box at front desk
+• Multilingual staff
+• Front desk (limited hours)
+• Limo or town car service available
+• Tours/ticket assistance
+• Parking (limited spaces)
+• Free self parking
+• Water dispenser
+• Art gallery on site
+• Accessible shuttle
+• No accessible shuttle
+
+HOTEL POLICIES:
+PETS:
+Pets not allowed
+
+CHILDREN AND EXTRA BEDS:
+No rollaway/extra beds available
+
+GENERAL:
+Cashless transactions are available
+
+ACCESSIBILITY:
+No elevators
+
+GENERAL:
+Professional property host/manager
+
+CHILDREN AND EXTRA BEDS:
+No cribs (infant beds) available
+
+GUEST SENTIMENT ANALYSIS:
+What Guests Love:
+• Clean rooms
+• Friendly staff
+• Great location
+• Comfortable beds
+
+Areas for Improvement:
+• Limited parking
+• Expensive breakfast
+• No spa services
+
+Category Ratings:
+• Cleanliness: 7.5/10 - Guests consistently mentioned cleanliness as a positive aspect.
+• Service: 8.3/10 - Service was generally appreciated, although a few guests had complaints about wait times.
+• Location: 8.1/10 - The hotel is located in close proximity to many key landmarks and public transport.
+• Room Quality: 7.8/10 - Rooms were spacious and comfortable, although some guests mentioned minor maintenance issues.
+• Amenities: 7.2/10 - The amenities provided were satisfactory, with some guests highlighting the gym and pool, while others mentioned the lack of spa services.
+• Value for Money: 6.9/10 - Some guests felt that the price was a bit high for the services offered, while others thought it was reasonable given the location.
+• Food and Beverage: 7.3/10 - Breakfast and restaurant services were generally well-received, although a few guests thought there could be more variety.
+• Overall Experience: 8/10 - Most guests had a positive overall experience and would recommend the hotel to others.
+
+BASIC INFORMATION:
+Name: The Blanket Hotel
+Address: 95/19-21 Phuket Road
+City: Phuket
+Country: TH
+Star Rating: 4 stars
+Guest Rating: 0/10 (50 reviews)
+Check-in: 2:00 PM
+Check-out: 12:00 PM
+
+==================
+END OF EXPORT
+==================

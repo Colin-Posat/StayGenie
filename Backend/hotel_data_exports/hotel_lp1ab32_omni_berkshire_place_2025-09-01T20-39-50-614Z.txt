@@ -1,0 +1,179 @@
+HOTEL DATA EXPORT
+==================
+Hotel Name: Omni Berkshire Place
+Hotel ID: lp1ab32
+Export Date: 2025-09-01T20:39:50.614Z
+Export Length: 6233 characters
+
+==================
+COMPLETE HOTEL INFORMATION
+==================
+
+HOTEL DESCRIPTION:
+Luxurious AccommodationsExperience the ultimate comfort at Omni Berkshire Place with spacious rooms featuring modern amenities like a 49-inch HDTV and marble bathrooms. Stay connected with complimentary WiFi during your stay.Fitness and WellnessEnjoy stunning views of St. Patrick's Cathedral while working out at the on-site gym equipped with top-notch cardio machines and personal TVs. Indulge in concierge services including relaxing in-room massages to unwind after a long day of exploring.Prime LocationSituated just steps away from iconic landmarks like Rockefeller Center and Central Park, Omni Berkshire Place offers convenience and luxury in the heart of Manhattan. Book now to elevate your NYC experience!
+
+IMPORTANT INFORMATION:
+Guests are required to show a photo identification and credit card upon check-in. Please note that all Special Requests are subject to availability and additional charges may apply.
+Please note, refrigerators are available upon request for free, subject to availability at the time of request.
+
+Please note, parking fees will apply upon reentry.
+
+Service Charge includes:
+-2 Bottles of water daily.
+-Local and Long Distance Calls.
+-24 hr access to fitness center.
+-Complimentary premier Wi-Fi.
+-Coffee Maker.
+-Mini-Refrigerator.
+-Tea Kettle can be requested at no charge.
+-Newspapers available at concierge complimentary.
+
+HOTEL FACILITIES & AMENITIES:
+• Fitness facilities (surcharge)
+• Non-smoking rooms
+• Air conditioning
+• Restaurant
+• Room service
+• Terrace
+• Family rooms
+• Pets allowed
+• Lift / Elevator
+• Luggage storage
+• Express check-in/check-out
+• Safety deposit box
+• Fax/photocopying
+• Tour desk
+• Facilities for disabled guests
+• Ironing service
+• Non-smoking throughout
+• Concierge service
+• Allergy-free room
+• Beauty Services
+• Staff adhere to local safety protocols
+• Guest rooms disinfected between stays
+• Hand sanitizer in guest room and key areas
+• Cashless payment available
+• Fire extinguishers
+• First aid kit available
+• Sanitized tableware & silverware
+• Contactless check-in/check-out
+• Guests can opt-out any cleaning services during stay
+• Smoke alarms
+• CCTV outside property
+• 24-hour security
+• Key card access
+• Television in common areas
+• Front desk (limited hours)
+• Express check-in
+• Free wired internet
+• Self parking (surcharge)
+• Fitness facilities (surcharge)
+• Internet access
+• Housekeeping on request
+• Reception hall
+• Covered parking
+• Secured parking
+• Garage
+
+ADDITIONAL FACILITIES:
+• Fitness facilities (surcharge)
+• Non-smoking rooms
+• Air conditioning
+• Restaurant
+• Room service
+• Terrace
+• Family rooms
+• Pets allowed
+• Lift / Elevator
+• Luggage storage
+• Express check-in/check-out
+• Safety deposit box
+• Fax/photocopying
+• Tour desk
+• Facilities for disabled guests
+• Ironing service
+• Non-smoking throughout
+• Concierge service
+• Allergy-free room
+• Beauty Services
+• Staff adhere to local safety protocols
+• Guest rooms disinfected between stays
+• Hand sanitizer in guest room and key areas
+• Cashless payment available
+• Fire extinguishers
+• First aid kit available
+• Sanitized tableware & silverware
+• Contactless check-in/check-out
+• Guests can opt-out any cleaning services during stay
+• Smoke alarms
+• CCTV outside property
+• 24-hour security
+• Key card access
+• Television in common areas
+• Front desk (limited hours)
+• Express check-in
+• Free wired internet
+• Self parking (surcharge)
+• Fitness facilities (surcharge)
+• Internet access
+• Housekeeping on request
+• Reception hall
+• Covered parking
+• Secured parking
+• Garage
+
+HOTEL POLICIES:
+INTERNET:
+WiFi is available in all areas and is free of charge.
+
+PETS:
+Pets are allowed. Charges may be applicable.
+
+GROUPS:
+When booking more than 9 rooms, different policies and additional supplements may apply.
+
+PARKING:
+Private parking is possible on site (reservation is not needed) and costs  USD 85 per  day.
+
+CHILDREN AND EXTRA BED POLICY:
+Children of any age are allowed.
+Children up to and including 2 years old stay for free when using an available cot.
+Children up to and including 17 years old stay for free when using an existing bed.
+People no matter the age stay for US$45 per person per night when using an available extra bed.
+Any type of extra bed or child's cot/crib is upon request and needs to be confirmed by management.
+Supplements are not calculated automatically in the total costs and will have to be paid for separately during your stay.
+
+GUEST SENTIMENT ANALYSIS:
+What Guests Love:
+• Great location
+• Comfortable rooms
+• Friendly and helpful staff
+
+Areas for Improvement:
+• Issues with service
+• Elevator outages
+• Value for money concerns
+
+Category Ratings:
+• Cleanliness: 7.6/10 - Rooms were generally clean and well-maintained, with some guests noting the cleanliness as a positive aspect.
+• Service: 6.9/10 - Mixed reviews on service quality, with some guests praising staff friendliness and helpfulness, while others had complaints about slow response times and lack of recognition for loyalty status.
+• Location: 8.6/10 - The hotel's central location in Midtown Manhattan was highly praised by many guests for its convenience and proximity to key landmarks.
+• Room Quality: 7.6/10 - Rooms were described as comfortable and modern by most guests, although a few mentioned minor issues like non-functional elevators.
+• Amenities: 7/10 - The amenities offered, such as the on-site restaurant and coffee shop, were viewed positively by some guests, but others mentioned shortcomings like elevator outages.
+• Value for Money: 7/10 - Opinions were divided on the value for money, with some guests feeling the price was justified by the location, while others thought it was expensive compared to other options.
+• Food and Beverage: 7.6/10 - Guests generally enjoyed the breakfast and dining options at the hotel, although some suggested improvement in variety and service speed.
+• Overall Experience: 8.3/10 - Most guests had a positive overall experience, citing the location, room quality, and friendly staff as highlights of their stay.
+
+BASIC INFORMATION:
+Name: Omni Berkshire Place
+Address: 21 East 52nd Street
+City: New York
+Country: us
+Star Rating: 4 stars
+Guest Rating: 8.7/10 (1111 reviews)
+Check-in: 3:00 PM
+Check-out: 12:00 PM
+
+==================
+END OF EXPORT
+==================
