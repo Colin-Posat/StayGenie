@@ -9,6 +9,9 @@ import {
   Platform,
   Alert,
   Animated,
+  Modal,
+  TouchableWithoutFeedback,
+  StyleSheet
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import tw from 'twrnc';
@@ -19,6 +22,7 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import type { StackNavigationProp } from '@react-navigation/stack';
 import EventSource from 'react-native-sse';
 
+const OVERLAY_BACKDROP = 'rgba(0,0,0,0.7)';
 
 // Import test data
 import { testAISuggestions, generateTestSearchResponse } from '../components/HomeScreenTop/TestModeData';
@@ -298,8 +302,8 @@ interface Hotel {
   allHotelInfo?: string;
 }
 
-//const BASE_URL = 'https://staygenie-wwpa.onrender.com';
-const BASE_URL = 'http://localhost:3003';
+const BASE_URL = 'https://staygenie-wwpa.onrender.com';
+//const BASE_URL = 'http://localhost:3003';
 
 
 
@@ -2136,31 +2140,46 @@ const handleBackPress = useCallback(() => {
       />
       </View>
 
-      {/* AI SEARCH OVERLAY */}
-      <AISearchOverlay
-        visible={showAiOverlay}
-        onClose={handleCloseAiOverlay}
-        onSearchUpdate={handleSearchUpdate}
-        currentSearch={searchQuery}
-        searchContext={{
-          location: (stage1Results?.searchParams || searchResults?.searchParams)?.cityName,
-          dates: {
-            checkin: checkInDate.toISOString().split('T')[0],
-            checkout: checkOutDate.toISOString().split('T')[0],
-          },
-          guests: {
-            adults: adults,
-            children: children,
-          },
-          budget: {
-            min: (stage1Results?.searchParams || searchResults?.searchParams)?.minCost,
-            max: (stage1Results?.searchParams || searchResults?.searchParams)?.maxCost,
-            currency: (stage1Results?.searchParams || searchResults?.searchParams)?.currency,
-          },
-          // Include result count for AI's opening message
-          resultCount: displayHotels.length || stage1Results?.matchedHotelsCount || searchResults?.aiRecommendationsCount || 0
-        }}
-      />
+      <Modal
+  visible={showAiOverlay}
+  transparent
+  animationType="fade"
+  statusBarTranslucent
+  presentationStyle="overFullScreen"
+  onRequestClose={handleCloseAiOverlay}  // Android back button
+>
+  {/* Backdrop to close on outside press */}
+  <TouchableWithoutFeedback onPress={handleCloseAiOverlay}>
+    <View style={[StyleSheet.absoluteFillObject, { backgroundColor: 'rgba(0,0,0,0.1)' }]} />
+  </TouchableWithoutFeedback>
+
+  {/* Centered panel (or bottom sheet—your call) */}
+  <View style={[StyleSheet.absoluteFillObject, tw`items-center justify-center`]}>
+    {/* If AISearchOverlay already draws its own panel/backdrop,
+        give it a prop to render just the inner content */}
+    <AISearchOverlay
+      visible
+      onClose={handleCloseAiOverlay}
+      onSearchUpdate={handleSearchUpdate}
+      currentSearch={searchQuery}
+      searchContext={{
+        location: (stage1Results?.searchParams || searchResults?.searchParams)?.cityName,
+        dates: {
+          checkin: checkInDate.toISOString().split('T')[0],
+          checkout: checkOutDate.toISOString().split('T')[0],
+        },
+        guests: { adults, children },
+        budget: {
+          min: (stage1Results?.searchParams || searchResults?.searchParams)?.minCost,
+          max: (stage1Results?.searchParams || searchResults?.searchParams)?.maxCost,
+          currency: (stage1Results?.searchParams || searchResults?.searchParams)?.currency,
+        },
+        resultCount: displayHotels.length || stage1Results?.matchedHotelsCount || searchResults?.aiRecommendationsCount || 0
+      }}
+    />
+  </View>
+</Modal>
+
       </Animated.View>
     </SafeAreaView>
   );

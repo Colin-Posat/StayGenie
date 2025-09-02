@@ -1,4 +1,4 @@
-// HotelChatOverlay.tsx - Compact slide-up modal design
+// HotelChatOverlay.tsx — Centered fullscreen popup (matches ConversationalRefineOverlay behavior)
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   View,
@@ -7,12 +7,12 @@ import {
   Animated,
   Dimensions,
   TextInput,
-  FlatList,
   ScrollView,
   Platform,
-  KeyboardAvoidingView,
   ActivityIndicator,
-  Alert,
+  KeyboardAvoidingView,
+  StyleSheet,
+  Keyboard,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import tw from 'twrnc';
@@ -20,16 +20,15 @@ import type { EnhancedHotel } from '../StoryView/SwipeableHotelStoryCard';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
-// Turquoise color constants
+// Turquoise color constants - keep in sync with ConversationalRefineOverlay
 const TURQUOISE = '#1df9ff';
+const TURQUOISE_LIGHT = '#5dfbff';
 const TURQUOISE_DARK = '#00d4e6';
+const TURQUOISE_GLOW = '#1df9ff';
 const TURQUOISE_SUBTLE = '#f0feff';
 const TURQUOISE_BORDER = '#b3f7ff';
 
-// Compact modal height - much smaller!
-const MODAL_HEIGHT = screenHeight * 0.6;
-
-// Common hotel questions as suggestion pills - prioritized order
+// Common hotel questions as suggestion pills
 const HOTEL_QUESTION_SUGGESTIONS = [
   { text: 'Check-in/out', query: 'What are the check-in and check-out times?', icon: 'time' as const },
   { text: 'Amenities', query: 'What amenities does this hotel offer?', icon: 'list' as const },
@@ -55,16 +54,14 @@ interface HotelChatOverlayProps {
   hotel: EnhancedHotel;
 }
 
-const BASE_URL = 'http://localhost:3003';
+const BASE_URL = 'https://staygenie-wwpa.onrender.com';
+// const BASE_URL = 'http://localhost:3003';
 
 const HotelChatOverlay: React.FC<HotelChatOverlayProps> = ({
   visible,
   onClose,
   hotel,
 }) => {
-  const slideAnim = useRef(new Animated.Value(MODAL_HEIGHT)).current;
-  const backdropAnim = useRef(new Animated.Value(0)).current;
-  
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [inputText, setInputText] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -72,89 +69,85 @@ const HotelChatOverlay: React.FC<HotelChatOverlayProps> = ({
   const [contextReady, setContextReady] = useState(false);
   const [enrichedHotel, setEnrichedHotel] = useState<EnhancedHotel>(hotel);
   const [conversationId] = useState(() => `chat_${Date.now()}`);
-  
-  const scrollRef = useRef<ScrollView | FlatList>(null);
+
+  const scrollRef = useRef<ScrollView>(null);
   const inputRef = useRef<TextInput>(null);
 
-  // Determine if we should use ScrollView (web) or FlatList (mobile)
-  const isWeb = Platform.OS === 'web';
+  // Animations — mirror ConversationalRefineOverlay
+  const slideAnim = useRef(new Animated.Value(20)).current;   // small vertical offset
+  const opacityAnim = useRef(new Animated.Value(0)).current;  // fade
+  const scaleAnim  = useRef(new Animated.Value(0.97)).current; // tiny scale pop
 
-  // Get contextual suggestions that haven't been used yet
-  const getContextualSuggestions = useCallback(() => {
-    const usedQueries = new Set(
-      messages
-        .filter(msg => msg.type === 'user')
-        .map(msg => msg.text.toLowerCase())
-    );
-
-    return HOTEL_QUESTION_SUGGESTIONS.filter(suggestion => 
-      !usedQueries.has(suggestion.query.toLowerCase()) &&
-      !Array.from(usedQueries).some(used => 
-        used.includes(suggestion.text.toLowerCase()) || 
-        suggestion.query.toLowerCase().includes(used)
-      )
-    ).slice(0, 6); // Show up to 6 suggestions
-  }, [messages]);
+  // Panel dimensions — mirror ConversationalRefineOverlay
+  const panelWidth = Math.min(screenWidth - 32, 700);
+  const panelHeight = Math.min(Math.round(screenHeight * 0.6), 560);
 
   const scrollToEnd = useCallback(() => {
-    if (isWeb && scrollRef.current) {
-      // For web ScrollView
-      (scrollRef.current as ScrollView).scrollToEnd({ animated: true });
-    } else if (scrollRef.current) {
-      // For mobile FlatList
-      (scrollRef.current as FlatList).scrollToEnd({ animated: true });
-    }
-  }, [isWeb]);
+    setTimeout(() => {
+      scrollRef.current?.scrollToEnd({ animated: true });
+    }, 100);
+  }, []);
 
-  // Initialize chat when visible
+  // Contextual suggestions (avoid repeating user-asked items)
+  const getContextualSuggestions = useCallback(() => {
+    const usedQueries = new Set(
+      messages.filter(m => m.type === 'user').map(m => m.text.toLowerCase())
+    );
+    return HOTEL_QUESTION_SUGGESTIONS.filter(s =>
+      !usedQueries.has(s.query.toLowerCase()) &&
+      !Array.from(usedQueries).some(used =>
+        used.includes(s.text.toLowerCase()) || s.query.toLowerCase().includes(used)
+      )
+    ).slice(0, 4);
+  }, [messages]);
+
+  // Animate in/out + initialize
   useEffect(() => {
-    if (visible) {
-      // Show modal
-      Animated.parallel([
-        Animated.spring(slideAnim, {
-          toValue: 0,
-          useNativeDriver: true,
-          tension: 100,
-          friction: 8,
-        }),
-        Animated.timing(backdropAnim, {
-          toValue: 1,
-          duration: 200,
-          useNativeDriver: true,
-        }),
-      ]).start();
+    if (!visible) return;
 
-      // Initialize conversation
-      initializeChat();
-    } else {
-      // Hide modal
-      Animated.parallel([
-        Animated.spring(slideAnim, {
-          toValue: MODAL_HEIGHT,
-          useNativeDriver: true,
-          tension: 120,
-          friction: 8,
-        }),
-        Animated.timing(backdropAnim, {
-          toValue: 0,
-          duration: 150,
-          useNativeDriver: true,
-        }),
-      ]).start();
-      
-      // Reset state
-      setMessages([]);
-      setInputText('');
-      setContextReady(false);
-      setIsLoading(false);
-      setIsTyping(false);
-    }
+    // Start slightly below center
+    slideAnim.setValue(20);
+    opacityAnim.setValue(0);
+    scaleAnim.setValue(0.97);
+
+    Animated.parallel([
+      Animated.spring(slideAnim, {
+        toValue: 0,
+        useNativeDriver: true,
+        tension: 100,
+        friction: 10,
+      }),
+      Animated.timing(opacityAnim, {
+        toValue: 1,
+        duration: 250,
+        useNativeDriver: true,
+      }),
+      Animated.spring(scaleAnim, {
+        toValue: 1,
+        useNativeDriver: true,
+        tension: 100,
+        friction: 8,
+      }),
+    ]).start();
+
+    initializeChat();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [visible]);
+
+  // Reset state when closed
+  useEffect(() => {
+    if (visible) return;
+    setMessages([]);
+    setInputText('');
+    setContextReady(false);
+    setIsLoading(false);
+    setIsTyping(false);
+    setEnrichedHotel(hotel);
+  }, [visible, hotel]);
 
   const initializeChat = async () => {
     setIsLoading(true);
-    
-    // Add welcome message immediately
+
     const welcomeMsg: ChatMessage = {
       id: `welcome_${Date.now()}`,
       type: 'ai',
@@ -163,14 +156,13 @@ const HotelChatOverlay: React.FC<HotelChatOverlayProps> = ({
     };
     setMessages([welcomeMsg]);
 
-    // Fetch hotel context
     try {
       const response = await fetch(`${BASE_URL}/api/hotels/fetch-details-for-chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           hotelId: hotel.id,
-          hotelName: hotel.name
+          hotelName: hotel.name,
         }),
       });
 
@@ -179,8 +171,7 @@ const HotelChatOverlay: React.FC<HotelChatOverlayProps> = ({
         if (data.success) {
           setEnrichedHotel({ ...hotel, allHotelInfo: data.allHotelInfo });
           setContextReady(true);
-          
-          // Update welcome message
+
           const readyMsg: ChatMessage = {
             id: `ready_${Date.now()}`,
             type: 'ai',
@@ -188,7 +179,11 @@ const HotelChatOverlay: React.FC<HotelChatOverlayProps> = ({
             timestamp: new Date(),
           };
           setMessages([readyMsg]);
+        } else {
+          throw new Error('Fetch details returned success=false');
         }
+      } else {
+        throw new Error('Failed to fetch details');
       }
     } catch (error) {
       console.error('Failed to load hotel context:', error);
@@ -201,7 +196,7 @@ const HotelChatOverlay: React.FC<HotelChatOverlayProps> = ({
       setMessages([errorMsg]);
       setContextReady(true);
     }
-    
+
     setIsLoading(false);
   };
 
@@ -218,6 +213,7 @@ const HotelChatOverlay: React.FC<HotelChatOverlayProps> = ({
     setMessages(prev => [...prev, userMsg]);
     setInputText('');
     setIsTyping(true);
+    scrollToEnd();
 
     try {
       const response = await fetch(`${BASE_URL}/api/hotels/chat`, {
@@ -269,14 +265,15 @@ const HotelChatOverlay: React.FC<HotelChatOverlayProps> = ({
             timestamp: new Date(),
           };
           setMessages(prev => [...prev, aiMsg]);
-          
-          // Auto scroll to new message
-          setTimeout(() => scrollToEnd(), 100);
+          scrollToEnd();
+        } else {
+          throw new Error('chat success=false');
         }
       } else {
         throw new Error('Failed to get response');
       }
     } catch (error) {
+      console.error(error);
       const errorMsg: ChatMessage = {
         id: `error_${Date.now()}`,
         type: 'ai',
@@ -284,13 +281,20 @@ const HotelChatOverlay: React.FC<HotelChatOverlayProps> = ({
         timestamp: new Date(),
       };
       setMessages(prev => [...prev, errorMsg]);
-      
-      // Auto scroll to new message
-      setTimeout(() => scrollToEnd(), 100);
     }
 
     setIsTyping(false);
+    scrollToEnd();
   };
+
+  const handleSend = useCallback(() => {
+    if (isTyping || !contextReady) return;
+    const msg = inputText.trim();
+    if (!msg) return;
+    setInputText('');
+    Keyboard.dismiss();
+    sendMessage(msg);
+  }, [inputText, isTyping, contextReady]);
 
   const handleSuggestionPress = (suggestion: typeof HOTEL_QUESTION_SUGGESTIONS[0]) => {
     if (contextReady && !isTyping) {
@@ -298,39 +302,97 @@ const HotelChatOverlay: React.FC<HotelChatOverlayProps> = ({
     }
   };
 
-  const renderMessage = ({ item }: { item: ChatMessage }) => {
-    const isAI = item.type === 'ai';
-    
+  const SuggestionPills = () => {
+    const suggestions = getContextualSuggestions();
+    if (suggestions.length === 0) return null;
+
     return (
-      <View style={[
-        tw`mb-3 px-4`,
-        isAI ? tw`items-start` : tw`items-end`
-      ]}>
-        <View style={[
-          tw`max-w-4/5 px-3 py-2 rounded-2xl`,
-          isAI 
-            ? { backgroundColor: '#F1F5F9', borderColor: TURQUOISE + '30', borderWidth: 1 }
-            : { backgroundColor: TURQUOISE }
-        ]}>
-          <Text style={[
-            tw`text-sm`,
-            isAI ? tw`text-gray-800` : tw`text-white`
-          ]}>
-            {item.text}
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        style={tw`mb-2`}
+        contentContainerStyle={tw`px-0 gap-2`}
+        keyboardShouldPersistTaps="always"
+      >
+        {suggestions.map((suggestion, index) => (
+          <TouchableOpacity
+            key={index}
+            style={[
+              tw`flex-row items-center px-3 py-2 rounded-full`,
+              {
+                backgroundColor: TURQUOISE_SUBTLE,
+                borderColor: TURQUOISE_BORDER,
+                borderWidth: 1,
+              }
+            ]}
+            onPress={() => {
+              Keyboard.dismiss();
+              handleSuggestionPress(suggestion);
+            }}
+            activeOpacity={0.7}
+            disabled={isTyping}
+          >
+            <Ionicons
+              name={suggestion.icon}
+              size={12}
+              color="#4B5563"
+              style={tw`mr-1`}
+            />
+            <Text
+              style={[tw`text-xs font-medium`, { color: '#4B5563' }]}
+              numberOfLines={1}
+            >
+              {suggestion.text}
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </ScrollView>
+    );
+  };
+
+  const MessageBubble = ({ message }: { message: ChatMessage }) => {
+    const isAI = message.type === 'ai';
+    return (
+      <View style={[tw`flex-row items-end mb-3 px-4`, isAI ? tw`justify-start` : tw`justify-end`]}>
+        {isAI && (
+          <View style={[tw`w-6 h-6 rounded-full items-center justify-center mr-2`, { backgroundColor: TURQUOISE + '15' }]}>
+            <Ionicons name="sparkles" size={12} color={TURQUOISE_DARK} />
+          </View>
+        )}
+        <View
+          style={[
+            tw`rounded-2xl px-3 py-2`,
+            { maxWidth: screenWidth * 0.65 },
+            isAI
+              ? { backgroundColor: '#F8FAFC', borderColor: TURQUOISE + '20', borderWidth: 1 }
+              : { backgroundColor: TURQUOISE }
+          ]}
+        >
+          <Text style={[tw`text-sm`, isAI ? tw`text-gray-800` : tw`text-white`]}>
+            {message.text}
           </Text>
         </View>
+        {!isAI && (
+          <View style={tw`w-6 h-6 rounded-full bg-gray-300 items-center justify-center ml-2`}>
+            <Ionicons name="person" size={12} color="#6B7280" />
+          </View>
+        )}
       </View>
     );
   };
 
-  const renderTypingIndicator = () => (
-    <View style={tw`mb-3 px-4 items-start`}>
-      <View style={[
-        tw`px-3 py-2 rounded-2xl flex-row items-center`,
-        { backgroundColor: '#F1F5F9', borderColor: TURQUOISE + '30', borderWidth: 1 }
-      ]}>
-        <ActivityIndicator size="small" color={TURQUOISE_DARK} />
-        <Text style={tw`text-sm text-gray-600 ml-2`}>Thinking...</Text>
+  const TypingIndicator = () => (
+    <View style={tw`flex-row items-end mb-3 px-4 justify-start`}>
+      <View style={[tw`w-6 h-6 rounded-full items-center justify-center mr-2`, { backgroundColor: TURQUOISE + '15' }]}>
+        <Ionicons name="sparkles" size={12} color={TURQUOISE_DARK} />
+      </View>
+      <View style={[tw`bg-gray-100 rounded-2xl px-3 py-2 flex-row items-center`]}>
+        <View style={tw`flex-row items-center`}>
+          <View style={[tw`w-1.5 h-1.5 rounded-full bg-gray-400 mr-1`]} />
+          <View style={[tw`w-1.5 h-1.5 rounded-full bg-gray-400 mr-1`]} />
+          <View style={[tw`w-1.5 h-1.5 rounded-full bg-gray-400`]} />
+        </View>
+        <Text style={tw`text-xs text-gray-500 ml-2`}>Thinking...</Text>
       </View>
     </View>
   );
@@ -338,185 +400,143 @@ const HotelChatOverlay: React.FC<HotelChatOverlayProps> = ({
   if (!visible) return null;
 
   return (
-    <View style={tw`absolute inset-0 z-50`}>
-      {/* Backdrop */}
-      <Animated.View
-        style={[
-          tw`absolute inset-0 bg-black`,
-          { opacity: backdropAnim.interpolate({
-            inputRange: [0, 1],
-            outputRange: [0, 0.5]
-          })}
-        ]}
-      >
-        <TouchableOpacity style={tw`flex-1`} onPress={onClose} />
-      </Animated.View>
+    <View
+      style={[
+        StyleSheet.absoluteFillObject,
+        {
+          zIndex: 999999,
+          backgroundColor: 'rgba(0,0,0,0.7)', // FULLSCREEN BACKDROP (darkens top/bottom bars too)
+        },
+      ]}
+    >
+      {/* Fade container mirrors ConversationalRefineOverlay */}
+      <Animated.View style={[StyleSheet.absoluteFillObject, { opacity: opacityAnim }]} pointerEvents="auto">
+        {/* Click-anywhere backdrop to close */}
+        <TouchableOpacity style={StyleSheet.absoluteFillObject} onPress={onClose} activeOpacity={1} />
 
-      {/* Chat Modal */}
-      <Animated.View
-        style={[
-          {
-            position: 'absolute',
-            bottom: 0,
-            left: 0,
-            right: 0,
-            height: MODAL_HEIGHT,
-            transform: [{ translateY: slideAnim }],
-            backgroundColor: 'white',
-            borderTopLeftRadius: 20,
-            borderTopRightRadius: 20,
-            shadowColor: '#000',
-            shadowOffset: { width: 0, height: -2 },
-            shadowOpacity: 0.1,
-            shadowRadius: 10,
-            elevation: 10,
-          }
-        ]}
-      >
-        <KeyboardAvoidingView 
-          style={tw`flex-1`}
-          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-          keyboardVerticalOffset={0}
+        {/* Centered panel with keyboard avoidance */}
+        <KeyboardAvoidingView
+          style={tw`flex-1 justify-center items-center`}
+          behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+          keyboardVerticalOffset={Platform.OS === 'ios' ? 100 : 60}
         >
-          {/* Header */}
-          <View style={tw`px-4 py-3 border-b border-gray-100`}>
-            <View style={tw`flex-row items-center justify-between`}>
-              <View style={tw`flex-1`}>
-                <Text style={tw`font-bold text-gray-900`} numberOfLines={1}>
-                  Ask Us Anything
-                </Text>
+          <Animated.View style={[{ transform: [{ translateY: slideAnim }, { scale: scaleAnim }] }]}>
+            <View
+              style={[
+                tw`bg-white rounded-2xl overflow-hidden`,
+                {
+                  width: panelWidth,
+                  height: panelHeight,
+                  shadowColor: TURQUOISE,
+                  shadowOffset: { width: 0, height: 8 },
+                  shadowOpacity: 0.15,
+                  shadowRadius: 20,
+                },
+              ]}
+            >
+              {/* Header */}
+              <View style={tw`px-4 pt-4 pb-3 border-b border-gray-100`}>
+                <View style={tw`flex-row items-center justify-between`}>
+                  <View style={tw`flex-1`}>
+                    <Text style={tw`text-base font-bold text-gray-900`} numberOfLines={1}>
+                      Get Instant Answers
+                    </Text>
+                  </View>
+                  <TouchableOpacity
+                    style={[tw`ml-3 w-8 h-8 rounded-full items-center justify-center`, { backgroundColor: TURQUOISE + '10' }]}
+                    onPress={onClose}
+                    hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
+                  >
+                    <Ionicons name="close" size={16} color={TURQUOISE_DARK} />
+                  </TouchableOpacity>
+                </View>
               </View>
-              <TouchableOpacity
-                style={tw`ml-3 w-8 h-8 bg-gray-100 rounded-full items-center justify-center`}
-                onPress={onClose}
-              >
-                <Ionicons name="close" size={18} color="#6B7280" />
-              </TouchableOpacity>
-            </View>
 
-          </View>
-
-          {/* Quick Suggestions - Removed since we have pills at bottom */}
-
-          {/* Messages - Web vs Mobile optimized */}
-          <View style={tw`flex-1`}>
-            {Platform.OS === 'web' ? (
-              // Web version with proper mouse wheel scrolling
-              <ScrollView
-                ref={scrollRef as React.RefObject<ScrollView>}
-                style={tw`flex-1`}
-                contentContainerStyle={tw`py-3`}
-                showsVerticalScrollIndicator={true}
-                onContentSizeChange={() => scrollToEnd()}
-              >
-                {messages.map(item => renderMessage({ item }))}
-                {isTyping && renderTypingIndicator()}
-              </ScrollView>
-            ) : (
-              // Mobile version with FlatList for better performance
-              <FlatList
-                ref={scrollRef as React.RefObject<FlatList>}
-                data={messages}
-                renderItem={renderMessage}
-                keyExtractor={item => item.id}
-                contentContainerStyle={tw`py-3`}
-                showsVerticalScrollIndicator={false}
-                onContentSizeChange={() => scrollToEnd()}
-                onLayout={() => scrollToEnd()}
-                ListFooterComponent={isTyping ? renderTypingIndicator() : null}
-              />
-            )}
-          </View>
-
-          {/* Input */}
-          <View style={[tw`px-4 py-3 border-t border-gray-100`, { backgroundColor: '#FAFAFA' }]}>
-            {/* Suggestion Pills */}
-            {contextReady && !isLoading && (
-              <View style={tw`mb-3`}>
-                <ScrollView 
-                  horizontal 
-                  showsHorizontalScrollIndicator={false}
-                  contentContainerStyle={tw`gap-2`}
-                  bounces={true}
+              {/* Messages */}
+              <View style={tw`flex-1`}>
+                <ScrollView
+                  ref={scrollRef}
+                  style={tw`flex-1`}
+                  contentContainerStyle={tw`pt-3 pb-2`}
+                  keyboardShouldPersistTaps="always"
+                  showsVerticalScrollIndicator={false}
                 >
-                  {getContextualSuggestions().map((suggestion, index) => (
-                    <TouchableOpacity
-                      key={index}
-                      style={[
-                        tw`flex-row items-center px-3 py-2 rounded-full`,
-                        {
-                          backgroundColor: TURQUOISE_SUBTLE,
-                          borderColor: TURQUOISE_BORDER,
-                          borderWidth: 1,
-                        }
-                      ]}
-                      onPress={() => handleSuggestionPress(suggestion)}
-                      disabled={isTyping}
-                      activeOpacity={0.7}
-                    >
-                      <Ionicons
-                        name={suggestion.icon}
-                        size={12}
-                        color={TURQUOISE_DARK}
-                        style={tw`mr-1.5`}
-                      />
-                      <Text
-                        style={[
-                          tw`text-xs font-medium`,
-                          { color: '#374151' }
-                        ]}
-                        numberOfLines={1}
-                      >
-                        {suggestion.text}
-                      </Text>
-                    </TouchableOpacity>
+                  {messages.map((message) => (
+                    <MessageBubble key={message.id} message={message} />
                   ))}
+                  {isTyping && <TypingIndicator />}
                 </ScrollView>
               </View>
-            )}
 
-            <View style={tw`flex-row items-end gap-3`}>
-              <View style={[
-                tw`flex-1 bg-white border rounded-2xl`,
-                { borderColor: contextReady ? TURQUOISE + '30' : '#E5E7EB' }
-              ]}>
-                <TextInput
-                  ref={inputRef}
-                  style={tw`px-4 py-3 text-sm text-gray-900`}
-                  value={inputText}
-                  onChangeText={setInputText}
-                  placeholder={contextReady ? "Ask about this hotel..." : "Please wait..."}
-                  placeholderTextColor="#9CA3AF"
-                  multiline
-                  maxLength={500}
-                  editable={contextReady && !isTyping}
-                  returnKeyType="send"
-                  onSubmitEditing={() => sendMessage(inputText)}
-                  blurOnSubmit={false}
-                />
+              {/* Input area */}
+              <View style={[tw`px-4 py-3 border-t border-gray-100`]}>
+                {contextReady && !isLoading && <SuggestionPills />}
+
+                <View style={tw`flex-row items-end gap-2`}>
+                  <View
+                    style={[
+                      tw`flex-1 rounded-xl border`,
+                      {
+                        backgroundColor: '#F8FAFC',
+                        borderColor: contextReady ? (TURQUOISE + '20') : '#E5E7EB',
+                        maxHeight: 100,
+                      },
+                    ]}
+                  >
+<TextInput
+  style={[
+    tw`px-3 py-2 text-base text-gray-900`, // changed text-sm → text-base
+    { lineHeight: Platform.OS === 'ios' ? 20 : 20, minHeight: 42 },
+  ]}
+                      value={inputText}
+                      onChangeText={setInputText}
+                      placeholder={contextReady ? 'Ask about this hotel…' : 'Please wait…'}
+                      placeholderTextColor="#94A3B8"
+                      multiline
+                      maxLength={500}
+                      editable={contextReady && !isTyping}
+                      returnKeyType="send"
+                      onSubmitEditing={handleSend}
+                      blurOnSubmit
+                      enablesReturnKeyAutomatically
+                    />
+                  </View>
+
+                  <TouchableOpacity
+                    style={[
+                      tw`w-12 h-12 rounded-2xl items-center justify-center`,
+                      {
+                        backgroundColor: inputText.trim() && contextReady && !isTyping ? TURQUOISE : '#E5E7EB',
+                        shadowColor: inputText.trim() && contextReady && !isTyping ? TURQUOISE : 'transparent',
+                        shadowOffset: { width: 0, height: 2 },
+                        shadowOpacity: inputText.trim() && contextReady && !isTyping ? 0.2 : 0,
+                        shadowRadius: 4,
+                        elevation: inputText.trim() && contextReady && !isTyping ? 3 : 0,
+                      },
+                    ]}
+                    onPress={handleSend}
+                    disabled={!inputText.trim() || !contextReady || isTyping}
+                    activeOpacity={0.85}
+                  >
+                    <Ionicons
+                      name="send"
+                      size={18}
+                      color={inputText.trim() && contextReady && !isTyping ? 'white' : '#9CA3AF'}
+                    />
+                  </TouchableOpacity>
+                </View>
               </View>
-              <TouchableOpacity
-                style={[
-                  tw`w-12 h-12 rounded-full items-center justify-center`,
-                  {
-                    backgroundColor: (inputText.trim() && contextReady && !isTyping) 
-                      ? TURQUOISE 
-                      : '#E5E7EB'
-                  }
-                ]}
-                onPress={() => sendMessage(inputText)}
-                disabled={!inputText.trim() || !contextReady || isTyping}
-              >
-                <Ionicons 
-                  name="send" 
-                  size={18} 
-                  color={(inputText.trim() && contextReady && !isTyping) ? 'white' : '#9CA3AF'} 
-                />
-              </TouchableOpacity>
             </View>
-          </View>
+          </Animated.View>
         </KeyboardAvoidingView>
       </Animated.View>
+
+      {/* Optional loading spinner overlay */}
+      {isLoading && (
+        <View style={tw`absolute inset-0 items-center justify-center`}>
+          <ActivityIndicator size="small" color={TURQUOISE_DARK} />
+        </View>
+      )}
     </View>
   );
 };

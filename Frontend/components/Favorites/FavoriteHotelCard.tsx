@@ -22,7 +22,7 @@ const TURQUOISE_LIGHT = '#5dfbff';
 const TURQUOISE_DARK = '#00d4e6';
 
 // Base deep link URL
-const DEEP_LINK_BASE_URL = 'https://colin-posat-1t6gl.nuitee.link';
+const DEEP_LINK_BASE_URL = 'https://staygenie.nuitee.link';
 
 interface FavoriteHotelCardProps {
   hotel: FavoritedHotel;

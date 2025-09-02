@@ -10,6 +10,9 @@ import {
   Animated,
   Linking,
   Alert,
+  StyleSheet,
+   KeyboardAvoidingView,
+   Modal
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import tw from 'twrnc';
@@ -25,7 +28,7 @@ const CARD_WIDTH = screenWidth - 40;
 const CARD_HEIGHT = screenHeight * 0.55;
 
 // Base deep link URL
-const DEEP_LINK_BASE_URL = 'https://colin-posat-1t6gl.nuitee.link';
+const DEEP_LINK_BASE_URL = 'https://staygenie.nuitee.link';
 // Turquoise color constants
 const TURQUOISE = '#1df9ff';
 const TURQUOISE_LIGHT = '#5dfbff';
@@ -1263,7 +1266,7 @@ useEffect(() => {
   };
 
   return (
-    <View style={tw`bg-white rounded-2xl overflow-hidden shadow-lg`}>
+    <View style={[tw`rounded-2xl shadow-lg`, { position: 'relative' }]}>
       <TouchableOpacity
         activeOpacity={0.95}
         onPress={handleCardPress}
@@ -1348,73 +1351,82 @@ useEffect(() => {
 
 <View style={tw`bg-white rounded-b-2xl`}>
   
-  {/* Action Buttons - Updated styling to match collapse all button */}
-  <View style={tw`flex-row items-center px-4 py-3 gap-2`}>
-    {/* Heart/Save Button */}
-    <AnimatedHeartButton
-      hotel={hotel}
-      size={24}
-      onShowSignUpModal={handleShowSignUpModal}
-    />
-    
-    {/* Ask Button - New */}
-<TouchableOpacity
-  style={[
-    tw`py-3 px-4 rounded-xl border-2 flex-row items-center flex-1 justify-center`,
-    { 
-      backgroundColor: TURQUOISE + '10',
-      borderColor: TURQUOISE + '30',
-    }
-  ]}
-  onPress={() => setShowHotelChat(true)} 
-  activeOpacity={0.8}
->
-  <Ionicons name="chatbubble" size={16} color={TURQUOISE_DARK} />
-  <Text style={[tw`ml-2 font-medium text-sm`, { color: BLACK }]}>
-    Ask
-  </Text>
-</TouchableOpacity>
-    {/* View Details Button - Updated styling */}
-<TouchableOpacity
+{/* Action Buttons - Original spacing, smaller text */}
+<View style={tw`flex-row items-center px-4 py-3 gap-2`}>
+  {/* Heart/Save Button */}
+  <AnimatedHeartButton
+    hotel={hotel}
+    size={24}
+    onShowSignUpModal={handleShowSignUpModal}
+  />
+
+  {/* Ask Button */}
+  <TouchableOpacity
     style={[
       tw`py-3 px-4 rounded-xl border-2 flex-row items-center flex-1 justify-center`,
-      { 
+      {
         backgroundColor: TURQUOISE + '10',
         borderColor: TURQUOISE + '30',
-      }
+      },
+    ]}
+    onPress={() => setShowHotelChat(true)}
+    activeOpacity={0.8}
+  >
+    <Ionicons name="chatbubble" size={14} color={TURQUOISE_DARK} />
+    <Text
+      style={[tw`ml-2 font-medium text-xs`, { color: BLACK }]}
+      numberOfLines={1}
+    >
+      Ask
+    </Text>
+  </TouchableOpacity>
+
+  {/* View Details (Map) Button */}
+  <TouchableOpacity
+    style={[
+      tw`py-3 px-4 rounded-xl border-2 flex-row items-center flex-1 justify-center`,
+      {
+        backgroundColor: TURQUOISE + '10',
+        borderColor: TURQUOISE + '30',
+      },
     ]}
     onPress={handleViewDetails}
     activeOpacity={0.8}
   >
-    <Ionicons name="map" size={16} color={TURQUOISE_DARK} />
-    <Text style={[tw`ml-2 font-medium text-sm`, { color: BLACK }]}>
+    <Ionicons name="map" size={14} color={TURQUOISE_DARK} />
+    <Text
+      style={[tw`ml-2 font-medium text-xs`, { color: BLACK }]}
+      numberOfLines={1}
+    >
       Map
     </Text>
   </TouchableOpacity>
 
+  {/* Book Button */}
+  <TouchableOpacity
+    style={[
+      tw`py-3 px-4 rounded-xl border-2 flex-row items-center flex-1 justify-center`,
+      {
+        backgroundColor: TURQUOISE + '10',
+        borderColor: TURQUOISE + '30',
+      },
+    ]}
+    onPress={handleDeepLink}
+    activeOpacity={0.8}
+  >
+    <Image
+      source={require('../../assets/images/logo.png')}
+      style={{ width: 14, height: 14 }}
+      resizeMode="contain"
+    />
+    <Text
+      style={[tw`ml-2 font-medium text-xs`, { color: BLACK }]}
+      numberOfLines={1}
+    >
+      Book
+    </Text>
+  </TouchableOpacity>
 
-
-{/* Book Button - Updated text */}
-<TouchableOpacity
-  style={[
-    tw`py-3 px-4 rounded-xl border-2 flex-row items-center flex-1 justify-center`,
-    { 
-      backgroundColor: TURQUOISE + '10',
-      borderColor: TURQUOISE + '30',
-    }
-  ]}
-  onPress={handleDeepLink}
-  activeOpacity={0.8}
->
-  <Image 
-    source={require('../../assets/images/logo.png')} 
-    style={{ width: 16, height: 16 }} 
-    resizeMode="contain"
-  />
-  <Text style={[tw`ml-2 font-medium text-sm`, { color: BLACK }]}>
-    Book
-  </Text>
-</TouchableOpacity>
 </View>
 </View>
 
@@ -1434,11 +1446,18 @@ useEffect(() => {
           console.log('Forgot password pressed');
         }}
       />
-      <HotelChatOverlay
+<Modal
   visible={showHotelChat}
-  onClose={() => setShowHotelChat(false)}
-  hotel={hotel}
-/>
+  transparent
+  animationType="fade"
+  onRequestClose={() => setShowHotelChat(false)}
+>
+  <HotelChatOverlay
+    visible={showHotelChat}
+    onClose={() => setShowHotelChat(false)}
+    hotel={hotel}
+  />
+</Modal>
     </View>
     
   );
