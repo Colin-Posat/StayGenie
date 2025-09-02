@@ -32,7 +32,7 @@ const TURQUOISE_BORDER = '#b3f7ff';
 const HOTEL_QUESTION_SUGGESTIONS = [
   { text: 'Check-in/out', query: 'What are the check-in and check-out times?', icon: 'time' as const },
   { text: 'Amenities', query: 'What amenities does this hotel offer?', icon: 'list' as const },
-  { text: 'Location info', query: 'Tell me about the location and nearby attractions', icon: 'location' as const },
+  { text: 'Location info', query: 'Tell me about the location', icon: 'location' as const },
   { text: 'Breakfast', query: 'Do they have breakfast included?', icon: 'restaurant' as const },
   { text: 'Parking', query: 'Is parking available and free?', icon: 'car' as const },
   { text: 'WiFi', query: 'Do they have free WiFi?', icon: 'wifi' as const },
