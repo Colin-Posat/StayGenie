@@ -36,6 +36,7 @@ interface SwipeableStoryViewProps {
     totalSteps: number;
     message: string;
   };
+  searchParams?: any;
 }
 
 const SwipeableStoryView: React.FC<SwipeableStoryViewProps> = ({
@@ -55,7 +56,8 @@ const SwipeableStoryView: React.FC<SwipeableStoryViewProps> = ({
   showPlaceholders = false,
   // Streaming props with defaults
   isStreaming = false,
-  streamingProgress = { step: 0, totalSteps: 8, message: '' }
+  streamingProgress = { step: 0, totalSteps: 8, message: '' },
+  searchParams,
 }) => {
   // Streaming state
   const [streamingHotelsCount, setStreamingHotelsCount] = useState(0);
@@ -318,6 +320,7 @@ const SwipeableStoryView: React.FC<SwipeableStoryViewProps> = ({
             isInsightsLoading={insightsStatus === 'loading'}
             insightsStatus={insightsStatus}
             searchMode={searchMode}
+            searchParams={searchParams}
           />
         </View>
       </View>

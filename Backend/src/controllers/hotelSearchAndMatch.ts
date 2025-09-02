@@ -296,7 +296,6 @@ const processHotelWithImmediateInsights = async (
 
       if (insightsResponse.data?.recommendations?.[0]) {
         const aiRecommendation = insightsResponse.data.recommendations[0];
-        console.log(`HOTEL SEARCH AND MATCH SHIT: ${aiRecommendation.allHotelInfo}`);
           const enhancedHotelData = {
             ...basicHotelData,
             whyItMatches: aiRecommendation.whyItMatches || "Great choice with excellent amenities",
@@ -1826,16 +1825,21 @@ export const hotelSearchAndMatchController = async (req: Request, res: Response)
     console.log(`🚀 ${isSSERequest ? 'SSE' : 'POST'} Hotel Search Complete in ${performanceReport.totalTime}ms ✅`);
 
     if (isSSERequest) {
-      // SSE completion
-      sendUpdate('complete', {
-        message: `Found ${enrichedHotels.length} perfect hotels for you!`,
-        searchId: searchId,
-        totalHotels: enrichedHotels.length,
-        performance: {
-          totalTimeMs: performanceReport.totalTime,
-          optimization: 'Real-time SSE streaming'
-        }
-      });
+  // SSE completion
+  sendUpdate('complete', {
+    message: `Found ${enrichedHotels.length} perfect hotels for you!`,
+    searchId: searchId,
+    totalHotels: enrichedHotels.length,
+    searchParams: {
+      ...parsedQuery,
+      nights: nights,
+      currency: 'USD'
+    },
+    performance: {
+      totalTimeMs: performanceReport.totalTime,
+      optimization: 'Real-time SSE streaming'
+    }
+  });
       
       // Close SSE connection
       if (!res.destroyed) {

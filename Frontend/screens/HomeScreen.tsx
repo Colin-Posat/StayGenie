@@ -317,7 +317,9 @@ const HomeScreen = () => {
   const params = route.params as RouteParams;
   const navigation = useNavigation<HomeScreenNavigationProp>();
   const width = Dimensions.get('window').width;
+  const [streamingSearchParams, setStreamingSearchParams] = useState<any>(null);
 
+  // State management
   const [showPlaceholders, setShowPlaceholders] = useState(false);
   // State management
   const [searchQuery, setSearchQuery] = useState('');
@@ -456,20 +458,31 @@ const handleStreamingUpdate = async (data: any, userInput?: string) => {
         totalSteps: data.totalSteps || 8,
         message: data.message || 'Processing...'
       });
+      
+      // UPDATE DATES AND GUEST INFO AS SOON AS WE HAVE DESTINATION INFO
+      if (data.destination && !checkInDate) {
+        // Set default dates if not already set
+        const defaultCheckIn = new Date();
+        defaultCheckIn.setDate(defaultCheckIn.getDate() + 7);
+        const defaultCheckOut = new Date();
+        defaultCheckOut.setDate(defaultCheckOut.getDate() + 9);
+        
+        setCheckInDate(defaultCheckIn);
+        setCheckOutDate(defaultCheckOut);
+        setAdults(2); // Set default if not set
+      }
       break;
 
     case 'hotel_found':
       if (data.hotel) {
         const newHotel = convertStreamedHotelToDisplay(data.hotel, data.hotelIndex - 1);
         
-        // ✨ IMMEDIATE DISPLAY LOGIC - Show first hotel and dismiss loading screen
         if (!firstHotelFound && data.hotelIndex === 1) {
           console.log('🎯 FIRST HOTEL FOUND - Showing immediately!');
           setFirstHotelFound(true);
           setShowPlaceholders(false);
-          setDisplayHotels([newHotel]); // Show just the first hotel
+          setDisplayHotels([newHotel]);
         } else {
-          // ✨ LIVE UPDATES - Add subsequent hotels to existing list
           console.log(`🔥 Hotel ${data.hotelIndex}/${data.totalExpected} streaming in: ${newHotel.name} (${newHotel.aiMatchPercent}% match)`);
           
           setDisplayHotels(prevHotels => {
@@ -478,16 +491,13 @@ const handleStreamingUpdate = async (data: any, userInput?: string) => {
             const existingIndex = updatedHotels.findIndex(h => h.id === newHotel.id);
             
             if (existingIndex >= 0) {
-              // Update existing hotel with enhanced data
               updatedHotels[existingIndex] = newHotel;
               console.log(`🔄 Updated existing hotel: ${newHotel.name}`);
             } else {
-              // Add new hotel and sort by match percentage
               updatedHotels.push(newHotel);
               console.log(`➕ Added new hotel: ${newHotel.name}`);
             }
             
-            // Sort by AI match percentage (best matches first)
             return updatedHotels.sort((a, b) => (b.aiMatchPercent || 0) - (a.aiMatchPercent || 0));
           });
         }
@@ -496,47 +506,38 @@ const handleStreamingUpdate = async (data: any, userInput?: string) => {
       }
       break;
 
-    // 🔥 NEW: Handle enhanced hotels with AI insights
     case 'hotel_enhanced':
-  if (data.hotel && data.hotelId) {
-    console.log(`✨ Received AI-enhanced hotel: ${data.hotel.name}`);
-    
-    const enhancedHotel = convertStreamedHotelToDisplay(data.hotel, data.hotelIndex - 1);
-    
-    setDisplayHotels(prevHotels => {
-      const updatedHotels = [...prevHotels];
-      const existingIndex = updatedHotels.findIndex(h => h.id === data.hotelId);
-      
-      if (existingIndex >= 0) {
-        // Replace with AI-enhanced version
-        updatedHotels[existingIndex] = {
-          ...updatedHotels[existingIndex],
-          ...enhancedHotel,
-          // Specifically update AI-generated content
-          aiExcerpt: enhancedHotel.whyItMatches || enhancedHotel.aiExcerpt,
-          whyItMatches: enhancedHotel.whyItMatches || "Enhanced with AI insights",
-          funFacts: enhancedHotel.funFacts || ["AI-curated facts"],
-          guestInsights: enhancedHotel.guestInsights || "AI-enhanced guest insights",
-          nearbyAttractions: enhancedHotel.nearbyAttractions || ["AI-found attractions"],
-          locationHighlight: enhancedHotel.locationHighlight || "AI-analyzed location",
-          allHotelInfo: enhancedHotel.allHotelInfo || "Comprehensive hotel details available" // ADD THIS
-        };
+      if (data.hotel && data.hotelId) {
+        console.log(`✨ Received AI-enhanced hotel: ${data.hotel.name}`);
         
-        console.log(`🎨 Enhanced existing hotel with AI insights: ${data.hotel.name}`);
+        const enhancedHotel = convertStreamedHotelToDisplay(data.hotel, data.hotelIndex - 1);
         
-        // Show subtle notification for enhancement (optional)
-        if (data.hotelIndex <= 3) { // Only for first 3 hotels to avoid spam
-          console.log(`✨ Hotel ${data.hotelIndex} enhanced: ${data.hotel.name}`);
-        }
-      } else {
-        console.warn(`⚠️ Could not find hotel ${data.hotelId} to enhance`);
+        setDisplayHotels(prevHotels => {
+          const updatedHotels = [...prevHotels];
+          const existingIndex = updatedHotels.findIndex(h => h.id === data.hotelId);
+          
+          if (existingIndex >= 0) {
+            updatedHotels[existingIndex] = {
+              ...updatedHotels[existingIndex],
+              ...enhancedHotel,
+              aiExcerpt: enhancedHotel.whyItMatches || enhancedHotel.aiExcerpt,
+              whyItMatches: enhancedHotel.whyItMatches || "Enhanced with AI insights",
+              funFacts: enhancedHotel.funFacts || ["AI-curated facts"],
+              guestInsights: enhancedHotel.guestInsights || "AI-enhanced guest insights",
+              nearbyAttractions: enhancedHotel.nearbyAttractions || ["AI-found attractions"],
+              locationHighlight: enhancedHotel.locationHighlight || "AI-analyzed location",
+              allHotelInfo: enhancedHotel.allHotelInfo || "Comprehensive hotel details available"
+            };
+            
+            console.log(`🎨 Enhanced existing hotel with AI insights: ${data.hotel.name}`);
+          } else {
+            console.warn(`⚠️ Could not find hotel ${data.hotelId} to enhance`);
+          }
+          
+          return updatedHotels.sort((a, b) => (b.aiMatchPercent || 0) - (a.aiMatchPercent || 0));
+        });
       }
-      
-      // Sort by AI match percentage (best matches first)
-      return updatedHotels.sort((a, b) => (b.aiMatchPercent || 0) - (a.aiMatchPercent || 0));
-    });
-  }
-  break;
+      break;
 
     case 'complete':
       console.log('🎉 All hotels found and AI-enhanced!');
@@ -551,6 +552,28 @@ const handleStreamingUpdate = async (data: any, userInput?: string) => {
         setCurrentSearchId(data.searchId);
       }
 
+      // CRITICAL FIX: Update dates from search parameters
+      if (data.searchParams) {
+        console.log('📅 Updating dates from search params:', data.searchParams);
+        setStreamingSearchParams(data.searchParams);
+        
+        if (data.searchParams.checkin) {
+  const checkinDate = new Date(data.searchParams.checkin + 'T12:00:00');
+  setCheckInDate(checkinDate);
+}
+if (data.searchParams.checkout) {
+  const checkoutDate = new Date(data.searchParams.checkout + 'T12:00:00');
+  setCheckOutDate(checkoutDate);
+}
+        if (data.searchParams.adults) {
+          console.log('Setting adults:', data.searchParams.adults);
+          setAdults(data.searchParams.adults);
+        }
+        if (data.searchParams.children) {
+          console.log('Setting children:', data.searchParams.children);
+          setChildren(data.searchParams.children);
+        }
+      }
       break;
 
     case 'error':
@@ -564,6 +587,23 @@ const handleStreamingUpdate = async (data: any, userInput?: string) => {
       console.log('📝 Unknown streaming event:', data.type, data);
   }
 };
+
+const confirmedParams =
+  stage1Results?.searchParams ||
+  searchResults?.searchParams ||
+  (streamingSearchParams?.checkin && streamingSearchParams); // set on SSE 'complete'
+
+const hasFinalizedDates = Boolean(
+  confirmedParams?.checkin && confirmedParams?.checkout
+);
+
+const confirmedCheckInDate = hasFinalizedDates
+  ? new Date(`${confirmedParams!.checkin}T12:00:00`)
+  : undefined;
+
+const confirmedCheckOutDate = hasFinalizedDates
+  ? new Date(`${confirmedParams!.checkout}T12:00:00`)
+  : undefined;
 
 const convertStreamedHotelToDisplay = (streamedHotel: any, index: number): Hotel => {
   console.log('🔄 Converting streamed hotel:', streamedHotel.name);
@@ -677,6 +717,8 @@ const convertStreamedHotelToDisplay = (streamedHotel: any, index: number): Hotel
 };
 
 // FINAL FIX: Remove all custom event listeners - everything goes through 'message'
+const fmtDate = (iso: string) =>
+  new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 
 const executeStreamingSearch = async (userInput: string) => {
   if (!userInput.trim()) return;
@@ -2039,21 +2081,40 @@ const handleBackPress = useCallback(() => {
 
 
         </View>
-
-{/* SEARCH RESULTS HEADER WITH PERFORMANCE INDICATORS */}
 {searchQuery.trim().length > 0 && (
   <View style={tw`bg-white px-3 py-2 rounded-lg border border-gray-200`}>
     <View style={tw`flex-row items-center justify-between`}>
-      <Text style={tw`text-xs text-gray-500 flex-1`}>
-        {isStreamingSearch && displayHotels.length > 0
-          ? `${displayHotels.length} Hotels Found For "${searchQuery}"`
-          : isStreamingSearch
-            ? `Searching for "${searchQuery}"`
-            : displayHotels.length > 0
-              ? `${displayHotels.length} Hotels Found For "${searchQuery}"`
-              : `Results for "${searchQuery}"`
-        }
-      </Text>
+      <View style={tw`flex-1`}>
+        <Text style={tw`text-xs text-gray-500`}>
+          {isStreamingSearch && displayHotels.length > 0
+            ? `${displayHotels.length} Hotels Found For "${searchQuery}"`
+            : isStreamingSearch
+              ? `Searching for "${searchQuery}"`
+              : displayHotels.length > 0
+                ? `${displayHotels.length} Hotels Found For "${searchQuery}"`
+                : `Results for "${searchQuery}"`
+          }
+        </Text>
+        
+        {/* Date and guest info - ONLY show when we have actual search params from the API */}
+        {displayHotels.length > 0 && (stage1Results?.searchParams || searchResults?.searchParams || currentSearchId) && (
+          <Text style={tw`text-xs text-gray-400 mt-1`}>
+            {checkInDate.toLocaleDateString('en-US', { 
+              weekday: 'short', 
+              month: 'short', 
+              day: 'numeric' 
+            })} - {checkOutDate.toLocaleDateString('en-US', { 
+              weekday: 'short', 
+              month: 'short', 
+              day: 'numeric' 
+            })} • {adults} adult{adults !== 1 ? 's' : ''}
+            {children > 0 ? 
+              `, ${children} child${children !== 1 ? 'ren' : ''}` 
+              : ''
+            }
+          </Text>
+        )}
+      </View>
     </View>
     
     {/* Streaming progress message */}
@@ -2124,20 +2185,20 @@ const handleBackPress = useCallback(() => {
       {/* CONTENT VIEW - Story View */}
       <View style={tw`flex-1 bg-gray-50`}>
         <SwipeableStoryView
-        hotels={displayHotels}
-        onHotelPress={handleHotelPress}
-        onViewDetails={handleViewDetails}
-        checkInDate={checkInDate}
-        checkOutDate={checkOutDate}
-        adults={adults}
-        children={children}
-        // NEW: Add placeholder prop
-        showPlaceholders={showPlaceholders}
-        isInsightsLoading={isInsightsLoading}
-        stage1Complete={!!stage1Results}
-        stage2Complete={!!stage2Results}
-        searchMode={TEST_MODE ? 'test' : stage1Results ? 'two-stage' : 'legacy'}
-      />
+  hotels={displayHotels}
+  onHotelPress={handleHotelPress}
+  onViewDetails={handleViewDetails}
+  checkInDate={confirmedCheckInDate}
+  checkOutDate={confirmedCheckOutDate}
+  adults={adults}
+  children={children}
+  showPlaceholders={showPlaceholders}
+  isInsightsLoading={isInsightsLoading}
+  stage1Complete={!!stage1Results}
+  stage2Complete={!!stage2Results}
+  searchMode={TEST_MODE ? 'test' : stage1Results ? 'two-stage' : 'legacy'}
+  searchParams={streamingSearchParams || searchResults?.searchParams}
+/>
       </View>
 
       <Modal

@@ -9,6 +9,57 @@ const openai = new OpenAI({
 });
 
 // City validation and correction mapping
+
+// --- Helpers for future-proofing dates ---
+const addYears = (d: Date, years: number) => {
+  const nd = new Date(d);
+  nd.setFullYear(d.getFullYear() + years);
+  return nd;
+};
+
+const startOfDay = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate());
+
+/**
+ * Ensures parsed.checkin / parsed.checkout are in the future.
+ * If checkin < tomorrow, roll both forward by exactly one year,
+ * preserving the original length-of-stay.
+ */
+const ensureFutureDates = (parsed: any) => {
+  const today = startOfDay(new Date());
+  const tomorrow = new Date(today);
+  tomorrow.setDate(today.getDate() + 1);
+
+  let checkinDate = new Date(parsed.checkin);
+  let checkoutDate = new Date(parsed.checkout);
+
+  // If checkin is before tomorrow, roll the pair forward one year
+  if (checkinDate < tomorrow) {
+    const stayNights = Math.max(
+      1,
+      Math.ceil((startOfDay(checkoutDate).getTime() - startOfDay(checkinDate).getTime()) / 86400000)
+    );
+    checkinDate = addYears(checkinDate, 1);
+    checkoutDate = new Date(checkinDate);
+    checkoutDate.setDate(checkinDate.getDate() + stayNights);
+  }
+
+  // Always enforce checkout > checkin
+  if (checkoutDate <= checkinDate) {
+    checkoutDate = new Date(checkinDate);
+    checkoutDate.setDate(checkinDate.getDate() + 1);
+  }
+
+  // Max stay 30 nights
+  const maxCheckout = new Date(checkinDate);
+  maxCheckout.setDate(checkinDate.getDate() + 30);
+  if (checkoutDate > maxCheckout) checkoutDate = maxCheckout;
+
+  parsed.checkin = checkinDate.toISOString().split('T')[0];
+  parsed.checkout = checkoutDate.toISOString().split('T')[0];
+  return parsed;
+};
+
+
 const validateAndCorrectCity = (parsed: any) => {
   const cityCorrections: { [key: string]: { city: string, country?: string } } = {
     // National Parks → Gateway Cities
@@ -87,45 +138,45 @@ const validateAndCorrectCity = (parsed: any) => {
   return parsed;
 };
 
-// Additional validation for common issues
 const validateParsedData = (parsed: any) => {
-  // Ensure dates are valid
-  const checkinDate = new Date(parsed.checkin);
-  const checkoutDate = new Date(parsed.checkout);
-  const today = new Date();
-  
-  // Check-in can't be in the past
-  if (checkinDate < today) {
-    const tomorrow = new Date(today);
-    tomorrow.setDate(today.getDate() + 1);
-    parsed.checkin = tomorrow.toISOString().split('T')[0];
-    console.log(`📅 Adjusted check-in to tomorrow: ${parsed.checkin}`);
+  // Parse to dates
+  let checkinDate = new Date(parsed.checkin);
+  let checkoutDate = new Date(parsed.checkout);
+
+  // Basic defaults if parsing failed
+  if (isNaN(checkinDate.getTime()) || isNaN(checkoutDate.getTime())) {
+    const today = new Date();
+    const fallbackIn = new Date(today);
+    fallbackIn.setMonth(today.getMonth() + 1);
+    const fallbackOut = new Date(fallbackIn);
+    fallbackOut.setDate(fallbackIn.getDate() + 3);
+    parsed.checkin = fallbackIn.toISOString().split('T')[0];
+    parsed.checkout = fallbackOut.toISOString().split('T')[0];
   }
-  
-  // Check-out must be after check-in
-  if (checkoutDate <= checkinDate) {
-    const newCheckout = new Date(checkinDate);
-    newCheckout.setDate(checkinDate.getDate() + 1);
-    parsed.checkout = newCheckout.toISOString().split('T')[0];
-    console.log(`📅 Adjusted check-out: ${parsed.checkout}`);
-  }
-  
-  // Validate guest counts
+
+  // NEW: force dates into the future while preserving trip length
+  parsed = ensureFutureDates(parsed);
+
+  // Re-parse after adjustments
+  checkinDate = new Date(parsed.checkin);
+  checkoutDate = new Date(parsed.checkout);
+
+  // Guest count clamps
   if (parsed.adults < 1) parsed.adults = 1;
   if (parsed.children < 0) parsed.children = 0;
-  if (parsed.adults > 10) parsed.adults = 10; // Reasonable limit
-  if (parsed.children > 8) parsed.children = 8; // Reasonable limit
-  
-  // Validate price ranges
+  if (parsed.adults > 10) parsed.adults = 10;
+  if (parsed.children > 8) parsed.children = 8;
+
+  // Price range clamps
   if (parsed.minCost !== null && parsed.minCost < 0) parsed.minCost = null;
   if (parsed.maxCost !== null && parsed.maxCost < 0) parsed.maxCost = null;
   if (parsed.minCost !== null && parsed.maxCost !== null && parsed.minCost > parsed.maxCost) {
-    // Swap them if backwards
     [parsed.minCost, parsed.maxCost] = [parsed.maxCost, parsed.minCost];
   }
-  
+
   return parsed;
 };
+
 
 export const parseSearchQuery = async (req: Request, res: Response) => {
   try {

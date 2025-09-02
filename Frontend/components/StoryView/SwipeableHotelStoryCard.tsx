@@ -26,6 +26,8 @@ import HotelChatOverlay from '../../components/HomeScreenTop/HotelChatOverlay';
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 const CARD_WIDTH = screenWidth - 40;
 const CARD_HEIGHT = screenHeight * 0.55;
+const TURQUOISE_SUBTLE = '#f0feff';
+const TURQUOISE_BORDER = '#b3f7ff';
 
 // Base deep link URL
 const DEEP_LINK_BASE_URL = 'https://staygenie.nuitee.link';
@@ -136,9 +138,29 @@ interface SwipeableHotelStoryCardProps {
   // Props for deep linking
   placeId?: string;
   occupancies?: any[];
+  searchParams?: any;
 }
 
-
+const AvailabilityChip = ({ label }: { label?: string }) => {
+  if (!label) return null;
+  return (
+    <View
+      style={[
+        tw`self-start flex-row items-center px-3 py-1.5 rounded-lg`,
+        {
+          backgroundColor: 'rgba(0, 0, 0, 0.5)',
+          borderColor: 'rgba(255, 255, 255, 0.2)',
+          borderWidth: 1,
+        },
+      ]}
+    >
+      <Ionicons name="checkmark-circle" size={12} color={TURQUOISE} style={tw`mr-1`} />
+      <Text numberOfLines={1} style={[tw`text-xs font-medium text-white`]}>
+        {label}
+      </Text>
+    </View>
+  );
+};
 // Helper function to generate hotel deep link URL
 const generateHotelDeepLink = (
   hotel: EnhancedHotel,
@@ -400,10 +422,16 @@ const HotelOverviewSlide: React.FC<{
   hotel: EnhancedHotel; 
   insightsStatus?: string;
   searchMode?: string;
+  checkInDate?: Date;
+  checkOutDate?: Date;
+  showAvailability?: boolean;
 }> = ({ 
   hotel, 
   insightsStatus = 'complete',
-  searchMode = 'two-stage'
+  searchMode = 'two-stage',
+  checkInDate,
+  checkOutDate,
+  showAvailability = false
 }) => {
   const aiInsight = generateAIInsight(hotel, insightsStatus);
   const panAnimation = useRef(new Animated.Value(0)).current;
@@ -476,6 +504,20 @@ const HotelOverviewSlide: React.FC<{
     return hotel.location;
   };
 
+  // Format dates for availability display - same logic as header
+  const formatDateRange = () => {
+    if (!showAvailability || !checkInDate || !checkOutDate) return null;
+    
+    const formatDate = (date: Date) => {
+      return date.toLocaleDateString('en-US', { 
+        month: 'short', 
+        day: 'numeric' 
+      });
+    };
+    
+    return `${formatDate(checkInDate)} - ${formatDate(checkOutDate)}`;
+  };
+
   return (
     <View style={tw`flex-1 relative overflow-hidden`}>
       <Animated.Image 
@@ -528,6 +570,13 @@ const HotelOverviewSlide: React.FC<{
       </View>
 
       <View style={tw`absolute bottom-6 left-4 right-4 z-10`}>
+        {/* Compact availability chip above price */}
+{showAvailability && formatDateRange() && (
+  <View style={tw`mb-2`}>
+    <AvailabilityChip label={formatDateRange()!} />
+  </View>
+)}
+
         <View style={tw`flex-row items-end gap-2 mb-2.5`}>
           <View style={tw`bg-black/50 border border-white/20 px-3 py-1.5 rounded-lg`}>
             <View style={tw`flex-row items-baseline`}>
@@ -1331,6 +1380,9 @@ useEffect(() => {
               hotel={hotel} 
               insightsStatus={insightsStatus}
               searchMode={searchMode}
+              checkInDate={checkInDate}
+              checkOutDate={checkOutDate}
+              showAvailability={true}
             />
           </View>
           <View style={{ width: CARD_WIDTH, height: CARD_HEIGHT }}>

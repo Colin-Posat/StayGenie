@@ -997,7 +997,6 @@ const hotelDetailsInsightsPromises = validHotels.map(async (hotel, index) => {
     const finalRecommendations: AIRecommendation[] = aiContentResults.map(aiContent => {
       
       const hotelDetailsInsights = hotelDetailsInsightsMap.get(aiContent.hotelId);
-      console.log(`AI INSIGHTS SHIT: ${hotelDetailsInsights?.allHotelInfo}`);
       
       return {
         hotelId: aiContent.hotelId,
