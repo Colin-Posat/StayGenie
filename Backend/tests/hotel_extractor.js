@@ -1,7 +1,7 @@
 const fs = require('fs');
 const https = require('https');
 
-const API_KEY = 'sand_460dd888-f2bc-4e2c-a0df-40d373ae1024';
+const API_KEY = 'PUT KEY HERE';
 const API_BASE = 'https://api.liteapi.travel/v3.0';
 
 // Set default dates (check-in tomorrow, check-out day after)
