@@ -58,7 +58,7 @@ interface HighlightedTextPart {
 interface ConversationalRefineOverlayProps {
   visible: boolean;
   onClose: () => void;
-  onSearchUpdate: (newSearch: string) => void;
+  onSearchUpdate: (newSearch: string, originalSearch?: string) => void;
   currentSearch: string;
   searchContext?: {
     location?: string;
@@ -394,7 +394,7 @@ const ConversationalRefineOverlay: React.FC<ConversationalRefineOverlayProps> = 
 
   const handleApplySearch = useCallback(() => {
     if (hasSearchChanged) {
-      onSearchUpdate(searchText);
+      onSearchUpdate(searchText, originalSearch);
       onClose();
     }
   }, [searchText, onSearchUpdate, onClose, hasSearchChanged]);

@@ -25,7 +25,8 @@ import {
   query,
   where,
   getDocs,
-  orderBy
+  orderBy,
+  limit // Add this import
 } from 'firebase/firestore';
 
 // Expo Auth imports
@@ -44,6 +45,23 @@ export interface User {
   email: string;
   name: string;
   favoriteHotels: string[];
+  recentSearches: string[]; // Add this line
+  createdAt: string;
+}
+
+// Add this new interface after the FavoriteHotel interface
+export interface RecentSearch {
+  id: string;
+  query: string;
+  searchParams?: {
+    checkin: string;
+    checkout: string;
+    cityName?: string;
+    countryCode?: string;
+    adults: number;
+    children: number;
+  };
+  resultCount?: number;
   createdAt: string;
 }
 
@@ -101,6 +119,11 @@ interface AuthContextType {
   firebaseUser: FirebaseUser | null;
   isAuthenticated: boolean;
   isLoading: boolean;
+
+  removeRecentSearch: (searchToRemove: string) => Promise<void>;
+  addRecentSearch: (query: string, replaceQuery?: string) => Promise<void>;
+  getRecentSearches: () => string[];
+  clearRecentSearches: () => Promise<void>;
   
   // Authentication actions
   signIn: (email: string, password: string) => Promise<void>;
@@ -189,43 +212,142 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     return unsubscribe;
   }, []);
 
-  // Load user data from Firestore
-  const loadUserData = async (firebaseUser: FirebaseUser) => {
-    try {
-      const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
+const addRecentSearch = async (query: string, replaceQuery?: string): Promise<void> => {
+  if (!firebaseUser || !user || !query.trim()) {
+    return;
+  }
+
+  try {
+    const trimmedQuery = query.trim();
+    const trimmedReplaceQuery = replaceQuery?.trim();
+    
+    let updatedSearches: string[];
+    
+    if (trimmedReplaceQuery && trimmedReplaceQuery !== trimmedQuery) {
+      // Replace the original query with the new one
+      updatedSearches = [
+        trimmedQuery,
+        ...user.recentSearches.filter(search => 
+          search !== trimmedQuery && search !== trimmedReplaceQuery
+        )
+      ].slice(0, 10);
       
-      if (userDoc.exists()) {
-        const userData = userDoc.data() as Omit<User, 'id'>;
-        setUser({
-          id: firebaseUser.uid,
-          ...userData,
-          // Ensure favoriteHotels is always an array
-          favoriteHotels: userData.favoriteHotels || []
-        });
-      } else {
-        const defaultName = firebaseUser.displayName || generateDefaultName(firebaseUser.email || '');
-        
-        const newUser: User = {
-          id: firebaseUser.uid,
-          email: firebaseUser.email || '',
-          name: defaultName,
-          favoriteHotels: [],
-          createdAt: new Date().toISOString(),
-        };
-        
-        await setDoc(doc(db, 'users', firebaseUser.uid), {
-          email: newUser.email,
-          name: newUser.name,
-          favoriteHotels: newUser.favoriteHotels,
-          createdAt: newUser.createdAt,
-        });
-        
-        setUser(newUser);
-      }
-    } catch (error) {
-      console.error('Error loading user data:', error);
+      console.log(`Replacing "${trimmedReplaceQuery}" with "${trimmedQuery}" in recent searches`);
+    } else {
+      // Normal behavior - add to front, remove duplicates
+      updatedSearches = [
+        trimmedQuery,
+        ...user.recentSearches.filter(search => search !== trimmedQuery)
+      ].slice(0, 10);
     }
-  };
+
+    await updateDoc(doc(db, 'users', firebaseUser.uid), {
+      recentSearches: updatedSearches
+    });
+
+    // Update local state
+    setUser(prev => prev ? {
+      ...prev,
+      recentSearches: updatedSearches
+    } : null);
+
+    console.log('Recent search saved:', trimmedQuery);
+    
+  } catch (error) {
+    console.error('Failed to save recent search:', error);
+  }
+};
+
+const getRecentSearches = (): string[] => {
+  return user?.recentSearches || [];
+};
+
+const clearRecentSearches = async (): Promise<void> => {
+  if (!firebaseUser || !user) {
+    return;
+  }
+
+  try {
+    await updateDoc(doc(db, 'users', firebaseUser.uid), {
+      recentSearches: []
+    });
+
+    setUser(prev => prev ? {
+      ...prev,
+      recentSearches: []
+    } : null);
+
+    console.log('Recent searches cleared');
+    
+  } catch (error) {
+    console.error('Failed to clear recent searches:', error);
+  }
+};
+
+const removeRecentSearch = async (searchToRemove: string): Promise<void> => {
+  if (!firebaseUser || !user) {
+    return;
+  }
+
+  try {
+    const updatedSearches = user.recentSearches.filter(search => search !== searchToRemove);
+
+    await updateDoc(doc(db, 'users', firebaseUser.uid), {
+      recentSearches: updatedSearches
+    });
+
+    setUser(prev => prev ? {
+      ...prev,
+      recentSearches: updatedSearches
+    } : null);
+
+    console.log('Removed recent search:', searchToRemove);
+    
+  } catch (error) {
+    console.error('Failed to remove recent search:', error);
+  }
+};
+  // Load user data from Firestore
+ // Update the loadUserData function
+const loadUserData = async (firebaseUser: FirebaseUser) => {
+  try {
+    const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
+    
+    if (userDoc.exists()) {
+      const userData = userDoc.data() as Omit<User, 'id'>;
+      setUser({
+        id: firebaseUser.uid,
+        ...userData,
+        // Ensure arrays are always initialized
+        favoriteHotels: userData.favoriteHotels || [],
+        recentSearches: userData.recentSearches || [] // Add this line
+      });
+    } else {
+      const defaultName = firebaseUser.displayName || generateDefaultName(firebaseUser.email || '');
+      
+      const newUser: User = {
+        id: firebaseUser.uid,
+        email: firebaseUser.email || '',
+        name: defaultName,
+        favoriteHotels: [],
+        recentSearches: [], // Add this line
+        createdAt: new Date().toISOString(),
+      };
+      
+      await setDoc(doc(db, 'users', firebaseUser.uid), {
+        email: newUser.email,
+        name: newUser.name,
+        favoriteHotels: newUser.favoriteHotels,
+        recentSearches: newUser.recentSearches, // Add this line
+        createdAt: newUser.createdAt,
+      });
+      
+      setUser(newUser);
+    }
+  } catch (error) {
+    console.error('Error loading user data:', error);
+  }
+};
 
   // Sign up with email and password
   const signUp = async (email: string, password: string): Promise<void> => {
@@ -243,6 +365,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         name: defaultName,
         favoriteHotels: [],
         createdAt: new Date().toISOString(),
+        recentSearches: []
       };
       
       await setDoc(doc(db, 'users', firebaseUser.uid), newUser);
@@ -509,26 +632,32 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
-  const value: AuthContextType = {
-    user,
-    firebaseUser,
-    isAuthenticated,
-    isLoading,
-    signIn,
-    signUp,
-    signInWithGoogle,
-    signOut: signOutUser,
-    sendPasswordReset,
-    addFavoriteHotel,
-    removeFavoriteHotel,
-    toggleFavoriteHotel,
-    isFavoriteHotel,
-    getFavoriteHotels,
-    getFavoriteHotelsData,
-    onFavoritesChange,
-    notifyFavoritesChanged,
-    requireAuth,
-  };
+// Update the value object
+const value: AuthContextType = {
+  user,
+  firebaseUser,
+  isAuthenticated,
+  isLoading,
+  signIn,
+  signUp,
+  signInWithGoogle,
+  signOut: signOutUser,
+  sendPasswordReset,
+  addFavoriteHotel,
+  removeFavoriteHotel,
+  toggleFavoriteHotel,
+  isFavoriteHotel,
+  getFavoriteHotels,
+  getFavoriteHotelsData,
+  onFavoritesChange,
+  notifyFavoritesChanged,
+  // Add these new methods
+  removeRecentSearch,
+  addRecentSearch,
+  getRecentSearches,
+  clearRecentSearches,
+  requireAuth,
+};
 
   return (
     <AuthContext.Provider value={value}>

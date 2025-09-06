@@ -1,4 +1,4 @@
-// InitialSearchScreen.tsx - Fixed with animation reset
+// InitialSearchScreen.tsx - Updated with SearchQueryCarousel replacing Beautiful Stays
 import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
@@ -10,15 +10,16 @@ import {
   Platform,
   Animated,
   Dimensions,
-  FlatList,
-  Image,
+  ScrollView,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import tw from 'twrnc';
 import RevolvingPillWheel, { SearchRecommendation } from '../components/InitalSearch/RevolvingPillWheel';
-import BeautifulHotelCard, { BeautifulHotel } from '../components/InitalSearch/BeautifulHotelCard';
-import { getRandomBeautifulHotels } from '../utils/BeautifulHotelsData';
-import { useFocusEffect } from '@react-navigation/native'; // ADD THIS IMPORT
+import RecentSearches from '../components/InitalSearch/RecentSearches';
+import SearchQueryCarousel from '../components/InitalSearch/SearchQueryCarousel';
+import { getRandomSearchQueries, SearchQueryWithHotels } from '../utils/SearchQueryData';
+import { useFocusEffect } from '@react-navigation/native';
+import { useAuth } from '../contexts/AuthContext';
 
 const { width, height } = Dimensions.get('window');
 
@@ -86,9 +87,18 @@ const InitialSearchScreen: React.FC<InitialSearchScreenProps> = ({
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [isFocused, setIsFocused] = useState(false);
-  const [displayedHotels, setDisplayedHotels] = useState<BeautifulHotel[]>([]);
+  const [searchQueryCarousels, setSearchQueryCarousels] = useState<SearchQueryWithHotels[]>([]);
   const [isTransitioning, setIsTransitioning] = useState(false);
   const [pillWheelResetTrigger, setPillWheelResetTrigger] = useState(0);
+  
+  // Get auth context for recent searches
+  const { 
+    getRecentSearches, 
+    addRecentSearch, 
+    clearRecentSearches,
+    removeRecentSearch,
+    isAuthenticated 
+  } = useAuth();
   
   // Animation values
   const fadeAnimation = useRef(new Animated.Value(0)).current;
@@ -160,18 +170,18 @@ const InitialSearchScreen: React.FC<InitialSearchScreenProps> = ({
     }
   ];
 
-  // Load random hotels on mount
+  // Load random search query carousels on mount
   useEffect(() => {
-    const randomHotels = getRandomBeautifulHotels(6);
-    setDisplayedHotels(randomHotels);
+    const randomCarousels = getRandomSearchQueries(4);
+    setSearchQueryCarousels(randomCarousels);
   }, []);
 
-  // FIX: Reset animations when screen comes into focus
+  // Reset animations when screen comes into focus
   useFocusEffect(
     React.useCallback(() => {
       console.log('InitialSearchScreen focused - resetting animations');
       
-      // IMMEDIATE RESET: Reset pill wheel immediately when screen comes into focus
+      // Reset pill wheel immediately when screen comes into focus
       setPillWheelResetTrigger(prev => prev + 1);
       
       // Add small delay to let navigation transition complete
@@ -209,10 +219,9 @@ const InitialSearchScreen: React.FC<InitialSearchScreenProps> = ({
             useNativeDriver: true,
           }),
         ]).start();
-      }, 100); // Small delay to let navigation settle
+      }, 100);
       
       return () => {
-        // Cleanup function (runs when screen loses focus)
         console.log('InitialSearchScreen unfocused - cleaning up');
         clearTimeout(resetTimer);
       };
@@ -283,7 +292,7 @@ const InitialSearchScreen: React.FC<InitialSearchScreenProps> = ({
     Animated.parallel([
       // Slide entire screen to the left (off-screen)
       Animated.timing(screenSlideOut, {
-        toValue: -width, // Slide to the left by screen width
+        toValue: -width,
         duration: 400,
         useNativeDriver: true,
       }),
@@ -305,33 +314,50 @@ const InitialSearchScreen: React.FC<InitialSearchScreenProps> = ({
     });
   };
 
-  // Search handler with transition animation
-  const handleSearch = () => {
+  // Search handler with recent searches tracking
+  const handleSearch = async () => {
     if (searchQuery.trim() && !isTransitioning) {
-      console.log('Starting search transition for:', searchQuery);
+      const trimmedQuery = searchQuery.trim();
+      console.log('Starting search transition for:', trimmedQuery);
+      
+      // Add to recent searches if user is authenticated
+      if (isAuthenticated) {
+        try {
+          await addRecentSearch(trimmedQuery);
+        } catch (error) {
+          console.error('Failed to save recent search:', error);
+        }
+      }
       
       // Perform transition animation, then navigate
       performTransitionAnimation(() => {
         if (navigation) {
-          // Navigate to HomeScreen (Results) with search query
           navigation.navigate('Results', { 
-            searchQuery: searchQuery.trim() 
+            searchQuery: trimmedQuery 
           });
         }
-        onSearchStart?.(searchQuery);
+        onSearchStart?.(trimmedQuery);
       });
     }
   };
 
-  // Recommendation handler with transition animation
-  const handleRecommendationPress = (recommendation: SearchRecommendation) => {
+  // Recommendation handler with recent searches tracking
+  const handleRecommendationPress = async (recommendation: SearchRecommendation) => {
     if (!isTransitioning) {
       console.log('Starting recommendation transition for:', recommendation.query);
+      
+      // Add to recent searches if user is authenticated
+      if (isAuthenticated) {
+        try {
+          await addRecentSearch(recommendation.query);
+        } catch (error) {
+          console.error('Failed to save recent search:', error);
+        }
+      }
       
       // Perform transition animation, then navigate
       performTransitionAnimation(() => {
         if (navigation) {
-          // Navigate to HomeScreen (Results) with recommendation query
           navigation.navigate('Results', { 
             searchQuery: recommendation.query 
           });
@@ -341,10 +367,78 @@ const InitialSearchScreen: React.FC<InitialSearchScreenProps> = ({
     }
   };
 
-  const handleHotelPress = (hotel: BeautifulHotel) => {
-    console.log('Hotel card tapped - opening Google Maps for:', hotel.name);
-    // The BeautifulHotelCard will handle opening Google Maps internally
-    // No navigation or search is triggered here
+  // Handle recent search selection
+  const handleRecentSearchPress = async (search: string) => {
+    if (!isTransitioning) {
+      console.log('Starting recent search transition for:', search);
+      
+      // Move this search to the top of recent searches
+      if (isAuthenticated) {
+        try {
+          await addRecentSearch(search);
+        } catch (error) {
+          console.error('Failed to update recent search:', error);
+        }
+      }
+      
+      // Perform transition animation, then navigate
+      performTransitionAnimation(() => {
+        if (navigation) {
+          navigation.navigate('Results', { 
+            searchQuery: search 
+          });
+        }
+        onSearchStart?.(search);
+      });
+    }
+  };
+
+  // Handle removing individual recent search
+  const handleRemoveRecentSearch = async (search: string) => {
+    if (isAuthenticated) {
+      try {
+        await removeRecentSearch(search);
+      } catch (error) {
+        console.error('Failed to remove recent search:', error);
+      }
+    }
+  };
+
+  // Handle clearing all recent searches
+  const handleClearAllRecentSearches = async () => {
+    if (isAuthenticated) {
+      try {
+        await clearRecentSearches();
+      } catch (error) {
+        console.error('Failed to clear recent searches:', error);
+      }
+    }
+  };
+
+  // Handle search query carousel press
+  const handleSearchQueryPress = async (query: string) => {
+    if (!isTransitioning) {
+      console.log('Starting search query carousel transition for:', query);
+      
+      // Add to recent searches if user is authenticated
+      if (isAuthenticated) {
+        try {
+          await addRecentSearch(query);
+        } catch (error) {
+          console.error('Failed to save recent search:', error);
+        }
+      }
+      
+      // Perform transition animation, then navigate
+      performTransitionAnimation(() => {
+        if (navigation) {
+          navigation.navigate('Results', { 
+            searchQuery: query 
+          });
+        }
+        onSearchStart?.(query);
+      });
+    }
   };
 
   const getPlaceholderText = () => {
@@ -441,9 +535,14 @@ const InitialSearchScreen: React.FC<InitialSearchScreenProps> = ({
           ))}
         </View>
 
-        {/* Main Content */}
-        <View style={tw`flex-1 px-6`}>
-          {/* Top spacing - increased to accommodate logo */}
+        {/* Main Content - ScrollView to handle overflow */}
+        <ScrollView 
+          style={tw`flex-1`}
+          contentContainerStyle={tw`px-6 pb-6`}
+          showsVerticalScrollIndicator={false}
+          scrollEnabled={!isTransitioning}
+        >
+          {/* Top spacing */}
           <View style={tw`h-16`} />
           
           <Animated.View 
@@ -455,14 +554,15 @@ const InitialSearchScreen: React.FC<InitialSearchScreenProps> = ({
               }
             ]}
           >
-            {/* Enhanced Header section with encapsulating highlight */}
+            {/* Enhanced Header section */}
             <View style={tw`items-center mb-2 relative`}>
-              {/* Subtle background glow that encapsulates both texts */}
+              {/* Subtle background glow */}
               <View style={[
-                tw`absolute -inset-3 rounded-3xl opacity-5 `,
-                { backgroundColor: TURQUOISE,
+                tw`absolute -inset-3 rounded-3xl opacity-5`,
+                { 
+                  backgroundColor: TURQUOISE,
                   top: -25,
-                 }
+                }
               ]} />
               
               <Text style={tw`text-2xl font-semibold text-gray-900 text-center relative z-10`}>
@@ -473,7 +573,6 @@ const InitialSearchScreen: React.FC<InitialSearchScreenProps> = ({
               <Text style={tw`text-sm text-gray-500 text-center font-light mb-4 relative z-10`}>
                 Type anything. We'll find the right place.
               </Text>
-              
             </View>
 
             {/* Main Search Input */}
@@ -506,7 +605,7 @@ const InitialSearchScreen: React.FC<InitialSearchScreenProps> = ({
                   },
                 ]}
               >
-                {/* Search icon with turquoise color when focused */}
+                {/* Search icon */}
                 <View style={tw`w-6 h-6 mr-2 items-center justify-center`}>
                   <Ionicons
                     name="sparkles"
@@ -539,7 +638,7 @@ const InitialSearchScreen: React.FC<InitialSearchScreenProps> = ({
                   editable={!isTransitioning}
                 />
                 
-                {/* Clear button with turquoise hover */}
+                {/* Clear button */}
                 {searchQuery.length > 0 && !isTransitioning && (
                   <TouchableOpacity
                     onPress={() => setSearchQuery('')}
@@ -551,7 +650,7 @@ const InitialSearchScreen: React.FC<InitialSearchScreenProps> = ({
                 )}
               </Animated.View>
               
-              {/* Floating search button with turquoise gradient */}
+              {/* Floating search button */}
               {searchQuery.trim().length > 0 && (
                 <Animated.View
                   style={[
@@ -600,80 +699,68 @@ const InitialSearchScreen: React.FC<InitialSearchScreenProps> = ({
             </View>
           </Animated.View>
 
-          {/* Enhanced Beautiful Hotels Section */}
+          {/* Content sections */}
           <View style={tw`flex-1`}>
-            <View style={tw`mb-6 flex-row items-center justify-between`}>
-              <View style={tw`flex-1`}>
-                <Text style={tw`text-lg font-semibold text-gray-900 mb-1`}>
-                  Beautiful Stays For You
-                </Text>
-                <View style={tw`flex-row items-center`}>
-                  <View style={[tw`w-8 h-0.5 rounded-full mr-2`, { backgroundColor: TURQUOISE }]} />
-                  <Text style={tw`text-xs text-gray-500 font-medium`}>
-                    Our top picks
-                  </Text>
-                </View>
-              </View>
-              
-              {/* Animated explore more button */}
+            {/* Recent Searches Section */}
+            {isAuthenticated && (
               <Animated.View
                 style={{
                   opacity: fadeAnimation,
                   transform: [{
-                    scale: fadeAnimation.interpolate({
-                      inputRange: [0, 1],
-                      outputRange: [0.8, 1],
+                    translateY: slideAnimation.interpolate({
+                      inputRange: [0, 40],
+                      outputRange: [0, 15],
                     }),
                   }],
                 }}
               >
-
+                <RecentSearches
+                  recentSearches={getRecentSearches()}
+                  onSearchPress={handleRecentSearchPress}
+                  onRemoveSearch={handleRemoveRecentSearch}
+                  onClearAll={handleClearAllRecentSearches}
+                />
               </Animated.View>
-            </View>
+            )}
 
-            {/* Enhanced Hotel Grid */}
-            <Animated.View
-              style={{
-                opacity: fadeAnimation,
-                transform: [{
-                  translateY: slideAnimation.interpolate({
-                    inputRange: [0, 40],
-                    outputRange: [0, 20],
-                  }),
-                }],
-              }}
-            >
-              <FlatList
-                data={displayedHotels}
-                numColumns={2}
-                keyExtractor={(item) => item.id}
-                columnWrapperStyle={tw`justify-between`}
-                contentContainerStyle={tw`gap-4 pb-8`}
-                showsVerticalScrollIndicator={false}
-                scrollEnabled={!isTransitioning}
-                renderItem={({ item, index }) => (
-                  <Animated.View
-                    style={{
-                      opacity: fadeAnimation,
-                      transform: [{
-                        translateY: fadeAnimation.interpolate({
-                          inputRange: [0, 1],
-                          outputRange: [30, 0],
-                        }),
-                      }],
-                    }}
-                  >
-                    <BeautifulHotelCard
-                      hotel={item}
-                      onPress={() => handleHotelPress(item)}
-                    />
-                  </Animated.View>
-                )}
-                ItemSeparatorComponent={() => <View style={tw`h-4`} />}
-              />
-            </Animated.View>
+            {/* Search Query Carousels Section */}
+            <View style={tw`mb-6`}>
+              {/* Section Header */}
+              <Animated.View
+                style={[
+                  tw`flex-row items-center justify-between mb-4 px-1`,
+                  {
+                    opacity: fadeAnimation,
+                    transform: [{
+                      translateY: slideAnimation.interpolate({
+                        inputRange: [0, 40],
+                        outputRange: [0, 20],
+                      }),
+                    }],
+                  }
+                ]}
+              >
+              </Animated.View>
+
+              {searchQueryCarousels.map((carousel, index) => {
+  const isLast = index === searchQueryCarousels.length - 1;
+  return (
+    <View
+      key={`${carousel.searchQuery}-${index}`}
+      style={[tw`${isLast ? '' : 'mb--5'}`]} // change mb-6 to mb-4/mb-8 to taste
+    >
+      <SearchQueryCarousel
+        searchQuery={carousel.searchQuery}
+        hotels={carousel.hotels}
+        onSearchPress={handleSearchQueryPress}
+        index={index}
+      />
+    </View>
+  );
+})}
+            </View>
           </View>
-        </View>
+        </ScrollView>
       </Animated.View>
     </SafeAreaView>
   ); 
