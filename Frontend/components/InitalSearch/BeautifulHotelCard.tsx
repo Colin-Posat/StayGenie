@@ -68,6 +68,14 @@ const useLazyLoading = (threshold: number = 150) => {
   const [isVisible, setIsVisible] = useState(false);
   const [hasLoaded, setHasLoaded] = useState(false);
   const elementRef = useRef<View>(null);
+  const [imageLoading, setImageLoading] = useState(false);
+const [imageError, setImageError] = useState(false);
+
+useEffect(() => {
+  if (!isVisible || !imageLoading) return;
+  const t = setTimeout(() => setImageLoading(false), 8000); // 8s fallback
+  return () => clearTimeout(t);
+}, [isVisible, imageLoading]);
 
   useEffect(() => {
     let timeoutId: NodeJS.Timeout;
@@ -232,7 +240,7 @@ const GridHeartButton: React.FC<GridHeartButtonProps> = ({ hotel, size = 20 }) =
         activeOpacity={0.6}
         disabled={isLoading}
         style={[
-          tw`w-8 h-8 rounded-full bg-white/90 items-center justify-center shadow-sm`,
+          tw`w-7 h-7 rounded-full bg-black/50 items-center justify-center shadow-sm`,
           isLoading && tw`opacity-60`
         ]}
       >
@@ -247,7 +255,7 @@ const GridHeartButton: React.FC<GridHeartButtonProps> = ({ hotel, size = 20 }) =
             <Ionicons
               name={isLiked ? "heart" : "heart-outline"}
               size={size}
-              color={isLiked ? "#FF3040" : "#262626"}
+              color={isLiked ? "#FF3040" : "#FFFFFF"}
             />
           )}
         </Animated.View>
@@ -264,6 +272,7 @@ interface LazyImageProps {
   onLoadStart?: () => void;
   onLoad?: () => void;
   onError?: () => void;
+  onLoadEnd?: () => void; 
   isVisible: boolean;
 }
 
@@ -274,6 +283,7 @@ const LazyImage: React.FC<LazyImageProps> = ({
   onLoadStart,
   onLoad,
   onError,
+  onLoadEnd,   
   isVisible
 }) => {
   const [shouldLoad, setShouldLoad] = useState(false);
@@ -293,17 +303,20 @@ const LazyImage: React.FC<LazyImageProps> = ({
     return <View style={style} />;
   }
 
+  const isCached = ImageCache.isImageCached(source.uri);
   return (
     <Image
       source={source}
       style={style}
       resizeMode={resizeMode}
-      onLoadStart={onLoadStart}
+      // Don't trigger loading UI for known-cached images
+      onLoadStart={() => { if (!isCached) onLoadStart?.(); }}
       onLoad={() => {
         ImageCache.markImageCached(source.uri);
         onLoad?.();
       }}
-      onError={onError}
+      onError={(e) => { onError?.(); }}
+      onLoadEnd={() => { onLoadEnd?.(); }}    // ALWAYS fires (success or error)
       fadeDuration={300}
     />
   );
@@ -485,17 +498,33 @@ const BeautifulHotelCard: React.FC<BeautifulHotelCardProps> = ({
     return price.toString();
   };
 
-  const cardWidth = (width - 56) / 2; // Account for padding and gap
-  const cardHeight = cardWidth * 1.1; // Slightly taller than square
+  const cardWidth = (width - 75) / 2; // Account for padding and gap
+  const cardHeight = cardWidth; // Slightly taller than square
 
-  return (
+return (
+  <View
+    ref={elementRef}
+    style={{
+      width: cardWidth,
+      height: cardHeight,
+      // iOS shadow
+      shadowColor: '#000',
+      shadowOffset: {
+        width: 0,
+        height: 4,
+      },
+      shadowOpacity: 0.25,
+      shadowRadius: 3.5,
+      // Android shadow
+      elevation: 5,
+    }}
+  >
     <TouchableOpacity
-      ref={elementRef}
       onPress={handleCardPress}
       activeOpacity={0.95}
       style={[
-        tw`bg-white rounded-xl overflow-hidden shadow-lg`,
-        { width: cardWidth, height: cardHeight }
+        tw`bg-white rounded-2xl overflow-hidden`,
+        { width: '100%', height: '100%' }
       ]}
     >
       {/* Image with Ken Burns effect and lazy loading */}
@@ -521,17 +550,18 @@ const BeautifulHotelCard: React.FC<BeautifulHotelCardProps> = ({
               ]}
             >
               <LazyImage
-                source={{ uri: hotel.image }}
-                style={{ width: '100%', height: '100%' }}
-                resizeMode="cover"
-                onLoadStart={() => setImageLoading(true)}
-                onLoad={() => setImageLoading(false)}
-                onError={() => {
-                  setImageLoading(false);
-                  setImageError(true);
-                }}
-                isVisible={isVisible}
-              />
+            source={{ uri: hotel.image }}
+            style={{ width: '100%', height: '100%' }}
+            resizeMode="cover"
+            onLoadStart={() => setImageLoading(true)}
+            onLoad={() => setImageLoading(false)}
+            onError={() => {
+              setImageError(true);
+              setImageLoading(false);
+            }}
+            onLoadEnd={() => setImageLoading(false)}   // <- key line
+            isVisible={isVisible}
+          />
             </Animated.View>
           ) : (
             // Error placeholder
@@ -557,12 +587,11 @@ const BeautifulHotelCard: React.FC<BeautifulHotelCardProps> = ({
           </View>
         )}
 
-        {/* Loading indicator */}
         {imageLoading && !imageError && isVisible && (
-          <View style={tw`absolute inset-0 items-center justify-center bg-gray-100/80`}>
-            <ActivityIndicator size="small" color="#666" />
-          </View>
-        )}
+              <View style={tw`absolute inset-0 items-center justify-center bg-gray-100/60`}>
+                <ActivityIndicator size="small" color="#666" />
+              </View>
+            )}
         
         {/* Gradient overlay - only show when image is loaded */}
         {!imageLoading && !imageError && isVisible && (
@@ -585,7 +614,7 @@ const BeautifulHotelCard: React.FC<BeautifulHotelCardProps> = ({
 
         {/* Favorite Button - Bottom Right */}
         <View style={tw`absolute bottom-2 right-2`}>
-          <GridHeartButton hotel={hotel} size={20} />
+          <GridHeartButton hotel={hotel} size={15} />
         </View>
 
         {/* Hotel info at bottom left */}
@@ -599,8 +628,9 @@ const BeautifulHotelCard: React.FC<BeautifulHotelCardProps> = ({
           </View>
         </View>
       </View>
-    </TouchableOpacity>
-  );
+     </TouchableOpacity>
+  </View>
+);
 };
 
 // Preload function for critical images (use in parent component)

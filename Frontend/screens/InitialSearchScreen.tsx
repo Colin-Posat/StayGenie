@@ -1,4 +1,4 @@
-// InitialSearchScreen.tsx - Updated with SearchQueryCarousel replacing Beautiful Stays
+// InitialSearchScreen.tsx - Updated with compact header
 import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
@@ -268,6 +268,28 @@ const InitialSearchScreen: React.FC<InitialSearchScreenProps> = ({
       backgroundAnimation.stop();
     };
   }, []);
+  useEffect(() => {
+  const pulsingAnimation = Animated.loop(
+    Animated.sequence([
+      Animated.timing(pulsingShadow, {
+        toValue: 1,
+        duration: 2000,
+        useNativeDriver: false,
+      }),
+      Animated.timing(pulsingShadow, {
+        toValue: 0,
+        duration: 2000,
+        useNativeDriver: false,
+      }),
+    ])
+  );
+
+  pulsingAnimation.start();
+
+  return () => {
+    pulsingAnimation.stop();
+  };
+}, []);
 
   // Search bar focus animation with turquoise glow
   useEffect(() => {
@@ -285,6 +307,7 @@ const InitialSearchScreen: React.FC<InitialSearchScreenProps> = ({
     ]).start();
   }, [isFocused]);
 
+  const pulsingShadow = useRef(new Animated.Value(0)).current;
   // Transition animation function
   const performTransitionAnimation = (callback: () => void) => {
     setIsTransitioning(true);
@@ -495,54 +518,17 @@ const InitialSearchScreen: React.FC<InitialSearchScreenProps> = ({
           },
         ]}
       >
-        {/* Simple white background with subtle floating elements */}
-        <View style={tw`absolute inset-0 bg-white`}>
-          {/* Floating geometric elements - more subtle */}
-          {[...Array(5)].map((_, index) => (
-            <Animated.View
-              key={index}
-              style={[
-                tw`absolute rounded-full opacity-5`,
-                {
-                  width: 40 + (index * 15) % 60,
-                  height: 40 + (index * 15) % 60,
-                  backgroundColor: index % 3 === 0 ? TURQUOISE_LIGHT : 
-                                  index % 3 === 1 ? TURQUOISE : '#e0f7ff',
-                  ...getFloatingElementTransform(index, 0.3 + (index * 0.05)),
-                }
-              ]}
-            />
-          ))}
 
-          {/* Floating sparkle icons - very subtle */}
-          {[...Array(3)].map((_, index) => (
-            <Animated.View
-              key={`sparkle-${index}`}
-              style={[
-                tw`absolute`,
-                {
-                  ...getFloatingElementTransform(index + 8, 0.6),
-                  opacity: 0.1,
-                }
-              ]}
-            >
-              <Ionicons 
-                name="sparkles" 
-                size={12 + (index * 2)} 
-                color={TURQUOISE_LIGHT} 
-              />
-            </Animated.View>
-          ))}
-        </View>
+
 
         {/* Main Content - ScrollView to handle overflow */}
         <ScrollView 
           style={tw`flex-1`}
-          contentContainerStyle={tw`px-6 pb-6`}
+          contentContainerStyle={tw`px-4 pb-6`}
           showsVerticalScrollIndicator={false}
           scrollEnabled={!isTransitioning}
         >
-          {/* Top spacing */}
+          {/* Reduced top spacing for more compactness */}
           <View style={tw`h-16`} />
           
           <Animated.View 
@@ -555,139 +541,239 @@ const InitialSearchScreen: React.FC<InitialSearchScreenProps> = ({
             ]}
           >
             {/* Enhanced Header section */}
-            <View style={tw`items-center mb-2 relative`}>
-              {/* Subtle background glow */}
-              <View style={[
-                tw`absolute -inset-3 rounded-3xl opacity-5`,
-                { 
-                  backgroundColor: TURQUOISE,
-                  top: -25,
-                }
-              ]} />
-              
-              <Text style={tw`text-2xl font-semibold text-gray-900 text-center relative z-10`}>
-                Describe your perfect stay{' '}
-                <Text style={{ color: TURQUOISE }}></Text>
-              </Text>
-              
-              <Text style={tw`text-sm text-gray-500 text-center font-light mb-4 relative z-10`}>
-                Type anything. We'll find the right place.
-              </Text>
-            </View>
+<View style={tw`items-center mb-4 w-full max-w-2xl`}>
+  {/* Logo/Brand area with subtle animation */}
+  <Animated.View 
+    style={[
+      tw`mb-3`,
+      {
+        opacity: logoFade,
+        transform: [{
+          scale: logoFade.interpolate({
+            inputRange: [0, 1],
+            outputRange: [0.8, 1],
+          }),
+        }],
+      }
+    ]}
+  >
+    <View style={tw`flex-row items-center justify-center`}>
 
-            {/* Main Search Input */}
-            <Animated.View 
-              style={[
-                tw`relative mb-6 w-full max-w-md`,
-                {
-                  transform: [{ scale: searchBarScale }],
-                }
-              ]}
-            >
+
+    </View>
+  </Animated.View>
+  
+  {/* Main headline with gradient text effect */}
+  <Animated.View
+    style={[
+      tw`mb-2`,
+      {
+        opacity: fadeAnimation,
+        transform: [{
+          translateY: slideAnimation.interpolate({
+            inputRange: [0, 40],
+            outputRange: [0, -10],
+          }),
+        }],
+      }
+    ]}
+  >
+    <Text style={tw`mt--10 text-4xl font-bold text-gray-900 text-center leading-tight`}>
+  Describe your{'\n'}
+  <Text style={{ 
+    color: TURQUOISE,
+    textShadowColor: 'rgba(29, 249, 255, 0.3)',
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 8,
+  }}>
+    perfect stay
+  </Text>
+</Text>
+  </Animated.View>
+  
+  {/* Enhanced subtitle with icon */}
+  <Animated.View
+    style={[
+      tw`flex-row items-center justify-center mb-1`,
+      {
+        opacity: fadeAnimation.interpolate({
+          inputRange: [0, 1],
+          outputRange: [0, 0.8],
+        }),
+        transform: [{
+          translateY: slideAnimation.interpolate({
+            inputRange: [0, 40],
+            outputRange: [0, 5],
+          }),
+        }],
+      }
+    ]}
+  >
+
+  
+    
+  </Animated.View>
+</View>
+
+            <View style={tw`w-full items-center`}>
               <Animated.View 
                 style={[
-                  tw`flex-row items-center bg-white rounded-3xl px-6 shadow-lg border`,
-                  { 
-                    height: 64,
-                    shadowColor: isFocused ? TURQUOISE : '#000',
-                    shadowOffset: { width: 0, height: 8 },
-                    shadowOpacity: isFocused ? 0.3 : 0.1,
-                    shadowRadius: 20,
-                    elevation: 10,
-                    borderColor: turquoiseGlow.interpolate({
-                      inputRange: [0, 1],
-                      outputRange: ['#E5E7EB', TURQUOISE],
-                    }),
-                    borderWidth: turquoiseGlow.interpolate({
-                      inputRange: [0, 1],
-                      outputRange: [1, 2],
-                    }),
-                  },
+                  tw`relative mb-10 w-full max-w-2xl`,
+                  {
+                    transform: [{ scale: searchBarScale }],
+                  }
                 ]}
               >
-                {/* Search icon */}
-                <View style={tw`w-6 h-6 mr-2 items-center justify-center`}>
-                  <Ionicons
-                    name="sparkles"
-                    size={20}
-                    color={isFocused ? TURQUOISE : "#9CA3AF"}
-                  />
-                </View>
-                
-                <TextInput
-                  style={[
-                    tw`flex-1 text-lg text-gray-900 font-normal`,
-                    {
-                      lineHeight: Platform.OS === 'ios' ? 24 : 26,
-                      includeFontPadding: false,
-                      textAlignVertical: 'center',
-                      paddingVertical: 0,
-                    }
-                  ]}
-                  placeholder={getPlaceholderText()}
-                  placeholderTextColor="#9CA3AF"
-                  value={searchQuery}
-                  onChangeText={setSearchQuery}
-                  onFocus={() => setIsFocused(true)}
-                  onBlur={() => setIsFocused(false)}
-                  onSubmitEditing={handleSearch}
-                  autoCorrect={false}
-                  autoCapitalize="words"
-                  returnKeyType="search"
-                  selectionColor={TURQUOISE}
-                  editable={!isTransitioning}
-                />
-                
-                {/* Clear button */}
-                {searchQuery.length > 0 && !isTransitioning && (
-                  <TouchableOpacity
-                    onPress={() => setSearchQuery('')}
-                    activeOpacity={0.6}
-                    style={tw`ml-3 w-6 h-6 items-center justify-center`}
-                  >
-                    <Ionicons name="close-circle" size={20} color={TURQUOISE} />
-                  </TouchableOpacity>
-                )}
-              </Animated.View>
-              
-              {/* Floating search button */}
-              {searchQuery.trim().length > 0 && (
-                <Animated.View
-                  style={[
-                    tw`absolute -right--2 top-2`,
-                    {
-                      opacity: fadeAnimation,
-                    }
-                  ]}
-                >
-                  <TouchableOpacity
+                <Animated.View 
+  style={[
+    tw`flex-row items-center bg-white rounded-3xl px-6 shadow-lg border`,
+    { 
+      height: 64,
+      shadowColor: Animated.add(
+        turquoiseGlow.interpolate({
+          inputRange: [0, 1],
+          outputRange: [0, 1],
+        }),
+        pulsingShadow.interpolate({
+          inputRange: [0, 1],
+          outputRange: [0, 0.5],
+        })
+      ).interpolate({
+        inputRange: [0, 0.5, 1, 1.5],
+        outputRange: ['#000', TURQUOISE, TURQUOISE, TURQUOISE],
+      }),
+      shadowOffset: { width: 0, height: 8 },
+      shadowOpacity: Animated.add(
+        turquoiseGlow.interpolate({
+          inputRange: [0, 1],
+          outputRange: [0, 0.3],
+        }),
+        pulsingShadow.interpolate({
+          inputRange: [0, 1],
+          outputRange: [0.1, 0.25],
+        })
+      ),
+      shadowRadius: Animated.add(
+        turquoiseGlow.interpolate({
+          inputRange: [0, 1],
+          outputRange: [0, 20],
+        }),
+        pulsingShadow.interpolate({
+          inputRange: [0, 1],
+          outputRange: [20, 28],
+        })
+      ),
+      elevation: 10,
+      borderColor: Animated.add(
+        turquoiseGlow.interpolate({
+          inputRange: [0, 1],
+          outputRange: [0, 1],
+        }),
+        pulsingShadow.interpolate({
+          inputRange: [0, 1],
+          outputRange: [0, 0.3],
+        })
+      ).interpolate({
+        inputRange: [0, 0.3, 1, 1.3],
+        outputRange: ['#E5E7EB', 'rgba(29, 249, 255, 0.3)', TURQUOISE, TURQUOISE],
+      }),
+      borderWidth: Animated.add(
+        turquoiseGlow.interpolate({
+          inputRange: [0, 1],
+          outputRange: [0, 0],
+        }),
+        pulsingShadow.interpolate({
+          inputRange: [0, 1],
+          outputRange: [1, 1],
+        })
+      ),
+    },
+  ]}
+>
+                  {/* Search icon */}
+                  <View style={tw`w-6 h-6 mr-2 items-center justify-center`}>
+                    <Ionicons
+                      name="sparkles"
+                      size={20}
+                      color={isFocused ? TURQUOISE : "#9CA3AF"}
+                    />
+                  </View>
+                  
+                  <TextInput
                     style={[
-                      tw`w-12 h-12 rounded-2xl items-center justify-center shadow-lg`,
+                      tw`flex-1 text-lg text-gray-900 font-normal`,
                       {
-                        backgroundColor: isTransitioning ? '#9CA3AF' : TURQUOISE,
-                        shadowColor: TURQUOISE,
-                        shadowOffset: { width: 0, height: 4 },
-                        shadowOpacity: 0.4,
-                        shadowRadius: 12,
-                        elevation: 8,
+                        lineHeight: Platform.OS === 'ios' ? 24 : 26,
+                        includeFontPadding: false,
+                        textAlignVertical: 'center',
+                        paddingVertical: 0,
                       }
                     ]}
-                    onPress={handleSearch}
-                    activeOpacity={0.8}
-                    disabled={isTransitioning}
-                  >
-                    <Ionicons 
-                      name={isTransitioning ? "hourglass" : "arrow-forward"} 
-                      size={20} 
-                      color="white" 
-                    />
-                  </TouchableOpacity>
+                    placeholder={getPlaceholderText()}
+                    placeholderTextColor="#9CA3AF"
+                    value={searchQuery}
+                    onChangeText={setSearchQuery}
+                    onFocus={() => setIsFocused(true)}
+                    onBlur={() => setIsFocused(false)}
+                    onSubmitEditing={handleSearch}
+                    autoCorrect={false}
+                    autoCapitalize="words"
+                    returnKeyType="search"
+                    selectionColor={TURQUOISE}
+                    editable={!isTransitioning}
+                  />
+                  
+                  {/* Clear button */}
+                  {searchQuery.length > 0 && !isTransitioning && (
+                    <TouchableOpacity
+                      onPress={() => setSearchQuery('')}
+                      activeOpacity={0.6}
+                      style={tw`ml-3 w-6 h-6 items-center justify-center`}
+                    >
+                      <Ionicons name="close-circle" size={20} color={TURQUOISE} />
+                    </TouchableOpacity>
+                  )}
                 </Animated.View>
-              )}
-            </Animated.View>
+                
+                {/* Floating search button */}
+                {searchQuery.trim().length > 0 && (
+                  <Animated.View
+                    style={[
+                      tw`absolute -right-0 top-2`,
+                      {
+                        opacity: fadeAnimation,
+                      }
+                    ]}
+                  >
+                    <TouchableOpacity
+                      style={[
+                        tw`w-12 h-12 mr-2 rounded-2xl items-center justify-center shadow-lg`,
+                        {
+                          backgroundColor: isTransitioning ? '#9CA3AF' : TURQUOISE,
+                          shadowColor: TURQUOISE,
+                          shadowOffset: { width: 0, height: 4 },
+                          shadowOpacity: 0.4,
+                          shadowRadius: 12,
+                          elevation: 8,
+                        }
+                      ]}
+                      onPress={handleSearch}
+                      activeOpacity={0.8}
+                      disabled={isTransitioning}
+                    >
+                      <Ionicons 
+                        name={isTransitioning ? "hourglass" : "arrow-forward"} 
+                        size={20} 
+                        color="white" 
+                      />
+                    </TouchableOpacity>
+                  </Animated.View>
+                )}
+              </Animated.View>
+            </View>
 
-            {/* Suggestions section */}
-            <View style={tw`w-full max-w-md mb-4`}>
+            {/* Suggestions section - reduced margin */}
+            <View style={tw`w-full max-w-5xl mx-auto mb-3 px-2`}>
               {/* Revolving Search Recommendations */}
               <RevolvingPillWheel
                 recommendations={searchRecommendations}
@@ -700,7 +786,7 @@ const InitialSearchScreen: React.FC<InitialSearchScreenProps> = ({
           </Animated.View>
 
           {/* Content sections */}
-          <View style={tw`flex-1`}>
+          <View style={tw`flex-1 w-full max-w-4xl mx-auto`}>
             {/* Recent Searches Section */}
             {isAuthenticated && (
               <Animated.View
@@ -743,21 +829,21 @@ const InitialSearchScreen: React.FC<InitialSearchScreenProps> = ({
               </Animated.View>
 
               {searchQueryCarousels.map((carousel, index) => {
-  const isLast = index === searchQueryCarousels.length - 1;
-  return (
-    <View
-      key={`${carousel.searchQuery}-${index}`}
-      style={[tw`${isLast ? '' : 'mb--5'}`]} // change mb-6 to mb-4/mb-8 to taste
-    >
-      <SearchQueryCarousel
-        searchQuery={carousel.searchQuery}
-        hotels={carousel.hotels}
-        onSearchPress={handleSearchQueryPress}
-        index={index}
-      />
-    </View>
-  );
-})}
+                const isLast = index === searchQueryCarousels.length - 1;
+                return (
+                  <View
+                    key={`${carousel.searchQuery}-${index}`}
+                    style={[tw`${isLast ? '' : 'mb--5'}`]}
+                  >
+                    <SearchQueryCarousel
+                      searchQuery={carousel.searchQuery}
+                      hotels={carousel.hotels}
+                      onSearchPress={handleSearchQueryPress}
+                      index={index}
+                    />
+                  </View>
+                );
+              })}
             </View>
           </View>
         </ScrollView>

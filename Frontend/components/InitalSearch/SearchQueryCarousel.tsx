@@ -89,7 +89,7 @@ const SearchQueryCarousel: React.FC<SearchQueryCarouselProps> = ({
   return (
     <Animated.View
       style={[
-        tw`w-full mb-6`,
+        tw`w-full mb-0`,
         {
           opacity: fadeAnimation,
           transform: [{ translateY: slideAnimation }],
@@ -118,7 +118,7 @@ const SearchQueryCarousel: React.FC<SearchQueryCarouselProps> = ({
         
         {/* Pill-Style Chevron Button */}
         <View style={[
-          tw`w-6 h-6 rounded-full items-center justify-center border`,
+          tw`w-5 h-5 rounded-full items-center justify-center border`,
           {
             backgroundColor: isChevronPressed ? TURQUOISE_LIGHT : TURQUOISE_SUBTLE,
             borderColor: isChevronPressed ? TURQUOISE : TURQUOISE_BORDER,
@@ -135,7 +135,7 @@ const SearchQueryCarousel: React.FC<SearchQueryCarouselProps> = ({
         ]}>
           <Ionicons 
             name="chevron-forward" 
-            size={16} 
+            size={12} 
             color={isChevronPressed ? TURQUOISE_DARK : '#4B5563'} 
           />
         </View>
@@ -147,14 +147,12 @@ const SearchQueryCarousel: React.FC<SearchQueryCarouselProps> = ({
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={tw`px-1`}
         decelerationRate="fast"
-        snapToInterval={cardWidth + cardMargin} // Card width + reduced margin
-        snapToAlignment="start"
       >
         {hotels.map((hotel, hotelIndex) => (
           <View
             key={`${hotel.id}-${hotelIndex}`}
             style={[
-              tw`mr-2`, // Reduced margin (8px equivalent)
+              tw`mr--5`, // Reduced margin (8px equivalent)
               { width: cardWidth }
             ]}
           >
