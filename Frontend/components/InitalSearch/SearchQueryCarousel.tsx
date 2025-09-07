@@ -100,25 +100,22 @@ const SearchQueryCarousel: React.FC<SearchQueryCarouselProps> = ({
       <TouchableOpacity
         onPress={handleSearchPress}
         activeOpacity={0.7}
-        style={tw`flex-row items-center justify-between mb-3 px-1`}
+        style={tw`flex-row items-center mb-3 px-1`}
       >
-        <View style={tw`flex-row items-center flex-1 mr-2`}>
-          
-          {/* Search query text with dynamic sizing */}
-          <Text 
-            style={tw`${getTextSize(searchQuery)} font-semibold text-gray-900 flex-1`}
-            numberOfLines={1}
-            adjustsFontSizeToFit={true}
-            minimumFontScale={0.7}
-            ellipsizeMode="tail"
-          >
-            {searchQuery}
-          </Text>
-        </View>
+        {/* Search query text with dynamic sizing */}
+        <Text 
+          style={tw`${getTextSize(searchQuery)} font-semibold text-gray-900`}
+          numberOfLines={1}
+          adjustsFontSizeToFit={true}
+          minimumFontScale={0.7}
+          ellipsizeMode="tail"
+        >
+          {searchQuery}
+        </Text>
         
-        {/* Pill-Style Chevron Button */}
+        {/* Pill-Style Chevron Button - right next to text */}
         <View style={[
-          tw`w-5 h-5 rounded-full items-center justify-center border`,
+          tw`w-5 h-5 rounded-full items-center justify-center border ml-2`,
           {
             backgroundColor: isChevronPressed ? TURQUOISE_LIGHT : TURQUOISE_SUBTLE,
             borderColor: isChevronPressed ? TURQUOISE : TURQUOISE_BORDER,
