@@ -119,7 +119,7 @@ const liteApiInstance = axios.create({
     'Content-Type': 'application/json',
     'Connection': 'keep-alive'
   },
-  timeout: 12000,
+  timeout: 30000,
   maxRedirects: 2,
 });
 
@@ -1535,7 +1535,7 @@ export const hotelSearchAndMatchController = async (req: Request, res: Response)
         language: 'en',
         limit: SMART_HOTEL_LIMIT
       },
-      timeout: 12000
+      timeout: 30000
     });
 
     const hotels = hotelsSearchResponse.data?.data || hotelsSearchResponse.data;

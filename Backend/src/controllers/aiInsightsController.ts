@@ -234,7 +234,7 @@ const liteApiInstance = axios.create({
     'Content-Type': 'application/json',
     'Connection': 'keep-alive'
   },
-  timeout: 12000,
+  timeout: 30000,
   maxRedirects: 2,
 });
 
