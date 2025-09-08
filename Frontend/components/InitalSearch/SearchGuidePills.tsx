@@ -195,7 +195,7 @@ const SearchGuidePills: React.FC<SearchGuidePillsProps> = ({
             onPress={() => handlePillPress(pill)}
             activeOpacity={0.8}
             style={[
-              tw`mr-2 px-3.8 py-2 rounded-xl flex-row items-center bg-white border border-gray-200`,
+              tw`mr-2 px-2.4 py-2.5 rounded-xl flex-row items-center bg-white border border-gray-200`,
               {
                 shadowColor: '#000',
                 shadowOffset: {

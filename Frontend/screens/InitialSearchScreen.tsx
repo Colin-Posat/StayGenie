@@ -1,4 +1,4 @@
-// InitialSearchScreen.tsx - Updated with date selection integration
+// InitialSearchScreen.tsx - Fixed for mobile compatibility
 import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
@@ -12,6 +12,7 @@ import {
   Dimensions,
   ScrollView,
   Image,
+  KeyboardAvoidingView,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import tw from 'twrnc';
@@ -88,8 +89,13 @@ const InitialSearchScreen: React.FC<InitialSearchScreenProps> = ({
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [isFocused, setIsFocused] = useState(false);
+  const [inputHeight, setInputHeight] = useState(60);
+  const [showScrollHint, setShowScrollHint] = useState(false);
   const [searchQueryCarousels, setSearchQueryCarousels] = useState<SearchQueryWithHotels[]>([]);
   const [isTransitioning, setIsTransitioning] = useState(false);
+  
+  // Refs
+  const textInputRef = useRef<TextInput>(null);
   
   // Get auth context for recent searches
   const { 
@@ -109,13 +115,22 @@ const InitialSearchScreen: React.FC<InitialSearchScreenProps> = ({
   const floatingElements = useRef(new Animated.Value(0)).current;
   const backgroundShift = useRef(new Animated.Value(0)).current;
   const pulsingShadow = useRef(new Animated.Value(0)).current;
+  const heightAnimation = useRef(new Animated.Value(60)).current;
+  const scrollHintOpacity = useRef(new Animated.Value(0)).current;
   
   // Transition animations
   const screenSlideOut = useRef(new Animated.Value(0)).current;
   const contentFadeOut = useRef(new Animated.Value(1)).current;
   const scaleTransition = useRef(new Animated.Value(1)).current;
 
-  // Refined search suggestions with turquoise theme
+
+  // constants near top of file or above the component
+const INPUT_FONT_SIZE = 16;         // keep in sync with style
+const INPUT_LINE_HEIGHT = 22;       // comfortable line height
+const INPUT_VISIBLE_LINES = 3;      // default visible lines
+const INPUT_HEIGHT = INPUT_LINE_HEIGHT * INPUT_VISIBLE_LINES + 12;
+
+  // Mobile-optimized search suggestions
   const hotelSearchSuggestions = [
     "Tokyo capsule hotels",
     "Bali beachfront villas",
@@ -129,6 +144,17 @@ const InitialSearchScreen: React.FC<InitialSearchScreenProps> = ({
     "Morocco desert camps"
   ];
 
+  const MIN_INPUT_HEIGHT = 85;   // ~1 line
+const MAX_INPUT_HEIGHT = 85;  // ~6 lines (tweak as you like)
+const INPUT_BOTTOM_PAD = 10; // extra breathing room inside the TextInput
+const ANDROID_EXTRA_PAD = 6;
+
+const handleContentSizeChange = (e: any) => {
+  const h = e?.nativeEvent?.contentSize?.height ?? MIN_INPUT_HEIGHT;
+  // clamp to avoid infinite growth
+  const clamped = Math.max(MIN_INPUT_HEIGHT, Math.min(h, MAX_INPUT_HEIGHT));
+  setInputHeight(clamped);
+};
   const { displayText, cursorVisible } = useTypingPlaceholder(
     hotelSearchSuggestions,
     80,
@@ -142,14 +168,48 @@ const InitialSearchScreen: React.FC<InitialSearchScreenProps> = ({
     setSearchQueryCarousels(randomCarousels);
   }, []);
 
+  // Auto-focus to end when screen becomes active
+  useEffect(() => {
+    if (isFocused && searchQuery && textInputRef.current) {
+      setTimeout(() => {
+        textInputRef.current?.setNativeProps({
+          selection: { start: searchQuery.length, end: searchQuery.length }
+        });
+      }, 100);
+    }
+  }, [isFocused, searchQuery]);
+
+
+
+  // Handle focus with cursor positioning
+  const handleFocus = () => {
+    setIsFocused(true);
+    
+    if (searchQuery && textInputRef.current) {
+      setTimeout(() => {
+        textInputRef.current?.setNativeProps({
+          selection: { start: searchQuery.length, end: searchQuery.length }
+        });
+      }, 50);
+    }
+  };
+
+  // Enhanced clear function
+  const handleClear = () => {
+    setSearchQuery('');
+    setShowScrollHint(false);
+    
+    if (textInputRef.current) {
+      textInputRef.current.focus();
+    }
+  };
+
   // Reset animations when screen comes into focus
   useFocusEffect(
     React.useCallback(() => {
       console.log('InitialSearchScreen focused - resetting animations');
       
-      // Add small delay to let navigation transition complete
       const resetTimer = setTimeout(() => {
-        // Reset all animation values to their initial state
         screenSlideOut.setValue(0);
         contentFadeOut.setValue(1);
         scaleTransition.setValue(1);
@@ -159,11 +219,9 @@ const InitialSearchScreen: React.FC<InitialSearchScreenProps> = ({
         searchBarScale.setValue(0.98);
         turquoiseGlow.setValue(0);
         
-        // Reset component state
         setIsTransitioning(false);
         setIsFocused(false);
         
-        // Start the proper entry animations
         Animated.parallel([
           Animated.timing(fadeAnimation, {
             toValue: 1,
@@ -258,9 +316,10 @@ const InitialSearchScreen: React.FC<InitialSearchScreenProps> = ({
   // Search bar focus animation with turquoise glow
   useEffect(() => {
     Animated.parallel([
-      Animated.timing(searchBarScale, {
+      Animated.spring(searchBarScale, {
         toValue: isFocused ? 1.02 : 1,
-        duration: 200,
+        tension: 100,
+        friction: 8,
         useNativeDriver: true,
       }),
       Animated.timing(turquoiseGlow, {
@@ -276,68 +335,75 @@ const InitialSearchScreen: React.FC<InitialSearchScreenProps> = ({
     setIsTransitioning(true);
     
     Animated.parallel([
-      // Slide entire screen to the left (off-screen)
       Animated.timing(screenSlideOut, {
         toValue: -width,
         duration: 400,
         useNativeDriver: true,
       }),
-      // Fade out content
       Animated.timing(contentFadeOut, {
         toValue: 0,
         duration: 300,
         useNativeDriver: true,
       }),
-      // Slight scale down for depth effect
       Animated.timing(scaleTransition, {
         toValue: 0.95,
         duration: 400,
         useNativeDriver: true,
       }),
     ]).start(() => {
-      // Execute the navigation callback after animation completes
       callback();
     });
   };
 
   const handleStyleSelect = (styleText: string) => {
-  console.log('Hotel style selected from pills:', styleText);
-  
-  // Add the style text to the existing search query
-  if (searchQuery.trim()) {
-    // If there's already text, add the style with a separator
-    setSearchQuery(prev => `${prev.trim()} • ${styleText}`);
-  } else {
-    // If empty, just set the style
-    setSearchQuery(styleText);
-  }
-};
+    console.log('Hotel style selected from pills:', styleText);
+    
+    if (searchQuery.trim()) {
+      setSearchQuery(prev => `${prev.trim()} • ${styleText}`);
+    } else {
+      setSearchQuery(styleText);
+    }
+  };
 
   const handleAmenitiesSelect = (amenitiesText: string) => {
-  console.log('Amenities selected from pills:', amenitiesText);
-  
-  // Add the amenities text to the existing search query
-  if (searchQuery.trim()) {
-    // If there's already text, add the amenities with a separator
-    setSearchQuery(prev => `${prev.trim()} • ${amenitiesText}`);
-  } else {
-    // If empty, just set the amenities
-    setSearchQuery(amenitiesText);
-  }
-};
+    console.log('Amenities selected from pills:', amenitiesText);
+    
+    if (searchQuery.trim()) {
+      setSearchQuery(prev => `${prev.trim()} • ${amenitiesText}`);
+    } else {
+      setSearchQuery(amenitiesText);
+    }
+  };
 
   const handleGuestsSelect = (guestsText: string) => {
-  console.log('Guests selected from pills:', guestsText);
-  
-  // Add the guests text to the existing search query
-  if (searchQuery.trim()) {
-    // If there's already text, add the guests with a separator
-    setSearchQuery(prev => `${prev.trim()} • ${guestsText}`);
-  } else {
-    // If empty, just set the guests
-    setSearchQuery(guestsText);
-  }
-};
+    console.log('Guests selected from pills:', guestsText);
+    
+    if (searchQuery.trim()) {
+      setSearchQuery(prev => `${prev.trim()} • ${guestsText}`);
+    } else {
+      setSearchQuery(guestsText);
+    }
+  };
+
+  const handleBudgetSelect = (budgetText: string) => {
+    console.log('Budget selected from pills:', budgetText);
+    
+    if (searchQuery.trim()) {
+      setSearchQuery(prev => `${prev.trim()} • ${budgetText}`);
+    } else {
+      setSearchQuery(budgetText);
+    }
+  };
+
+  const handleDateSelect = (dateText: string) => {
+    console.log('Date selected from pills:', dateText);
+    
+    if (searchQuery.trim()) {
+      setSearchQuery(prev => `${prev.trim()} • ${dateText}`);
+    } else {
+      setSearchQuery(dateText);
+    }
+  };
 
   // Search handler with recent searches tracking
   const handleSearch = async () => {
@@ -345,7 +411,6 @@ const InitialSearchScreen: React.FC<InitialSearchScreenProps> = ({
       const trimmedQuery = searchQuery.trim();
       console.log('Starting search transition for:', trimmedQuery);
       
-      // Add to recent searches if user is authenticated
       if (isAuthenticated) {
         try {
           await addRecentSearch(trimmedQuery);
@@ -354,7 +419,6 @@ const InitialSearchScreen: React.FC<InitialSearchScreenProps> = ({
         }
       }
       
-      // Perform transition animation, then navigate
       performTransitionAnimation(() => {
         if (navigation) {
           navigation.navigate('Results', { 
@@ -371,7 +435,6 @@ const InitialSearchScreen: React.FC<InitialSearchScreenProps> = ({
     if (!isTransitioning) {
       console.log('Starting recent search transition for:', search);
       
-      // Move this search to the top of recent searches
       if (isAuthenticated) {
         try {
           await addRecentSearch(search);
@@ -380,7 +443,6 @@ const InitialSearchScreen: React.FC<InitialSearchScreenProps> = ({
         }
       }
       
-      // Perform transition animation, then navigate
       performTransitionAnimation(() => {
         if (navigation) {
           navigation.navigate('Results', { 
@@ -391,18 +453,6 @@ const InitialSearchScreen: React.FC<InitialSearchScreenProps> = ({
       });
     }
   };
-  const handleBudgetSelect = (budgetText: string) => {
-  console.log('Budget selected from pills:', budgetText);
-  
-  // Add the budget text to the existing search query
-  if (searchQuery.trim()) {
-    // If there's already text, add the budget with a separator
-    setSearchQuery(prev => `${prev.trim()} • ${budgetText}`);
-  } else {
-    // If empty, just set the budget
-    setSearchQuery(budgetText);
-  }
-};
 
   // Handle removing individual recent search
   const handleRemoveRecentSearch = async (search: string) => {
@@ -431,7 +481,6 @@ const InitialSearchScreen: React.FC<InitialSearchScreenProps> = ({
     if (!isTransitioning) {
       console.log('Starting search query carousel transition for:', query);
       
-      // Add to recent searches if user is authenticated
       if (isAuthenticated) {
         try {
           await addRecentSearch(query);
@@ -440,7 +489,6 @@ const InitialSearchScreen: React.FC<InitialSearchScreenProps> = ({
         }
       }
       
-      // Perform transition animation, then navigate
       performTransitionAnimation(() => {
         if (navigation) {
           navigation.navigate('Results', { 
@@ -455,44 +503,6 @@ const InitialSearchScreen: React.FC<InitialSearchScreenProps> = ({
   // Handle search guide pill press
   const handleSearchGuidePillPress = (action: string, pill: any) => {
     console.log('Search guide pill pressed:', action, pill);
-    // TODO: Handle different pill actions
-    // switch(action) {
-    //   case 'ADD_DATES':
-    //     // Open date picker modal
-    //     break;
-    //   case 'SET_BUDGET':
-    //     // Open budget selector modal
-    //     break;
-    //   case 'PICK_LOCATION':
-    //     // Open location picker modal
-    //     break;
-    //   case 'ADD_GUESTS':
-    //     // Open guest count selector
-    //     break;
-    //   case 'SELECT_AMENITIES':
-    //     // Open amenities selector
-    //     break;
-    //   case 'SELECT_STYLE':
-    //     // Open hotel style selector
-    //     break;
-    // }
-  };
-
-  // NEW: Handle date selection from SearchGuidePills
-  const handleDateSelect = (dateText: string) => {
-    console.log('Date selected from pills:', dateText);
-    
-    // Add the date text to the existing search query
-    if (searchQuery.trim()) {
-      // If there's already text, add the dates with a separator
-      setSearchQuery(prev => `${prev.trim()} • ${dateText}`);
-    } else {
-      // If empty, just set the dates
-      setSearchQuery(dateText);
-    }
-    
-    // Optional: Focus the search input to show the user the update
-    // Note: You might want to add a ref to the TextInput for this
   };
 
   const getPlaceholderText = () => {
@@ -536,346 +546,404 @@ const InitialSearchScreen: React.FC<InitialSearchScreenProps> = ({
     <SafeAreaView style={tw`flex-1 bg-white`}>
       <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" translucent />
 
-      {/* Animated container for the entire screen */}
-      <Animated.View
-        style={[
-          tw`flex-1`,
-          {
-            opacity: contentFadeOut,
-            transform: [
-              { translateX: screenSlideOut },
-              { scale: scaleTransition },
-            ],
-          },
-        ]}
+      {/* KeyboardAvoidingView for better mobile keyboard handling */}
+      <KeyboardAvoidingView
+        behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+        style={tw`flex-1`}
+        keyboardVerticalOffset={Platform.OS === 'ios' ? 0 : 20}
       >
-        {/* Main Content - ScrollView to handle overflow */}
-        <ScrollView
-          style={tw`flex-1`}
-          contentContainerStyle={tw`px-4 pb-6`}
-          showsVerticalScrollIndicator={false}
-          scrollEnabled={!isTransitioning}
-          keyboardShouldPersistTaps="handled"
+        {/* Animated container for the entire screen */}
+        <Animated.View
+          style={[
+            tw`flex-1`,
+            {
+              opacity: contentFadeOut,
+              transform: [
+                { translateX: screenSlideOut },
+                { scale: scaleTransition },
+              ],
+            },
+          ]}
         >
-          {/* Reduced top spacing for more compactness */}
-          <View style={tw`h-16`} />
-          
-          <Animated.View 
-            style={[
-              tw`items-center`,
-              {
-                opacity: fadeAnimation,
-                transform: [{ translateY: slideAnimation }],
-              }
-            ]}
+          {/* Main Content - ScrollView to handle overflow */}
+          <ScrollView
+            style={tw`flex-1`}
+            contentContainerStyle={[tw`px-4 pb-6`, { minHeight: height - 100 }]} // Ensure minimum height
+            showsVerticalScrollIndicator={false}
+            scrollEnabled={!isTransitioning}
+            keyboardShouldPersistTaps="handled"
+            bounces={true}
+            contentInsetAdjustmentBehavior="automatic"
           >
-            {/* Enhanced Header section */}
-            <View style={tw`items-center mb-4 w-full max-w-2xl`}>
-              {/* Logo/Brand area with subtle animation */}
-              <Animated.View 
-                style={[
-                  tw`mb-3`,
-                  {
-                    opacity: logoFade,
-                    transform: [{
-                      scale: logoFade.interpolate({
-                        inputRange: [0, 1],
-                        outputRange: [0.8, 1],
-                      }),
-                    }],
-                  }
-                ]}
-              >
-                <View style={tw`flex-row items-center justify-center`}>
-                </View>
-              </Animated.View>
-              
-              {/* Main headline with gradient text effect */}
-              <Animated.View
-                style={[
-                  tw`mb-2`,
-                  {
-                    opacity: fadeAnimation,
-                    transform: [{
-                      translateY: slideAnimation.interpolate({
-                        inputRange: [0, 40],
-                        outputRange: [0, -10],
-                      }),
-                    }],
-                  }
-                ]}
-              >
-                <View style={tw`items-center`}>
-                  <Text style={tw`mt--10 text-4xl font-bold text-gray-900 text-center leading-tight`}>
-                    Describe your
-                  </Text>
-                  <View style={tw`flex-row items-center justify-center`}>
-                    <Text style={[
-                      tw`text-4xl font-bold text-center leading-tight`,
-                      { 
-                        color: TURQUOISE,
-                        textShadowColor: 'rgba(29, 249, 255, 0.3)',
-                        textShadowOffset: { width: 0, height: 2 },
-                        textShadowRadius: 8,
-                      }
-                    ]}>
-                      perfect stay
-                    </Text>
-                    {/* Your logo */}
-                    <View style={tw`ml-1`}>
-                      <Image
-                        source={require('../assets/images/logo.png')}
-                        style={[
-                          tw`w-8 h-8`,
-                          {
-                            shadowColor: 'rgba(29, 249, 255, 0.3)',
-                            shadowOffset: { width: 0, height: 2 },
-                            shadowRadius: 8,
-                            shadowOpacity: 1,
-                          }
-                        ]}
-                        resizeMode="contain"
-                      />
-                    </View>
-                  </View>
-                </View>
-              </Animated.View>
-            </View>
-
-            <View style={tw`w-full items-center`}>
-              <Animated.View 
-                style={[
-                  tw`relative mb-5 w-full max-w-2xl`,
-                  {
-                    transform: [{ scale: searchBarScale }],
-                  }
-                ]}
-              >
+            <View style={tw`h-12`} />
+            
+            <Animated.View 
+              style={[
+                tw`items-center`,
+                {
+                  opacity: fadeAnimation,
+                  transform: [{ translateY: slideAnimation }],
+                }
+              ]}
+            >
+              {/* Enhanced Header section - Mobile optimized */}
+              <View style={tw`items-center mb-6 w-full px-2`}>
                 <Animated.View 
                   style={[
-                    tw`flex-row items-center bg-white rounded-3xl px-6 shadow-lg border`,
-                    { 
-                      height: 64,
-                      shadowColor: Animated.add(
-                        turquoiseGlow.interpolate({
+                    tw`mb-3`,
+                    {
+                      opacity: logoFade,
+                      transform: [{
+                        scale: logoFade.interpolate({
                           inputRange: [0, 1],
-                          outputRange: [0, 1],
+                          outputRange: [0.8, 1],
                         }),
-                        pulsingShadow.interpolate({
-                          inputRange: [0, 1],
-                          outputRange: [0, 0.5],
-                        })
-                      ).interpolate({
-                        inputRange: [0, 0.5, 1, 1.5],
-                        outputRange: ['#000', TURQUOISE, TURQUOISE, TURQUOISE],
-                      }),
-                      shadowOffset: { width: 0, height: 8 },
-                      shadowOpacity: Animated.add(
-                        turquoiseGlow.interpolate({
-                          inputRange: [0, 1],
-                          outputRange: [0, 0.3],
-                        }),
-                        pulsingShadow.interpolate({
-                          inputRange: [0, 1],
-                          outputRange: [0.1, 0.25],
-                        })
-                      ),
-                      shadowRadius: Animated.add(
-                        turquoiseGlow.interpolate({
-                          inputRange: [0, 1],
-                          outputRange: [0, 20],
-                        }),
-                        pulsingShadow.interpolate({
-                          inputRange: [0, 1],
-                          outputRange: [20, 28],
-                        })
-                      ),
-                      elevation: 10,
-                      borderColor: Animated.add(
-                        turquoiseGlow.interpolate({
-                          inputRange: [0, 1],
-                          outputRange: [0, 1],
-                        }),
-                        pulsingShadow.interpolate({
-                          inputRange: [0, 1],
-                          outputRange: [0, 0.3],
-                        })
-                      ).interpolate({
-                        inputRange: [0, 0.3, 1, 1.3],
-                        outputRange: ['#E5E7EB', 'rgba(29, 249, 255, 0.3)', TURQUOISE, TURQUOISE],
-                      }),
-                      borderWidth: Animated.add(
-                        turquoiseGlow.interpolate({
-                          inputRange: [0, 1],
-                          outputRange: [0, 0],
-                        }),
-                        pulsingShadow.interpolate({
-                          inputRange: [0, 1],
-                          outputRange: [1, 1],
-                        })
-                      ),
-                    },
+                      }],
+                    }
                   ]}
                 >
-                  {/* Search icon */}
-                  <View style={tw`w-6 h-6 mr-2 items-center justify-center`}>
-                    <Ionicons
-                      name="sparkles"
-                      size={20}
-                      color={isFocused ? TURQUOISE : "#9CA3AF"}
-                    />
+                  <View style={tw`flex-row items-center justify-center`}>
                   </View>
-                  
-                  <TextInput
-                    style={[
-                      tw`flex-1 text-lg text-gray-900 font-normal`,
-                      {
-                        lineHeight: Platform.OS === 'ios' ? 24 : 26,
-                        includeFontPadding: false,
-                        textAlignVertical: 'center',
-                        paddingVertical: 0,
-                      }
-                    ]}
-                    placeholder={getPlaceholderText()}
-                    placeholderTextColor="#9CA3AF"
-                    value={searchQuery}
-                    onChangeText={setSearchQuery}
-                    onFocus={() => setIsFocused(true)}
-                    onBlur={() => setIsFocused(false)}
-                    onSubmitEditing={handleSearch}
-                    autoCorrect={false}
-                    autoCapitalize="words"
-                    returnKeyType="search"
-                    selectionColor={TURQUOISE}
-                    editable={!isTransitioning}
-                  />
-                  
-                  {/* Clear button */}
-                  {searchQuery.length > 0 && !isTransitioning && (
-                    <TouchableOpacity
-                      onPress={() => setSearchQuery('')}
-                      activeOpacity={0.6}
-                      style={tw`ml-3 w-6 h-6 items-center justify-center`}
-                    >
-                      <Ionicons name="close-circle" size={20} color={TURQUOISE} />
-                    </TouchableOpacity>
-                  )}
                 </Animated.View>
                 
-                {/* Floating search button */}
-                {searchQuery.trim().length > 0 && (
-                  <Animated.View
-                    style={[
-                      tw`absolute -right-0 top-2`,
-                      {
-                        opacity: fadeAnimation,
-                      }
-                    ]}
-                  >
-                    <TouchableOpacity
-                      style={[
-                        tw`w-12 h-12 mr-2 rounded-2xl items-center justify-center shadow-lg`,
-                        {
-                          backgroundColor: isTransitioning ? '#9CA3AF' : TURQUOISE,
-                          shadowColor: TURQUOISE,
-                          shadowOffset: { width: 0, height: 4 },
-                          shadowOpacity: 0.4,
-                          shadowRadius: 12,
-                          elevation: 8,
+                <Animated.View
+                  style={[
+                    tw`mb-4`,
+                    {
+                      opacity: fadeAnimation,
+                      transform: [{
+                        translateY: slideAnimation.interpolate({
+                          inputRange: [0, 40],
+                          outputRange: [0, -10],
+                        }),
+                      }],
+                    }
+                  ]}
+                >
+                  <View style={tw`items-center px-2`}>
+                    {/* Mobile-responsive text sizes */}
+                    <Text style={[
+                      tw`text-4xl md:text-4xl font-bold text-gray-900 text-center leading-tight mt--4`,
+                      Platform.OS === 'android' && { fontFamily: 'sans-serif-medium' }
+                    ]}>
+                      Describe your
+                    </Text>
+                    <View style={tw`flex-row items-center justify-center`}>
+                      <Text style={[
+                        tw`text-4xl md:text-4xl font-bold text-center leading-tight`,
+                        Platform.OS === 'android' && { fontFamily: 'sans-serif-medium' },
+                        { 
+                          color: TURQUOISE,
+                          textShadowColor: 'rgba(29, 249, 255, 0.3)',
+                          textShadowOffset: { width: 0, height: 2 },
+                          textShadowRadius: 8,
                         }
-                      ]}
-                      onPress={handleSearch}
-                      activeOpacity={0.8}
-                      disabled={isTransitioning}
-                    >
-                      <Ionicons 
-                        name={isTransitioning ? "hourglass" : "arrow-forward"} 
-                        size={20} 
-                        color="white" 
-                      />
-                    </TouchableOpacity>
-                  </Animated.View>
-                )}
-              </Animated.View>
-            </View>
+                      ]}>
+                        perfect stay
+                      </Text>
+                      <View style={tw`ml-0.5`}>
+                        <Image
+                          source={require('../assets/images/logo.png')}
+                          style={[
+                            tw`w-8 h-8 md:w-8 md:h-8`,
+                            {
+                              shadowColor: 'rgba(29, 249, 255, 0.3)',
+                              shadowOffset: { width: 0, height: 2 },
+                              shadowRadius: 8,
+                              shadowOpacity: 1,
+                            }
+                          ]}
+                          resizeMode="contain"
+                        />
+                      </View>
+                    </View>
+                  </View>
+                </Animated.View>
+              </View>
 
-            {/* Suggestions section - SearchGuidePills with date selection handler */}
-            <View style={tw`w-full max-w-5xl mx-auto mb-4`}>
-              <SearchGuidePills
-  onPillPress={handleSearchGuidePillPress}
-  onDateSelect={handleDateSelect}
-  onBudgetSelect={handleBudgetSelect}
-  onGuestsSelect={handleGuestsSelect}
-  onAmenitiesSelect={handleAmenitiesSelect}
-  onStyleSelect={handleStyleSelect}  // Add this line
-/>
+              {/* Mobile-optimized Search Bar */}
+              <View style={tw`w-full items-center px-2`}>
+                <Animated.View 
+                  style={[
+                    tw`relative mb-4 w-full`,
+                    {
+                      transform: [{ scale: searchBarScale }],
+                    }
+                  ]}
+                >
+<Animated.View 
+  style={[
+    tw`bg-white rounded-2xl shadow-lg border`,
+    { 
+      shadowColor: Animated.add(
+        turquoiseGlow.interpolate({
+          inputRange: [0, 1],
+          outputRange: [0, 1],
+        }),
+        pulsingShadow.interpolate({
+          inputRange: [0, 1],
+          outputRange: [0, 0.5],
+        })
+      ).interpolate({
+        inputRange: [0, 0.5, 1, 1.5],
+        outputRange: ['#000', TURQUOISE, TURQUOISE, TURQUOISE],
+      }),
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: Animated.add(
+        turquoiseGlow.interpolate({
+          inputRange: [0, 1],
+          outputRange: [0, 0.3],
+        }),
+        pulsingShadow.interpolate({
+          inputRange: [0, 1],
+          outputRange: [0.1, 0.25],
+        })
+      ),
+      shadowRadius: Animated.add(
+        turquoiseGlow.interpolate({
+          inputRange: [0, 1],
+          outputRange: [0, 15],
+        }),
+        pulsingShadow.interpolate({
+          inputRange: [0, 1],
+          outputRange: [15, 20],
+        })
+      ),
+      elevation: 8,
+      borderColor: Animated.add(
+        turquoiseGlow.interpolate({
+          inputRange: [0, 1],
+          outputRange: [0, 1],
+        }),
+        pulsingShadow.interpolate({
+          inputRange: [0, 1],
+          outputRange: [0, 0.3],
+        })
+      ).interpolate({
+        inputRange: [0, 0.3, 1, 1.3],
+        outputRange: ['#E5E7EB', 'rgba(29, 249, 255, 0.3)', TURQUOISE, TURQUOISE],
+      }),
+      borderWidth: 1,
+    },
+  ]}
+>
+<Animated.View 
+  style={[
+    tw`bg-white rounded-2xl shadow-lg border`,
+    { 
+      // Keep shadow color consistent - no turquoise animation
+      shadowColor: '#000000', // Always black shadow
+      shadowOffset: { width: 0, height: 4 },
+      shadowOpacity: pulsingShadow.interpolate({
+        inputRange: [0, 1],
+        outputRange: [0.1, 0.15], // Subtle pulsing opacity only
+      }),
+      shadowRadius: pulsingShadow.interpolate({
+        inputRange: [0, 1],
+        outputRange: [4, 6], // Smaller shadow radius
+      }),
+      elevation: 8,
+      
+      // Only animate the border to turquoise
+      borderColor: Animated.add(
+        turquoiseGlow.interpolate({
+          inputRange: [0, 1],
+          outputRange: [0, 1],
+        }),
+        pulsingShadow.interpolate({
+          inputRange: [0, 1],
+          outputRange: [0, 0.3],
+        })
+      ).interpolate({
+        inputRange: [0, 0.3, 1, 1.3],
+        outputRange: ['#E5E7EB', 'rgba(29, 249, 255, 0.5)', TURQUOISE, TURQUOISE],
+      }),
+      borderWidth: turquoiseGlow.interpolate({
+        inputRange: [0, 1],
+        outputRange: [1, 2], // Slightly thicker border when focused
+      }),
+    },
+  ]}
+>
+  
+{/* Main input area — fixed to 2 lines, scrolls after that */}
+<View style={tw`px-4 pt-4`}>
+  <View style={tw`flex-row items-start`}>
+    {/* (optional icon spot) */}
+    <View style={tw`flex-1`}>
+      <TextInput
+        ref={textInputRef}
+        multiline
+        numberOfLines={INPUT_VISIBLE_LINES} // Android initial height
+        style={[
+          tw`text-base text-gray-900 font-normal`,
+          Platform.OS === 'android' && { fontFamily: 'sans-serif' },
+          {
+            fontSize: INPUT_FONT_SIZE,
+            lineHeight: INPUT_LINE_HEIGHT,
+            height: INPUT_HEIGHT,             // <- fixed height (2 lines)
+            textAlignVertical: 'top',         // <- show from top
+            paddingVertical: -10,
+            paddingHorizontal: 0,
+            margin: 0,
+            paddingBottom: INPUT_BOTTOM_PAD + (Platform.OS === 'android' ? ANDROID_EXTRA_PAD : 0),
+          },
+        ]}
+        placeholder={getPlaceholderText()}
+        placeholderTextColor="#9CA3AF"
+        value={searchQuery}
+        onChangeText={setSearchQuery}
+        onFocus={handleFocus}
+        onBlur={() => setIsFocused(false)}
+        onSubmitEditing={handleSearch}
+        maxLength={400}
+        autoCorrect={false}
+        autoCapitalize="words"
+        returnKeyType="search"
+        selectionColor={TURQUOISE}
+        editable={!isTransitioning}
+        blurOnSubmit
+        scrollEnabled       // <- internal scroll once content > 2 lines
+      />
+    </View>
+  </View>
+</View>
 
-            </View>
-          </Animated.View>
 
-          {/* Content sections */}
-          <View style={tw`flex-1 w-full max-w-4xl mx-auto`}>
-            {/* Recent Searches Section */}
-            {isAuthenticated && (
-              <Animated.View
-                style={{
-                  opacity: fadeAnimation,
-                  transform: [{
-                    translateY: slideAnimation.interpolate({
-                      inputRange: [0, 40],
-                      outputRange: [0, 15],
-                    }),
-                  }],
-                }}
-              >
-                <RecentSearches
-                  recentSearches={getRecentSearches()}
-                  onSearchPress={handleRecentSearchPress}
-                  onRemoveSearch={handleRemoveRecentSearch}
-                  onClearAll={handleClearAllRecentSearches}
+  
+  {/* Bottom action bar - unchanged */}
+  <View style={tw`flex-row items-center justify-end px-4 py-3 border-t border-gray-100`}>
+
+
+    
+    {/* Right side - Action buttons */}
+    <View style={tw`flex-row items-center space-x-3`}>
+      {/* Clear button */}
+      {searchQuery.length > 0 && (
+        <TouchableOpacity
+          onPress={handleClear}
+          activeOpacity={0.7}
+          style={tw`w-8 h-8 items-center justify-center`}
+          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+        >
+          <Ionicons name="close" size={18} color="#6B7280" />
+        </TouchableOpacity>
+      )}
+      
+      {/* Voice button */}
+      <TouchableOpacity
+        style={tw`w-8 h-8 items-center justify-center`}
+        activeOpacity={0.7}
+      >
+        <Ionicons name="mic" size={18} color="#6B7280" />
+      </TouchableOpacity>
+      
+      {/* Send button */}
+      <TouchableOpacity
+        style={[
+          tw`w-8 h-8 items-center justify-center rounded-full`,
+          {
+            backgroundColor: searchQuery.trim().length > 0 && !isTransitioning ? TURQUOISE : '#E5E7EB',
+          }
+        ]}
+        onPress={handleSearch}
+        activeOpacity={0.8}
+        disabled={!searchQuery.trim() || isTransitioning}
+      >
+        <Ionicons 
+          name={isTransitioning ? "hourglass" : "arrow-up"} 
+          size={16} 
+          color={searchQuery.trim().length > 0 && !isTransitioning ? "white" : "#9CA3AF"} 
+        />
+      </TouchableOpacity>
+    </View>
+  </View>
+</Animated.View>
+</Animated.View>
+                  
+                
+                </Animated.View>
+              </View>
+
+              {/* Mobile-optimized Suggestions section */}
+              <View style={tw`w-full px-2 mb-5`}>
+                <SearchGuidePills
+                  onPillPress={handleSearchGuidePillPress}
+                  onDateSelect={handleDateSelect}
+                  onBudgetSelect={handleBudgetSelect}
+                  onGuestsSelect={handleGuestsSelect}
+                  onAmenitiesSelect={handleAmenitiesSelect}
+                  onStyleSelect={handleStyleSelect}
                 />
-              </Animated.View>
-            )}
+              </View>
+            </Animated.View>
 
-            {/* Search Query Carousels Section */}
-            <View style={tw`mb-6`}>
-              {/* Section Header */}
-              <Animated.View
-                style={[
-                  tw`flex-row items-center justify-between mb-4 px-1`,
-                  {
+            {/* Content sections - Mobile optimized */}
+            <View style={tw`flex-1 w-full px-2`}>
+              {/* Recent Searches Section */}
+              {isAuthenticated && (
+                <Animated.View
+                  style={{
                     opacity: fadeAnimation,
                     transform: [{
                       translateY: slideAnimation.interpolate({
                         inputRange: [0, 40],
-                        outputRange: [0, 20],
+                        outputRange: [0, 15],
                       }),
                     }],
-                  }
-                ]}
-              >
-              </Animated.View>
+                  }}
+                >
+                  <RecentSearches
+                    recentSearches={getRecentSearches()}
+                    onSearchPress={handleRecentSearchPress}
+                    onRemoveSearch={handleRemoveRecentSearch}
+                    onClearAll={handleClearAllRecentSearches}
+                  />
+                </Animated.View>
+              )}
 
-              {searchQueryCarousels.map((carousel, index) => {
-                const isLast = index === searchQueryCarousels.length - 1;
-                return (
-                  <View
-                    key={`${carousel.searchQuery}-${index}`}
-                    style={[tw`${isLast ? '' : 'mb--5'}`]}
-                  >
-                    <SearchQueryCarousel
-                      searchQuery={carousel.searchQuery}
-                      hotels={carousel.hotels}
-                      onSearchPress={handleSearchQueryPress}
-                      index={index}
-                    />
-                  </View>
-                );
-              })}
+              {/* Search Query Carousels Section - Mobile optimized */}
+              <View style={tw`mb-2`}>
+                <Animated.View
+                  style={[
+                    tw`flex-row items-center justify-between mb-4 px-1`,
+                    {
+                      opacity: fadeAnimation,
+                      transform: [{
+                        translateY: slideAnimation.interpolate({
+                          inputRange: [0, 40],
+                          outputRange: [0, 20],
+                        }),
+                      }],
+                    }
+                  ]}
+                >
+                </Animated.View>
+
+                {searchQueryCarousels.map((carousel, index) => {
+                  const isLast = index === searchQueryCarousels.length - 1;
+                  return (
+                    <View
+                      key={`${carousel.searchQuery}-${index}`}
+                      style={[tw`${isLast ? '' : 'mb-4'}`]}
+                    >
+                      <SearchQueryCarousel
+                        searchQuery={carousel.searchQuery}
+                        hotels={carousel.hotels}
+                        onSearchPress={handleSearchQueryPress}
+                        index={index}
+                      />
+                    </View>
+                  );
+                })}
+              </View>
             </View>
-          </View>
-        </ScrollView>
-      </Animated.View>
+
+            {/* Bottom padding for mobile keyboards */}
+            <View style={tw`h-20`} />
+          </ScrollView>
+        </Animated.View>
+      </KeyboardAvoidingView>
     </SafeAreaView>
   ); 
 };

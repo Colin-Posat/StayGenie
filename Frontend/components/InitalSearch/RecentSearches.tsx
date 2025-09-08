@@ -10,7 +10,7 @@ import { Ionicons } from '@expo/vector-icons';
 import tw from 'twrnc';
 
 const TURQUOISE = '#1df9ff';
-const CARD_WIDTH = 150; // Updated to match BeautifulHotelCard width
+const CARD_WIDTH = 140; // Updated to match BeautifulHotelCard width
 
 interface RecentSearchCardProps {
   search: string;
@@ -130,7 +130,7 @@ const RecentSearches: React.FC<RecentSearchesProps> = ({
         {recentSearches.length > 0 && (
           <TouchableOpacity
             onPress={onClearAll}
-            style={tw`px-2.5 py-1 rounded-full bg-gray-100`}
+            style={tw`px-2.4 py-1 rounded-full bg-gray-100`}
             activeOpacity={0.7}
           >
             <Text style={tw`text-xs font-medium text-gray-600`}>

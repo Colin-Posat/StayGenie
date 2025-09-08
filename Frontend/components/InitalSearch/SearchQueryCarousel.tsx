@@ -23,8 +23,8 @@ const TURQUOISE_SUBTLE = '#f0feff';
 const TURQUOISE_BORDER = '#b3f7ff';
 
 // Use same dimensions as your original - this was working properly
-const cardWidth = 150; // Same as your original SearchQueryCarousel
-const cardHeight = 150; // Same as your original SearchQueryCarousel  
+const cardWidth = 140; // Same as your original SearchQueryCarousel
+const cardHeight = 140; // Same as your original SearchQueryCarousel  
 const cardMargin = 8; // Same as your original
 
 interface Hotel {
@@ -460,7 +460,7 @@ const NewSearchQueryCarousel: React.FC<SearchQueryCarouselProps> = ({
   return (
     <Animated.View
       style={[
-        tw`w-full mb-10`,
+        tw`w-full mb-4`,
         {
           opacity: fadeAnimation,
           transform: [{ translateY: slideAnimation }],
