@@ -1,4 +1,4 @@
-// FavoritesScreen.tsx - Updated with sign up buttons matching ProfileScreen
+// FavoritesScreen.tsx - Redesigned for consistent modern aesthetic
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   View,
@@ -26,11 +26,10 @@ import EmailSignInModal from '../components/SignupLogin/EmailSignInModal';
 
 const { width } = Dimensions.get('window');
 
-// Turquoise color constants
+// Consistent turquoise color theme - matching InitialSearchScreen
 const TURQUOISE = '#1df9ff';
 const TURQUOISE_LIGHT = '#5dfbff';
 const TURQUOISE_DARK = '#00d4e6';
-const BLACK = "#000000";
 
 interface FavoritedHotel {
   id: string;
@@ -91,109 +90,121 @@ interface CityFolder {
   count: number;
 }
 
-// Add interface for tracking expanded states
 interface UIState {
   expandedFolders: Set<string>;
   expandedCards: Set<string>;
   lastDataHash: string;
 }
 
-// Clean empty state with turquoise accents
+// Sleek empty state - consistent with InitialSearchScreen aesthetic
 const EmptyFavorites: React.FC<{ onExplore: () => void }> = ({ onExplore }) => {
   const fadeAnimation = useRef(new Animated.Value(0)).current;
-  const scaleAnimation = useRef(new Animated.Value(0.9)).current;
-  const slideAnimation = useRef(new Animated.Value(20)).current;
+  const floatAnimation = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     Animated.parallel([
       Animated.timing(fadeAnimation, {
         toValue: 1,
-        duration: 600,
+        duration: 800,
         useNativeDriver: true,
       }),
-      Animated.spring(scaleAnimation, {
-        toValue: 1,
-        tension: 60,
-        friction: 8,
-        useNativeDriver: true,
-      }),
-      Animated.timing(slideAnimation, {
-        toValue: 0,
-        duration: 500,
-        useNativeDriver: true,
-      }),
+      Animated.loop(
+        Animated.sequence([
+          Animated.timing(floatAnimation, {
+            toValue: 1,
+            duration: 3000,
+            useNativeDriver: true,
+          }),
+          Animated.timing(floatAnimation, {
+            toValue: 0,
+            duration: 3000,
+            useNativeDriver: true,
+          }),
+        ])
+      ),
     ]).start();
   }, []);
+
+  const translateY = floatAnimation.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0, -8],
+  });
 
   return (
     <Animated.View
       style={[
-        tw`flex-1 items-center justify-center px-8`,
-        { 
-          opacity: fadeAnimation,
-          transform: [
-            { scale: scaleAnimation },
-            { translateY: slideAnimation }
-          ],
-        }
+        tw`flex-1 items-center justify-center px-6`,
+        { opacity: fadeAnimation }
       ]}
     >
-      <View style={tw`items-center mb-10`}>
+      <Animated.View 
+        style={[
+          tw`items-center`,
+          { transform: [{ translateY }] }
+        ]}
+      >
         <View style={[
-          tw`w-24 h-24 rounded-3xl items-center justify-center mb-6 shadow-lg`,
+          tw`w-20 h-20 rounded-3xl items-center justify-center mb-6`,
           { 
-            backgroundColor: TURQUOISE + '15',
-            borderWidth: 2,
-            borderColor: TURQUOISE + '40',
+            backgroundColor: 'rgba(29, 249, 255, 0.08)',
+            borderWidth: 1,
+            borderColor: 'rgba(29, 249, 255, 0.2)',
           }
         ]}>
-          <Ionicons name="heart-outline" size={32} color={TURQUOISE_DARK} />
+          <Ionicons name="heart-outline" size={28} color={TURQUOISE} />
         </View>
 
-        <Text style={tw`text-2xl font-bold text-gray-900 text-center mb-3`}>
+        <Text style={[
+          tw`text-3xl font-bold text-center mb-3`,
+          { color: '#1F2937' }
+        ]}>
           No Favorites Yet
         </Text>
 
-        <Text style={tw`text-base text-gray-600 text-center leading-6 mb-8 max-w-sm`}>
-          Start exploring amazing hotels and save them by city for easy organization.
+        <Text style={[
+          tw`text-base text-center leading-6 mb-8 max-w-xs`,
+          { color: '#6B7280' }
+        ]}>
+          Start exploring and save hotels you love for easy access later.
         </Text>
-      </View>
 
-      <TouchableOpacity
-        style={[
-          tw`py-4 px-8 rounded-2xl flex-row items-center shadow-lg`,
-          { 
-            backgroundColor: TURQUOISE,
-            shadowColor: TURQUOISE,
-            shadowOffset: { width: 0, height: 4 },
-            shadowOpacity: 0.3,
-            shadowRadius: 12,
-            elevation: 8,
-          }
-        ]}
-        onPress={onExplore}
-        activeOpacity={0.9}
-      >
-        <Ionicons name="search" size={20} color="#FFFFFF" />
-        <Text style={tw`text-white font-semibold text-base ml-3`}>
-          Explore Hotels
-        </Text>
-      </TouchableOpacity>
+        <TouchableOpacity
+          style={[
+            tw`py-4 px-8 rounded-2xl flex-row items-center`,
+            { 
+              backgroundColor: TURQUOISE,
+              shadowColor: 'rgba(29, 249, 255, 0.3)',
+              shadowOffset: { width: 0, height: 8 },
+              shadowOpacity: 0.4,
+              shadowRadius: 16,
+              elevation: 8,
+            }
+          ]}
+          onPress={onExplore}
+          activeOpacity={0.9}
+        >
+          <Ionicons name="search" size={18} color="#FFFFFF" />
+          <Text style={tw`text-white font-semibold text-base ml-2`}>
+            Explore Hotels
+          </Text>
+        </TouchableOpacity>
+      </Animated.View>
     </Animated.View>
   );
 };
 
-// Updated city folder header component to show city with country flag and text
+// Modern city folder header
 const CityFolderHeader: React.FC<{
   cityFolder: CityFolder;
   onToggle: (displayName: string) => void;
 }> = ({ cityFolder, onToggle }) => {
   const rotateAnimation = useRef(new Animated.Value(cityFolder.isExpanded ? 1 : 0)).current;
+  const scaleAnimation = useRef(new Animated.Value(1)).current;
 
   useEffect(() => {
     Animated.timing(rotateAnimation, {
       toValue: cityFolder.isExpanded ? 1 : 0,
-      duration: 200,
+      duration: 250,
       useNativeDriver: true,
     }).start();
   }, [cityFolder.isExpanded]);
@@ -203,59 +214,91 @@ const CityFolderHeader: React.FC<{
     outputRange: ['0deg', '90deg'],
   });
 
-  return (
-    <TouchableOpacity
-      style={[
-        tw`mx-6 mb-3 p-4 rounded-2xl flex-row items-center justify-between shadow-sm`,
-        { 
-          backgroundColor: '#FFFFFF',
-          borderWidth: 1,
-          borderColor: TURQUOISE + '20',
-        }
-      ]}
-      onPress={() => onToggle(cityFolder.displayName)}
-      activeOpacity={0.8}
-    >
-      <View style={tw`flex-row items-center flex-1`}>
-        <View style={tw`mr-3`}>
-          <Text style={tw`text-xl`}>
-            {cityFolder.flagEmoji}
-          </Text>
-        </View>
-        
-        <View style={tw`flex-1`}>
-          <Text style={tw`text-lg font-bold text-gray-900`}>
-            {cityFolder.city}
-          </Text>
-          <Text style={tw`text-xs text-gray-500`}>
-            {cityFolder.country} • {cityFolder.count} hotel{cityFolder.count !== 1 ? 's' : ''}
-          </Text>
-        </View>
-      </View>
+  const handlePressIn = () => {
+    Animated.spring(scaleAnimation, {
+      toValue: 0.98,
+      useNativeDriver: true,
+    }).start();
+  };
 
-      <View style={tw`flex-row items-center`}>
-        <View style={[
-          tw`px-3 py-1.5 rounded-full mr-3`,
-          { backgroundColor: TURQUOISE + '15' }
-        ]}>
-          <Text style={[tw`text-xs font-semibold`, { color: TURQUOISE_DARK }]}>
-            {cityFolder.count}
-          </Text>
+  const handlePressOut = () => {
+    Animated.spring(scaleAnimation, {
+      toValue: 1,
+      useNativeDriver: true,
+    }).start();
+  };
+
+  return (
+    <Animated.View style={{ transform: [{ scale: scaleAnimation }] }}>
+      <TouchableOpacity
+        style={[
+          tw`mx-4 mb-3 p-4 rounded-2xl flex-row items-center justify-between`,
+          { 
+            backgroundColor: '#FFFFFF',
+            shadowColor: '#000000',
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: 0.06,
+            shadowRadius: 8,
+            elevation: 2,
+            borderWidth: 1,
+            borderColor: 'rgba(0, 0, 0, 0.04)',
+          }
+        ]}
+        onPress={() => onToggle(cityFolder.displayName)}
+        onPressIn={handlePressIn}
+        onPressOut={handlePressOut}
+        activeOpacity={1}
+      >
+        <View style={tw`flex-row items-center flex-1`}>
+          <View style={[
+            tw`w-12 h-12 rounded-xl items-center justify-center mr-3`,
+            { backgroundColor: 'rgba(29, 249, 255, 0.08)' }
+          ]}>
+            <Text style={tw`text-xl`}>
+              {cityFolder.flagEmoji}
+            </Text>
+          </View>
+          
+          <View style={tw`flex-1`}>
+            <Text style={[
+              tw`text-lg font-bold`,
+              { color: '#1F2937' }
+            ]}>
+              {cityFolder.city}
+            </Text>
+            <Text style={[
+              tw`text-sm mt-0.5`,
+              { color: '#6B7280' }
+            ]}>
+              {cityFolder.country}
+            </Text>
+          </View>
         </View>
-        
-        <Animated.View style={{ transform: [{ rotate: rotation }] }}>
-          <Ionicons 
-            name="chevron-forward" 
-            size={20} 
-            color={TURQUOISE_DARK}
-          />
-        </Animated.View>
-      </View>
-    </TouchableOpacity>
+
+        <View style={tw`flex-row items-center`}>
+          <View style={[
+            tw`px-3 py-1.5 rounded-full mr-3`,
+            { backgroundColor: 'rgba(29, 249, 255, 0.12)' }
+          ]}>
+            <Text style={[tw`text-sm font-semibold`, { color: TURQUOISE_DARK }]}>
+              {cityFolder.count}
+            </Text>
+          </View>
+          
+          <Animated.View style={{ transform: [{ rotate: rotation }] }}>
+            <Ionicons 
+              name="chevron-forward" 
+              size={20} 
+              color={TURQUOISE}
+            />
+          </Animated.View>
+        </View>
+      </TouchableOpacity>
+    </Animated.View>
   );
 };
 
-// Enhanced header with city folders controls
+// Clean modern header - consistent styling
 const FavoritesHeader: React.FC<{
   totalCount: number;
   cityCount: number;
@@ -267,18 +310,33 @@ const FavoritesHeader: React.FC<{
 }> = ({ totalCount, cityCount, onRefresh, isRefreshing, onExpandAll, onCollapseAll, hasExpandedFolders }) => {
   return (
     <View style={tw`px-6 pt-6 pb-4 bg-white`}>
-      <View style={tw`flex-row items-center justify-between mb-3`}>
-        <Text style={tw`text-2xl font-bold text-gray-900`}>
-          My Favorites
-        </Text>
+      <View style={tw`flex-row items-center justify-between`}>
+        <View>
+          <Text style={[
+            tw`text-3xl font-bold`,
+            { color: '#1F2937' },
+            Platform.OS === 'android' && { fontFamily: 'sans-serif-medium' }
+          ]}>
+            Favorites
+          </Text>
+          {totalCount > 0 && (
+            <Text style={[
+              tw`text-sm mt-1`,
+              { color: '#6B7280' }
+            ]}>
+              {totalCount} hotel{totalCount !== 1 ? 's' : ''} in {cityCount} cit{cityCount !== 1 ? 'ies' : 'y'}
+            </Text>
+          )}
+        </View>
         
         {totalCount > 0 && (
           <TouchableOpacity
             style={[
-              tw`py-2.5 px-4 rounded-xl border-2 flex-row items-center`,
+              tw`py-2.5 px-4 rounded-xl flex-row items-center`,
               { 
-                backgroundColor: TURQUOISE + '10',
-                borderColor: TURQUOISE + '30',
+                backgroundColor: 'rgba(29, 249, 255, 0.08)',
+                borderWidth: 1,
+                borderColor: 'rgba(29, 249, 255, 0.2)',
               }
             ]}
             onPress={hasExpandedFolders ? onCollapseAll : onExpandAll}
@@ -287,28 +345,19 @@ const FavoritesHeader: React.FC<{
             <Ionicons 
               name={hasExpandedFolders ? "contract-outline" : "expand-outline"} 
               size={16} 
-              color={TURQUOISE_DARK} 
+              color={TURQUOISE} 
             />
-            <Text style={[tw`ml-2 font-medium text-sm`, { color: BLACK }]}>
-              {hasExpandedFolders ? 'Collapse' : 'Expand'} All
+            <Text style={[tw`ml-2 font-medium text-sm`, { color: TURQUOISE_DARK }]}>
+              {hasExpandedFolders ? 'Collapse' : 'Expand'}
             </Text>
           </TouchableOpacity>
         )}
-      </View>
-      
-      <View style={tw`flex-row items-center justify-between`}>
-        <Text style={tw`text-base text-gray-600`}>
-          {totalCount > 0
-            ? `${totalCount} hotel${totalCount > 1 ? 's' : ''} in ${cityCount} cit${cityCount > 1 ? 'ies' : 'y'}`
-            : "Save hotels organized by city"
-          }
-        </Text>
       </View>
     </View>
   );
 };
 
-// Loading and Error states
+// Enhanced loading state
 const LoadingState: React.FC<{ error?: string | null }> = ({ error }) => {
   const pulseAnimation = useRef(new Animated.Value(0)).current;
   const rotateAnimation = useRef(new Animated.Value(0)).current;
@@ -318,12 +367,12 @@ const LoadingState: React.FC<{ error?: string | null }> = ({ error }) => {
       Animated.sequence([
         Animated.timing(pulseAnimation, {
           toValue: 1,
-          duration: 1200,
+          duration: 1500,
           useNativeDriver: true,
         }),
         Animated.timing(pulseAnimation, {
           toValue: 0,
-          duration: 1200,
+          duration: 1500,
           useNativeDriver: true,
         }),
       ])
@@ -332,7 +381,7 @@ const LoadingState: React.FC<{ error?: string | null }> = ({ error }) => {
     const rotate = Animated.loop(
       Animated.timing(rotateAnimation, {
         toValue: 1,
-        duration: 2000,
+        duration: 3000,
         useNativeDriver: true,
       })
     );
@@ -348,7 +397,7 @@ const LoadingState: React.FC<{ error?: string | null }> = ({ error }) => {
 
   const opacity = pulseAnimation.interpolate({
     inputRange: [0, 1],
-    outputRange: [0.4, 1],
+    outputRange: [0.3, 1],
   });
 
   const rotation = rotateAnimation.interpolate({
@@ -360,24 +409,38 @@ const LoadingState: React.FC<{ error?: string | null }> = ({ error }) => {
     <View style={tw`flex-1 items-center justify-center px-6`}>
       <Animated.View 
         style={[
-          tw`w-16 h-16 rounded-3xl items-center justify-center mb-4 border-2`,
+          tw`w-16 h-16 rounded-3xl items-center justify-center mb-6`,
           { 
             opacity,
             transform: [{ rotate: rotation }],
-            backgroundColor: TURQUOISE + '15',
-            borderColor: TURQUOISE + '40',
+            backgroundColor: 'rgba(29, 249, 255, 0.08)',
+            borderWidth: 2,
+            borderColor: 'rgba(29, 249, 255, 0.2)',
           }
         ]}
       >
-        <Ionicons name="heart" size={24} color={TURQUOISE_DARK} />
+        <Ionicons name="heart" size={24} color={TURQUOISE} />
       </Animated.View>
       
-      <Text style={tw`text-gray-800 text-base mb-2 font-medium`}>
-        Loading your favorites...
+      <Text style={[
+        tw`text-lg mb-2 font-semibold`,
+        { color: '#1F2937' }
+      ]}>
+        Loading favorites
+      </Text>
+      
+      <Text style={[
+        tw`text-base text-center`,
+        { color: '#6B7280' }
+      ]}>
+        Organizing your saved hotels...
       </Text>
       
       {error && (
-        <Text style={tw`text-red-500 text-sm text-center px-4 leading-5 mt-2`}>
+        <Text style={[
+          tw`text-sm text-center px-4 leading-5 mt-4`,
+          { color: '#EF4444' }
+        ]}>
           {error}
         </Text>
       )}
@@ -385,29 +448,44 @@ const LoadingState: React.FC<{ error?: string | null }> = ({ error }) => {
   );
 };
 
+// Clean error state
 const ErrorState: React.FC<{ error: string; onRetry: () => void }> = ({ error, onRetry }) => (
   <View style={tw`flex-1 items-center justify-center px-8`}>
-    <View style={tw`w-16 h-16 bg-red-50 rounded-3xl items-center justify-center mb-4 border-2 border-red-100`}>
+    <View style={[
+      tw`w-16 h-16 rounded-3xl items-center justify-center mb-6`,
+      { 
+        backgroundColor: 'rgba(239, 68, 68, 0.08)',
+        borderWidth: 2,
+        borderColor: 'rgba(239, 68, 68, 0.2)',
+      }
+    ]}>
       <Ionicons name="alert-circle" size={24} color="#EF4444" />
     </View>
     
-    <Text style={tw`text-red-600 text-lg mb-2 text-center font-semibold`}>
-      Couldn't Load Favorites
+    <Text style={[
+      tw`text-xl mb-2 text-center font-semibold`,
+      { color: '#EF4444' }
+    ]}>
+      Something went wrong
     </Text>
     
-    <Text style={tw`text-gray-600 text-base text-center mb-6 leading-6 max-w-sm`}>
+    <Text style={[
+      tw`text-base text-center mb-8 leading-6 max-w-sm`,
+      { color: '#6B7280' }
+    ]}>
       {error}
     </Text>
     
     <TouchableOpacity
       style={[
-        tw`py-3 px-6 rounded-xl shadow-lg`,
+        tw`py-4 px-8 rounded-2xl`,
         { 
           backgroundColor: TURQUOISE,
-          shadowColor: TURQUOISE,
-          shadowOffset: { width: 0, height: 4 },
-          shadowOpacity: 0.3,
-          shadowRadius: 8,
+          shadowColor: 'rgba(29, 249, 255, 0.3)',
+          shadowOffset: { width: 0, height: 8 },
+          shadowOpacity: 0.4,
+          shadowRadius: 16,
+          elevation: 8,
         }
       ]}
       onPress={onRetry}
@@ -420,7 +498,7 @@ const ErrorState: React.FC<{ error: string; onRetry: () => void }> = ({ error, o
   </View>
 );
 
-// Main Favorites Screen Component - Updated with sign up functionality
+// Main Favorites Screen Component
 const FavoritesScreen = () => {
   const [cityFolders, setCityFolders] = useState<CityFolder[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -430,14 +508,12 @@ const FavoritesScreen = () => {
   const [showEmailSignUpModal, setShowEmailSignUpModal] = useState(false);
   const [showEmailSignInModal, setShowEmailSignInModal] = useState(false);
   
-  // Track UI state separately from data
   const [uiState, setUIState] = useState<UIState>({
     expandedFolders: new Set(),
     expandedCards: new Set(),
     lastDataHash: ''
   });
   
-  // Track if we need to refresh data vs just preserve UI
   const [needsDataRefresh, setNeedsDataRefresh] = useState(true);
   const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
   const lastFocusTime = useRef<number>(0);
@@ -451,13 +527,11 @@ const FavoritesScreen = () => {
     signInWithGoogle
   } = useAuth();
 
-  // Helper function to create a hash of the data to detect changes
   const createDataHash = useCallback((hotels: FavoritedHotel[]): string => {
     const hotelIds = hotels.map(h => h.id).sort().join(',');
     return `${hotels.length}-${hotelIds}`;
   }, []);
 
-  // Group hotels by city, creating folders with country context and flags
   const createCityFolders = useCallback((hotels: FavoritedHotel[], preserveExpansion = false): CityFolder[] => {
     const cityMap = new Map<string, { hotels: FavoritedHotel[]; country: string; countryCode: string }>();
     
@@ -499,10 +573,8 @@ const FavoritesScreen = () => {
     return folders;
   }, [uiState.expandedFolders]);
 
-  // Optimized load function that preserves UI state
   const loadFavorites = useCallback(async (forceRefresh = false) => {
     if (!isAuthenticated) {
-      console.log('User not authenticated, clearing favorites data');
       setCityFolders([]);
       setTotalCount(0);
       setIsLoading(false);
@@ -510,24 +582,19 @@ const FavoritesScreen = () => {
       return;
     }
 
-    // Skip loading if we don't need to refresh and it's not forced (but not on first load)
     if (!needsDataRefresh && !forceRefresh && hasLoadedOnce) {
-      console.log('⚡ Skipping unnecessary data refresh');
       setIsLoading(false);
       return;
     }
 
     try {
-      console.log('📱 Loading favorites from Firebase...');
       setIsLoading(true);
       setError(null);
       
       const favoriteHotels = await getFavoriteHotelsData();
       const newDataHash = createDataHash(favoriteHotels);
       
-      // Check if data actually changed (but not on first load)
       if (newDataHash === uiState.lastDataHash && !forceRefresh && hasLoadedOnce) {
-        console.log('⚡ Data unchanged, preserving UI state');
         setIsLoading(false);
         setNeedsDataRefresh(false);
         return;
@@ -536,21 +603,17 @@ const FavoritesScreen = () => {
       const shouldPreserveExpansion = newDataHash !== uiState.lastDataHash && uiState.lastDataHash !== '' && hasLoadedOnce;
       const newFolders = createCityFolders(favoriteHotels, shouldPreserveExpansion);
       
-      console.log(`📱 Loaded ${favoriteHotels.length} favorites organized into ${newFolders.length} city folders`);
-      
       setCityFolders(newFolders);
       setTotalCount(favoriteHotels.length);
       setNeedsDataRefresh(false);
-      setHasLoadedOnce(true); // Mark that we've loaded at least once
+      setHasLoadedOnce(true);
       
-      // Update data hash
       setUIState(prev => ({
         ...prev,
         lastDataHash: newDataHash
       }));
       
     } catch (error) {
-      console.error('❌ Error loading favorites:', error);
       setError(error instanceof Error ? error.message : 'Failed to load favorites');
       setCityFolders([]);
       setTotalCount(0);
@@ -559,13 +622,11 @@ const FavoritesScreen = () => {
     }
   }, [isAuthenticated, getFavoriteHotelsData, createDataHash, needsDataRefresh, uiState.lastDataHash, createCityFolders, hasLoadedOnce]);
 
-  // Optimized refresh handler
   const handleRefresh = useCallback(async () => {
     if (!isAuthenticated) return;
     
-    console.log('🔄 Manual refresh triggered');
     setIsRefreshing(true);
-    setNeedsDataRefresh(true); // Force refresh on manual pull
+    setNeedsDataRefresh(true);
     await loadFavorites(true);
     setIsRefreshing(false);
     
@@ -575,7 +636,6 @@ const FavoritesScreen = () => {
     }
   }, [loadFavorites, isAuthenticated]);
 
-  // Optimized toggle function that preserves state
   const toggleCityFolder = useCallback((displayName: string) => {
     if (Platform.OS === 'ios') {
       LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
@@ -594,7 +654,6 @@ const FavoritesScreen = () => {
       };
     });
     
-    // Update the folders state to reflect the UI change immediately
     setCityFolders(prev => 
       prev.map(folder => 
         folder.displayName === displayName 
@@ -602,11 +661,8 @@ const FavoritesScreen = () => {
           : folder
       )
     );
-    
-    console.log(`📁 Toggled ${displayName} folder`);
   }, []);
 
-  // Optimized expand/collapse functions
   const expandAllFolders = useCallback(() => {
     if (Platform.OS === 'ios') {
       LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
@@ -619,7 +675,6 @@ const FavoritesScreen = () => {
     }));
     
     setCityFolders(prev => prev.map(folder => ({ ...folder, isExpanded: true })));
-    console.log('📁 Expanded all folders');
   }, [cityFolders]);
 
   const collapseAllFolders = useCallback(() => {
@@ -633,60 +688,44 @@ const FavoritesScreen = () => {
     }));
     
     setCityFolders(prev => prev.map(folder => ({ ...folder, isExpanded: false })));
-    console.log('📁 Collapsed all folders');
   }, []);
 
-  // Optimized remove function that doesn't trigger notifications (since it's from this screen)
   const handleRemoveFavorite = useCallback(async (hotel: FavoritedHotel) => {
     if (!isAuthenticated) return;
     
     try {
-      console.log(`🗑️ Removing ${hotel.name}...`);
-      
-      // Optimistically update UI first for immediate feedback
       setCityFolders(prev => {
         const newFolders = prev.map(folder => ({
           ...folder,
           hotels: folder.hotels.filter(h => h.id !== hotel.id),
           count: folder.hotels.filter(h => h.id !== hotel.id).length
-        })).filter(folder => folder.count > 0); // Remove empty folders
+        })).filter(folder => folder.count > 0);
         
         return newFolders;
       });
       
       setTotalCount(prev => prev - 1);
       
-      // Remove from backend without triggering our own listener
       await removeFavoriteHotel(hotel.id);
-      
-      console.log(`✅ Removed ${hotel.name}`);
     } catch (error) {
-      console.error('❌ Error removing favorite:', error);
       Alert.alert('Error', 'Failed to remove hotel from favorites');
-      
-      // Revert optimistic update on error
       setNeedsDataRefresh(true);
       await loadFavorites(true);
     }
   }, [removeFavoriteHotel, isAuthenticated, loadFavorites]);
 
   const handleHotelPress = useCallback((hotel: FavoritedHotel) => {
-    console.log('🏨 Hotel pressed:', hotel.name);
     // Navigation logic here
   }, []);
 
   const handleExplore = useCallback(() => {
-    console.log('🔍 Explore hotels pressed');
     // Navigation logic here
   }, []);
 
-  // Sign up handlers matching ProfileScreen
   const handleGoogleSignUp = useCallback(async () => {
     try {
       await signInWithGoogle();
-      console.log('✅ Google sign up successful');
     } catch (error: any) {
-      console.log('❌ Google sign up error:', error.message);
       Alert.alert('Sign Up Failed', 'Failed to sign up with Google. Please try again.');
     }
   }, [signInWithGoogle]);
@@ -707,46 +746,35 @@ const FavoritesScreen = () => {
 
   const hasExpandedFolders = cityFolders.some(folder => folder.isExpanded);
 
-  // Listen for favorites changes from other parts of the app (optimized)
   useEffect(() => {
     if (!isAuthenticated) return;
     
     const unsubscribe = onFavoritesChange(() => {
-      console.log('🔔 Favorites changed notification received');
       setNeedsDataRefresh(true);
-      // Don't auto-refresh here, let the focus effect handle it
     });
     
     return unsubscribe;
   }, [isAuthenticated, onFavoritesChange]);
 
-  // Smart focus effect that only refreshes when needed
   useFocusEffect(
     useCallback(() => {
       if (!authLoading) {
         const currentTime = Date.now();
         const timeSinceLastFocus = currentTime - lastFocusTime.current;
         
-        console.log('📱 Screen focused');
-        
-        // On first load or if it's been more than 5 seconds since last focus
-        // or if we specifically need a data refresh
         if (!hasLoadedOnce || timeSinceLastFocus > 5000 || needsDataRefresh) {
-          console.log('📱 Triggering data refresh on focus');
           const timer = setTimeout(() => {
             loadFavorites();
-          }, hasLoadedOnce ? 100 : 0); // No delay on first load
+          }, hasLoadedOnce ? 100 : 0);
           lastFocusTime.current = currentTime;
           return () => clearTimeout(timer);
         } else {
-          console.log('⚡ Skipping refresh - too recent');
           setIsLoading(false);
         }
       }
     }, [loadFavorites, authLoading, needsDataRefresh, hasLoadedOnce])
   );
 
-  // Show loading while auth is still loading
   if (authLoading) {
     return (
       <SafeAreaView style={tw`flex-1 bg-white`}>
@@ -756,7 +784,6 @@ const FavoritesScreen = () => {
     );
   }
 
-  // Show message for unauthenticated users with sign up options
   if (!isAuthenticated) {
     return (
       <SafeAreaView style={tw`flex-1 bg-white`}>
@@ -772,81 +799,117 @@ const FavoritesScreen = () => {
           hasExpandedFolders={false}
         />
 
-        <View style={tw`flex-1 items-center justify-center px-8`}>
-          <View style={tw`items-center mb-10`}>
+        <View style={tw`flex-1 items-center justify-center px-6`}>
+          <View style={tw`items-center`}>
             <View style={[
-              tw`w-24 h-24 rounded-3xl items-center justify-center mb-6 shadow-lg`,
+              tw`w-20 h-20 rounded-3xl items-center justify-center mb-6`,
               { 
-                backgroundColor: TURQUOISE + '15',
-                borderWidth: 2,
-                borderColor: TURQUOISE + '40',
+                backgroundColor: 'rgba(29, 249, 255, 0.08)',
+                borderWidth: 1,
+                borderColor: 'rgba(29, 249, 255, 0.2)',
               }
             ]}>
-              <Ionicons name="person-outline" size={32} color={TURQUOISE_DARK} />
+              <Ionicons name="person-outline" size={28} color={TURQUOISE} />
             </View>
 
-            <Text style={tw`text-2xl font-bold text-gray-900 text-center mb-3`}>
-              Sign Up Required
+            <Text style={[
+              tw`text-2xl font-bold text-center mb-3`,
+              { color: '#1F2937' },
+              Platform.OS === 'android' && { fontFamily: 'sans-serif-medium' }
+            ]}>
+              Sign in to save favorites
             </Text>
 
-            <Text style={tw`text-base text-gray-600 text-center leading-6 mb-8 max-w-sm`}>
+            <Text style={[
+              tw`text-base text-center leading-6 mb-8 max-w-sm`,
+              { color: '#6B7280' }
+            ]}>
               Create an account to save and organize your favorite hotels by city.
             </Text>
           </View>
 
-          {/* Sign Up with Email Button */}
-          <TouchableOpacity
-            style={[
-              tw`p-4 rounded-xl mb-3 flex-row items-center justify-center w-full`,
-              { backgroundColor: TURQUOISE }
-            ]}
-            onPress={() => setShowEmailSignUpModal(true)}
-            activeOpacity={0.8}
-          >
-            <Ionicons name="mail-outline" size={20} color="white" />
-            <Text style={tw`text-white font-semibold text-base ml-3`}>
-              Sign Up with Email
-            </Text>
-          </TouchableOpacity>
 
-          {/* Sign Up with Google Button */}
-          <TouchableOpacity
-            style={[
-              tw`p-4 rounded-xl flex-row items-center justify-center border w-full mb-3`,
-              { 
-                backgroundColor: '#FFFFFF',
-                borderColor: '#E5E7EB',
-              }
-            ]}
-            onPress={handleGoogleSignUp}
-            activeOpacity={0.8}
-          >
-            <Ionicons name="logo-google" size={20} color="#4285F4" />
-            <Text style={tw`text-gray-900 font-semibold text-base ml-3`}>
-              Sign Up with Google
-            </Text>
-          </TouchableOpacity>
+<TouchableOpacity
+  style={[
+    tw`px-4 py-4 rounded-xl flex-row items-center justify-center w-full max-w-sm mb-3 bg-white border border-gray-200`,
+    {
+      shadowColor: '#000',
+      shadowOffset: {
+        width: 0,
+        height: 1,
+      },
+      shadowOpacity: 0.1,
+      shadowRadius: 2,
+      elevation: 3,
+    }
+  ]}
+  onPress={() => setShowEmailSignUpModal(true)}
+  activeOpacity={0.8}
+>
+  <View style={[
+    tw`w-6 h-6 rounded-full items-center justify-center mr-3`,
+    { backgroundColor: 'rgba(29, 249, 255, 0.15)' }
+  ]}>
+    <Ionicons
+      name="mail-outline"
+      size={14}
+      color={TURQUOISE_DARK}
+    />
+  </View>
+  <Text style={tw`text-base font-medium text-gray-800`}>
+    Sign Up with Email
+  </Text>
+</TouchableOpacity>
 
-          {/* Already have account link */}
+<TouchableOpacity
+  style={[
+    tw`px-4 py-4 rounded-xl flex-row items-center justify-center w-full max-w-sm mb-4 bg-white border border-gray-200`,
+    {
+      shadowColor: '#000',
+      shadowOffset: {
+        width: 0,
+        height: 1,
+      },
+      shadowOpacity: 0.1,
+      shadowRadius: 2,
+      elevation: 3,
+    }
+  ]}
+  onPress={handleGoogleSignUp}
+  activeOpacity={0.8}
+>
+  <View style={[
+    tw`w-6 h-6 rounded-full items-center justify-center mr-3`,
+    { backgroundColor: 'rgba(66, 133, 244, 0.15)' }
+  ]}>
+    <Ionicons
+      name="logo-google"
+      size={14}
+      color="#4285F4"
+    />
+  </View>
+  <Text style={tw`text-base font-medium text-gray-800`}>
+    Sign Up with Google
+  </Text>
+</TouchableOpacity>
+
           <TouchableOpacity
-            style={tw`mt-3 items-center`}
+            style={tw`mt-2 items-center`}
             onPress={() => setShowEmailSignInModal(true)}
             activeOpacity={0.8}
           >
-            <Text style={[tw`text-sm`, { color: TURQUOISE_DARK }]}>
+            <Text style={[tw`text-sm font-medium`, { color: TURQUOISE_DARK }]}>
               Already have an account? Sign In
             </Text>
           </TouchableOpacity>
         </View>
 
-        {/* Email Sign Up Modal */}
         <EmailSignUpModal
           visible={showEmailSignUpModal}
           onClose={() => setShowEmailSignUpModal(false)}
           onSwitchToSignIn={handleSwitchToSignIn}
         />
 
-        {/* Email Sign In Modal */}
         <EmailSignInModal
           visible={showEmailSignInModal}
           onClose={() => setShowEmailSignInModal(false)}
@@ -881,60 +944,67 @@ const FavoritesScreen = () => {
         <EmptyFavorites onExplore={handleExplore} />
       ) : (
         <ScrollView
-          style={tw`flex-1 bg-gray-50`}
-          contentContainerStyle={tw`py-4`}
+          style={tw`flex-1`}
+          contentContainerStyle={tw`pb-6`}
           showsVerticalScrollIndicator={false}
           refreshControl={
             <RefreshControl
               refreshing={isRefreshing}
               onRefresh={handleRefresh}
-              tintColor={TURQUOISE_DARK}
-              colors={[TURQUOISE_DARK]}
-              progressBackgroundColor="#F9FAFB"
+              tintColor={TURQUOISE}
+              colors={[TURQUOISE]}
+              progressBackgroundColor="#FFFFFF"
             />
           }
         >
-          {cityFolders.map((cityFolder) => (
-            <View key={cityFolder.displayName} style={tw`mb-4`}>
-              <CityFolderHeader
-                cityFolder={cityFolder}
-                onToggle={toggleCityFolder}
-              />
+          <View style={tw`pt-2`}>
+            {cityFolders.map((cityFolder, folderIndex) => (
+              <View key={cityFolder.displayName} style={tw`mb-2`}>
+                <CityFolderHeader
+                  cityFolder={cityFolder}
+                  onToggle={toggleCityFolder}
+                />
 
-              {cityFolder.isExpanded && (
-                <View style={tw`px-6`}>
-                  {cityFolder.hotels.map((hotel, index) => {
-                    const safeHotel = {
-                      ...hotel,
-                      addedAt: hotel.addedAt ?? '',
-                    };
-                    return (
-                      <FavoriteHotelCard
-                        key={`${hotel.id}-${cityFolder.displayName}-${hotel.addedAt ?? ''}`}
-                        hotel={safeHotel}
-                        onPress={handleHotelPress}
-                        onRemove={handleRemoveFavorite}
-                        index={index}
-                      />
-                    );
-                  })}
-                </View>
-              )}
-            </View>
-          ))}
+                {cityFolder.isExpanded && (
+                  <View style={tw`px-4 mb-4`}>
+                    {cityFolder.hotels.map((hotel, index) => {
+                      const safeHotel = {
+                        ...hotel,
+                        addedAt: hotel.addedAt ?? '',
+                      };
+                      return (
+                        <View 
+                          key={`${hotel.id}-${cityFolder.displayName}-${hotel.addedAt ?? ''}`}
+                          style={[
+                            tw`mb-3`,
+                            index === cityFolder.hotels.length - 1 && tw`mb-0`
+                          ]}
+                        >
+                          <FavoriteHotelCard
+                            hotel={safeHotel}
+                            onPress={handleHotelPress}
+                            onRemove={handleRemoveFavorite}
+                            index={index}
+                          />
+                        </View>
+                      );
+                    })}
+                  </View>
+                )}
+              </View>
+            ))}
+          </View>
 
-          <View style={tw`h-6`} />
+          <View style={tw`h-8`} />
         </ScrollView>
       )}
 
-      {/* Email Sign Up Modal */}
       <EmailSignUpModal
         visible={showEmailSignUpModal}
         onClose={() => setShowEmailSignUpModal(false)}
         onSwitchToSignIn={handleSwitchToSignIn}
       />
 
-      {/* Email Sign In Modal */}
       <EmailSignInModal
         visible={showEmailSignInModal}
         onClose={() => setShowEmailSignInModal(false)}

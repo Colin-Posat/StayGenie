@@ -313,6 +313,7 @@ const BASE_URL = 'https://staygenie-wwpa.onrender.com';
 
 import { Dimensions } from 'react-native';
 
+
 const HomeScreen = () => {
   const { addRecentSearch } = useAuth();
   const screenSlideOut = useRef(new Animated.Value(0)).current;

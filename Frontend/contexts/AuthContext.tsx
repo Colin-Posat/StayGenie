@@ -5,7 +5,7 @@ import {
   User as FirebaseUser,
   createUserWithEmailAndPassword,
   signInWithEmailAndPassword,
-  signOut,
+  signOut as firebaseSignOut,
   onAuthStateChanged,
   sendPasswordResetEmail,
   updateProfile,
@@ -452,17 +452,16 @@ const loadUserData = async (firebaseUser: FirebaseUser) => {
   };
 
   // Sign out
-  const signOutUser = async (): Promise<void> => {
-    try {
-      await signOut(auth);
-      setUser(null);
-      setFirebaseUser(null);
-    } catch (error) {
-      console.error('Sign out error:', error);
-      throw new Error('Failed to sign out');
-    }
-  };
-
+const signOutUser = async (): Promise<void> => {
+  try {
+    await firebaseSignOut(auth);  // ← Use the renamed import
+    setUser(null);
+    setFirebaseUser(null);
+  } catch (error) {
+    console.error('Sign out error:', error);
+    throw new Error('Failed to sign out');
+  }
+};
   // Send password reset email
   const sendPasswordReset = async (email: string): Promise<void> => {
     try {

@@ -1,4 +1,4 @@
-// FavoriteHotelCard.tsx - Clean turquoise design with enhanced UX + Action Buttons
+// FavoriteHotelCard.tsx - Updated with single AI Insights dropdown
 import React, { useRef, useEffect, useState } from 'react';
 import {
   View,
@@ -6,15 +6,16 @@ import {
   TouchableOpacity,
   Image,
   Animated,
-  ScrollView,
   Easing,
   Alert,
   Linking,
+  Modal
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import tw from 'twrnc';
 import { FavoritedHotel } from '../../utils/FavoritesCache';
 import { formatLocationDisplay, getCountryName } from '../../utils/countryMapping';
+import HotelChatOverlay from '../../components/HomeScreenTop/HotelChatOverlay';
 
 // Turquoise color constants
 const TURQUOISE = '#1df9ff';
@@ -29,7 +30,6 @@ interface FavoriteHotelCardProps {
   onPress: (hotel: FavoritedHotel) => void;
   onRemove: (hotel: FavoritedHotel) => void;
   index: number;
-  // Optional props for deep linking
   checkInDate?: Date;
   checkOutDate?: Date;
   adults?: number;
@@ -122,13 +122,12 @@ const generateGoogleMapsLink = (hotel: FavoritedHotel, checkin?: Date, checkout?
   return url;
 };
 
-// Clean confirmation modal with turquoise accents
+// Simple confirmation modal
 interface ConfirmationModalProps {
   isVisible: boolean;
   hotelName: string;
   onConfirm: () => void;
   onCancel: () => void;
-  cardLayout?: { width: number; height: number; x: number; y: number };
 }
 
 const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
@@ -136,11 +135,9 @@ const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
   hotelName,
   onConfirm,
   onCancel,
-  cardLayout
 }) => {
   const fadeAnimation = useRef(new Animated.Value(0)).current;
   const scaleAnimation = useRef(new Animated.Value(0.8)).current;
-  const [textHeight, setTextHeight] = useState(0);
 
   useEffect(() => {
     if (isVisible) {
@@ -175,29 +172,12 @@ const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
 
   if (!isVisible) return null;
 
-  // Calculate modal dimensions based on card size - match exact card dimensions
-  const modalWidth = cardLayout ? cardLayout.width : 300;
-  const baseModalHeight = cardLayout ? cardLayout.height : 140;
-  
-  // Estimate if text will wrap (rough calculation based on character count and modal width)
-  const textContent = `Remove "${hotelName}" from your favorites?`;
-  const estimatedTextWidth = textContent.length * 8; // rough estimate: 8px per character
-  const availableTextWidth = modalWidth - 48; // subtract padding
-  const willTextWrap = estimatedTextWidth > availableTextWidth;
-  
-  // Add extra height if text will wrap to second line
-  const modalHeight = willTextWrap ? baseModalHeight + 24 : baseModalHeight;
-
   return (
-    <View
-      style={tw`absolute inset-0 items-center justify-center z-50`}
-    >
+    <View style={tw`rounded-2xl absolute inset-0 items-center justify-center z-50 bg-black/50`}>
       <Animated.View
         style={[
-          tw`bg-white rounded-xl p-6 border border-gray-200 shadow-xl`,
+          tw`bg-white rounded-2xl p-6 mx-6 shadow-xl`,
           { 
-            width: modalWidth,
-            height: modalHeight,
             transform: [{ scale: scaleAnimation }],
             opacity: fadeAnimation,
           }
@@ -206,15 +186,13 @@ const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
         <Text style={tw`text-lg font-semibold text-black mb-2`}>
           Remove from Favorites
         </Text>
-        <View style={tw`mb-6`}>
-          <Text style={tw`text-gray-600 text-sm leading-5`}>
-            Remove "{hotelName}" from your favorites?
-          </Text>
-        </View>
+        <Text style={tw`text-gray-600 text-sm mb-6`}>
+          Remove "{hotelName}" from your favorites?
+        </Text>
         
         <View style={tw`flex-row justify-end gap-3`}>
           <TouchableOpacity
-            style={tw`px-4 py-2 rounded-lg bg-gray-100`}
+            style={tw`px-6 py-3 rounded-xl bg-gray-100`}
             onPress={onCancel}
             activeOpacity={0.7}
           >
@@ -222,7 +200,7 @@ const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
           </TouchableOpacity>
           
           <TouchableOpacity
-            style={tw`px-4 py-2 rounded-lg bg-red-500`}
+            style={tw`px-6 py-3 rounded-xl bg-red-500`}
             onPress={onConfirm}
             activeOpacity={0.7}
           >
@@ -234,28 +212,24 @@ const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
   );
 };
 
-// Clean accordion section with turquoise accents
-interface AccordionSectionProps {
-  title: string;
-  icon: string;
-  children: React.ReactNode;
+const getRatingColor = (rating: number): string => {
+  if (rating >= 8.0) return TURQUOISE;
+  if (rating >= 7.0) return TURQUOISE + 'E6';
+  if (rating >= 6.0) return TURQUOISE + 'CC';
+  if (rating >= 5.0) return TURQUOISE + 'B3';
+  if (rating >= 4.0) return TURQUOISE + '99';
+  return TURQUOISE + '80';
+};
+
+// AI Insights Dropdown Component
+interface AIInsightsDropdownProps {
+  hotel: FavoritedHotel;
   isExpanded: boolean;
   onToggle: () => void;
 }
 
-const getRatingColor = (rating: number): string => {
-  if (rating >= 8.0) return TURQUOISE;
-  if (rating >= 7.0) return TURQUOISE + 'E6'; // 90% opacity
-  if (rating >= 6.0) return TURQUOISE + 'CC'; // 80% opacity
-  if (rating >= 5.0) return TURQUOISE + 'B3'; // 70% opacity
-  if (rating >= 4.0) return TURQUOISE + '99'; // 60% opacity
-  return TURQUOISE + '80'; // 50% opacity
-};
-
-const AccordionSection: React.FC<AccordionSectionProps> = ({
-  title,
-  icon,
-  children,
+const AIInsightsDropdown: React.FC<AIInsightsDropdownProps> = ({
+  hotel,
   isExpanded,
   onToggle
 }) => {
@@ -284,91 +258,14 @@ const AccordionSection: React.FC<AccordionSectionProps> = ({
     outputRange: ['0deg', '180deg'],
   });
 
-  return (
-    <View style={tw`border-b border-gray-50`}>
-      <TouchableOpacity
-        style={tw`flex-row items-center justify-between px-4 py-3`}
-        onPress={onToggle}
-        activeOpacity={0.7}
-      >
-        <View style={tw`flex-row items-center`}>
-          <View style={[tw`w-6 h-6 rounded-full items-center justify-center mr-3`, { backgroundColor: TURQUOISE + '20' }]}>
-            <Ionicons name={icon as any} size={12} color={TURQUOISE_DARK} />
-          </View>
-          <Text style={tw`text-gray-900 font-medium text-sm`}>
-            {title}
-          </Text>
-        </View>
-        <Animated.View style={{ transform: [{ rotate: rotateInterpolate }] }}>
-          <Ionicons name="chevron-down" size={16} color="#9CA3AF" />
-        </Animated.View>
-      </TouchableOpacity>
-      
-      <Animated.View 
-        style={[
-          tw`overflow-hidden`,
-          { 
-            maxHeight: animatedHeight.interpolate({
-              inputRange: [0, 1],
-              outputRange: [0, 400],
-            }),
-            opacity: animatedHeight,
-          }
-        ]}
-      >
-        <View style={tw`px-4 pb-3`}>
-          {children}
-        </View>
-      </Animated.View>
-    </View>
-  );
-};
-
-// Clean expandable content with turquoise highlights
-interface FavoriteDropdownProps {
-  hotel: FavoritedHotel;
-  isExpanded: boolean;
-  onToggle: () => void;
-}
-
-const FavoriteDropdown: React.FC<FavoriteDropdownProps> = ({ 
-  hotel, 
-  isExpanded, 
-  onToggle 
-}) => {
-  const [expandedSections, setExpandedSections] = useState<{[key: string]: boolean}>({});
-
-  const toggleSection = (section: string) => {
-    setExpandedSections(prev => ({
-      ...prev,
-      [section]: !prev[section]
-    }));
-  };
-
-  const mockAIReason = hotel.whyItMatches || "This hotel perfectly matches your preferences with its excellent location, premium amenities, and outstanding guest reviews. The combination of comfort, style, and convenience makes it an ideal choice for your stay.";
-  
-  const mockNearbyAttractions = hotel.nearbyAttractions?.length ? hotel.nearbyAttractions : [
-    "City Center • 0.2 mi",
-    "Main Shopping District • 0.5 mi", 
-    "Historic Quarter • 0.8 mi",
-    "Transportation Hub • 1.1 mi"
-  ];
-
-  const mockFunFacts = hotel.funFacts?.length ? hotel.funFacts : [
-    "Featured in architectural magazines for innovative design",
-    "Rooftop terrace offers panoramic city views",
-    "Award-winning restaurant with local cuisine",
-    "Eco-friendly with LEED Gold certification"
-  ];
-
-  // NEW: Get category ratings with fallbacks
+  // Get category ratings with fallbacks
   const getRatings = () => {
     if (hotel.categoryRatings) {
       return hotel.categoryRatings;
     }
     
-    // Fallback: try to parse from guestInsights if available
-    if (hotel.guestInsights) {
+    // Parse from guestInsights if available
+    if (hotel.guestInsights && !hotel.guestInsights.includes('Loading')) {
       try {
         const defaultRatings = {
           cleanliness: 6.0,
@@ -380,43 +277,25 @@ const FavoriteDropdown: React.FC<FavoriteDropdownProps> = ({
         const lines = hotel.guestInsights.split('\n');
         const ratings = { ...defaultRatings };
 
-        interface GuestInsightRatings {
-          cleanliness: number;
-          service: number;
-          location: number;
-          roomQuality: number;
-        }
-
-        interface GuestInsightLineMatch {
-          [key: string]: RegExp;
-        }
-
-        const ratingLineMatchers: GuestInsightLineMatch = {
-          cleanliness: /Cleanliness:/,
-          service: /Service:/,
-          location: /Location:/,
-          roomQuality: /Room Quality:/,
-        };
-
         lines.forEach((line: string) => {
-          if (ratingLineMatchers.cleanliness.test(line)) {
-            const match: RegExpMatchArray | null = line.match(/(\d+\.?\d*)/);
-            if (match) (ratings as GuestInsightRatings).cleanliness = parseFloat(match[1]);
-          } else if (ratingLineMatchers.service.test(line)) {
-            const match: RegExpMatchArray | null = line.match(/(\d+\.?\d*)/);
-            if (match) (ratings as GuestInsightRatings).service = parseFloat(match[1]);
-          } else if (ratingLineMatchers.location.test(line)) {
-            const match: RegExpMatchArray | null = line.match(/(\d+\.?\d*)/);
-            if (match) (ratings as GuestInsightRatings).location = parseFloat(match[1]);
-          } else if (ratingLineMatchers.roomQuality.test(line)) {
-            const match: RegExpMatchArray | null = line.match(/(\d+\.?\d*)/);
-            if (match) (ratings as GuestInsightRatings).roomQuality = parseFloat(match[1]);
+          if (line.includes('Cleanliness:')) {
+            const match = line.match(/(\d+\.?\d*)/);
+            if (match) ratings.cleanliness = parseFloat(match[1]);
+          } else if (line.includes('Service:')) {
+            const match = line.match(/(\d+\.?\d*)/);
+            if (match) ratings.service = parseFloat(match[1]);
+          } else if (line.includes('Location:')) {
+            const match = line.match(/(\d+\.?\d*)/);
+            if (match) ratings.location = parseFloat(match[1]);
+          } else if (line.includes('Room Quality:')) {
+            const match = line.match(/(\d+\.?\d*)/);
+            if (match) ratings.roomQuality = parseFloat(match[1]);
           }
         });
 
         return ratings;
       } catch (error) {
-        console.warn('Failed to parse ratings from guestInsights:', error);
+        console.warn('Failed to parse ratings:', error);
       }
     }
     
@@ -432,162 +311,185 @@ const FavoriteDropdown: React.FC<FavoriteDropdownProps> = ({
 
   const ratings = getRatings();
 
-  const getRatingColor = (rating: number): string => {
-    if (rating >= 8.0) return TURQUOISE;
-    if (rating >= 7.0) return TURQUOISE + 'E6';
-    if (rating >= 6.0) return TURQUOISE + 'CC';
-    if (rating >= 5.0) return TURQUOISE + 'B3';
-    if (rating >= 4.0) return TURQUOISE + '99';
-    return TURQUOISE + '80';
+  const generateAIInsight = (): string => {
+    if (hotel.whyItMatches && !hotel.whyItMatches.includes('progress') && !hotel.whyItMatches.includes('loading')) {
+      return hotel.whyItMatches;
+    }
+    
+    if (hotel.aiExcerpt && !hotel.aiExcerpt.includes('progress')) {
+      return hotel.aiExcerpt;
+    }
+
+    if (hotel.locationHighlight && !hotel.locationHighlight.includes('Analyzing')) {
+      return hotel.locationHighlight;
+    }
+
+    return "This hotel perfectly matches your preferences with its excellent location, premium amenities, and outstanding guest reviews. The combination of comfort, style, and convenience makes it an ideal choice for your stay.";
   };
 
-  const getRatingTextColor = (rating: number): string => {
-    return "#FFFFFF";
-  };
+  const mockNearbyAttractions = hotel.nearbyAttractions?.length ? hotel.nearbyAttractions : [
+    "City Center • 0.2 mi",
+    "Main Shopping District • 0.5 mi", 
+    "Historic Quarter • 0.8 mi",
+    "Transportation Hub • 1.1 mi"
+  ];
 
   return (
-    <View style={tw`bg-white`}>
-      <AccordionSection
-        title="Why You Saved This"
-        icon="sparkles"
-        isExpanded={expandedSections.aiReason}
-        onToggle={() => toggleSection('aiReason')}
+    <View style={tw`bg-white border-t border-gray-50`}>
+      <TouchableOpacity
+        style={tw`flex-row items-center justify-between px-4 py-3`}
+        onPress={onToggle}
+        activeOpacity={0.7}
       >
-        <View style={[tw`p-3 rounded-xl border`, { backgroundColor: TURQUOISE + '10', borderColor: TURQUOISE + '30' }]}>
-          <Text style={tw`text-gray-800 text-sm leading-5`}>
-            {mockAIReason}
+        <View style={tw`flex-row items-center`}>
+          <View style={[tw`w-6 h-6 rounded-full items-center justify-center mr-3`, { backgroundColor: TURQUOISE + '20' }]}>
+            <Ionicons name="information-circle" size={12} color={TURQUOISE_DARK} />
+          </View>
+          <Text style={tw`text-gray-900 font-medium text-sm`}>
+            View More Details
           </Text>
         </View>
-      </AccordionSection>
-
-      {/* NEW: Category Ratings Section */}
-      <AccordionSection
-        title="Guest Ratings"
-        icon="star"
-        isExpanded={expandedSections.ratings}
-        onToggle={() => toggleSection('ratings')}
+        <Animated.View style={{ transform: [{ rotate: rotateInterpolate }] }}>
+          <Ionicons name="chevron-up" size={16} color="#9CA3AF" />
+        </Animated.View>
+      </TouchableOpacity>
+      
+      <Animated.View 
+        style={[
+          tw`overflow-hidden`,
+          { 
+            maxHeight: animatedHeight.interpolate({
+              inputRange: [0, 1],
+              outputRange: [0, 500],
+            }),
+            opacity: animatedHeight,
+          }
+        ]}
       >
-        <View style={tw`gap-2`}>
-          <View style={tw`flex-row gap-2`}>
-            <View style={tw`flex-1 bg-gray-50 border border-gray-100 rounded-lg p-2 flex-row items-center`}>
-              <View 
-                style={[
-                  tw`w-7 h-7 rounded-full items-center justify-center`,
-                  { backgroundColor: getRatingColor(ratings.cleanliness) }
-                ]}
-              >
-                <Text 
-                  style={[
-                    tw`text-xs font-bold`,
-                    { 
-                      color: getRatingTextColor(ratings.cleanliness),
-                      textShadowColor: '#000000',
-                      textShadowOffset: { width: 0.5, height: 0.5 },
-                      textShadowRadius: 1
-                    }
-                  ]}
-                >
-                  {ratings.cleanliness.toFixed(1)}
-                </Text>
-              </View>
-              <Text style={tw`text-gray-800 text-xs font-medium ml-2 flex-1`}>Cleanliness</Text>
-            </View>
+        <View style={tw`px-4 pb-4`}>
 
-            <View style={tw`flex-1 bg-gray-50 border border-gray-100 rounded-lg p-2 flex-row items-center`}>
-              <View 
-                style={[
-                  tw`w-7 h-7 rounded-full items-center justify-center`,
-                  { backgroundColor: getRatingColor(ratings.service) }
-                ]}
-              >
-                <Text 
-                  style={[
-                    tw`text-xs font-bold`,
-                    { 
-                      color: getRatingTextColor(ratings.service),
-                      textShadowColor: '#000000',
-                      textShadowOffset: { width: 0.5, height: 0.5 },
-                      textShadowRadius: 1
-                    }
-                  ]}
-                >
-                  {ratings.service.toFixed(1)}
-                </Text>
+          {/* Category Ratings */}
+          <View style={tw`mb-4`}>
+            <Text style={tw`text-gray-900 font-medium text-sm mb-3`}>Guest Ratings</Text>
+            <View style={tw`gap-2`}>
+              <View style={tw`flex-row gap-2`}>
+                <View style={tw`flex-1 bg-gray-50 border border-gray-100 rounded-lg p-2 flex-row items-center`}>
+                  <View 
+                    style={[
+                      tw`w-7 h-7 rounded-full items-center justify-center`,
+                      { backgroundColor: getRatingColor(ratings.cleanliness) }
+                    ]}
+                  >
+                    <Text 
+                      style={[
+                        tw`text-xs font-bold`,
+                        { 
+                          color: '#FFFFFF',
+                          textShadowColor: '#000000',
+                          textShadowOffset: { width: 0.5, height: 0.5 },
+                          textShadowRadius: 1
+                        }
+                      ]}
+                    >
+                      {ratings.cleanliness.toFixed(1)}
+                    </Text>
+                  </View>
+                  <Text style={tw`text-gray-800 text-xs font-medium ml-2 flex-1`}>Cleanliness</Text>
+                </View>
+
+                <View style={tw`flex-1 bg-gray-50 border border-gray-100 rounded-lg p-2 flex-row items-center`}>
+                  <View 
+                    style={[
+                      tw`w-7 h-7 rounded-full items-center justify-center`,
+                      { backgroundColor: getRatingColor(ratings.service) }
+                    ]}
+                  >
+                    <Text 
+                      style={[
+                        tw`text-xs font-bold`,
+                        { 
+                          color: '#FFFFFF',
+                          textShadowColor: '#000000',
+                          textShadowOffset: { width: 0.5, height: 0.5 },
+                          textShadowRadius: 1
+                        }
+                      ]}
+                    >
+                      {ratings.service.toFixed(1)}
+                    </Text>
+                  </View>
+                  <Text style={tw`text-gray-800 text-xs font-medium ml-2 flex-1`}>Service</Text>
+                </View>
               </View>
-              <Text style={tw`text-gray-800 text-xs font-medium ml-2 flex-1`}>Service</Text>
+
+              <View style={tw`flex-row gap-2`}>
+                <View style={tw`flex-1 bg-gray-50 border border-gray-100 rounded-lg p-2 flex-row items-center`}>
+                  <View 
+                    style={[
+                      tw`w-7 h-7 rounded-full items-center justify-center`,
+                      { backgroundColor: getRatingColor(ratings.location) }
+                    ]}
+                  >
+                    <Text 
+                      style={[
+                        tw`text-xs font-bold`,
+                        { 
+                          color: '#FFFFFF',
+                          textShadowColor: '#000000',
+                          textShadowOffset: { width: 0.5, height: 0.5 },
+                          textShadowRadius: 1
+                        }
+                      ]}
+                    >
+                      {ratings.location.toFixed(1)}
+                    </Text>
+                  </View>
+                  <Text style={tw`text-gray-800 text-xs font-medium ml-2 flex-1`}>Location</Text>
+                </View>
+
+                <View style={tw`flex-1 bg-gray-50 border border-gray-100 rounded-lg p-2 flex-row items-center`}>
+                  <View 
+                    style={[
+                      tw`w-7 h-7 rounded-full items-center justify-center`,
+                      { backgroundColor: getRatingColor(ratings.roomQuality) }
+                    ]}
+                  >
+                    <Text 
+                      style={[
+                        tw`text-xs font-bold`,
+                        { 
+                          color: '#FFFFFF',
+                          textShadowColor: '#000000',
+                          textShadowOffset: { width: 0.5, height: 0.5 },
+                          textShadowRadius: 1
+                        }
+                      ]}
+                    >
+                      {ratings.roomQuality.toFixed(1)}
+                    </Text>
+                  </View>
+                  <Text style={tw`text-gray-800 text-xs font-medium ml-2 flex-1`}>Rooms</Text>
+                </View>
+              </View>
             </View>
           </View>
 
-          <View style={tw`flex-row gap-2`}>
-            <View style={tw`flex-1 bg-gray-50 border border-gray-100 rounded-lg p-2 flex-row items-center`}>
-              <View 
-                style={[
-                  tw`w-7 h-7 rounded-full items-center justify-center`,
-                  { backgroundColor: getRatingColor(ratings.location) }
-                ]}
-              >
-                <Text 
-                  style={[
-                    tw`text-xs font-bold`,
-                    { 
-                      color: getRatingTextColor(ratings.location),
-                      textShadowColor: '#000000',
-                      textShadowOffset: { width: 0.5, height: 0.5 },
-                      textShadowRadius: 1
-                    }
-                  ]}
-                >
-                  {ratings.location.toFixed(1)}
-                </Text>
-              </View>
-              <Text style={tw`text-gray-800 text-xs font-medium ml-2 flex-1`}>Location</Text>
-            </View>
-
-            <View style={tw`flex-1 bg-gray-50 border border-gray-100 rounded-lg p-2 flex-row items-center`}>
-              <View 
-                style={[
-                  tw`w-7 h-7 rounded-full items-center justify-center`,
-                  { backgroundColor: getRatingColor(ratings.roomQuality) }
-                ]}
-              >
-                <Text 
-                  style={[
-                    tw`text-xs font-bold`,
-                    { 
-                      color: getRatingTextColor(ratings.roomQuality),
-                      textShadowColor: '#000000',
-                      textShadowOffset: { width: 0.5, height: 0.5 },
-                      textShadowRadius: 1
-                    }
-                  ]}
-                >
-                  {ratings.roomQuality.toFixed(1)}
-                </Text>
-              </View>
-              <Text style={tw`text-gray-800 text-xs font-medium ml-2 flex-1`}>Rooms</Text>
+          {/* Nearby Attractions */}
+          <View>
+            <Text style={tw`text-gray-900 font-medium text-sm mb-3`}>Nearby Attractions</Text>
+            <View style={tw`bg-gray-50 p-3 rounded-xl`}>
+              {mockNearbyAttractions.slice(0, 4).map((attraction: string, index: number) => (
+                <View key={index} style={tw`flex-row items-center ${index === 0 ? '' : 'mt-2'}`}>
+                  <View style={[tw`w-1.5 h-1.5 rounded-full mr-2`, { backgroundColor: TURQUOISE }]} />
+                  <Text style={tw`text-gray-700 text-sm flex-1`}>
+                    {attraction}
+                  </Text>
+                </View>
+              ))}
             </View>
           </View>
         </View>
-      </AccordionSection>
-
-      <AccordionSection
-        title="Nearby Attractions"
-        icon="location"
-        isExpanded={expandedSections.attractions}
-        onToggle={() => toggleSection('attractions')}
-      >
-        <View style={tw`bg-gray-50 p-3 rounded-xl`}>
-          {mockNearbyAttractions.map((attraction: string, index: number) => (
-            <View key={index} style={tw`flex-row items-center ${index === 0 ? '' : 'mt-2'}`}>
-              <View style={[tw`w-1.5 h-1.5 rounded-full mr-2`, { backgroundColor: TURQUOISE }]} />
-              <Text style={tw`text-gray-700 text-sm flex-1`}>
-                {attraction}
-              </Text>
-            </View>
-          ))}
-        </View>
-      </AccordionSection>
-
+      </Animated.View>
     </View>
   );
 };
@@ -605,11 +507,9 @@ const FavoriteHotelCard: React.FC<FavoriteHotelCardProps> = ({
   occupancies
 }) => {
   const fadeAnimation = useRef(new Animated.Value(0)).current;
-  const chevronRotateAnimation = useRef(new Animated.Value(0)).current;
-  const mainDropdownAnimation = useRef(new Animated.Value(0)).current;
-  const [isDropdownExpanded, setIsDropdownExpanded] = useState(false);
   const [showConfirmModal, setShowConfirmModal] = useState(false);
-  const [cardLayout, setCardLayout] = useState({ width: 0, height: 0, x: 0, y: 0 });
+  const [showAIInsights, setShowAIInsights] = useState(false);
+const [showHotelChat, setShowHotelChat] = useState(false);
 
   useEffect(() => {
     Animated.timing(fadeAnimation, {
@@ -619,23 +519,6 @@ const FavoriteHotelCard: React.FC<FavoriteHotelCardProps> = ({
       useNativeDriver: true,
     }).start();
   }, [index]);
-
-  useEffect(() => {
-    Animated.parallel([
-      Animated.timing(chevronRotateAnimation, {
-        toValue: isDropdownExpanded ? 1 : 0,
-        duration: 300,
-        easing: Easing.bezier(0.4, 0, 0.2, 1),
-        useNativeDriver: true,
-      }),
-      Animated.timing(mainDropdownAnimation, {
-        toValue: isDropdownExpanded ? 1 : 0,
-        duration: 350,
-        easing: Easing.bezier(0.4, 0, 0.2, 1),
-        useNativeDriver: false,
-      }),
-    ]).start();
-  }, [isDropdownExpanded]);
 
   const handleRemove = () => {
     setShowConfirmModal(true);
@@ -650,11 +533,6 @@ const FavoriteHotelCard: React.FC<FavoriteHotelCardProps> = ({
     setShowConfirmModal(false);
   };
 
-  const handleCardLayout = (event: any) => {
-    const { width, height, x, y } = event.nativeEvent.layout;
-    setCardLayout({ width, height, x, y });
-  };
-
   // Handle View Details (Google Maps)
   const handleViewDetails = async () => {
     try {
@@ -665,8 +543,6 @@ const FavoriteHotelCard: React.FC<FavoriteHotelCardProps> = ({
         adults,
         children
       );
-
-      console.log(`🗺️ Opening Google Maps for: ${hotel.name}`);
 
       const canOpen = await Linking.canOpenURL(mapsLink);
       
@@ -706,8 +582,6 @@ const FavoriteHotelCard: React.FC<FavoriteHotelCardProps> = ({
         placeId,
         occupancies
       );
-
-      console.log(`🔗 Opening hotel booking: ${hotel.name}`);
 
       const canOpen = await Linking.canOpenURL(deepLinkUrl);
       
@@ -756,15 +630,6 @@ const FavoriteHotelCard: React.FC<FavoriteHotelCardProps> = ({
     return hotel.location;
   };
 
-  const toggleDropdown = () => {
-    setIsDropdownExpanded(!isDropdownExpanded);
-  };
-
-  const chevronRotateInterpolate = chevronRotateAnimation.interpolate({
-    inputRange: [0, 1],
-    outputRange: ['0deg', '180deg'],
-  });
-
   return (
     <Animated.View
       style={[
@@ -772,57 +637,48 @@ const FavoriteHotelCard: React.FC<FavoriteHotelCardProps> = ({
         { opacity: fadeAnimation }
       ]}
     >
-      <View 
-        style={tw`bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100`}
-        onLayout={handleCardLayout}
-      >
-        {/* Main Card Content */}
-        <View style={tw`flex-row min-h-28`}>
-          {/* Hotel Image with enhanced styling */}
-          <View style={tw`relative w-28`}>
-            <Image
-              source={{ uri: hotel.image }}
-              style={tw`w-28 h-full absolute inset-0`}
-              resizeMode="cover"
-            />
-            {/* Subtle overlay for better text contrast */}
-            <View style={tw`absolute inset-0 bg-black/5`} />
-          </View>
-
-          {/* Hotel Information */}
-          <TouchableOpacity
-            style={tw`flex-1 p-4 justify-between pr-12`}
-            onPress={() => onPress(hotel)}
-            activeOpacity={0.95}
-          >
-            <View>
-              <Text style={tw`text-base font-semibold text-gray-900 leading-5 mb-1.5`}>
-                {hotel.name}
-              </Text>
-              <View style={tw`flex-row items-center mb-3`}>
-                <Ionicons name="location-outline" size={14} color="#6B7280" />
-                <Text style={tw`text-sm text-gray-600 ml-1.5`} numberOfLines={1}>
-                  {getLocationDisplay()}
-                </Text>
-              </View>
-            </View>
-
-            {/* Price and Rating */}
-            <View style={tw`flex-row items-center justify-between`}>
-              <Text style={tw`text-base font-bold text-gray-900`}>
-                {getDisplayPrice()}<Text style={tw`text-sm font-normal text-gray-600`}>/night</Text>
-              </Text>
-                         
-              <View style={tw`flex-row items-center`}>
+      {/* MOVE THE DROPDOWN INSIDE THIS CONTAINER */}
+      <View
+  style={[
+    tw`bg-white rounded-2xl overflow-hidden border border-gray-100`,
+    {
+      shadowColor: '#000',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: 0.1,
+      shadowRadius: 5,
+      elevation: 4, // Android
+    },
+  ]}
+>
+        <TouchableOpacity
+          onPress={() => onPress(hotel)}
+          activeOpacity={0.98}
+        >
+          {/* Main Card Content */}
+          <View style={tw`flex-row`}>
+            {/* Hotel Image */}
+            <View style={tw`relative w-32 h-32`}>
+              <Image
+                source={{ uri: hotel.image }}
+                style={tw`w-full h-full`}
+                resizeMode="cover"
+              />
+              {/* Rating badge on image */}
+              <View 
+                style={[
+                  tw`absolute top-2 left-2 px-2 py-1 rounded-lg flex-row items-center`,
+                  { backgroundColor: 'rgba(0, 0, 0, 0.7)' }
+                ]}
+              >
                 <View 
                   style={[
-                    tw`w-5 h-5 rounded-full items-center justify-center mr-2`,
+                    tw`w-4 h-4 rounded-full items-center justify-center mr-1`,
                     { backgroundColor: getRatingColor(hotel.rating || 0) }
                   ]}
                 >
                   <Ionicons 
                     name="thumbs-up" 
-                    size={10} 
+                    size={8} 
                     color="#FFFFFF"
                     style={{
                       textShadowColor: '#000000',
@@ -831,105 +687,131 @@ const FavoriteHotelCard: React.FC<FavoriteHotelCardProps> = ({
                     }}
                   />
                 </View>
-                <Text style={tw`text-sm font-semibold text-gray-800`}>
+                <Text style={tw`text-white text-xs font-semibold`}>
                   {hotel.rating?.toFixed(1) || 'N/A'}
                 </Text>
               </View>
             </View>
-          </TouchableOpacity>
+
+            {/* Hotel Information */}
+            <View style={tw`flex-1 p-4`}>
+              <View style={tw`flex-row justify-between items-start mb-2`}>
+                <View style={tw`flex-1 pr-2`}>
+                  <Text style={tw`text-base font-semibold text-gray-900 leading-tight mb-1`}>
+                    {hotel.name}
+                  </Text>
+                  <View style={tw`flex-row items-center mb-2`}>
+                    <Ionicons name="location-outline" size={14} color="#6B7280" />
+                    <Text style={tw`text-sm text-gray-600 ml-1 flex-1`} numberOfLines={1}>
+                      {getLocationDisplay()}
+                    </Text>
+                  </View>
+                </View>
+                
+                {/* Remove button */}
+                <TouchableOpacity
+                  style={tw`w-8 h-8 bg-gray-100 rounded-full items-center justify-center`}
+                  onPress={handleRemove}
+                  activeOpacity={0.7}
+                >
+                  <Ionicons name="close" size={16} color="#6B7280" />
+                </TouchableOpacity>
+              </View>
+
+              {/* Price */}
+              <View style={tw`flex-row items-center justify-between`}>
+                <Text style={tw`text-lg font-bold text-gray-900`}>
+                  {getDisplayPrice()}
+                  <Text style={tw`text-sm font-normal text-gray-600`}>/night</Text>
+                </Text>
+              </View>
+            </View>
+          </View>
+        </TouchableOpacity>
+
+        {/* Action Buttons */}
+        <View style={tw`px-4 py-3 border-t border-gray-50`}>
+          <View style={tw`flex-row gap-2`}>
+            {/* Ask Button */}
+            <TouchableOpacity
+              style={[
+                tw`flex-1 py-3 rounded-xl border-2 flex-row items-center justify-center`,
+                { 
+                  backgroundColor: TURQUOISE + '10',
+                  borderColor: TURQUOISE + '30',
+                }
+              ]}
+              onPress={() => setShowHotelChat(true)}
+              activeOpacity={0.8}
+            >
+              <Ionicons name="chatbubble" size={16} color={TURQUOISE_DARK} />
+              <Text style={[tw`ml-2 font-medium text-sm`, { color: '#000000' }]}>
+                Ask
+              </Text>
+            </TouchableOpacity>
+
+            {/* View on Map Button */}
+            <TouchableOpacity
+              style={[
+                tw`flex-1 py-3 rounded-xl border-2 flex-row items-center justify-center`,
+                { 
+                  backgroundColor: TURQUOISE + '10',
+                  borderColor: TURQUOISE + '30',
+                }
+              ]}
+              onPress={handleViewDetails}
+              activeOpacity={0.8}
+            >
+              <Ionicons name="map" size={16} color={TURQUOISE_DARK} />
+              <Text style={[tw`ml-2 font-medium text-sm`, { color: '#000000' }]}>
+                Map
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[
+                tw`flex-1 py-3 rounded-xl border-2 flex-row items-center justify-center`,
+                { 
+                  backgroundColor: TURQUOISE + '10',
+                  borderColor: TURQUOISE + '30',
+                }
+              ]}
+              onPress={handleBookNow}
+              activeOpacity={0.8}
+            >
+              <Image 
+                source={require('../../assets/images/logo.png')} 
+                style={{ width: 16, height: 16 }} 
+                resizeMode="contain"
+              />
+              <Text style={[tw`ml-2 font-medium text-sm`, { color: '#000000' }]}>
+                Book
+              </Text>
+            </TouchableOpacity>
+          </View>
         </View>
 
-        {/* Remove button with enhanced styling */}
-        <TouchableOpacity
-          style={tw`absolute top-3 right-3 w-7 h-7 bg-white/90 backdrop-blur rounded-full items-center justify-center shadow-lg border border-gray-200`}
-          onPress={handleRemove}
-          activeOpacity={0.8}
-        >
-          <Ionicons name="close" size={14} color="#6B7280" />
-        </TouchableOpacity>
-
-        {/* Action Buttons Section */}
-       <View style={tw`border-t border-gray-50 px-4 py-3`}>
-         <View style={tw`flex-row gap-2`}>
-           {/* View Details Button */}
-           <TouchableOpacity
-             style={[
-               tw`flex-1 py-3 rounded-xl border-2 flex-row items-center justify-center`,
-               { 
-                 backgroundColor: TURQUOISE + '10',
-                 borderColor: TURQUOISE + '30',
-               }
-             ]}
-             onPress={handleViewDetails}
-             activeOpacity={0.8}
-           >
-             <Ionicons name="map" size={16} color={TURQUOISE_DARK} />
-             <Text style={[tw`ml-2 font-medium text-sm`, { color: '#000000' }]}>
-               Map View
-             </Text>
-           </TouchableOpacity>
-
-           {/* Book Now Button */}
-           <TouchableOpacity
-             style={[
-               tw`flex-1 py-3 rounded-xl border-2 flex-row items-center justify-center`,
-               { 
-                 backgroundColor: TURQUOISE + '10',
-                 borderColor: TURQUOISE + '30',
-               }
-             ]}
-             onPress={handleBookNow}
-             activeOpacity={0.8}
-           >
-             <Image 
-               source={require('../../assets/images/logo.png')} 
-               style={{ width: 16, height: 16 }} 
-               resizeMode="contain"
-             />
-             <Text style={[tw`ml-2 font-medium text-sm`, { color: '#000000' }]}>
-               Book Now
-             </Text>
-           </TouchableOpacity>
-         </View>
-       </View>
-        {/* Clean Expandable Dropdown Toggle */}
-        <TouchableOpacity
-          style={tw`flex-row items-center justify-between px-4 py-3 border-t border-gray-50`}
-          onPress={toggleDropdown}
-          activeOpacity={0.7}
-        >
-          <Text style={tw`text-gray-700 font-medium text-sm`}>
-            More Details
-          </Text>
-          <Animated.View style={{ transform: [{ rotate: chevronRotateInterpolate }] }}>
-            <Ionicons 
-              name="chevron-down" 
-              size={18} 
-              color={TURQUOISE_DARK}
-            />
-          </Animated.View>
-        </TouchableOpacity>
-
-        {/* Expandable Dropdown */}
-        <Animated.View 
-          style={[
-            tw`overflow-hidden border-t border-gray-50`,
-            { 
-              maxHeight: mainDropdownAnimation.interpolate({
-                inputRange: [0, 1],
-                outputRange: [0, 600],
-              }),
-              opacity: mainDropdownAnimation,
-            }
-          ]}
-        >
-          <FavoriteDropdown
-            hotel={hotel}
-            isExpanded={isDropdownExpanded}
-            onToggle={toggleDropdown}
-          />
-        </Animated.View>
+        {/* AI Insights Dropdown - MOVED INSIDE THE CARD CONTAINER */}
+        <AIInsightsDropdown
+          hotel={hotel}
+          isExpanded={showAIInsights}
+          onToggle={() => setShowAIInsights(!showAIInsights)}
+        />
       </View>
+
+      {/* Hotel Chat Modal */}
+      <Modal
+        visible={showHotelChat}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowHotelChat(false)}
+      >
+        <HotelChatOverlay
+          visible={showHotelChat}
+          onClose={() => setShowHotelChat(false)}
+          hotel={hotel as any}
+        />
+      </Modal>
 
       {/* Confirmation modal */}
       <ConfirmationModal
@@ -937,7 +819,6 @@ const FavoriteHotelCard: React.FC<FavoriteHotelCardProps> = ({
         hotelName={hotel.name}
         onConfirm={handleConfirmRemove}
         onCancel={handleCancelRemove}
-        cardLayout={cardLayout}
       />
     </Animated.View>
   );

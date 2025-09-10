@@ -175,28 +175,38 @@ const ProfileScreen = () => {
     ]).start();
   }, []);
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+  try {
+    if (Platform.OS === 'web') {
+      // RN Alert buttons don't work on web; use native confirm
+      const ok = window.confirm('Are you sure you want to sign out?');
+      if (!ok) return;
+      await firebaseSignOut();
+      console.log('✅ Successfully signed out (web)');
+      return;
+    }
+
+    // iOS/Android: use Alert with buttons
     Alert.alert(
       'Sign Out',
       'Are you sure you want to sign out?',
       [
         { text: 'Cancel', style: 'cancel' },
         { 
-          text: 'Sign Out', 
+          text: 'Sign Out',
           style: 'destructive',
           onPress: async () => {
-            try {
-              await firebaseSignOut();
-              console.log('✅ Successfully signed out');
-            } catch (error: any) {
-              console.log('❌ Sign out error:', error.message);
-              Alert.alert('Error', 'Failed to sign out');
-            }
+            await firebaseSignOut();
+            console.log('✅ Successfully signed out (native)');
           }
         }
       ]
     );
-  };
+  } catch (err) {
+    console.log('❌ Sign out error:', (err as any)?.message);
+    Alert.alert('Error', 'Failed to sign out');
+  }
+};
 
   const handleGoogleSignUp = async () => {
     try {

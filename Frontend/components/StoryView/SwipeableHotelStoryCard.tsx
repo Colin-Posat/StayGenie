@@ -25,7 +25,7 @@ import HotelChatOverlay from '../../components/HomeScreenTop/HotelChatOverlay';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 const CARD_WIDTH = screenWidth - 40;
-const CARD_HEIGHT = screenHeight * 0.55;
+const CARD_HEIGHT = screenHeight * 0.50;
 const TURQUOISE_SUBTLE = '#f0feff';
 const TURQUOISE_BORDER = '#b3f7ff';
 
@@ -140,6 +140,7 @@ interface SwipeableHotelStoryCardProps {
   occupancies?: any[];
   searchParams?: any;
 }
+
 
 const AvailabilityChip = ({ label }: { label?: string }) => {
   if (!label) return null;
@@ -1380,8 +1381,6 @@ useEffect(() => {
               hotel={hotel} 
               insightsStatus={insightsStatus}
               searchMode={searchMode}
-              checkInDate={checkInDate}
-              checkOutDate={checkOutDate}
               showAvailability={true}
             />
           </View>

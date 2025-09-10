@@ -78,7 +78,7 @@ const RecentSearchCard: React.FC<RecentSearchCardProps> = ({
         {/* Search text - fixed height area for text */}
         <View style={[
           tw`justify-center`,
-          { height: 28, overflow: 'hidden' }
+          { height: 50, overflow: 'hidden' }
         ]}>
           <Text 
             style={[
@@ -87,7 +87,7 @@ const RecentSearchCard: React.FC<RecentSearchCardProps> = ({
                 lineHeight: 14,
               }
             ]}
-            numberOfLines={2}
+            numberOfLines={3}
             ellipsizeMode="tail"
           >
             {search}
