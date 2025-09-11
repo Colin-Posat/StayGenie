@@ -1,4 +1,4 @@
-// ProfileScreen.tsx - Revamped with Firebase authentication
+// ProfileScreen.tsx - Clean and sleek design matching app aesthetic
 import React, { useState, useRef, useEffect } from 'react';
 import {
   View,
@@ -8,7 +8,6 @@ import {
   StatusBar,
   ScrollView,
   Animated,
-  Switch,
   Platform,
   Alert,
 } from 'react-native';
@@ -17,142 +16,115 @@ import tw from 'twrnc';
 import { useAuth } from '../contexts/AuthContext';
 import EmailSignUpModal from '../components/SignupLogin/EmailSignUpModal';
 import EmailSignInModal from '../components/SignupLogin/EmailSignInModal';
+import HelpFeedbackModal from '../components/Profile/HelpFeedbackModal';
 
-// Consistent color constants (matching other screens)
+// Consistent color constants
 const TURQUOISE = '#1df9ff';
 const TURQUOISE_LIGHT = '#5dfbff';
 const TURQUOISE_DARK = '#00d4e6';
-const BLACK = "#000000";
 
-// Enhanced section header component (consistent with FavoritesScreen)
-const SectionHeader: React.FC<{ title: string; subtitle?: string }> = ({ title, subtitle }) => (
-  <View style={tw`mb-4 px-6`}>
-    <Text style={tw`text-xl font-bold text-gray-900 mb-1`}>
-      {title}
-    </Text>
-    {subtitle && (
-      <Text style={tw`text-sm text-gray-600`}>
-        {subtitle}
-      </Text>
-    )}
-  </View>
-);
-
-// Menu item component matching consistent app style
+// Clean menu item component
 const MenuItem: React.FC<{
   icon: string;
   title: string;
   subtitle?: string;
-  value?: string;
   onPress?: () => void;
-  hasSwitch?: boolean;
-  switchValue?: boolean;
-  onSwitchChange?: (value: boolean) => void;
-  showArrow?: boolean;
   iconColor?: string;
-  badge?: string;
   isDestructive?: boolean;
 }> = ({
   icon,
   title,
   subtitle,
-  value,
   onPress,
-  hasSwitch = false,
-  switchValue = false,
-  onSwitchChange,
-  showArrow = true,
   iconColor,
-  badge,
   isDestructive = false
 }) => {
-  const defaultIconColor = isDestructive ? '#EF4444' : TURQUOISE_DARK;
-  const finalIconColor = iconColor || defaultIconColor;
+  const scaleAnimation = useRef(new Animated.Value(1)).current;
+  const defaultIconColor = isDestructive ? '#EF4444' : TURQUOISE;
+
+  const handlePressIn = () => {
+    Animated.spring(scaleAnimation, {
+      toValue: 0.98,
+      useNativeDriver: true,
+    }).start();
+  };
+
+  const handlePressOut = () => {
+    Animated.spring(scaleAnimation, {
+      toValue: 1,
+      useNativeDriver: true,
+    }).start();
+  };
 
   return (
-    <TouchableOpacity
-      style={[
-        tw`mx-6 mb-3 p-4 rounded-2xl flex-row items-center shadow-sm`,
-        { 
-          backgroundColor: '#FFFFFF',
-          borderWidth: 1,
-          borderColor: isDestructive ? '#FEE2E2' : TURQUOISE + '20',
-        }
-      ]}
-      onPress={onPress}
-      activeOpacity={0.8}
-      disabled={hasSwitch}
-    >
-      {/* Icon container */}
-      <View style={[
-        tw`w-12 h-12 rounded-xl items-center justify-center mr-4`,
-        { 
-          backgroundColor: isDestructive ? '#FEE2E2' : TURQUOISE + '15',
-        }
-      ]}>
-        <Ionicons name={icon as any} size={22} color={finalIconColor} />
-      </View>
+    <Animated.View style={{ transform: [{ scale: scaleAnimation }] }}>
+      <TouchableOpacity
+        style={[
+          tw`mx-6 mb-3 p-4 rounded-2xl flex-row items-center`,
+          { 
+            backgroundColor: '#FFFFFF',
+            shadowColor: '#000000',
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: 0.06,
+            shadowRadius: 8,
+            elevation: 2,
+            borderWidth: 1,
+            borderColor: 'rgba(0, 0, 0, 0.04)',
+          }
+        ]}
+        onPress={onPress}
+        onPressIn={handlePressIn}
+        onPressOut={handlePressOut}
+        activeOpacity={1}
+      >
+        {/* Icon container */}
+        <View style={[
+          tw`w-12 h-12 rounded-xl items-center justify-center mr-4`,
+          { 
+            backgroundColor: isDestructive ? 'rgba(239, 68, 68, 0.08)' : 'rgba(29, 249, 255, 0.08)',
+          }
+        ]}>
+          <Ionicons 
+            name={icon as any} 
+            size={22} 
+            color={iconColor || defaultIconColor} 
+          />
+        </View>
 
-      {/* Content */}
-      <View style={tw`flex-1`}>
-        <View style={tw`flex-row items-center`}>
+        {/* Content */}
+        <View style={tw`flex-1`}>
           <Text style={[
             tw`text-base font-semibold`,
-            { color: isDestructive ? '#EF4444' : BLACK }
+            { color: isDestructive ? '#EF4444' : '#1F2937' }
           ]}>
             {title}
           </Text>
-          {badge && (
-            <View style={[
-              tw`rounded-full px-2.5 py-1 ml-2`,
-              { backgroundColor: TURQUOISE }
+          {subtitle && (
+            <Text style={[
+              tw`text-sm mt-0.5`,
+              { color: '#6B7280' }
             ]}>
-              <Text style={tw`text-white text-xs font-bold`}>
-                {badge}
-              </Text>
-            </View>
+              {subtitle}
+            </Text>
           )}
         </View>
-        {subtitle && (
-          <Text style={tw`text-sm text-gray-500 mt-0.5`}>
-            {subtitle}
-          </Text>
-        )}
-        {value && (
-          <Text style={[tw`text-sm mt-0.5 font-medium`, { color: TURQUOISE_DARK }]}>
-            {value}
-          </Text>
-        )}
-      </View>
 
-      {/* Right side content */}
-      {hasSwitch ? (
-        <Switch
-          value={switchValue}
-          onValueChange={onSwitchChange}
-          trackColor={{ false: '#E5E7EB', true: TURQUOISE }}
-          thumbColor={switchValue ? '#FFFFFF' : '#F3F4F6'}
-          ios_backgroundColor="#E5E7EB"
-        />
-      ) : showArrow ? (
+        {/* Arrow */}
         <Ionicons 
           name="chevron-forward" 
           size={20} 
-          color={isDestructive ? '#EF4444' : TURQUOISE_DARK} 
+          color={isDestructive ? '#EF4444' : TURQUOISE} 
         />
-      ) : null}
-    </TouchableOpacity>
+      </TouchableOpacity>
+    </Animated.View>
   );
 };
 
 // Main Profile Screen
 const ProfileScreen = () => {
-  const [notificationsEnabled, setNotificationsEnabled] = useState(true);
-  const [locationEnabled, setLocationEnabled] = useState(true);
-  const [biometricEnabled, setBiometricEnabled] = useState(false);
-  const [darkModeEnabled, setDarkModeEnabled] = useState(false);
   const [showEmailSignUpModal, setShowEmailSignUpModal] = useState(false);
   const [showEmailSignInModal, setShowEmailSignInModal] = useState(false);
+  const [showHelpFeedbackModal, setShowHelpFeedbackModal] = useState(false); // Added missing state
 
   // Firebase auth
   const { user, isAuthenticated, signOut: firebaseSignOut, signInWithGoogle } = useAuth();
@@ -175,38 +147,36 @@ const ProfileScreen = () => {
     ]).start();
   }, []);
 
-  const handleLogout = async () => {
-  try {
-    if (Platform.OS === 'web') {
-      // RN Alert buttons don't work on web; use native confirm
-      const ok = window.confirm('Are you sure you want to sign out?');
-      if (!ok) return;
-      await firebaseSignOut();
-      console.log('✅ Successfully signed out (web)');
-      return;
-    }
+  const handleSignOut = async () => {
+    try {
+      if (Platform.OS === 'web') {
+        const ok = window.confirm('Are you sure you want to sign out?');
+        if (!ok) return;
+        await firebaseSignOut();
+        console.log('✅ Successfully signed out (web)');
+        return;
+      }
 
-    // iOS/Android: use Alert with buttons
-    Alert.alert(
-      'Sign Out',
-      'Are you sure you want to sign out?',
-      [
-        { text: 'Cancel', style: 'cancel' },
-        { 
-          text: 'Sign Out',
-          style: 'destructive',
-          onPress: async () => {
-            await firebaseSignOut();
-            console.log('✅ Successfully signed out (native)');
+      Alert.alert(
+        'Sign Out',
+        'Are you sure you want to sign out?',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          { 
+            text: 'Sign Out',
+            style: 'destructive',
+            onPress: async () => {
+              await firebaseSignOut();
+              console.log('✅ Successfully signed out');
+            }
           }
-        }
-      ]
-    );
-  } catch (err) {
-    console.log('❌ Sign out error:', (err as any)?.message);
-    Alert.alert('Error', 'Failed to sign out');
-  }
-};
+        ]
+      );
+    } catch (err) {
+      console.log('❌ Sign out error:', (err as any)?.message);
+      Alert.alert('Error', 'Failed to sign out');
+    }
+  };
 
   const handleGoogleSignUp = async () => {
     try {
@@ -232,298 +202,247 @@ const ProfileScreen = () => {
     }, 300);
   };
 
-  const handleEditProfile = () => {
-    console.log('Edit profile pressed');
+  const handleChangePassword = () => {
+    console.log('Change password pressed');
+    // Implement password change flow
+  };
+
+  const handleHelpFeedback = () => {
+    setShowHelpFeedbackModal(true); // Updated to show the modal
   };
 
   return (
-    <SafeAreaView style={tw`flex-1 bg-gray-50`}>
-      <StatusBar barStyle="dark-content" backgroundColor="#F9FAFB" />
+    <SafeAreaView style={tw`flex-1 bg-white`}>
+      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" translucent={false} />
 
       <ScrollView 
         style={tw`flex-1`}
         contentContainerStyle={tw`pb-8`}
         showsVerticalScrollIndicator={false}
       >
-        {/* Header with profile info */}
+        {/* Header */}
         <View style={tw`px-6 pt-6 pb-8 bg-white`}>
-          <View style={tw`flex-row items-center justify-between mb-6`}>
-            <Text style={tw`text-2xl font-bold text-gray-900`}>
-              Profile
-            </Text>
-            <TouchableOpacity
-              style={[
-                tw`w-12 h-12 rounded-xl items-center justify-center`,
-                { backgroundColor: TURQUOISE + '15' }
-              ]}
-              onPress={handleEditProfile}
-              activeOpacity={0.8}
-            >
-              <Ionicons name="create-outline" size={20} color={TURQUOISE_DARK} />
-            </TouchableOpacity>
-          </View>
+          <Text style={[
+            tw`text-3xl font-bold`,
+            { color: '#1F2937' },
+            Platform.OS === 'android' && { fontFamily: 'sans-serif-medium' }
+          ]}>
+            Profile
+          </Text>
+        </View>
 
-          {/* Profile section with user info */}
-          <Animated.View
-            style={[
-              tw``,
-              {
-                opacity: fadeAnimation,
-                transform: [{ translateY: slideAnimation }],
+        {/* Profile section */}
+        <Animated.View
+          style={[
+            tw`px-6 pb-8`,
+            {
+              opacity: fadeAnimation,
+              transform: [{ translateY: slideAnimation }],
+            }
+          ]}
+        >
+          {isAuthenticated && user ? (
+            <View style={[
+              tw`p-6 rounded-2xl`,
+              { 
+                backgroundColor: '#FFFFFF',
+                shadowColor: '#000000',
+                shadowOffset: { width: 0, height: 2 },
+                shadowOpacity: 0.06,
+                shadowRadius: 8,
+                elevation: 2,
+                borderWidth: 1,
+                borderColor: 'rgba(0, 0, 0, 0.04)',
               }
-            ]}
-          >
-            {isAuthenticated && user ? (
-              <>
-                <Text style={tw`text-xl font-bold text-gray-900 mb-1`}>
-                  {user.name}
-                </Text>
-                <Text style={tw`text-sm text-gray-500`}>
-                  {user.email}
-                </Text>
-                <View style={tw`flex-row items-center mt-2`}>
-                  <View style={[tw`w-2 h-2 rounded-full mr-2`, { backgroundColor: TURQUOISE }]} />
-                  <Text style={tw`text-xs text-gray-500`}>
-                    {user.favoriteHotels.length} favorite hotel{user.favoriteHotels.length !== 1 ? 's' : ''}
+            ]}>
+              {/* User info */}
+              <View style={tw`flex-row items-center mb-4`}>
+                <View style={[
+                  tw`w-16 h-16 rounded-2xl items-center justify-center mr-4`,
+                  { backgroundColor: 'rgba(29, 249, 255, 0.08)' }
+                ]}>
+                  <Ionicons name="person" size={28} color={TURQUOISE} />
+                </View>
+                
+                <View style={tw`flex-1`}>
+                  <Text style={[
+                    tw`text-lg font-semibold`,
+                    { color: '#1F2937' }
+                  ]}>
+                    {user.email}
                   </Text>
                 </View>
-              </>
-            ) : (
-              <>
-                <Text style={tw`text-xl font-bold text-gray-900 mb-1`}>
-                  Guest User
+              </View>
+
+              {/* Stats */}
+              <View style={[
+                tw`pt-4 border-t border-gray-100`,
+              ]}>
+                <View style={tw`flex-row items-center`}>
+                  <View style={[tw`w-2 h-2 rounded-full mr-2`, { backgroundColor: TURQUOISE }]} />
+                  <Text style={[tw`text-sm`, { color: '#6B7280' }]}>
+                    {user.favoriteHotels.length} favorited hotel{user.favoriteHotels.length !== 1 ? 's' : ''}
+                  </Text>
+                </View>
+              </View>
+            </View>
+          ) : (
+            <View style={[
+              tw`p-6 rounded-2xl`,
+              { 
+                backgroundColor: '#FFFFFF',
+                shadowColor: '#000000',
+                shadowOffset: { width: 0, height: 2 },
+                shadowOpacity: 0.06,
+                shadowRadius: 8,
+                elevation: 2,
+                borderWidth: 1,
+                borderColor: 'rgba(0, 0, 0, 0.04)',
+              }
+            ]}>
+              <View style={tw`items-center`}>
+                <View style={[
+                  tw`w-16 h-16 rounded-2xl items-center justify-center mb-4`,
+                  { backgroundColor: 'rgba(29, 249, 255, 0.08)' }
+                ]}>
+                  <Ionicons name="person-outline" size={28} color={TURQUOISE} />
+                </View>
+
+                <Text style={[
+                  tw`text-xl font-bold text-center mb-2`,
+                  { color: '#1F2937' }
+                ]}>
+                  Sign in to your account
                 </Text>
-                <Text style={tw`text-sm text-gray-500 mb-4`}>
-                  Create an account to save your favorite hotels and get personalized recommendations
+                
+                <Text style={[
+                  tw`text-sm text-center mb-6 max-w-sm`,
+                  { color: '#6B7280' }
+                ]}>
+                  Create an account to save favorites and get personalized recommendations
                 </Text>
 
-                {/* Sign Up with Email Button */}
+                {/* Updated Sign Up with Email Button - matching FavoritesScreen style */}
                 <TouchableOpacity
                   style={[
-                    tw`p-4 rounded-xl mb-3 flex-row items-center justify-center`,
-                    { backgroundColor: TURQUOISE }
+                    tw`px-4 py-4 rounded-xl flex-row items-center justify-center w-full mb-3 bg-white border border-gray-200`,
+                    {
+                      shadowColor: '#000',
+                      shadowOffset: {
+                        width: 0,
+                        height: 1,
+                      },
+                      shadowOpacity: 0.1,
+                      shadowRadius: 2,
+                      elevation: 3,
+                    }
                   ]}
                   onPress={() => setShowEmailSignUpModal(true)}
                   activeOpacity={0.8}
                 >
-                  <Ionicons name="mail-outline" size={20} color="white" />
-                  <Text style={tw`text-white font-semibold text-base ml-3`}>
+                  <View style={[
+                    tw`w-6 h-6 rounded-full items-center justify-center mr-3`,
+                    { backgroundColor: 'rgba(29, 249, 255, 0.15)' }
+                  ]}>
+                    <Ionicons
+                      name="mail-outline"
+                      size={14}
+                      color={TURQUOISE_DARK}
+                    />
+                  </View>
+                  <Text style={tw`text-base font-medium text-gray-800`}>
                     Sign Up with Email
                   </Text>
                 </TouchableOpacity>
 
-                {/* Sign Up with Google Button */}
+                {/* Updated Sign Up with Google Button - matching FavoritesScreen style */}
                 <TouchableOpacity
                   style={[
-                    tw`p-4 rounded-xl flex-row items-center justify-center border`,
-                    { 
-                      backgroundColor: '#FFFFFF',
-                      borderColor: '#E5E7EB',
+                    tw`px-4 py-4 rounded-xl flex-row items-center justify-center w-full mb-4 bg-white border border-gray-200`,
+                    {
+                      shadowColor: '#000',
+                      shadowOffset: {
+                        width: 0,
+                        height: 1,
+                      },
+                      shadowOpacity: 0.1,
+                      shadowRadius: 2,
+                      elevation: 3,
                     }
                   ]}
                   onPress={handleGoogleSignUp}
                   activeOpacity={0.8}
                 >
-                  <Ionicons name="logo-google" size={20} color="#4285F4" />
-                  <Text style={tw`text-gray-900 font-semibold text-base ml-3`}>
+                  <View style={[
+                    tw`w-6 h-6 rounded-full items-center justify-center mr-3`,
+                    { backgroundColor: 'rgba(66, 133, 244, 0.15)' }
+                  ]}>
+                    <Ionicons
+                      name="logo-google"
+                      size={14}
+                      color="#4285F4"
+                    />
+                  </View>
+                  <Text style={tw`text-base font-medium text-gray-800`}>
                     Sign Up with Google
                   </Text>
                 </TouchableOpacity>
 
                 {/* Already have account link */}
                 <TouchableOpacity
-                  style={tw`mt-3 items-center`}
+                  style={tw`mt-2 items-center`}
                   onPress={() => setShowEmailSignInModal(true)}
                   activeOpacity={0.8}
                 >
-                  <Text style={[tw`text-sm`, { color: TURQUOISE_DARK }]}>
+                  <Text style={[tw`text-sm font-medium`, { color: TURQUOISE_DARK }]}>
                     Already have an account? Sign In
                   </Text>
                 </TouchableOpacity>
-              </>
-            )}
-          </Animated.View>
-        </View>
+              </View>
+            </View>
+          )}
+        </Animated.View>
 
-        {/* Search Preferences Section */}
-        <SectionHeader 
-          title="Search Preferences" 
-          subtitle="Your hotel discovery settings"
-        />
-        
-        <MenuItem
-          icon="star-outline"
-          title="Recent Searches"
-          subtitle="Quick access to recent searches"
-          onPress={() => console.log('Saved searches pressed')}
-        />
-        
-        <MenuItem
-          icon="location-outline"
-          title="Preferred Locations"
-          subtitle="Cities you search often"
-          onPress={() => console.log('Locations pressed')}
-        />
-        
-        <MenuItem
-          icon="options-outline"
-          title="Default Filters"
-          subtitle="Set your go-to preferences"
-          onPress={() => console.log('Filters pressed')}
-        />
-
-        {/* Account Section */}
-        <SectionHeader 
-          title="Account" 
-          subtitle="Manage your account settings"
-        />
-        
-        <MenuItem
-          icon="person-outline"
-          title="Personal Information"
-          subtitle="Update your details"
-          onPress={() => console.log('Personal info pressed')}
-        />
-        
-        <MenuItem
-          icon="shield-checkmark-outline"
-          title="Privacy & Security"
-          subtitle="Control your privacy"
-          onPress={() => console.log('Privacy pressed')}
-        />
-        
-        <MenuItem
-          icon="heart-outline"
-          title="Favorites"
-          subtitle={isAuthenticated ? "Your saved hotels" : "Sign in to save favorites"}
-          badge={isAuthenticated && user ? user.favoriteHotels.length.toString() : undefined}
-          onPress={() => {
-            if (isAuthenticated) {
-              console.log('Navigate to favorites');
-            } else {
-              console.log('Navigate to sign in');
-            }
-          }}
-        />
-
-        {/* Preferences Section */}
-        <SectionHeader 
-          title="Preferences" 
-          subtitle="Customize your experience"
-        />
-        
-        <MenuItem
-          icon="notifications-outline"
-          title="Push Notifications"
-          subtitle="Hotel recommendations & updates"
-          hasSwitch={true}
-          switchValue={notificationsEnabled}
-          onSwitchChange={setNotificationsEnabled}
-          showArrow={false}
-        />
-        
-        <MenuItem
-          icon="location-outline"
-          title="Location Services"
-          subtitle="For better hotel recommendations"
-          hasSwitch={true}
-          switchValue={locationEnabled}
-          onSwitchChange={setLocationEnabled}
-          showArrow={false}
-        />
-        
-        <MenuItem
-          icon="finger-print-outline"
-          title="Biometric Login"
-          subtitle="Use Face ID or Touch ID"
-          hasSwitch={true}
-          switchValue={biometricEnabled}
-          onSwitchChange={setBiometricEnabled}
-          showArrow={false}
-        />
-        
-        <MenuItem
-          icon="moon-outline"
-          title="Dark Mode"
-          subtitle="Coming soon"
-          hasSwitch={true}
-          switchValue={darkModeEnabled}
-          onSwitchChange={setDarkModeEnabled}
-          showArrow={false}
-        />
-
-        {/* Support Section */}
-        <SectionHeader 
-          title="Support" 
-          subtitle="Get help when you need it"
-        />
-        
-        <MenuItem
-          icon="help-circle-outline"
-          title="Help Center"
-          subtitle="FAQs and guides"
-          onPress={() => console.log('Help pressed')}
-        />
-        
-        <MenuItem
-          icon="chatbubble-outline"
-          title="Contact Support"
-          subtitle="Get help with hotel searches"
-          onPress={() => console.log('Support pressed')}
-        />
-        
-        <MenuItem
-          icon="star-outline"
-          title="Rate Our App"
-          subtitle="Share your feedback"
-          onPress={() => console.log('Rate pressed')}
-        />
-
-        {/* About Section */}
-        <SectionHeader title="About" />
-        
-        <MenuItem
-          icon="document-text-outline"
-          title="Terms of Service"
-          onPress={() => console.log('Terms pressed')}
-        />
-        
-        <MenuItem
-          icon="shield-outline"
-          title="Privacy Policy"
-          onPress={() => console.log('Privacy policy pressed')}
-        />
-        
-        <MenuItem
-          icon="information-circle-outline"
-          title="App Version"
-          value="1.2.4"
-          showArrow={false}
-        />
-
-        {/* Logout Button (only shown when authenticated) */}
+        {/* Menu Items - Only for authenticated users */}
         {isAuthenticated && (
-          <View style={tw`px-6 pt-4 pb-6`}>
-            <TouchableOpacity
-              style={[
-                tw`p-4 rounded-2xl flex-row items-center justify-center shadow-sm border`,
-                { 
-                  backgroundColor: '#FEF2F2',
-                  borderColor: '#FECACA',
-                }
-              ]}
-              onPress={handleLogout}
-              activeOpacity={0.8}
-            >
-              <Ionicons name="log-out-outline" size={20} color="#EF4444" />
-              <Text style={tw`text-red-600 font-semibold text-base ml-3`}>
-                Sign Out
-              </Text>
-            </TouchableOpacity>
-          </View>
+          <Animated.View
+            style={{
+              opacity: fadeAnimation,
+              transform: [{
+                translateY: slideAnimation.interpolate({
+                  inputRange: [0, 30],
+                  outputRange: [0, 15],
+                }),
+              }],
+            }}
+          >
+
+            <MenuItem
+              icon="help-circle-outline"
+              title="Help & Feedback"
+              subtitle="Booking support and personal assistance"
+              onPress={handleHelpFeedback}
+            />
+            
+            <MenuItem
+              icon="log-out-outline"
+              title="Sign Out"
+              subtitle="Sign out of your account"
+              onPress={handleSignOut}
+              isDestructive={true}
+            />
+          </Animated.View>
         )}
 
+        {/* Bottom spacing */}
+        <View style={tw`h-8`} />
       </ScrollView>
+
+      {/* Help Feedback Modal */}
+      <HelpFeedbackModal
+        visible={showHelpFeedbackModal}
+        onClose={() => setShowHelpFeedbackModal(false)}
+      />
 
       {/* Email Sign Up Modal */}
       <EmailSignUpModal

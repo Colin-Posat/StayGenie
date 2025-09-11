@@ -23,6 +23,19 @@ import { getCountryName } from '../utils/countryMapping';
 import { getFlagEmoji } from '../utils/flagMapping';
 import EmailSignUpModal from '../components/SignupLogin/EmailSignUpModal';
 import EmailSignInModal from '../components/SignupLogin/EmailSignInModal';
+import { useNavigation, NavigationProp } from '@react-navigation/native';
+
+
+type FindStackParamList = {
+  InitialSearch: undefined;
+  Results: undefined;
+};
+
+type RootTabParamList = {
+  Favorites: undefined;
+  Find: { screen?: keyof FindStackParamList } | undefined;
+  Profile: undefined;
+};
 
 const { width } = Dimensions.get('window');
 
@@ -357,6 +370,7 @@ const FavoritesHeader: React.FC<{
   );
 };
 
+
 // Enhanced loading state
 const LoadingState: React.FC<{ error?: string | null }> = ({ error }) => {
   const pulseAnimation = useRef(new Animated.Value(0)).current;
@@ -532,6 +546,8 @@ const FavoritesScreen = () => {
     return `${hotels.length}-${hotelIds}`;
   }, []);
 
+  const navigation = useNavigation<NavigationProp<RootTabParamList>>();
+  
   const createCityFolders = useCallback((hotels: FavoritedHotel[], preserveExpansion = false): CityFolder[] => {
     const cityMap = new Map<string, { hotels: FavoritedHotel[]; country: string; countryCode: string }>();
     
@@ -718,9 +734,9 @@ const FavoritesScreen = () => {
     // Navigation logic here
   }, []);
 
-  const handleExplore = useCallback(() => {
-    // Navigation logic here
-  }, []);
+const handleExplore = useCallback(() => {
+  navigation.navigate('Find');
+}, [navigation]);
 
   const handleGoogleSignUp = useCallback(async () => {
     try {

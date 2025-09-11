@@ -22,6 +22,7 @@ import EmailSignUpModal from '../SignupLogin/EmailSignUpModal';
 import EmailSignInModal from '../SignupLogin/EmailSignInModal';
 import AnimatedHeartButton from './AnimatedHeartButton';
 import HotelChatOverlay from '../../components/HomeScreenTop/HotelChatOverlay';
+import * as WebBrowser from 'expo-web-browser';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 const CARD_WIDTH = screenWidth - 40;
@@ -224,6 +225,24 @@ interface AnimatedHeartButtonProps {
   size?: number;
   onShowSignUpModal?: () => void;
 }
+
+const openInAppBrowser = async (url: string) => {
+  try {
+    await WebBrowser.openBrowserAsync(url, {
+      presentationStyle: WebBrowser.WebBrowserPresentationStyle.PAGE_SHEET, // iOS nice sheet
+      dismissButtonStyle: 'done',
+      showTitle: true,                // Android toolbar title
+      toolbarColor: '#ffffff',        // Android toolbar
+      controlsColor: '#000000ff',       // iOS controls tint
+      enableBarCollapsing: true,      // Android
+      secondaryToolbarColor: '#f6f6f6',
+      showInRecents: false,
+    });
+  } catch (e) {
+    // last-ditch fallback if WebBrowser fails
+    try { await Linking.openURL(url); } catch {}
+  }
+};
 
 const getRatingColor = (rating: number): string => {
   if (rating >= 8.0) return "#1df9ff";
@@ -1168,39 +1187,24 @@ useEffect(() => {
   };
 
   const handleDeepLink = async () => {
-    try {
-      const deepLinkUrl = generateHotelDeepLink(
-        hotel,
-        checkInDate,
-        checkOutDate,
-        adults,
-        children,
-        placeId || hotel.placeId,
-        occupancies
-      );
+  try {
+    const deepLinkUrl = generateHotelDeepLink(
+      hotel,
+      checkInDate,
+      checkOutDate,
+      adults,
+      children,
+      placeId || hotel.placeId,
+      occupancies
+    );
 
-      console.log(`🔗 Opening hotel deep link: ${deepLinkUrl}`);
-
-      const canOpen = await Linking.canOpenURL(deepLinkUrl);
-      
-      if (canOpen) {
-        await Linking.openURL(deepLinkUrl);
-      } else {
-        Alert.alert(
-          'Unable to Open Link',
-          'Could not open the hotel booking page. Please check your internet connection and try again.',
-          [{ text: 'OK' }]
-        );
-      }
-    } catch (error) {
-      console.error('Error opening deep link:', error);
-      Alert.alert(
-        'Error',
-        'Failed to open hotel booking page. Please try again.',
-        [{ text: 'OK' }]
-      );
-    }
-  };
+    console.log(`🔗 Opening hotel deep link in-app: ${deepLinkUrl}`);
+    await openInAppBrowser(deepLinkUrl);
+  } catch (error) {
+    console.error('Error opening deep link:', error);
+    Alert.alert('Error', 'Failed to open hotel booking page. Please try again.', [{ text: 'OK' }]);
+  }
+};
 
   const generateGoogleMapsLink = (hotel: Hotel, checkin?: Date, checkout?: Date, adults: number = 2, children: number = 0): string => {
     let query = '';
@@ -1231,52 +1235,18 @@ useEffect(() => {
   };
 
   const handleViewDetails = async () => {
-    try {
-      const mapsLink = generateGoogleMapsLink(
-        hotel,
-        checkInDate,
-        checkOutDate,
-        adults,
-        children
-      );
-
-      console.log(`🗺️ Opening Google Maps for: ${hotel.name}`);
-      console.log(`🔗 Maps URL: ${mapsLink}`);
-
-      const canOpen = await Linking.canOpenURL(mapsLink);
-      
-      if (canOpen) {
-        await Linking.openURL(mapsLink);
-      } else {
-        let fallbackQuery = '';
-        if (hotel.latitude && hotel.longitude) {
-          fallbackQuery = `${hotel.latitude},${hotel.longitude}`;
-        } else if (hotel.city && hotel.country) {
-          fallbackQuery = encodeURIComponent(`${hotel.name} ${hotel.city} ${hotel.country}`);
-        } else {
-          fallbackQuery = encodeURIComponent(`${hotel.name} ${hotel.location}`);
-        }
-        const fallbackUrl = `https://www.google.com/maps/search/?api=1&query=${fallbackQuery}`;
-        await Linking.openURL(fallbackUrl);
-      }
-
-      onViewDetails?.();
-
-    } catch (error) {
-      console.error('Error opening Google Maps:', error);
-      
-      Alert.alert(
-        'Unable to Open Maps',
-        'Could not open Google Maps. Please check your internet connection and try again.',
-        [
-          {
-            text: 'OK',
-            onPress: () => onViewDetails?.()
-          }
-        ]
-      );
-    }
-  };
+  try {
+    const mapsLink = generateGoogleMapsLink(hotel, checkInDate, checkOutDate, adults, children);
+    console.log(`🗺️ Opening Google Maps (web) in-app: ${mapsLink}`);
+    await openInAppBrowser(mapsLink);
+    onViewDetails?.();
+  } catch (error) {
+    console.error('Error opening Google Maps:', error);
+    Alert.alert('Unable to Open Maps', 'Please check your internet connection and try again.', [
+      { text: 'OK', onPress: () => onViewDetails?.() },
+    ]);
+  }
+};
 
   const handleSlideChange = (slideIndex: number) => {
     setCurrentSlide(slideIndex);

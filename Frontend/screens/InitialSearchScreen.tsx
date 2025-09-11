@@ -204,50 +204,24 @@ const handleContentSizeChange = (e: any) => {
     }
   };
 
-  // Reset animations when screen comes into focus
-  useFocusEffect(
-    React.useCallback(() => {
-      console.log('InitialSearchScreen focused - resetting animations');
-      
-      const resetTimer = setTimeout(() => {
-        screenSlideOut.setValue(0);
-        contentFadeOut.setValue(1);
-        scaleTransition.setValue(1);
-        fadeAnimation.setValue(0);
-        slideAnimation.setValue(40);
-        logoFade.setValue(0);
-        searchBarScale.setValue(0.98);
-        turquoiseGlow.setValue(0);
-        
-        setIsTransitioning(false);
-        setIsFocused(false);
-        
-        Animated.parallel([
-          Animated.timing(fadeAnimation, {
-            toValue: 1,
-            duration: 800,
-            useNativeDriver: true,
-          }),
-          Animated.timing(slideAnimation, {
-            toValue: 0,
-            duration: 800,
-            useNativeDriver: true,
-          }),
-          Animated.timing(logoFade, {
-            toValue: 1,
-            duration: 1000,
-            delay: 200,
-            useNativeDriver: true,
-          }),
-        ]).start();
-      }, 100);
-      
-      return () => {
-        console.log('InitialSearchScreen unfocused - cleaning up');
-        clearTimeout(resetTimer);
-      };
-    }, [])
-  );
+useFocusEffect(
+  React.useCallback(() => {
+    // freeze hero at end-state so nothing re-animates
+    screenSlideOut.setValue(0);
+    contentFadeOut.setValue(1);
+    scaleTransition.setValue(1);
+
+    fadeAnimation.setValue(1);   // header visible
+    slideAnimation.setValue(0);  // no slide
+    logoFade.setValue(1);        // logo visible
+    searchBarScale.setValue(1);  // no pop
+    turquoiseGlow.setValue(0);   // neutral until user focuses
+
+    setIsTransitioning(false);
+    setIsFocused(false);
+  }, [])
+);
+
 
   // Continuous floating animation for background elements
   useEffect(() => {

@@ -6,6 +6,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { Image } from 'react-native';
 import { AuthProvider } from './contexts/AuthContext';
 
+
 // Import your screen components
 import InitialSearchScreen from './screens/InitialSearchScreen';
 import ExploreScreen from './screens/HomeScreen';

@@ -1,4 +1,4 @@
-// FavoriteHotelCard.tsx - Updated with single AI Insights dropdown
+// FavoriteHotelCard.tsx - Fixed with proper shadow rendering
 import React, { useRef, useEffect, useState } from 'react';
 import {
   View,
@@ -9,13 +9,16 @@ import {
   Easing,
   Alert,
   Linking,
-  Modal
+  Modal,
+  Platform,
+  StyleSheet
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import tw from 'twrnc';
 import { FavoritedHotel } from '../../utils/FavoritesCache';
 import { formatLocationDisplay, getCountryName } from '../../utils/countryMapping';
 import HotelChatOverlay from '../../components/HomeScreenTop/HotelChatOverlay';
+import * as WebBrowser from 'expo-web-browser';
 
 // Turquoise color constants
 const TURQUOISE = '#1df9ff';
@@ -509,7 +512,7 @@ const FavoriteHotelCard: React.FC<FavoriteHotelCardProps> = ({
   const fadeAnimation = useRef(new Animated.Value(0)).current;
   const [showConfirmModal, setShowConfirmModal] = useState(false);
   const [showAIInsights, setShowAIInsights] = useState(false);
-const [showHotelChat, setShowHotelChat] = useState(false);
+  const [showHotelChat, setShowHotelChat] = useState(false);
 
   useEffect(() => {
     Animated.timing(fadeAnimation, {
@@ -533,75 +536,36 @@ const [showHotelChat, setShowHotelChat] = useState(false);
     setShowConfirmModal(false);
   };
 
-  // Handle View Details (Google Maps)
-  const handleViewDetails = async () => {
-    try {
-      const mapsLink = generateGoogleMapsLink(
-        hotel,
-        checkInDate,
-        checkOutDate,
-        adults,
-        children
-      );
 
-      const canOpen = await Linking.canOpenURL(mapsLink);
-      
-      if (canOpen) {
-        await Linking.openURL(mapsLink);
-      } else {
-        let fallbackQuery = '';
-        if (hotel.latitude && hotel.longitude) {
-          fallbackQuery = `${hotel.latitude},${hotel.longitude}`;
-        } else if (hotel.city && hotel.country) {
-          fallbackQuery = encodeURIComponent(`${hotel.name} ${hotel.city} ${hotel.country}`);
-        } else {
-          fallbackQuery = encodeURIComponent(`${hotel.name} ${hotel.location}`);
-        }
-        const fallbackUrl = `https://www.google.com/maps/search/?api=1&query=${fallbackQuery}`;
-        await Linking.openURL(fallbackUrl);
-      }
-    } catch (error) {
-      console.error('Error opening Google Maps:', error);
-      Alert.alert(
-        'Unable to Open Maps',
-        'Could not open Google Maps. Please check your internet connection and try again.',
-        [{ text: 'OK' }]
-      );
-    }
-  };
+// Updated WebBrowser call with better configuration
+const handleViewDetails = async () => {
+  const mapsLink = generateGoogleMapsLink(hotel, checkInDate, checkOutDate, adults, children);
+  
+  await WebBrowser.openBrowserAsync(mapsLink, {
+    presentationStyle: WebBrowser.WebBrowserPresentationStyle.PAGE_SHEET,
+    dismissButtonStyle: 'done',
+    // These options help keep it in web view
+    controlsColor: '#000000ff',
+    toolbarColor: '#ffffff',
+    // Prevent automatic app switching
+    showTitle: true,
+    showInRecents: false,
+  });
+};
 
-  // Handle Book Now (Deep Link)
+
   const handleBookNow = async () => {
-    try {
-      const deepLinkUrl = generateHotelDeepLink(
-        hotel,
-        checkInDate,
-        checkOutDate,
-        adults,
-        children,
-        placeId,
-        occupancies
-      );
-
-      const canOpen = await Linking.canOpenURL(deepLinkUrl);
-      
-      if (canOpen) {
-        await Linking.openURL(deepLinkUrl);
-      } else {
-        Alert.alert(
-          'Unable to Open Booking',
-          'Could not open the hotel booking page. Please check your internet connection and try again.',
-          [{ text: 'OK' }]
-        );
-      }
-    } catch (error) {
-      console.error('Error opening booking link:', error);
-      Alert.alert(
-        'Error',
-        'Failed to open hotel booking page. Please try again.',
-        [{ text: 'OK' }]
-      );
-    }
+    const deepLinkUrl = generateHotelDeepLink(hotel, checkInDate, checkOutDate, adults, children, placeId, occupancies);
+    await WebBrowser.openBrowserAsync(deepLinkUrl, {
+    presentationStyle: WebBrowser.WebBrowserPresentationStyle.PAGE_SHEET,
+    dismissButtonStyle: 'done',
+    // These options help keep it in web view
+    controlsColor: '#000000ff',
+    toolbarColor: '#ffffff',
+    // Prevent automatic app switching
+    showTitle: true,
+    showInRecents: false,
+  });
   };
 
   const getDisplayPrice = () => {
@@ -637,166 +601,162 @@ const [showHotelChat, setShowHotelChat] = useState(false);
         { opacity: fadeAnimation }
       ]}
     >
-      {/* MOVE THE DROPDOWN INSIDE THIS CONTAINER */}
-      <View
-  style={[
-    tw`bg-white rounded-2xl overflow-hidden border border-gray-100`,
-    {
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: 0.1,
-      shadowRadius: 5,
-      elevation: 4, // Android
-    },
-  ]}
->
-        <TouchableOpacity
-          onPress={() => onPress(hotel)}
-          activeOpacity={0.98}
+      {/* Outer shadow wrapper - NO overflow or rounding */}
+      <View style={styles.shadowWrapper}>
+        {/* Inner container - handles rounding and overflow */}
+        <View
+          style={[
+            tw`bg-white rounded-2xl overflow-hidden border border-gray-100`,
+          ]}
         >
-          {/* Main Card Content */}
-          <View style={tw`flex-row`}>
-            {/* Hotel Image */}
-            <View style={tw`relative w-32 h-32`}>
-              <Image
-                source={{ uri: hotel.image }}
-                style={tw`w-full h-full`}
-                resizeMode="cover"
-              />
-              {/* Rating badge on image */}
-              <View 
-                style={[
-                  tw`absolute top-2 left-2 px-2 py-1 rounded-lg flex-row items-center`,
-                  { backgroundColor: 'rgba(0, 0, 0, 0.7)' }
-                ]}
-              >
+          <TouchableOpacity
+            onPress={() => onPress(hotel)}
+            activeOpacity={0.98}
+          >
+            {/* Main Card Content */}
+            <View style={tw`flex-row`}>
+              {/* Hotel Image */}
+              <View style={tw`relative w-32 h-32`}>
+                <Image
+                  source={{ uri: hotel.image }}
+                  style={tw`w-full h-full`}
+                  resizeMode="cover"
+                />
+                {/* Rating badge on image */}
                 <View 
                   style={[
-                    tw`w-4 h-4 rounded-full items-center justify-center mr-1`,
-                    { backgroundColor: getRatingColor(hotel.rating || 0) }
+                    tw`absolute top-2 left-2 px-2 py-1 rounded-lg flex-row items-center`,
+                    { backgroundColor: 'rgba(0, 0, 0, 0.7)' }
                   ]}
                 >
-                  <Ionicons 
-                    name="thumbs-up" 
-                    size={8} 
-                    color="#FFFFFF"
-                    style={{
-                      textShadowColor: '#000000',
-                      textShadowOffset: { width: 0.5, height: 0.5 },
-                      textShadowRadius: 1
-                    }}
-                  />
-                </View>
-                <Text style={tw`text-white text-xs font-semibold`}>
-                  {hotel.rating?.toFixed(1) || 'N/A'}
-                </Text>
-              </View>
-            </View>
-
-            {/* Hotel Information */}
-            <View style={tw`flex-1 p-4`}>
-              <View style={tw`flex-row justify-between items-start mb-2`}>
-                <View style={tw`flex-1 pr-2`}>
-                  <Text style={tw`text-base font-semibold text-gray-900 leading-tight mb-1`}>
-                    {hotel.name}
-                  </Text>
-                  <View style={tw`flex-row items-center mb-2`}>
-                    <Ionicons name="location-outline" size={14} color="#6B7280" />
-                    <Text style={tw`text-sm text-gray-600 ml-1 flex-1`} numberOfLines={1}>
-                      {getLocationDisplay()}
-                    </Text>
+                  <View 
+                    style={[
+                      tw`w-4 h-4 rounded-full items-center justify-center mr-1`,
+                      { backgroundColor: getRatingColor(hotel.rating || 0) }
+                    ]}
+                  >
+                    <Ionicons 
+                      name="thumbs-up" 
+                      size={8} 
+                      color="#FFFFFF"
+                      style={{
+                        textShadowColor: '#000000',
+                        textShadowOffset: { width: 0.5, height: 0.5 },
+                        textShadowRadius: 1
+                      }}
+                    />
                   </View>
+                  <Text style={tw`text-white text-xs font-semibold`}>
+                    {hotel.rating?.toFixed(1) || 'N/A'}
+                  </Text>
                 </View>
-                
-                {/* Remove button */}
-                <TouchableOpacity
-                  style={tw`w-8 h-8 bg-gray-100 rounded-full items-center justify-center`}
-                  onPress={handleRemove}
-                  activeOpacity={0.7}
-                >
-                  <Ionicons name="close" size={16} color="#6B7280" />
-                </TouchableOpacity>
               </View>
 
-              {/* Price */}
-              <View style={tw`flex-row items-center justify-between`}>
-                <Text style={tw`text-lg font-bold text-gray-900`}>
-                  {getDisplayPrice()}
-                  <Text style={tw`text-sm font-normal text-gray-600`}>/night</Text>
-                </Text>
+              {/* Hotel Information */}
+              <View style={tw`flex-1 p-4`}>
+                <View style={tw`flex-row justify-between items-start mb-2`}>
+                  <View style={tw`flex-1 pr-2`}>
+                    <Text style={tw`text-base font-semibold text-gray-900 leading-tight mb-1`}>
+                      {hotel.name}
+                    </Text>
+                    <View style={tw`flex-row items-center mb-2`}>
+                      <Ionicons name="location-outline" size={14} color="#6B7280" />
+                      <Text style={tw`text-sm text-gray-600 ml-1 flex-1`} numberOfLines={1}>
+                        {getLocationDisplay()}
+                      </Text>
+                    </View>
+                  </View>
+                  
+                  {/* Remove button */}
+                  <TouchableOpacity
+                    style={tw`w-8 h-8 bg-gray-100 rounded-full items-center justify-center`}
+                    onPress={handleRemove}
+                    activeOpacity={0.7}
+                  >
+                    <Ionicons name="close" size={16} color="#6B7280" />
+                  </TouchableOpacity>
+                </View>
+
+                {/* Price */}
+                <View style={tw`flex-row items-center justify-between`}>
+                  <Text style={tw`text-lg font-bold text-gray-900`}>
+                    {getDisplayPrice()}
+                    <Text style={tw`text-sm font-normal text-gray-600`}>/night</Text>
+                  </Text>
+                </View>
               </View>
             </View>
+          </TouchableOpacity>
+
+          {/* Action Buttons */}
+          <View style={tw`px-4 py-3 border-t border-gray-50`}>
+            <View style={tw`flex-row gap-2`}>
+              {/* Ask Button */}
+              <TouchableOpacity
+                style={[
+                  tw`flex-1 py-3 rounded-xl border-2 flex-row items-center justify-center`,
+                  { 
+                    backgroundColor: TURQUOISE + '10',
+                    borderColor: TURQUOISE + '30',
+                  }
+                ]}
+                onPress={() => setShowHotelChat(true)}
+                activeOpacity={0.8}
+              >
+                <Ionicons name="chatbubble" size={16} color={TURQUOISE_DARK} />
+                <Text style={[tw`ml-2 font-medium text-sm`, { color: '#000000' }]}>
+                  Ask
+                </Text>
+              </TouchableOpacity>
+
+              {/* View on Map Button */}
+              <TouchableOpacity
+                style={[
+                  tw`flex-1 py-3 rounded-xl border-2 flex-row items-center justify-center`,
+                  { 
+                    backgroundColor: TURQUOISE + '10',
+                    borderColor: TURQUOISE + '30',
+                  }
+                ]}
+                onPress={handleViewDetails}
+                activeOpacity={0.8}
+              >
+                <Ionicons name="map" size={16} color={TURQUOISE_DARK} />
+                <Text style={[tw`ml-2 font-medium text-sm`, { color: '#000000' }]}>
+                  Map
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[
+                  tw`flex-1 py-3 rounded-xl border-2 flex-row items-center justify-center`,
+                  { 
+                    backgroundColor: TURQUOISE + '10',
+                    borderColor: TURQUOISE + '30',
+                  }
+                ]}
+                onPress={handleBookNow}
+                activeOpacity={0.8}
+              >
+                <Image 
+                  source={require('../../assets/images/logo.png')} 
+                  style={{ width: 16, height: 16 }} 
+                  resizeMode="contain"
+                />
+                <Text style={[tw`ml-2 font-medium text-sm`, { color: '#000000' }]}>
+                  Book
+                </Text>
+              </TouchableOpacity>
+            </View>
           </View>
-        </TouchableOpacity>
 
-        {/* Action Buttons */}
-        <View style={tw`px-4 py-3 border-t border-gray-50`}>
-          <View style={tw`flex-row gap-2`}>
-            {/* Ask Button */}
-            <TouchableOpacity
-              style={[
-                tw`flex-1 py-3 rounded-xl border-2 flex-row items-center justify-center`,
-                { 
-                  backgroundColor: TURQUOISE + '10',
-                  borderColor: TURQUOISE + '30',
-                }
-              ]}
-              onPress={() => setShowHotelChat(true)}
-              activeOpacity={0.8}
-            >
-              <Ionicons name="chatbubble" size={16} color={TURQUOISE_DARK} />
-              <Text style={[tw`ml-2 font-medium text-sm`, { color: '#000000' }]}>
-                Ask
-              </Text>
-            </TouchableOpacity>
-
-            {/* View on Map Button */}
-            <TouchableOpacity
-              style={[
-                tw`flex-1 py-3 rounded-xl border-2 flex-row items-center justify-center`,
-                { 
-                  backgroundColor: TURQUOISE + '10',
-                  borderColor: TURQUOISE + '30',
-                }
-              ]}
-              onPress={handleViewDetails}
-              activeOpacity={0.8}
-            >
-              <Ionicons name="map" size={16} color={TURQUOISE_DARK} />
-              <Text style={[tw`ml-2 font-medium text-sm`, { color: '#000000' }]}>
-                Map
-              </Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[
-                tw`flex-1 py-3 rounded-xl border-2 flex-row items-center justify-center`,
-                { 
-                  backgroundColor: TURQUOISE + '10',
-                  borderColor: TURQUOISE + '30',
-                }
-              ]}
-              onPress={handleBookNow}
-              activeOpacity={0.8}
-            >
-              <Image 
-                source={require('../../assets/images/logo.png')} 
-                style={{ width: 16, height: 16 }} 
-                resizeMode="contain"
-              />
-              <Text style={[tw`ml-2 font-medium text-sm`, { color: '#000000' }]}>
-                Book
-              </Text>
-            </TouchableOpacity>
-          </View>
+          {/* AI Insights Dropdown */}
+          <AIInsightsDropdown
+            hotel={hotel}
+            isExpanded={showAIInsights}
+            onToggle={() => setShowAIInsights(!showAIInsights)}
+          />
         </View>
-
-        {/* AI Insights Dropdown - MOVED INSIDE THE CARD CONTAINER */}
-        <AIInsightsDropdown
-          hotel={hotel}
-          isExpanded={showAIInsights}
-          onToggle={() => setShowAIInsights(!showAIInsights)}
-        />
       </View>
 
       {/* Hotel Chat Modal */}
@@ -823,5 +783,22 @@ const [showHotelChat, setShowHotelChat] = useState(false);
     </Animated.View>
   );
 };
+
+// Shadow styles - platform specific
+const styles = StyleSheet.create({
+  shadowWrapper: {
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOpacity: 0.15,
+        shadowRadius: 10,
+        shadowOffset: { width: 0, height: 6 },
+      },
+      android: {
+        elevation: 6,
+      },
+    }),
+  },
+});
 
 export default FavoriteHotelCard;
