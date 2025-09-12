@@ -1,4 +1,4 @@
-// ProfileScreen.tsx - Clean and sleek design matching app aesthetic
+// ProfileScreen.tsx - Updated with password reset flow
 import React, { useState, useRef, useEffect } from 'react';
 import {
   View,
@@ -16,6 +16,7 @@ import tw from 'twrnc';
 import { useAuth } from '../contexts/AuthContext';
 import EmailSignUpModal from '../components/SignupLogin/EmailSignUpModal';
 import EmailSignInModal from '../components/SignupLogin/EmailSignInModal';
+import ForgotPasswordModal from '../components/SignupLogin/ForgotPasswordModal'; // Add this import
 import HelpFeedbackModal from '../components/Profile/HelpFeedbackModal';
 
 // Consistent color constants
@@ -124,7 +125,10 @@ const MenuItem: React.FC<{
 const ProfileScreen = () => {
   const [showEmailSignUpModal, setShowEmailSignUpModal] = useState(false);
   const [showEmailSignInModal, setShowEmailSignInModal] = useState(false);
-  const [showHelpFeedbackModal, setShowHelpFeedbackModal] = useState(false); // Added missing state
+  const [showForgotPasswordModal, setShowForgotPasswordModal] = useState(false); // Add this state
+  const [showResetPasswordModal, setShowResetPasswordModal] = useState(false); // Add this state
+  const [resetToken, setResetToken] = useState<string | undefined>(undefined); // Add this state
+  const [showHelpFeedbackModal, setShowHelpFeedbackModal] = useState(false);
 
   // Firebase auth
   const { user, isAuthenticated, signOut: firebaseSignOut, signInWithGoogle } = useAuth();
@@ -202,13 +206,51 @@ const ProfileScreen = () => {
     }, 300);
   };
 
+  // Updated to show ForgotPasswordModal
+  const handleForgotPassword = () => {
+    setShowEmailSignInModal(false);
+    setTimeout(() => {
+      setShowForgotPasswordModal(true);
+    }, 300);
+  };
+
+  // Handle when forgot password modal wants to go back to sign in
+  const handleBackToSignIn = () => {
+    setShowForgotPasswordModal(false);
+    setTimeout(() => {
+      setShowEmailSignInModal(true);
+    }, 300);
+  };
+
+  // Handle when reset email is sent
+  const handleResetSent = (email: string) => {
+    console.log('Reset email sent to:', email);
+    // You could show a success message or handle deep linking here
+  };
+
+  // Handle password reset with token (for deep link scenarios)
+  const handlePasswordResetWithToken = (token: string) => {
+    setResetToken(token);
+    setShowResetPasswordModal(true);
+  };
+
+  // Handle successful password reset
+  const handlePasswordResetSuccess = () => {
+    setShowResetPasswordModal(false);
+    setResetToken(undefined);
+    Alert.alert('Success', 'Password updated successfully! You can now sign in with your new password.');
+  };
+
   const handleChangePassword = () => {
+    // For authenticated users who want to change their password
+    // You could implement this to show the SimpleResetPasswordModal
+    // or redirect to a settings page
     console.log('Change password pressed');
-    // Implement password change flow
+    setShowResetPasswordModal(true);
   };
 
   const handleHelpFeedback = () => {
-    setShowHelpFeedbackModal(true); // Updated to show the modal
+    setShowHelpFeedbackModal(true);
   };
 
   return (
@@ -322,7 +364,7 @@ const ProfileScreen = () => {
                   Create an account to save favorites and get personalized recommendations
                 </Text>
 
-                {/* Updated Sign Up with Email Button - matching FavoritesScreen style */}
+                {/* Updated Sign Up with Email Button */}
                 <TouchableOpacity
                   style={[
                     tw`px-4 py-4 rounded-xl flex-row items-center justify-center w-full mb-3 bg-white border border-gray-200`,
@@ -355,7 +397,7 @@ const ProfileScreen = () => {
                   </Text>
                 </TouchableOpacity>
 
-                {/* Updated Sign Up with Google Button - matching FavoritesScreen style */}
+                {/* Updated Sign Up with Google Button */}
                 <TouchableOpacity
                   style={[
                     tw`px-4 py-4 rounded-xl flex-row items-center justify-center w-full mb-4 bg-white border border-gray-200`,
@@ -456,10 +498,17 @@ const ProfileScreen = () => {
         visible={showEmailSignInModal}
         onClose={() => setShowEmailSignInModal(false)}
         onSwitchToSignUp={handleSwitchToSignUp}
-        onForgotPassword={() => {
-          console.log('Forgot password pressed');
-        }}
+        onForgotPassword={handleForgotPassword} // Updated to use the proper handler
       />
+
+      {/* Forgot Password Modal */}
+      <ForgotPasswordModal
+        visible={showForgotPasswordModal}
+        onClose={() => setShowForgotPasswordModal(false)}
+        onBackToSignIn={handleBackToSignIn}
+        onResetSent={handleResetSent}
+      />
+
     </SafeAreaView>
   );
 };
