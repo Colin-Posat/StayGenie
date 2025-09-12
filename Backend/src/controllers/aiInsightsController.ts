@@ -7,6 +7,7 @@ import pLimit from 'p-limit';
 import { randomUUID } from 'crypto';
 import dotenv from 'dotenv';
 import path from 'path';
+import { searchCostTracker, extractTokens } from '../utils/searchCostTracker';
 
 export interface AIRecommendation {
   hotelId: string;
@@ -558,13 +559,15 @@ const generateInsightsFromSentiment = async (hotelName: string, sentimentData: H
 const generateDetailedAIContent = async (
   hotel: HotelSummaryForInsights,
   userQuery?: string,
-  nights?: number
+  nights?: number,
+  searchId?: string
 ): Promise<{
   whyItMatches: string;
   funFacts: string[];
   nearbyAttractions: string[];
   locationHighlight: string;
 }> => {
+
   
   console.log(`🧠 GPT-4o Mini generating detailed content for ${hotel.name}`);
   
@@ -683,6 +686,11 @@ Use coordinates (${summary.latitude}, ${summary.longitude}) for real attractions
       temperature: 0.7,
       max_tokens: 400,
     });
+
+    if (searchId) {
+      const tokens = extractTokens(completion);
+      searchCostTracker.addGptUsage(searchId, 'aiInsights', tokens.prompt, tokens.completion);
+    }
 
     const content = completion.choices[0]?.message?.content?.trim() || '{}';
     const cleanContent = content.replace(/```json\n?|\n?```/g, '').trim();
@@ -891,7 +899,7 @@ export const aiInsightsController = async (req: Request, res: Response) => {
   const logger = new PerformanceLogger();
   
   try {
-    const { hotels, userQuery, nights } = req.body;
+    const { hotels, userQuery, nights, searchId } = req.body;
 
     if (!hotels || !Array.isArray(hotels) || hotels.length === 0) {
       return res.status(400).json({ 
@@ -930,7 +938,7 @@ export const aiInsightsController = async (req: Request, res: Response) => {
         // Stagger requests to avoid rate limiting
         await new Promise(resolve => setTimeout(resolve, index * 300));
         
-        const aiContent = await generateDetailedAIContent(hotel, userQuery, nights);
+        const aiContent = await generateDetailedAIContent(hotel, userQuery, nights, searchId);
         
         return {
           hotelId: hotel.hotelId,

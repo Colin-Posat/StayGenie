@@ -825,7 +825,7 @@ useFocusEffect(
         disabled={!searchQuery.trim() || isTransitioning}
       >
         <Ionicons 
-          name={isTransitioning ? "hourglass" : "arrow-up"} 
+          name={isTransitioning ? "hourglass" : "arrow-forward"} 
           size={16} 
           color={searchQuery.trim().length > 0 && !isTransitioning ? "white" : "#9CA3AF"} 
         />

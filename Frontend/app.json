@@ -2,6 +2,7 @@
   "expo": {
     "name": "StayGenie",
     "slug": "StayGenie",
+    "scheme": "staygenie",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/logo.png",
@@ -15,7 +16,8 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.colinps.staygenie",
-      "runtimeVersion": "1.0.0"
+      "runtimeVersion": "1.0.0",
+      "googleServicesFile": "./GoogleService-Info.plist"
     },
     "android": {
       "adaptiveIcon": {
@@ -23,22 +25,19 @@
         "backgroundColor": "#ffffff"
       },
       "edgeToEdgeEnabled": true,
-      "runtimeVersion": {
-        "policy": "appVersion"
-      }
+      "runtimeVersion": { "policy": "appVersion" },
+      "googleServicesFile": "./google-services.json"
     },
-    "web": {
-      "favicon": "./assets/favicon.png"
-    },
+    "web": { "favicon": "./assets/favicon.png" },
     "extra": {
-      "eas": {
-        "projectId": "391713d4-1f73-45c0-a82e-e4ad89ac6f20"
-      }
+      "eas": { "projectId": "391713d4-1f73-45c0-a82e-e4ad89ac6f20" }
     },
     "updates": {
       "url": "https://u.expo.dev/391713d4-1f73-45c0-a82e-e4ad89ac6f20"
     },
     "plugins": [
+      "@react-native-firebase/app",
+      "@react-native-firebase/analytics",
       "expo-web-browser"
     ]
   }

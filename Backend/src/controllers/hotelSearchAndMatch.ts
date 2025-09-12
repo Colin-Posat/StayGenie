@@ -10,6 +10,7 @@ import {
   HotelWithRates, 
   HotelSummaryForAI
 } from '../types/hotel';
+import { searchCostTracker, extractTokens } from '../utils/searchCostTracker';
 
 // Load environment variables
 dotenv.config({ path: path.resolve(__dirname, '../../.env') });
@@ -374,8 +375,10 @@ const gptHotelMatchingSSE = async (
   sendUpdate: (type: string, data: any) => void,
   hotelMetadataMap: Map<string, Record<string, unknown>>,
   hotelsWithRates: any[],
-  userInput: string
+  userInput: string,
+  searchId: string 
 ): Promise<Array<{ hotelName: string; aiMatchPercent: number; hotelData: HotelSummaryForAI }>> => {
+  
   
   const hasSpecificPreferences = parsedQuery.aiSearch && parsedQuery.aiSearch.trim() !== '';
   
@@ -493,6 +496,7 @@ REMEMBER: Always select 15 hotels using exact names from the list above.`;
     temperature: 0.3,
     max_tokens: 1200,
     stream: true,
+    stream_options: { include_usage: true } // This enables usage tracking
   });
 
   let buffer = '';
@@ -500,10 +504,20 @@ REMEMBER: Always select 15 hotels using exact names from the list above.`;
   let hotelsStreamed = 0;
   const insightPromises: Promise<void>[] = [];
   
+  // Track tokens as we stream
+  let totalTokens = { prompt: 0, completion: 0 };
+  
   try {
     for await (const chunk of stream) {
       const content = chunk.choices[0]?.delta?.content || '';
       buffer += content;
+      
+      // CAPTURE TOKEN USAGE - this comes at the end of the stream
+      if (chunk.usage) {
+        totalTokens.prompt = chunk.usage.prompt_tokens || 0;
+        totalTokens.completion = chunk.usage.completion_tokens || 0;
+        console.log(`📊 Stream usage captured: ${totalTokens.prompt} + ${totalTokens.completion} = ${totalTokens.prompt + totalTokens.completion} tokens`);
+      }
       
       const lines = buffer.split('\n');
       buffer = lines.pop() || '';
@@ -525,7 +539,6 @@ REMEMBER: Always select 15 hotels using exact names from the list above.`;
           });
 
           if (matchingHotel) {
-            // Process hotel with immediate insights
             const insightPromise = processHotelWithImmediateInsights(
               { ...matchingHotel, aiMatchPercent: parsed.aiMatchPercent },
               parsed.rank,
@@ -536,7 +549,6 @@ REMEMBER: Always select 15 hotels using exact names from the list above.`;
               sendUpdate
             ).catch(error => {
               console.error(`❌ Insight processing failed for ${parsed.hotelName}:`, error);
-              // Send fallback data even if insights fail
               sendUpdate('hotel_enhanced', {
                 hotelIndex: parsed.rank,
                 hotelId: parsed.hotelData.hotelId,
@@ -559,6 +571,73 @@ REMEMBER: Always select 15 hotels using exact names from the list above.`;
         }
       }
     }
+    
+    // IMPORTANT: Track tokens AFTER stream is fully consumed
+    if (totalTokens.prompt > 0 || totalTokens.completion > 0) {
+      searchCostTracker.addGptUsage(searchId, 'hotelMatching', totalTokens.prompt, totalTokens.completion);
+      console.log(`💰 Tracked streaming tokens for hotel matching: ${totalTokens.prompt + totalTokens.completion} tokens`);
+    } else {
+      // Fallback: estimate tokens if usage not provided
+      const estimatedTokens = Math.ceil(prompt.length / 4); // Rough estimate: 4 chars per token
+      console.warn(`⚠️ No token usage from stream, estimating ${estimatedTokens} tokens`);
+      searchCostTracker.addGptUsage(searchId, 'hotelMatching', estimatedTokens, 600); // Estimate completion tokens
+    }
+    
+    // Process remaining buffer content
+    if (buffer.trim()) {
+      const remainingLines = buffer.split('\n');
+      for (const line of remainingLines) {
+        if (line.trim()) {
+          const parsed = parseRankedHotelLine(line.trim(), hotelSummaries);
+          if (parsed && !rankedHotels.has(parsed.rank)) {
+            rankedHotels.set(parsed.rank, {
+              hotelName: parsed.hotelName,
+              aiMatchPercent: parsed.aiMatchPercent,
+              hotelData: parsed.hotelData
+            });
+            
+            const matchingHotel = hotelsWithRates.find((hotel: any) => {
+              const hotelId = hotel.hotelId || hotel.id || hotel.hotel_id;
+              return hotelId === parsed.hotelData.hotelId;
+            });
+
+            if (matchingHotel) {
+              const insightPromise = processHotelWithImmediateInsights(
+                { ...matchingHotel, aiMatchPercent: parsed.aiMatchPercent },
+                parsed.rank,
+                userInput,
+                parsedQuery,
+                nights,
+                hotelMetadataMap,
+                sendUpdate
+              ).catch(error => {
+                console.error(`❌ Insight processing failed for ${parsed.hotelName}:`, error);
+                sendUpdate('hotel_enhanced', {
+                  hotelIndex: parsed.rank,
+                  hotelId: parsed.hotelData.hotelId,
+                  hotel: {
+                    name: parsed.hotelName,
+                    aiMatchPercent: parsed.aiMatchPercent,
+                    whyItMatches: "Great choice with excellent amenities",
+                    funFacts: ["Quality accommodations", "Convenient location"],
+                    nearbyAttractions: ["City center", "Local attractions"],
+                    locationHighlight: "Well-located property",
+                    guestInsights: "Consistently rated well by guests"
+                  },
+                  message: `${parsed.hotelName} ready (insights unavailable)`
+                });
+              });
+              
+              insightPromises.push(insightPromise);
+              hotelsStreamed++;
+            }
+          }
+        }
+      }
+    }
+    searchCostTracker.addGptUsage(searchId, 'hotelMatching', totalTokens.prompt, totalTokens.completion);
+
+    
     
     // Process remaining buffer
     if (buffer.trim()) {
@@ -669,6 +748,11 @@ REMEMBER: Always select 15 hotels using exact names from the list above.`;
     
   } catch (streamError) {
     console.error('❌ SSE Streaming error:', streamError);
+    
+    // Even if streaming fails, try to track some estimated cost
+    const estimatedTokens = Math.ceil(prompt.length / 4);
+    searchCostTracker.addGptUsage(searchId, 'hotelMatching', estimatedTokens, 300);
+    
     sendUpdate('error', { 
       message: 'AI matching encountered an error',
       details: streamError instanceof Error ? streamError.message : 'Unknown streaming error'
@@ -880,7 +964,8 @@ const createOptimizedHotelSummaryForAI = (hotel: HotelWithRates, hotelMetadata: 
 const gptHotelMatching = async (
   hotelSummaries: HotelSummaryForAI[], 
   parsedQuery: ParsedSearchQuery, 
-  nights: number
+  nights: number,
+  searchId: string 
 ): Promise<Array<{ hotelName: string; aiMatchPercent: number; hotelData: HotelSummaryForAI }>> => {
   
   const hasSpecificPreferences = parsedQuery.aiSearch && parsedQuery.aiSearch.trim() !== '';
@@ -1029,6 +1114,8 @@ REMEMBER: ALWAYS return 5 hotels! Use exact names from list.`;
     temperature: 0.3,
     max_tokens: 1200,
   });
+  const tokens = extractTokens(response);
+  searchCostTracker.addGptUsage(searchId, 'hotelMatching', tokens.prompt, tokens.completion);
   
   // Parse response with fallback logic (same as before)
   const parseMatchingResponse = (response: any): Array<{ hotelName: string; aiMatchPercent: number; hotelData: HotelSummaryForAI }> => {
@@ -1632,6 +1719,13 @@ export const hotelSearchAndMatchController = async (req: Request, res: Response)
         hotelsWithRates = [];
       }
     }
+    searchCostTracker.startSearch(
+    searchId, 
+    userInput, 
+    `${parsedQuery.cityName}, ${parsedQuery.countryCode}`,
+    hotelsWithRates.length
+  );
+
 
     logger.endStep('4-FetchRates', { hotelsWithRates: hotelsWithRates.length });
 
@@ -1748,11 +1842,12 @@ export const hotelSearchAndMatchController = async (req: Request, res: Response)
         sendUpdate,
         hotelMetadataMap,
         hotelsWithRates,
-        userInput
+        userInput,
+        searchId
       );
     } else {
       // Use regular GPT matching for POST requests
-      gptMatches = await gptHotelMatching(priceFilteredHotels, parsedQuery, nights);
+      gptMatches = await gptHotelMatching(priceFilteredHotels, parsedQuery, nights, searchId);
     }
     
     logger.endStep('7-GPTMatching', { matches: gptMatches.length });
@@ -1821,6 +1916,7 @@ export const hotelSearchAndMatchController = async (req: Request, res: Response)
     logger.endStep('8-BuildEnrichedData', { enrichedHotels: enrichedHotels.length });
 
     // Final response
+    const totalSearchCost = searchCostTracker.finishSearch(searchId);
     const performanceReport = logger.getDetailedReport();
     console.log(`🚀 ${isSSERequest ? 'SSE' : 'POST'} Hotel Search Complete in ${performanceReport.totalTime}ms ✅`);
 
@@ -1830,6 +1926,7 @@ export const hotelSearchAndMatchController = async (req: Request, res: Response)
     message: `Found ${enrichedHotels.length} perfect hotels for you!`,
     searchId: searchId,
     totalHotels: enrichedHotels.length,
+    searchCost: totalSearchCost,
     searchParams: {
       ...parsedQuery,
       nights: nights,
@@ -1861,6 +1958,7 @@ export const hotelSearchAndMatchController = async (req: Request, res: Response)
         generatedAt: new Date().toISOString(),
         searchId: searchId,
         aiModel: "gpt-4o-mini",
+         searchCost: totalSearchCost,
         performance: {
           totalTimeMs: performanceReport.totalTime,
           stepBreakdown: performanceReport.steps,
