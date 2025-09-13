@@ -324,7 +324,9 @@ const HomeScreen = () => {
   const navigation = useNavigation<HomeScreenNavigationProp>();
   const width = Dimensions.get('window').width;
   const [streamingSearchParams, setStreamingSearchParams] = useState<any>(null);
-
+const [isSearchInfoExpanded, setIsSearchInfoExpanded] = useState(false);
+const [textIsTruncated, setTextIsTruncated] = useState(false);
+const [shouldShowChevron, setShouldShowChevron] = useState(false);
   // State management
   const [showPlaceholders, setShowPlaceholders] = useState(false);
   // State management
@@ -1573,10 +1575,17 @@ const handleBackPress = useCallback(() => {
 
         </View>
 {searchQuery.trim().length > 0 && (
-  <View style={tw`bg-white px-3 py-2 rounded-lg border border-gray-200`}>
-    <View style={tw`flex-row items-center justify-between`}>
-      <View style={tw`flex-1`}>
-        <Text style={tw`text-xs text-gray-500`}>
+  <TouchableOpacity
+    style={tw`bg-white px-3 py-2 rounded-lg border border-gray-200`}
+    onPress={() => setIsSearchInfoExpanded(!isSearchInfoExpanded)}
+    activeOpacity={0.7}
+  >
+    <View style={tw`flex-row items-start justify-between`}>
+      <View style={tw`flex-1 pr-2`}>
+        <Text 
+          style={tw`text-xs text-gray-500`}
+          numberOfLines={isSearchInfoExpanded ? undefined : 2}
+        >
           {isStreamingSearch && displayHotels.length > 0
             ? `${displayHotels.length} Hotels Found For "${searchQuery}"`
             : isStreamingSearch
@@ -1587,7 +1596,7 @@ const handleBackPress = useCallback(() => {
           }
         </Text>
         
-        {/* Date and guest info - ONLY show when we have actual search params from the API */}
+        {/* Date and guest info */}
         {displayHotels.length > 0 && (stage1Results?.searchParams || searchResults?.searchParams || currentSearchId) && (
           <Text style={tw`text-xs text-gray-400 mt-1`}>
             {checkInDate.toLocaleDateString('en-US', { 
@@ -1606,15 +1615,27 @@ const handleBackPress = useCallback(() => {
           </Text>
         )}
       </View>
+      
+      {/* Chevron indicator - now just visual, not interactive */}
+      <View style={tw`p-1`}>
+        <Ionicons 
+          name={isSearchInfoExpanded ? "chevron-up" : "chevron-down"} 
+          size={14} 
+          color="#9CA3AF" 
+        />
+      </View>
     </View>
     
     {/* Streaming progress message */}
     {isStreamingSearch && streamingProgress.message && (
-      <Text style={tw`text-xs text-blue-500 mt-1`}>
+      <Text 
+        style={tw`text-xs text-blue-500 mt-1`}
+        numberOfLines={isSearchInfoExpanded ? undefined : 1}
+      >
         {streamingProgress.message}
       </Text>
     )}
-  </View>
+  </TouchableOpacity>
 )}
             </View>
             

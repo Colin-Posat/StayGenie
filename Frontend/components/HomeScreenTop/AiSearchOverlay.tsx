@@ -210,7 +210,7 @@ const ConversationalRefineOverlay: React.FC<ConversationalRefineOverlayProps> = 
     const welcomeMessage: ChatMessage = {
       id: `ai_${Date.now()}`,
       type: 'ai',
-      text: `You searched "${currentSearch}". Use the suggestions below or tell me how you'd like to refine your search.`,
+      text: `See the suggestions below or tell me how you'd like to refine or edit your search.`,
       timestamp: new Date(),
     };
     setChatMessages([welcomeMessage]);
@@ -517,57 +517,88 @@ const ConversationalRefineOverlay: React.FC<ConversationalRefineOverlayProps> = 
                 </View>
 
                 {/* Compact highlighted search bar */}
-                <View
-                  style={[
-                    tw`mt-3 rounded-xl border bg-white`,
-                    {
-                      borderColor: isSearchUpdating ? TURQUOISE : TURQUOISE + '30',
-                      shadowColor: TURQUOISE,
-                      shadowOffset: { width: 0, height: 2 },
-                      shadowOpacity: isSearchUpdating ? 0.12 : 0.04,
-                      shadowRadius: 4,
-                    },
-                  ]}
-                >
-                  <View style={tw`px-3 py-2 flex-row items-center`}>
-                    <Ionicons
-                      name={isSearchUpdating ? 'sparkles' : 'search'}
-                      size={16}
-                      color={isSearchUpdating ? TURQUOISE_DARK : TURQUOISE_DARK}
-                      style={tw`mr-2`}
-                    />
-                    <View style={tw`flex-1`}>
-                      {searchParts.length > 0 ? (
-                        renderHighlightedText()
-                      ) : (
-                        <TextInput
-                          style={[
-                            tw`text-sm font-medium`,
-                            {
-                              color: '#111827',
-                              lineHeight: Platform.OS === 'ios' ? 20 : 22,
-                              paddingVertical: 0,
-                              minHeight: 20,
-                              maxHeight: 80,
-                            },
-                          ]}
-                          value={searchText}
-                          onChangeText={handleSearchTextChange}
-                          placeholder="Your search will appear here…"
-                          placeholderTextColor="#94A3B8"
-                          multiline
-                          scrollEnabled={false}
-                          returnKeyType="done"
-                          blurOnSubmit
-                        />
-                      )}
-                    </View>
-                    {isSearchUpdating && (
-                      <Text style={[tw`text-xs font-medium ml-2`, { color: TURQUOISE_DARK }]}>Updated</Text>
-                    )}
-                  </View>
-                </View>
-              </View>
+                {/* Compact highlighted search bar with height constraints */}
+{/* Compact highlighted search bar with height constraints */}
+<View
+  style={[
+    tw`mt-3 rounded-xl border bg-white`,
+    {
+      borderColor: isSearchUpdating ? TURQUOISE : TURQUOISE + '30',
+      shadowColor: TURQUOISE,
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: isSearchUpdating ? 0.12 : 0.04,
+      shadowRadius: 4,
+      maxHeight: 74, // Height for exactly 3 lines + padding
+    },
+  ]}
+>
+  <ScrollView
+    style={{ maxHeight: 75 }} // Scroll area for 3 lines of text
+    showsVerticalScrollIndicator={true} // Show scroll bar
+    contentContainerStyle={{ minHeight: 36 }} // Ensure minimum height
+  >
+    <View style={tw`px-3 py-2 flex-row items-start`}> {/* Changed to items-start */}
+      <Ionicons
+        name={isSearchUpdating ? 'sparkles' : 'search'}
+        size={16}
+        color={isSearchUpdating ? TURQUOISE_DARK : TURQUOISE_DARK}
+        style={[tw`mr-2`, { marginTop: 2 }]} // Add small top margin to align with text
+      />
+      <View style={tw`flex-1`}>
+        {searchParts.length > 0 ? (
+          <View style={tw`flex-row flex-wrap`}>
+            {searchParts.map((part) => (
+              <Animated.Text
+                key={part.id}
+                style={[
+                  tw`text-sm font-medium`,
+                  {
+                    color: part.isHighlighted ? TURQUOISE_DARK : '#111827',
+                    backgroundColor: part.isHighlighted ? TURQUOISE + '20' : 'transparent',
+                    borderRadius: part.isHighlighted ? 4 : 0,
+                    paddingHorizontal: part.isHighlighted ? 2 : 0,
+                    lineHeight: Platform.OS === 'ios' ? 18 : 20, // Tighter line height
+                  },
+                ]}
+                // No numberOfLines - text never truncates, just scrolls
+              >
+                {part.text}
+              </Animated.Text>
+            ))}
+          </View>
+        ) : (
+          <TextInput
+            style={[
+              tw`text-sm font-medium`,
+              {
+                color: '#111827',
+                lineHeight: Platform.OS === 'ios' ? 18 : 20,
+                paddingVertical: 0,
+                minHeight: 20,
+                maxHeight: 54, // Height for 3 lines in the input
+              },
+            ]}
+            value={searchText}
+            onChangeText={handleSearchTextChange}
+            placeholder="Your search will appear here…"
+            placeholderTextColor="#94A3B8"
+            multiline
+            scrollEnabled={true} // Allow scrolling within the input
+            returnKeyType="done"
+            blurOnSubmit
+            // No numberOfLines - allow unlimited lines, just scroll
+          />
+        )}
+      </View>
+      {isSearchUpdating && (
+        <View style={[tw`ml-2`, { marginTop: 2 }]}>
+          <Text style={[tw`text-xs font-medium`, { color: TURQUOISE_DARK }]}>Updated</Text>
+        </View>
+      )}
+    </View>
+  </ScrollView>
+</View>
+</View>
 
               {/* Messages — compact */}
               <View style={tw`flex-1`}>

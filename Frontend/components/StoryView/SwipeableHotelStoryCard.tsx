@@ -1372,7 +1372,7 @@ useEffect(() => {
 
 <View style={tw`bg-white rounded-b-2xl`}>
   
-{/* Action Buttons - Original spacing, smaller text */}
+{/* Action Buttons - Original spacing, prevents text truncation */}
 <View style={tw`flex-row items-center px-4 py-3 gap-2`}>
   {/* Heart/Save Button */}
   <AnimatedHeartButton
@@ -1396,7 +1396,7 @@ useEffect(() => {
     <Ionicons name="chatbubble" size={14} color={TURQUOISE_DARK} />
     <Text
       style={[tw`ml-2 font-medium text-xs`, { color: BLACK }]}
-      numberOfLines={1}
+      allowFontScaling={false}
     >
       Ask
     </Text>
@@ -1417,7 +1417,7 @@ useEffect(() => {
     <Ionicons name="map" size={14} color={TURQUOISE_DARK} />
     <Text
       style={[tw`ml-2 font-medium text-xs`, { color: BLACK }]}
-      numberOfLines={1}
+      allowFontScaling={false}
     >
       Map
     </Text>
@@ -1442,12 +1442,11 @@ useEffect(() => {
     />
     <Text
       style={[tw`ml-2 font-medium text-xs`, { color: BLACK }]}
-      numberOfLines={1}
+      allowFontScaling={false}
     >
       Book
     </Text>
   </TouchableOpacity>
-
 </View>
 </View>
 
