@@ -1,4 +1,4 @@
-// SwipeableStoryView.tsx - Updated with Grey Placeholder Support
+// SwipeableStoryView.tsx - Updated with Enhanced Room Image Support
 import React, { useState, useEffect } from 'react';
 import {
   View,
@@ -27,9 +27,7 @@ interface SwipeableStoryViewProps {
   stage1Complete?: boolean;
   stage2Complete?: boolean;
   searchMode?: 'test' | 'two-stage' | 'legacy';
-  // NEW: Placeholder support
   showPlaceholders?: boolean;
-  // Streaming props
   isStreaming?: boolean;
   streamingProgress?: {
     step: number;
@@ -52,9 +50,7 @@ const SwipeableStoryView: React.FC<SwipeableStoryViewProps> = ({
   stage1Complete = false,
   stage2Complete = false,
   searchMode = 'two-stage',
-  // NEW: Placeholder prop
   showPlaceholders = false,
-  // Streaming props with defaults
   isStreaming = false,
   streamingProgress = { step: 0, totalSteps: 8, message: '' },
   searchParams,
@@ -96,7 +92,7 @@ const SwipeableStoryView: React.FC<SwipeableStoryViewProps> = ({
     }
   }, [isStreaming, streamingHotelsCount, hotels.length]);
 
-  // NEW: Generate placeholder card
+  // Generate placeholder card
   const renderPlaceholderCard = (index: number) => {
     return (
       <View style={tw`px-5 mb-6`}>
@@ -154,70 +150,101 @@ const SwipeableStoryView: React.FC<SwipeableStoryViewProps> = ({
     );
   };
 
-  // Enhanced hotel processing
+  // Enhanced hotel processing with priority room image handling
   const enhanceHotel = (hotel: Hotel): EnhancedHotel => {
-    const generateImages = (hotel: Hotel): string[] => {
-      if (hotel.images && hotel.images.length > 0) {
-        console.log(`✅ Using API images for ${hotel.name}:`, hotel.images.length, 'images');
-        
-        if (hotel.images.length >= 3) {
-          return hotel.images.slice(0, 3);
-        }
-        
-        const apiImages = [...hotel.images];
-        const baseImage = hotel.images[0];
-        
-        if (baseImage && (baseImage.includes('unsplash.com') || baseImage.includes('http') || baseImage.startsWith('//'))) {
-          const baseUrl = baseImage.split('?')[0];
-          
-          while (apiImages.length < 3) {
-            if (apiImages.length === 1) {
-              apiImages.push(`${baseUrl}?auto=format&fit=crop&w=800&q=80&crop=entropy`);
-            } else if (apiImages.length === 2) {
-              apiImages.push(`${baseUrl}?auto=format&fit=crop&w=800&q=80&crop=faces`);
-            }
-          }
-        }
-        
-        while (apiImages.length < 3) {
-          const fallbackImages = [
-            "https://images.unsplash.com/photo-1564501049412-61c2a3083791?auto=format&fit=crop&w=800&q=80",
-            "https://images.unsplash.com/photo-1571896349842-33c89424de2d?auto=format&fit=crop&w=800&q=80",
-            "https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?auto=format&fit=crop&w=800&q=80",
-          ];
-          apiImages.push(fallbackImages[apiImages.length - 1] || fallbackImages[0]);
-        }
-        
-        return apiImages.slice(0, 3);
+const generateImages = (hotel: Hotel): string[] => {
+  console.log(`🖼️ Processing images for ${hotel.name}:`);
+  console.log(`- firstRoomImage: ${hotel.firstRoomImage ? 'Present' : 'Not available'}`);
+  console.log(`- secondRoomImage: ${hotel.secondRoomImage ? 'Present' : 'Not available'}`);
+  console.log(`- images array: ${hotel.images ? hotel.images.length + ' images' : 'Not available'}`);
+  console.log(`- fallback image: ${hotel.image ? 'Present' : 'Not available'}`);
+
+  const finalImages: string[] = [];
+  
+  // PRIORITY 1: Use existing images array first (don't mix with room images)
+  if (hotel.images && hotel.images.length > 0) {
+    for (const image of hotel.images) {
+      if (finalImages.length >= 3) break;
+      
+      if (image && 
+          typeof image === 'string' && 
+          image.trim() !== '' && 
+          !finalImages.includes(image)) {
+        console.log(`✅ Adding image from array: ${image.substring(0, 50)}...`);
+        finalImages.push(image);
       }
+    }
+  }
+  
+  // PRIORITY 2: Use fallback hotel.image if still need more (but NOT room images)
+  if (finalImages.length < 3 && hotel.image && 
+      typeof hotel.image === 'string' && 
+      hotel.image.trim() !== '' && 
+      !finalImages.includes(hotel.image)) {
+    console.log(`✅ Adding fallback image: ${hotel.image.substring(0, 50)}...`);
+    finalImages.push(hotel.image);
+  }
+  
+  // PRIORITY 3: Generate variations from existing images if we have a base
+  if (finalImages.length > 0 && finalImages.length < 3) {
+    const baseImage = finalImages[0];
+    if (baseImage.includes('unsplash.com') || baseImage.includes('http') || baseImage.startsWith('//')) {
+      const baseUrl = baseImage.split('?')[0];
       
-      const baseImage = hotel.image;
-      if (baseImage && (baseImage.includes('unsplash.com') || baseImage.includes('http') || baseImage.startsWith('//'))) {
-        console.log(`⚠️ No API images array for ${hotel.name}, generating from base image:`, baseImage);
-        const baseUrl = baseImage.split('?')[0];
-        return [
-          baseImage,
-          `${baseUrl}?auto=format&fit=crop&w=800&q=80&crop=entropy`,
-          `${baseUrl}?auto=format&fit=crop&w=800&q=80&crop=faces`,
-        ];
+      while (finalImages.length < 3) {
+        let variation = '';
+        if (finalImages.length === 1) {
+          variation = `${baseUrl}?auto=format&fit=crop&w=800&q=80&crop=entropy&v=${Date.now()}`;
+        } else if (finalImages.length === 2) {
+          variation = `${baseUrl}?auto=format&fit=crop&w=800&q=80&crop=faces&v=${Date.now()}`;
+        }
+        
+        if (variation && !finalImages.includes(variation)) {
+          console.log(`✅ Generated variation: ${variation.substring(0, 50)}...`);
+          finalImages.push(variation);
+        } else {
+          break;
+        }
       }
-      
-      console.log(`❌ No valid images for ${hotel.name}, using fallback images`);
-      const fallbackImages = [
-        "https://images.unsplash.com/photo-1564501049412-61c2a3083791?auto=format&fit=crop&w=800&q=80",
-        "https://images.unsplash.com/photo-1571896349842-33c89424de2d?auto=format&fit=crop&w=800&q=80",
-        "https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?auto=format&fit=crop&w=800&q=80",
-      ];
-      
-      return fallbackImages;
-    };
+    }
+  }
+  
+  // FALLBACK: Use default images if still don't have enough
+  const defaultImages = [
+    "https://images.unsplash.com/photo-1564501049412-61c2a3083791?auto=format&fit=crop&w=800&q=80",
+    "https://images.unsplash.com/photo-1571896349842-33c89424de2d?auto=format&fit=crop&w=800&q=80",
+    "https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?auto=format&fit=crop&w=800&q=80",
+  ];
+  
+  while (finalImages.length < 3) {
+    const defaultImage = defaultImages[finalImages.length];
+    if (defaultImage && !finalImages.includes(defaultImage)) {
+      console.log(`⚠️ Using default image ${finalImages.length + 1}: ${defaultImage.substring(0, 50)}...`);
+      finalImages.push(defaultImage);
+    } else {
+      break;
+    }
+  }
+  
+  // Ensure we return exactly 3 images
+  const result = finalImages.slice(0, 3);
+  console.log(`✅ Final images for ${hotel.name}: ${result.length} images (room images preserved separately)`);
+  
+  return result;
+};
 
     const enhancedHotel: EnhancedHotel = {
       ...hotel,
+      // Use our enhanced image generation that prioritizes room images
       images: generateImages(hotel),
+      // Preserve the original room images for reference
+      firstRoomImage: hotel.firstRoomImage,
+      secondRoomImage: hotel.secondRoomImage,
+      // Generate map image
       mapImage: hotel.latitude && hotel.longitude
         ? `https://maps.googleapis.com/maps/api/staticmap?center=${hotel.latitude},${hotel.longitude}&zoom=15&size=400x200&markers=color:red%7C${hotel.latitude},${hotel.longitude}&key=YOUR_API_KEY`
         : "https://maps.googleapis.com/maps/api/staticmap?center=",
+      // Handle nearby attractions
       nearbyAttractions: hotel.nearbyAttractions && hotel.nearbyAttractions.length > 0
         ? hotel.nearbyAttractions
         : ["Exploring nearby attractions..."],
@@ -279,10 +306,11 @@ const SwipeableStoryView: React.FC<SwipeableStoryViewProps> = ({
     console.log(`🤖 AI Match: ${hotel.aiMatchPercent}% (${hotel.matchType || 'standard'})`);
     console.log(`💰 Pricing: ${hotel.pricePerNight?.display || `$${hotel.price}/night`}`);
     console.log(`📊 Insights Status: ${getHotelInsightsStatus(hotel)}`);
+    console.log(`🖼️ Room Images: First=${hotel.firstRoomImage ? 'Yes' : 'No'}, Second=${hotel.secondRoomImage ? 'Yes' : 'No'}`);
     onHotelPress?.(hotel);
   };
 
-  // NEW: Render placeholder or real hotel card
+  // Render placeholder or real hotel card
   const renderHotelCard = ({ item: hotel, index }: { item: EnhancedHotel | any; index: number }) => {
     // If showing placeholders and this is a placeholder hotel, render grey placeholder
     if (showPlaceholders && hotels[index]?.isPlaceholder) {
@@ -327,8 +355,6 @@ const SwipeableStoryView: React.FC<SwipeableStoryViewProps> = ({
     );
   };
 
-
-
   const getItemLayout = (_: any, index: number) => ({
     length: screenHeight * 0.65 + 48,
     offset: (screenHeight * 0.65 + 48) * index,
@@ -364,15 +390,13 @@ const SwipeableStoryView: React.FC<SwipeableStoryViewProps> = ({
     );
   }
 
-  // NEW: Determine what to render - placeholders or real hotels
+  // Determine what to render - placeholders or real hotels
   const dataToRender = showPlaceholders 
     ? Array.from({ length: 10 }, (_, i) => ({ isPlaceholder: true, id: `placeholder-${i}` }))
     : enhancedHotels;
 
   return (
     <View style={tw`flex-1 bg-gray-50`}>
-
-
       {/* New hotel notification */}
       {showNewHotelAnimation && lastStreamedHotel && (
         <View style={tw`absolute top-16 left-4 right-4 bg-green-500 px-4 py-3 rounded-lg flex-row items-center z-40`}>

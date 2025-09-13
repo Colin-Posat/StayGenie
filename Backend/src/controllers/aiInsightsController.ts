@@ -19,7 +19,8 @@ export interface AIRecommendation {
   locationHighlight: string;
   guestInsights: string;
   sentimentData: any;
-  thirdImageHd: string | null; // ADD THIS
+  firstRoomImage: string | null;  // CHANGE FROM thirdImageHd
+  secondRoomImage: string | null;
   allHotelInfo: string;
 }
 
@@ -309,23 +310,64 @@ const getHotelSentimentOptimized = async (hotelId: string): Promise<HotelSentime
   }
 };
 
-const getThirdHotelImageHd = (hotelDetailsData: HotelSentimentData | null): string | null => {
+const getRoomOrHotelImages = (hotelDetailsData: HotelSentimentData | null): { firstImage: string | null; secondImage: string | null } => {
   try {
-    if (!hotelDetailsData?.data?.hotelImages || !Array.isArray(hotelDetailsData.data.hotelImages)) {
-      return null;
+    if (!hotelDetailsData?.data) {
+      return { firstImage: null, secondImage: null };
     }
     
-    const images = hotelDetailsData.data.hotelImages;
-    
-    // Check if there's a 3rd image (index 2)
-    if (images.length >= 3 && images[2]) {
-      return images[2].urlHd || images[2].url || null;
+    // PRIORITY 1: Try to get first TWO photos from first room
+    if (hotelDetailsData.data.rooms && Array.isArray(hotelDetailsData.data.rooms) && hotelDetailsData.data.rooms.length > 0) {
+      const firstRoom = hotelDetailsData.data.rooms[0];
+      
+      if (firstRoom.photos && Array.isArray(firstRoom.photos) && firstRoom.photos.length >= 2) {
+        const firstPhoto = firstRoom.photos[0];
+        const secondPhoto = firstRoom.photos[1];
+        
+        const firstImageUrl = firstPhoto.hd_url || firstPhoto.url || null;
+        const secondImageUrl = secondPhoto.hd_url || secondPhoto.url || null;
+        
+        if (firstImageUrl && secondImageUrl) {
+          console.log(`✅ Using first two room photos: ${firstImageUrl}, ${secondImageUrl}`);
+          return { firstImage: firstImageUrl, secondImage: secondImageUrl };
+        }
+      }
     }
     
-    return null;
+    // FALLBACK: Use third and fourth hotel images
+    if (hotelDetailsData.data.hotelImages && Array.isArray(hotelDetailsData.data.hotelImages)) {
+      const images = hotelDetailsData.data.hotelImages;
+      
+      let firstImage: string | null = null;
+      let secondImage: string | null = null;
+      
+      // Check if there's a 3rd image (index 2)
+      if (images.length >= 3 && images[2]) {
+        firstImage = images[2].urlHd || images[2].url || null;
+      }
+      
+      // Check if there's a 4th image (index 3)
+      if (images.length >= 4 && images[3]) {
+        secondImage = images[3].urlHd || images[3].url || null;
+      }
+      
+      if (firstImage && secondImage) {
+        console.log(`✅ Using third and fourth hotel images: ${firstImage}, ${secondImage}`);
+        return { firstImage, secondImage };
+      }
+      
+      if (firstImage) {
+        console.log(`✅ Using only third hotel image: ${firstImage}`);
+        return { firstImage, secondImage: null };
+      }
+    }
+    
+    console.warn('⚠️ No suitable images found - no room photos or hotel images available');
+    return { firstImage: null, secondImage: null };
+    
   } catch (error) {
-    console.warn('Error extracting third hotel image:', error);
-    return null;
+    console.warn('❌ Error extracting hotel/room images:', error);
+    return { firstImage: null, secondImage: null };
   }
 };
 import fs from 'fs';
@@ -855,10 +897,11 @@ const fetchHotelDetailsAndGenerateInsights = async (
   hotelId: string;
   guestInsights: string;
   sentimentData: HotelSentimentData | null;
-  thirdImageHd: string | null;
-  allHotelInfo: string; // ADD THIS
+  firstRoomImage: string | null;
+  secondRoomImage: string | null;
+  allHotelInfo: string;
 }> => {
-  
+
   if (delayMs > 0) {
     await new Promise(resolve => setTimeout(resolve, delayMs));
   }
@@ -868,17 +911,19 @@ const fetchHotelDetailsAndGenerateInsights = async (
     
     const hotelDetailsData = await getHotelSentimentOptimized(hotel.hotelId);
     const guestInsights = await generateInsightsFromSentiment(hotel.name, hotelDetailsData);
-    const thirdImageHd = getThirdHotelImageHd(hotelDetailsData);
-    const allHotelInfo = consolidateAllHotelInfo(hotelDetailsData); // ADD THIS
+    const roomImages = getRoomOrHotelImages(hotelDetailsData);
+    const allHotelInfo = consolidateAllHotelInfo(hotelDetailsData);
 
     console.log(`✅ Completed hotel details and insights for ${hotel.name}`);
+    console.log(`🖼️  Images found: first=${!!roomImages.firstImage}, second=${!!roomImages.secondImage}`);
     
     return {
       hotelId: hotel.hotelId,
       guestInsights,
       sentimentData: hotelDetailsData,
-      thirdImageHd,
-      allHotelInfo // ADD THIS
+      firstRoomImage: roomImages.firstImage,   // ✅ USE THE ACTUAL VALUES
+      secondRoomImage: roomImages.secondImage, // ✅ USE THE ACTUAL VALUES
+      allHotelInfo
     };
     
   } catch (error) {
@@ -888,8 +933,9 @@ const fetchHotelDetailsAndGenerateInsights = async (
       hotelId: hotel.hotelId,
       guestInsights: "Guests appreciate the comfortable accommodations and convenient location. Some mention the check-in process could be faster.",
       sentimentData: null,
-      thirdImageHd: null,
-      allHotelInfo: 'Detailed hotel information not available' // ADD THIS
+      firstRoomImage: null,
+      secondRoomImage: null,
+      allHotelInfo: 'Detailed hotel information not available'
     };
   }
 };
@@ -1003,23 +1049,24 @@ const hotelDetailsInsightsPromises = validHotels.map(async (hotel, index) => {
     );
 
     const finalRecommendations: AIRecommendation[] = aiContentResults.map(aiContent => {
-      
-      const hotelDetailsInsights = hotelDetailsInsightsMap.get(aiContent.hotelId);
-      
-      return {
-        hotelId: aiContent.hotelId,
-        hotelName: aiContent.name,
-        aiMatchPercent: aiContent.aiMatchPercent,
-        whyItMatches: aiContent.whyItMatches,
-        funFacts: aiContent.funFacts,
-        nearbyAttractions: aiContent.nearbyAttractions,
-        locationHighlight: aiContent.locationHighlight,
-        guestInsights: hotelDetailsInsights?.guestInsights || "Loading insights...",
-        sentimentData: hotelDetailsInsights?.sentimentData || null,
-        thirdImageHd: hotelDetailsInsights?.thirdImageHd || null,
-        allHotelInfo: hotelDetailsInsights?.allHotelInfo || 'Detailed information not available'
-      };
-    });
+  
+  const hotelDetailsInsights = hotelDetailsInsightsMap.get(aiContent.hotelId);
+  console.log('shit: ', hotelDetailsInsights?.firstRoomImage);
+  return {
+    hotelId: aiContent.hotelId,
+    hotelName: aiContent.name,
+    aiMatchPercent: aiContent.aiMatchPercent,
+    whyItMatches: aiContent.whyItMatches,
+    funFacts: aiContent.funFacts,
+    nearbyAttractions: aiContent.nearbyAttractions,
+    locationHighlight: aiContent.locationHighlight,
+    guestInsights: hotelDetailsInsights?.guestInsights || "Loading insights...",
+    sentimentData: hotelDetailsInsights?.sentimentData || null,
+    firstRoomImage: hotelDetailsInsights?.firstRoomImage || null,   // CHANGE FROM thirdImageHd
+    secondRoomImage: hotelDetailsInsights?.secondRoomImage || null, // ADD THIS
+    allHotelInfo: hotelDetailsInsights?.allHotelInfo || 'Detailed information not available'
+  };
+});
 
     logger.endStep('CombineResults', { finalRecommendations: finalRecommendations.length });
 

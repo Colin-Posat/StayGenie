@@ -23,12 +23,20 @@ import EmailSignInModal from '../SignupLogin/EmailSignInModal';
 import AnimatedHeartButton from './AnimatedHeartButton';
 import HotelChatOverlay from '../../components/HomeScreenTop/HotelChatOverlay';
 import * as WebBrowser from 'expo-web-browser';
+import { Easing } from 'react-native';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
-const CARD_WIDTH = screenWidth - 40;
-const CARD_HEIGHT = screenHeight * 0.50;
+const CARD_WIDTH = screenWidth - 42;
+const CARD_HEIGHT = screenHeight * 0.51;
 const TURQUOISE_SUBTLE = '#f0feff';
 const TURQUOISE_BORDER = '#b3f7ff';
+
+const IMAGE_BLEED = 0.0;        // 0 = no extra crop (was ~0.05 via 110%/-5%)
+const IMAGE_SCALE_MIN = 1.00;   // start scale (was 1.05 / 1.20)
+const IMAGE_SCALE_MAX = 1.03;   // subtle zoom (was 1.10 / 1.32)
+const IMAGE_PAN_X = 4;          // px left/right pan (was ~8–10)
+const IMAGE_PAN_Y = 4;          // px up/down pan (was ~4–12)
+const IMAGE_RESIZE_MODE = 'cover';
 
 // Base deep link URL
 const DEEP_LINK_BASE_URL = 'https://staygenie.nuitee.link';
@@ -56,7 +64,8 @@ interface Hotel {
   features: string[];
   images?: string[];
   allHotelInfo?: string;
-  
+  firstRoomImage?: string | null;
+  secondRoomImage?: string | null;
   // AI-powered fields from two-stage API
   aiExcerpt?: string;
   whyItMatches?: string;
@@ -119,6 +128,8 @@ interface Hotel {
 interface EnhancedHotel extends Hotel {
   images: string[];
   mapImage: string;
+  firstRoomImage?: string | null;
+  secondRoomImage?: string | null;
 }
 
 interface SwipeableHotelStoryCardProps {
@@ -143,26 +154,6 @@ interface SwipeableHotelStoryCardProps {
 }
 
 
-const AvailabilityChip = ({ label }: { label?: string }) => {
-  if (!label) return null;
-  return (
-    <View
-      style={[
-        tw`self-start flex-row items-center px-3 py-1.5 rounded-lg`,
-        {
-          backgroundColor: 'rgba(0, 0, 0, 0.5)',
-          borderColor: 'rgba(255, 255, 255, 0.2)',
-          borderWidth: 1,
-        },
-      ]}
-    >
-      <Ionicons name="checkmark-circle" size={12} color={TURQUOISE} style={tw`mr-1`} />
-      <Text numberOfLines={1} style={[tw`text-xs font-medium text-white`]}>
-        {label}
-      </Text>
-    </View>
-  );
-};
 // Helper function to generate hotel deep link URL
 const generateHotelDeepLink = (
   hotel: EnhancedHotel,
@@ -376,7 +367,7 @@ const StoryProgressBar: React.FC<StoryProgressBarProps> = ({
             useNativeDriver: false,
           }),
           Animated.timing(opacityValues[index], {
-            toValue: 0.8,
+            toValue: 1,
             duration: 200,
             useNativeDriver: false,
           })
@@ -402,7 +393,7 @@ const StoryProgressBar: React.FC<StoryProgressBarProps> = ({
             useNativeDriver: false,
           }),
           Animated.timing(opacityValues[index], {
-            toValue: 0.3,
+            toValue: 0.4,
             duration: 150,
             useNativeDriver: false,
           })
@@ -414,21 +405,53 @@ const StoryProgressBar: React.FC<StoryProgressBarProps> = ({
   }, [currentSlide, progressValues, opacityValues]);
 
   return (
-    <View style={tw`flex-row absolute top-4 left-4 right-4 z-10 gap-1.5`}>
+    // Enhanced container with better visibility
+    <View style={[
+      tw`flex-row absolute left-4 right-4 z-30 gap-2`, // Removed top-4
+      { top: 12 }, // Custom top position - adjust this number
+      {
+        // Add subtle background for better contrast
+        backgroundColor: 'rgba(0, 0, 0, 0.1)',
+        padding: 8,
+        borderRadius: 12,
+        backdropFilter: 'blur(10px)', // iOS blur effect
+      }
+    ]}>
       {Array.from({ length: totalSlides }, (_, index) => (
         <TouchableOpacity
           key={index}
-          style={tw`flex-1 h-1 rounded-sm bg-white/20 overflow-hidden`}
+          style={[
+            tw`flex-1 rounded-full overflow-hidden`, 
+            {
+              height: 4, // Increased height from 1 to 4
+              backgroundColor: 'rgba(255, 255, 255, 0.3)',
+              // Add subtle shadow for depth
+              shadowColor: '#000000',
+              shadowOffset: { width: 0, height: 1 },
+              shadowOpacity: 0.2,
+              shadowRadius: 2,
+              elevation: 2, // Android shadow
+            }
+          ]}
           onPress={() => onSlideChange(index)}
           activeOpacity={0.7}
         >
           <Animated.View
             style={[
-              tw`h-full bg-white rounded-sm`,
+              tw`h-full rounded-full`,
               {
+                backgroundColor: index === currentSlide ? '#1df9ff' : '#FFFFFF', // Turquoise for active, white for completed
                 opacity: opacityValues[index],
                 transform: [{ scaleX: progressValues[index] }],
-                transformOrigin: 'left'
+                transformOrigin: 'left',
+                // Add glow effect for active indicator
+                ...(index === currentSlide && {
+                  shadowColor: '#1df9ff',
+                  shadowOffset: { width: 0, height: 0 },
+                  shadowOpacity: 0.8,
+                  shadowRadius: 4,
+                  elevation: 4,
+                })
               }
             ]}
           />
@@ -451,11 +474,12 @@ const HotelOverviewSlide: React.FC<{
   searchMode = 'two-stage',
   checkInDate,
   checkOutDate,
-  showAvailability = false
+  showAvailability = true
 }) => {
   const aiInsight = generateAIInsight(hotel, insightsStatus);
   const panAnimation = useRef(new Animated.Value(0)).current;
-  const scaleAnimation = useRef(new Animated.Value(1.05)).current;
+  const scaleAnimation = useRef(new Animated.Value(IMAGE_SCALE_MIN)).current;
+
 
   useEffect(() => {
     const panningAnimation = Animated.loop(
@@ -476,12 +500,12 @@ const HotelOverviewSlide: React.FC<{
     const scalingAnimation = Animated.loop(
       Animated.sequence([
         Animated.timing(scaleAnimation, {
-          toValue: 1.1,
+          toValue: IMAGE_SCALE_MAX,
           duration: 10000,
           useNativeDriver: true,
         }),
         Animated.timing(scaleAnimation, {
-          toValue: 1.05,
+          toValue: IMAGE_SCALE_MIN,
           duration: 10000,
           useNativeDriver: true,
         }),
@@ -497,21 +521,15 @@ const HotelOverviewSlide: React.FC<{
     };
   }, [panAnimation, scaleAnimation]);
 
-  const translateX = panAnimation.interpolate({
-    inputRange: [0, 1],
-    outputRange: [-8, 8],
-  });
+ const translateX = panAnimation.interpolate({ inputRange: [0, 1], outputRange: [-IMAGE_PAN_X, IMAGE_PAN_X] });
 
-  const translateY = panAnimation.interpolate({
-    inputRange: [0, 1],
-    outputRange: [-4, 4],
-  });
+  const translateY = panAnimation.interpolate({ inputRange: [0, 1], outputRange: [-IMAGE_PAN_Y, IMAGE_PAN_Y] });
 
   const getDisplayPrice = () => {
     if (hotel.pricePerNight && hotel.pricePerNight !== null) {
       return `${hotel.pricePerNight.currency} ${hotel.pricePerNight.amount}`;
     }
-    return `${hotel.price}`;
+    return `$${hotel.price}`;
   };
 
   const getLocationDisplay = () => {
@@ -524,8 +542,8 @@ const HotelOverviewSlide: React.FC<{
     return hotel.location;
   };
 
-  // Format dates for availability display - same logic as header
-  const formatDateRange = () => {
+  // Format dates for availability display
+  const formatAvailabilityText = () => {
     if (!showAvailability || !checkInDate || !checkOutDate) return null;
     
     const formatDate = (date: Date) => {
@@ -535,7 +553,7 @@ const HotelOverviewSlide: React.FC<{
       });
     };
     
-    return `${formatDate(checkInDate)} - ${formatDate(checkOutDate)}`;
+    return `Available ${formatDate(checkInDate)} - ${formatDate(checkOutDate)}`;
   };
 
   return (
@@ -544,11 +562,10 @@ const HotelOverviewSlide: React.FC<{
         source={{ uri: hotel.images[0] }} 
         style={[
           {
-            position: 'absolute',
-            width: '110%',
-            height: '110%',
-            left: '-5%',
-            top: '-5%',
+             width: `${100 + IMAGE_BLEED * 200}%`,
+            height: `${100 + IMAGE_BLEED * 200}%`,
+            left: `${-IMAGE_BLEED * 100}%`,
+            top:  `${-IMAGE_BLEED * 100}%`,
           },
           {
             transform: [
@@ -558,7 +575,7 @@ const HotelOverviewSlide: React.FC<{
             ],
           }
         ]} 
-        resizeMode="cover"
+        resizeMode={IMAGE_RESIZE_MODE}
       />
       
       <View style={tw`absolute bottom-0 left-0 right-0 h-52 bg-gradient-to-t from-black/70 to-transparent z-1`} />
@@ -590,12 +607,11 @@ const HotelOverviewSlide: React.FC<{
       </View>
 
       <View style={tw`absolute bottom-6 left-4 right-4 z-10`}>
-        {/* Compact availability chip above price */}
-{showAvailability && formatDateRange() && (
-  <View style={tw`mb-2`}>
-    <AvailabilityChip label={formatDateRange()!} />
-  </View>
-)}
+        {/* Small availability chip above price */}
+        {showAvailability && formatAvailabilityText() && (
+          <View style={tw`mb-1.5`}>
+          </View>
+        )}
 
         <View style={tw`flex-row items-end gap-2 mb-2.5`}>
           <View style={tw`bg-black/50 border border-white/20 px-3 py-1.5 rounded-lg`}>
@@ -735,100 +751,84 @@ const AmenitiesSlide: React.FC<{
   hotel, 
   insightsStatus = 'complete'
 }) => {
-  const panAnimation = useRef(new Animated.Value(0)).current;
-  const scaleAnimation = useRef(new Animated.Value(1.2)).current;
+  console.log(`🏨 AmenitiesSlide for ${hotel.name}:`);
+  console.log(`- firstRoomImage: ${hotel.firstRoomImage ? 'Available' : 'Not available'}`);
+  console.log(`- secondRoomImage: ${hotel.secondRoomImage ? 'Available' : 'Not available'}`);
 
-  useEffect(() => {
-    const panningAnimation = Animated.loop(
-      Animated.sequence([
-        Animated.timing(panAnimation, {
-          toValue: 1,
-          duration: 10000,
-          useNativeDriver: true,
-        }),
-        Animated.timing(panAnimation, {
-          toValue: 0,
-          duration: 10000,
-          useNativeDriver: true,
-        }),
-      ])
-    );
-
-    const scalingAnimation = Animated.loop(
-      Animated.sequence([
-        Animated.timing(scaleAnimation, {
-          toValue: 1.32,
-          duration: 14000,
-          useNativeDriver: true,
-        }),
-        Animated.timing(scaleAnimation, {
-          toValue: 1.2,
-          duration: 14000,
-          useNativeDriver: true,
-        }),
-      ])
-    );
-
-    panningAnimation.start();
-    scalingAnimation.start();
-
-    return () => {
-      panningAnimation.stop();
-      scalingAnimation.stop();
-    };
-  }, [panAnimation, scaleAnimation]);
-
-  const translateX = panAnimation.interpolate({
-    inputRange: [0, 1],
-    outputRange: [-10, 10],
-  });
-
-  const translateY = panAnimation.interpolate({
-    inputRange: [0, 1],
-    outputRange: [12, -12],
-  });
-
-const parseRatings = (guestInsights?: string) => {
-  const defaultRatings = {
-    cleanliness: 6.0,
-    service: 6.0,
-    location: 6.0,
-    roomQuality: 6.0
+  // Get stacked room images
+  const getStackedRoomImages = () => {
+    const roomImages: string[] = [];
+    
+    // Priority 1: Add firstRoomImage if available
+    if (hotel.firstRoomImage && typeof hotel.firstRoomImage === 'string' && hotel.firstRoomImage.trim() !== '') {
+      roomImages.push(hotel.firstRoomImage);
+      console.log(`✅ Using firstRoomImage: ${hotel.firstRoomImage.substring(0, 50)}...`);
+    }
+    
+    // Priority 2: Add secondRoomImage if available
+    if (hotel.secondRoomImage && typeof hotel.secondRoomImage === 'string' && hotel.secondRoomImage.trim() !== '') {
+      roomImages.push(hotel.secondRoomImage);
+      console.log(`✅ Using secondRoomImage: ${hotel.secondRoomImage.substring(0, 50)}...`);
+    }
+    
+    // Fallback: If we don't have both room images, use regular images array
+    if (roomImages.length === 0) {
+      console.log(`⚠️ No room images available, using fallback from images array`);
+      if (hotel.images && hotel.images.length > 2) {
+        return [{ uri: hotel.images[2], type: 'fallback' }];
+      }
+      if (hotel.images && hotel.images.length > 1) {
+        return [{ uri: hotel.images[1], type: 'fallback' }];
+      }
+      return [{ uri: hotel.images?.[0] || hotel.image, type: 'fallback' }];
+    }
+    
+    return roomImages.map(uri => ({ uri, type: 'room' }));
   };
 
-  if (!guestInsights || insightsStatus === 'loading') {
-    return defaultRatings;
-  }
+  const stackedImages = getStackedRoomImages();
+  const hasRoomImages = stackedImages.length > 0 && stackedImages[0].type === 'room';
 
-  try {
-    const lines = guestInsights.split('\n');
-    const ratings = { ...defaultRatings };
+  const parseRatings = (guestInsights?: string) => {
+    const defaultRatings = {
+      cleanliness: 6.0,
+      service: 6.0,
+      location: 6.0,
+      roomQuality: 6.0
+    };
 
-    lines.forEach(line => {
-      if (line.includes('Cleanliness:')) {
-        const match = line.match(/(\d+\.?\d*)/);
-        if (match) ratings.cleanliness = parseFloat(match[1]);
-      } else if (line.includes('Service:')) {
-        const match = line.match(/(\d+\.?\d*)/);
-        if (match) ratings.service = parseFloat(match[1]);
-      } else if (line.includes('Location:')) {
-        const match = line.match(/(\d+\.?\d*)/);
-        if (match) ratings.location = parseFloat(match[1]);
-      } else if (line.includes('Room Quality:')) {
-        const match = line.match(/(\d+\.?\d*)/);
-        if (match) ratings.roomQuality = parseFloat(match[1]);
-      }
-    });
+    if (!guestInsights || insightsStatus === 'loading') {
+      return defaultRatings;
+    }
 
-    // Store the parsed ratings in the hotel object for later use
-    hotel.categoryRatings = ratings;
+    try {
+      const lines = guestInsights.split('\n');
+      const ratings = { ...defaultRatings };
 
-    return ratings;
-  } catch (error) {
-    console.warn('Failed to parse ratings:', error);
-    return defaultRatings;
-  }
-};
+      lines.forEach(line => {
+        if (line.includes('Cleanliness:')) {
+          const match = line.match(/(\d+\.?\d*)/);
+          if (match) ratings.cleanliness = parseFloat(match[1]);
+        } else if (line.includes('Service:')) {
+          const match = line.match(/(\d+\.?\d*)/);
+          if (match) ratings.service = parseFloat(match[1]);
+        } else if (line.includes('Location:')) {
+          const match = line.match(/(\d+\.?\d*)/);
+          if (match) ratings.location = parseFloat(match[1]);
+        } else if (line.includes('Room Quality:')) {
+          const match = line.match(/(\d+\.?\d*)/);
+          if (match) ratings.roomQuality = parseFloat(match[1]);
+        }
+      });
+
+      hotel.categoryRatings = ratings;
+      return ratings;
+    } catch (error) {
+      console.warn('Failed to parse ratings:', error);
+      return defaultRatings;
+    }
+  };
+
   const ratings = parseRatings(hotel.guestInsights);
 
   const getRatingColor = (rating: number): string => {
@@ -844,81 +844,48 @@ const parseRatings = (guestInsights?: string) => {
     return "#FFFFFF";
   };
 
-  const getAmenitiesImage = () => {
-  // NEW: Use thirdImageHd if available
-  if (hotel.thirdImageHd) {
-    return hotel.thirdImageHd;
-  }
-  
-  // Fallback to existing logic
-  if (hotel.images && hotel.images.length > 2) {
-    return hotel.images[2];
-  }
-  if (hotel.images && hotel.images.length > 1) {
-    return hotel.images[1];
-  }
-  return hotel.images && hotel.images.length > 0 ? hotel.images[0] : hotel.image;
-};
-
   return (
     <View style={tw`flex-1 relative overflow-hidden`}>
-      <Animated.Image 
-        source={{ uri: getAmenitiesImage() }} 
-        style={[
-          {
+      {/* Background Images - Stacked Room Images */}
+      {hasRoomImages && stackedImages.length > 0 ? (
+        <View style={tw`flex-1`}>
+          {stackedImages.map((imageData, index) => (
+            <View key={index} style={[
+              tw`absolute left-0 right-0`,
+              {
+                top: index * (CARD_HEIGHT * 0.5), // Stack vertically
+                height: CARD_HEIGHT * 0.5,
+              }
+            ]}>
+              <Image 
+                source={{ uri: imageData.uri }}
+                style={{
+                  width: '100%',
+                  height: '100%',
+                }}
+                resizeMode="cover"
+              />
+            </View>
+          ))}
+        </View>
+      ) : (
+        // Fallback: Single image with animation (original behavior)
+        <Image 
+          source={{ uri: stackedImages[0]?.uri }}
+          style={{
             position: 'absolute',
             width: '100%',
             height: '100%',
-            left: '-10%',
-            top: '-10%',
-          },
-          {
-            transform: [
-              { translateX },
-              { translateY },
-              { scale: scaleAnimation }
-            ],
-          }
-        ]} 
-        resizeMode="cover"
-      />
+            top: 0,
+            left: 0,
+          }}
+          resizeMode="cover"
+        />
+      )}
       
       <View style={tw`absolute bottom-0 left-0 right-0 h-52 bg-gradient-to-t from-black/70 to-transparent z-1`} />
       
       <View style={tw`absolute bottom-6 left-4 right-4 z-10`}>
-        
-        <View style={tw`bg-black/50 p-2.5 rounded-lg border border-white/20 mb-3`}>
-          <View style={tw`flex-row items-center mb-1`}>
-            <Ionicons 
-              name={insightsStatus === 'loading' && hotel.funFacts?.some(fact => fact.includes('Loading')) ? "sync" : "bulb"} 
-              size={12} 
-              color="#1df9ff" 
-            />
-            <Text style={tw`text-white text-xs font-semibold ml-1`}>
-              Fun Facts
-            </Text>
-            {insightsStatus === 'loading' && hotel.funFacts?.some(fact => fact.includes('Loading')) && (
-              <View style={tw`ml-2`}>
-                <Text style={tw`text-white/60 text-xs`}>Loading...</Text>
-              </View>
-            )}
-          </View>
-          {hotel.funFacts && hotel.funFacts.length > 0 ? (
-            hotel.funFacts.slice(0, 2).map((fact, index) => (
-              <Text key={index} style={tw`text-white text-xs leading-4 ${index === 0 ? '' : 'mt-1'}`}>
-                • {fact.includes('Loading') ? 'Generating fun facts...' : fact}
-              </Text>
-            ))
-          ) : (
-            <Text style={tw`text-white text-xs leading-4`}>
-              {insightsStatus === 'loading' 
-                ? 'Discovering interesting facts about this hotel...'
-                : 'Modern amenities and excellent guest services'
-              }
-            </Text>
-          )}
-        </View>
-
         <View style={tw`gap-1`}>
           <View style={tw`flex-row gap-1`}>
             <View style={tw`flex-1 bg-black/50 border border-white/20 rounded-md p-1.5 flex-row items-center`}>
@@ -1024,7 +991,6 @@ const parseRatings = (guestInsights?: string) => {
     </View>
   );
 };
-
 const SwipeableHotelStoryCard: React.FC<SwipeableHotelStoryCardProps> = ({ 
   hotel, 
   onSave,
@@ -1052,7 +1018,7 @@ const [showHotelChat, setShowHotelChat] = useState(false);
   const [pendingFavorite, setPendingFavorite] = useState(false); // Track if we need to favorite after login
   const scrollViewRef = useRef<ScrollView>(null);
   const prevHotelId = useRef(hotel.id);
-
+  const [hasUserInteracted, setHasUserInteracted] = useState(false);
   // Particle animation for heart button
   const particleAnim = useRef(new Animated.Value(0)).current;
   const bounceAnim = useRef(new Animated.Value(1)).current;
@@ -1090,15 +1056,25 @@ const { isAuthenticated, addFavoriteHotel, isFavoriteHotel, toggleFavoriteHotel,
   
 
   useEffect(() => {
-    if (prevHotelId.current !== hotel.id) {
-      setCurrentSlide(0);
-      scrollViewRef.current?.scrollTo({
-        x: 0,
-        animated: false,
-      });
-      prevHotelId.current = hotel.id;
-    }
-  }, [hotel.id]);
+  if (prevHotelId.current !== hotel.id) {
+    setCurrentSlide(0);
+    setHasUserInteracted(false); // Add this line
+    scrollViewRef.current?.scrollTo({
+      x: 0,
+      animated: false,
+    });
+    prevHotelId.current = hotel.id;
+  }
+
+  // Add this new section for the swipe hint
+  if (!hasUserInteracted) {
+    const timer = setTimeout(() => {
+      performSimpleSwipeHint();
+    }, 1000);
+
+    return () => clearTimeout(timer);
+  }
+}, [hotel.id, hasUserInteracted]);
 
 useEffect(() => {
   const handlePostAuthFavorite = async () => {
@@ -1205,7 +1181,25 @@ useEffect(() => {
     Alert.alert('Error', 'Failed to open hotel booking page. Please try again.', [{ text: 'OK' }]);
   }
 };
-
+const performSimpleSwipeHint = () => {
+  if (scrollViewRef.current && !hasUserInteracted) {
+    // Small peek at next slide
+    scrollViewRef.current.scrollTo({ 
+      x: CARD_WIDTH * 0.12, // Just 12% peek
+      animated: true 
+    });
+    
+    // Return to start
+    setTimeout(() => {
+      if (scrollViewRef.current && !hasUserInteracted) {
+        scrollViewRef.current.scrollTo({ 
+          x: 0, 
+          animated: true 
+        });
+      }
+    }, 800);
+  }
+};
   const generateGoogleMapsLink = (hotel: Hotel, checkin?: Date, checkout?: Date, adults: number = 2, children: number = 0): string => {
     let query = '';
 
@@ -1248,20 +1242,31 @@ useEffect(() => {
   }
 };
 
-  const handleSlideChange = (slideIndex: number) => {
-    setCurrentSlide(slideIndex);
-    scrollViewRef.current?.scrollTo({
-      x: slideIndex * CARD_WIDTH,
-      animated: true,
-    });
-  };
+const handleSlideChange = (slideIndex: number) => {
+  if (!hasUserInteracted) {
+  setHasUserInteracted(true);
+}
+  
+  setCurrentSlide(slideIndex);
+  scrollViewRef.current?.scrollTo({
+    x: slideIndex * CARD_WIDTH,
+    animated: true,
+  });
+};
 
-  const handleScroll = (event: any) => {
-    const slideIndex = Math.round(event.nativeEvent.contentOffset.x / CARD_WIDTH);
-    if (slideIndex !== currentSlide) {
-      setCurrentSlide(slideIndex);
-    }
-  };
+ const handleScroll = (event: any) => {
+  const scrollX = event.nativeEvent.contentOffset.x;
+  
+  // Add this line to detect real user interaction
+  if (scrollX > CARD_WIDTH * 0.2 && !hasUserInteracted) {
+    setHasUserInteracted(true);
+  }
+
+  const slideIndex = Math.round(scrollX / CARD_WIDTH);
+  if (slideIndex !== currentSlide) {
+    setCurrentSlide(slideIndex);
+  }
+};
 
   const handleLeftTap = () => {
     if (currentSlide > 0) {
@@ -1287,65 +1292,38 @@ useEffect(() => {
 
   return (
     <View style={[tw`rounded-2xl shadow-lg`, { position: 'relative' }]}>
-      <TouchableOpacity
-        activeOpacity={0.95}
-        onPress={handleCardPress}
-        style={[
-          tw`bg-white overflow-hidden relative rounded-t-2xl`,
-          { width: CARD_WIDTH, height: CARD_HEIGHT },
-        ]}
-      >
+      <View
+  style={[
+    tw`bg-white overflow-hidden relative rounded-t-2xl`,
+    { width: CARD_WIDTH, height: CARD_HEIGHT },
+  ]}
+>
         <StoryProgressBar
           currentSlide={currentSlide}
           totalSlides={3}
           onSlideChange={handleSlideChange}
         />
         
-        {currentSlide > 0 && (
-          <TouchableOpacity
-            style={tw`absolute top-0 left-0 w-40 h-full z-20`}
-            onPress={handleLeftTap}
-            activeOpacity={0}
-          />
-        )}
-        
-        {currentSlide < 2 && (
-          <TouchableOpacity
-            style={tw`absolute top-0 right-0 w-40 h-full z-20`}
-            onPress={handleRightTap}
-            activeOpacity={0}
-          />
-        )}
-        
-        {currentSlide > 0 && (
-          <TouchableOpacity
-            style={tw`absolute top-24 left-3 w-8 h-8 rounded-full bg-black/30 items-center justify-center z-25`}
-            onPress={handleLeftTap}
-            activeOpacity={0.6}
-          >
-            <Ionicons name="chevron-back" size={18} color="#FFFFFF" />
-          </TouchableOpacity>
-        )}
-        
-        {currentSlide < 2 && (
-          <TouchableOpacity
-            style={tw`absolute top-24 right-3 w-8 h-8 rounded-full bg-black/30 items-center justify-center z-25`}
-            onPress={handleRightTap}
-            activeOpacity={0.6}
-          >
-            <Ionicons name="chevron-forward" size={18} color="#FFFFFF" />
-          </TouchableOpacity>
-        )}
+
         
         <ScrollView
-          ref={scrollViewRef}
-          horizontal
-          pagingEnabled
-          showsHorizontalScrollIndicator={false}
-          onScroll={handleScroll}
-          scrollEventThrottle={16}
-          style={tw`flex-1`}
-        >
+  ref={scrollViewRef}
+  horizontal
+  pagingEnabled
+  showsHorizontalScrollIndicator={false}
+  onScroll={handleScroll}
+  scrollEventThrottle={8}
+  style={tw`flex-1`}
+  // Add these for better swiping:
+  decelerationRate="fast"
+  bounces={false}
+  scrollEnabled={true}
+  nestedScrollEnabled={false}
+  snapToInterval={CARD_WIDTH}
+  snapToAlignment="start"
+  removeClippedSubviews={true}
+scrollsToTop={false}
+>
           <View style={{ width: CARD_WIDTH, height: CARD_HEIGHT }}>
             <HotelOverviewSlide 
               hotel={hotel} 
@@ -1367,8 +1345,7 @@ useEffect(() => {
             />
           </View>
         </ScrollView>
-      </TouchableOpacity>
-      
+     </View>
 
 <View style={tw`bg-white rounded-b-2xl`}>
   

@@ -198,7 +198,7 @@ const EmailSignInModal: React.FC<EmailSignInModalProps> = ({
                 Welcome Back
               </Text>
               <Text style={tw`text-sm text-gray-500 mt-1`}>
-                Sign in to your account
+                Sign in to Your Account
               </Text>
             </View>
             <TouchableOpacity

@@ -210,7 +210,7 @@ const ConversationalRefineOverlay: React.FC<ConversationalRefineOverlayProps> = 
     const welcomeMessage: ChatMessage = {
       id: `ai_${Date.now()}`,
       type: 'ai',
-      text: `See the suggestions below or tell me how you'd like to refine or edit your search.`,
+      text: `Tell me how you'd like to refine or edit your search.`,
       timestamp: new Date(),
     };
     setChatMessages([welcomeMessage]);

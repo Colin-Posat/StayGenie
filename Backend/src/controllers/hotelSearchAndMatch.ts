@@ -298,15 +298,16 @@ const processHotelWithImmediateInsights = async (
       if (insightsResponse.data?.recommendations?.[0]) {
         const aiRecommendation = insightsResponse.data.recommendations[0];
           const enhancedHotelData = {
-            ...basicHotelData,
-            whyItMatches: aiRecommendation.whyItMatches || "Great choice with excellent amenities",
-            funFacts: aiRecommendation.funFacts || ["Modern facilities", "Excellent service"],
-            nearbyAttractions: aiRecommendation.nearbyAttractions || [`${enrichedHotelSummary.city} center`, "Local landmarks"],
-            locationHighlight: aiRecommendation.locationHighlight || "Prime location",
-            guestInsights: aiRecommendation.guestInsights || "Guests appreciate the quality and service",
-            thirdImageHd: aiRecommendation.thirdImageHd || null,
-            allHotelInfo: aiRecommendation.allHotelInfo || 'Detailed information not available' // ADD THIS
-          };
+  ...basicHotelData,
+  whyItMatches: aiRecommendation.whyItMatches || "Great choice with excellent amenities",
+  funFacts: aiRecommendation.funFacts || ["Modern facilities", "Excellent service"],
+  nearbyAttractions: aiRecommendation.nearbyAttractions || [`${enrichedHotelSummary.city} center`, "Local landmarks"],
+  locationHighlight: aiRecommendation.locationHighlight || "Prime location",
+  guestInsights: aiRecommendation.guestInsights || "Guests appreciate the quality and service",
+  firstRoomImage: aiRecommendation.firstRoomImage || null,    // CHANGE FROM thirdImageHd
+  secondRoomImage: aiRecommendation.secondRoomImage || null,  // ADD THIS
+  allHotelInfo: aiRecommendation.allHotelInfo || 'Detailed information not available'
+};
 
         // Stream enhanced hotel data with AI insights
         sendUpdate('hotel_enhanced', {
@@ -322,13 +323,15 @@ const processHotelWithImmediateInsights = async (
         
         // Send fallback enhanced data
         const fallbackEnhancedData = {
-          ...basicHotelData,
-          whyItMatches: "Excellent choice with great amenities and location",
-          funFacts: ["Quality accommodations", "Convenient location"],
-          nearbyAttractions: [`${enrichedHotelSummary.city} center`, "Local attractions"],
-          locationHighlight: "Well-located property",
-          guestInsights: "Consistently rated well by guests"
-        };
+  ...basicHotelData,
+  whyItMatches: "Excellent choice with great amenities and location",
+  funFacts: ["Quality accommodations", "Convenient location"],
+  nearbyAttractions: [`${enrichedHotelSummary.city} center`, "Local attractions"],
+  locationHighlight: "Well-located property",
+  guestInsights: "Consistently rated well by guests",
+  firstRoomImage: null,   // ADD THIS
+  secondRoomImage: null   // ADD THIS
+};
 
         sendUpdate('hotel_enhanced', {
           hotelIndex: hotelIndex,
@@ -343,13 +346,15 @@ const processHotelWithImmediateInsights = async (
       
       // Send fallback data on insights failure
       const fallbackData = {
-        ...basicHotelData,
-        whyItMatches: "Quality choice with excellent facilities",
-        funFacts: ["Well-appointed rooms", "Good location"],
-        nearbyAttractions: [`${enrichedHotelSummary.city} attractions`, "Local points of interest"],
-        locationHighlight: "Convenient location",
-        guestInsights: "Popular choice among travelers"
-      };
+  ...basicHotelData,
+  whyItMatches: "Quality choice with excellent facilities",
+  funFacts: ["Well-appointed rooms", "Good location"],
+  nearbyAttractions: [`${enrichedHotelSummary.city} attractions`, "Local points of interest"],
+  locationHighlight: "Convenient location",
+  guestInsights: "Popular choice among travelers",
+  firstRoomImage: null,   // ADD THIS
+  secondRoomImage: null   // ADD THIS
+};
 
       sendUpdate('hotel_enhanced', {
         hotelIndex: hotelIndex,
@@ -559,7 +564,9 @@ REMEMBER: Always select 15 hotels using exact names from the list above.`;
                   funFacts: ["Quality accommodations", "Convenient location"],
                   nearbyAttractions: ["City center", "Local attractions"],
                   locationHighlight: "Well-located property",
-                  guestInsights: "Consistently rated well by guests"
+                  guestInsights: "Consistently rated well by guests",
+                  firstRoomImage: null,   // ADD THIS
+                  secondRoomImage: null   // ADD THIS
                 },
                 message: `${parsed.hotelName} ready (insights unavailable)`
               });

@@ -547,7 +547,7 @@ const FavoritesScreen = () => {
   }, []);
 
   const navigation = useNavigation<NavigationProp<RootTabParamList>>();
-  
+
   const createCityFolders = useCallback((hotels: FavoritedHotel[], preserveExpansion = false): CityFolder[] => {
     const cityMap = new Map<string, { hotels: FavoritedHotel[]; country: string; countryCode: string }>();
     
@@ -833,7 +833,7 @@ const handleExplore = useCallback(() => {
               { color: '#1F2937' },
               Platform.OS === 'android' && { fontFamily: 'sans-serif-medium' }
             ]}>
-              Sign in to save favorites
+              Sign Up to Save Favorites
             </Text>
 
             <Text style={[

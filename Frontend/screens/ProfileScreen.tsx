@@ -354,7 +354,7 @@ const ProfileScreen = () => {
                   tw`text-xl font-bold text-center mb-2`,
                   { color: '#1F2937' }
                 ]}>
-                  Sign in to your account
+                  Sign in to Your Account
                 </Text>
                 
                 <Text style={[

@@ -90,7 +90,7 @@ const AuthWelcomeScreen: React.FC<AuthWelcomeScreenProps> = ({
           </Text>
           
           <Text style={tw`text-center text-gray-600 text-base leading-6`}>
-            Sign in to save your favorite hotels and get personalized recommendations
+            Sign up to save your favorite hotels and get personalized recommendations
           </Text>
         </Animated.View>
 

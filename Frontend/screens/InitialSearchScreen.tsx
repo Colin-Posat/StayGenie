@@ -772,7 +772,7 @@ useFocusEffect(
         onSubmitEditing={handleSearch}
         maxLength={400}
         autoCorrect={false}
-        autoCapitalize="words"
+        autoCapitalize="none"
         returnKeyType="search"
         selectionColor={TURQUOISE}
         editable={!isTransitioning}

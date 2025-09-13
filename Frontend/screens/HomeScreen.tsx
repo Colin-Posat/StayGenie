@@ -158,7 +158,8 @@ interface AIRecommendation {
   locationHighlight: string;
   guestInsights: string;
   sentimentData: any;
-  thirdImageHd?: string | null;
+  firstRoomImage?: string | null;
+  secondRoomImage?: string | null;
   allHotelInfo?: string;
 }
 
@@ -253,7 +254,7 @@ interface AISuggestion {
 }
 
 interface Hotel {
-  id: string; // Changed from: id: number;
+  id: string;
   name: string;
   image: string;
   price: number;
@@ -296,18 +297,18 @@ interface Hotel {
   fullDescription?: string;
   fullAddress?: string;
   
-  // NEW: Refundable policy fields
   isRefundable?: boolean;
   refundableTag?: string | null;
   refundableInfo?: string;
 
   isPlaceholder?: boolean;
-  thirdImageHd?: string | null;
+  firstRoomImage?: string | null;
+  secondRoomImage?: string | null;
   allHotelInfo?: string;
 }
 
-const BASE_URL = 'https://staygenie-wwpa.onrender.com';
-//const BASE_URL = 'http://localhost:3003';
+//const BASE_URL = 'https://staygenie-wwpa.onrender.com';
+const BASE_URL = 'http://localhost:3003';
 
 
 
@@ -580,9 +581,22 @@ const confirmedCheckOutDate = hasFinalizedDates
 const convertStreamedHotelToDisplay = (streamedHotel: any, index: number): Hotel => {
   console.log('🔄 Converting streamed hotel:', streamedHotel.name);
 
+
+    
   const getHotelImage = (hotel: any): string => {
     const defaultImage = "https://images.unsplash.com/photo-1564501049412-61c2a3083791?auto=format&fit=crop&w=800&q=80";
     
+    // PRIORITY 1: Use firstRoomImage if available
+    if (hotel.firstRoomImage && typeof hotel.firstRoomImage === 'string' && hotel.firstRoomImage.trim() !== '') {
+      return hotel.firstRoomImage;
+    }
+    
+    // PRIORITY 2: Use secondRoomImage if firstRoomImage is not available
+    if (hotel.secondRoomImage && typeof hotel.secondRoomImage === 'string' && hotel.secondRoomImage.trim() !== '') {
+      return hotel.secondRoomImage;
+    }
+    
+    // FALLBACK 1: Use existing images array
     if (hotel.images && hotel.images.length > 0) {
       const firstImage = hotel.images[0];
       if (firstImage && typeof firstImage === 'string' && firstImage.trim() !== '') {
@@ -592,6 +606,7 @@ const convertStreamedHotelToDisplay = (streamedHotel: any, index: number): Hotel
     
     return defaultImage;
   };
+
 
   let price = 200;
   let originalPrice = price * 1.15;
@@ -603,11 +618,14 @@ const convertStreamedHotelToDisplay = (streamedHotel: any, index: number): Hotel
     priceComparison = streamedHotel.pricePerNight.display || `${price}/night`;
   }
 
+  
+
   // Handle both basic hotels and AI-enhanced hotels
   const isAIEnhanced = streamedHotel.whyItMatches && 
                       !streamedHotel.whyItMatches.includes('Analyzing') && 
                       !streamedHotel.whyItMatches.includes('progress');
 
+                      console.log('SHIT: {firstRoomImage: ', streamedHotel.firstRoomImage);
   return {
     id: streamedHotel.hotelId || streamedHotel.id,
     name: streamedHotel.name,
@@ -623,7 +641,8 @@ const convertStreamedHotelToDisplay = (streamedHotel: any, index: number): Hotel
     tags: streamedHotel.topAmenities?.slice(0, 3) || ["Premium amenities"],
     location: streamedHotel.address || streamedHotel.summarizedInfo?.location || 'Prime location',
     features: streamedHotel.amenities || streamedHotel.topAmenities || ["Excellent features"],
-    thirdImageHd: streamedHotel.thirdImageHd || null,
+    firstRoomImage: streamedHotel.firstRoomImage || null,
+    secondRoomImage: streamedHotel.secondRoomImage || null,
     
     // AI content - use enhanced if available, otherwise show loading
     aiExcerpt: isAIEnhanced 
@@ -1574,67 +1593,49 @@ const handleBackPress = useCallback(() => {
 
 
         </View>
+{/* ONE-LINE (now two-line max) SEARCH SUMMARY PILL */}
 {searchQuery.trim().length > 0 && (
   <TouchableOpacity
     style={tw`bg-white px-3 py-2 rounded-lg border border-gray-200`}
     onPress={() => setIsSearchInfoExpanded(!isSearchInfoExpanded)}
     activeOpacity={0.7}
   >
-    <View style={tw`flex-row items-start justify-between`}>
-      <View style={tw`flex-1 pr-2`}>
-        <Text 
-          style={tw`text-xs text-gray-500`}
-          numberOfLines={isSearchInfoExpanded ? undefined : 2}
-        >
-          {isStreamingSearch && displayHotels.length > 0
-            ? `${displayHotels.length} Hotels Found For "${searchQuery}"`
-            : isStreamingSearch
-              ? `Searching for "${searchQuery}"`
-              : displayHotels.length > 0
-                ? `${displayHotels.length} Hotels Found For "${searchQuery}"`
-                : `Results for "${searchQuery}"`
-          }
-        </Text>
-        
-        {/* Date and guest info */}
-        {displayHotels.length > 0 && (stage1Results?.searchParams || searchResults?.searchParams || currentSearchId) && (
-          <Text style={tw`text-xs text-gray-400 mt-1`}>
-            {checkInDate.toLocaleDateString('en-US', { 
-              weekday: 'short', 
-              month: 'short', 
-              day: 'numeric' 
-            })} - {checkOutDate.toLocaleDateString('en-US', { 
-              weekday: 'short', 
-              month: 'short', 
-              day: 'numeric' 
-            })} • {adults} adult{adults !== 1 ? 's' : ''}
-            {children > 0 ? 
-              `, ${children} child${children !== 1 ? 'ren' : ''}` 
-              : ''
-            }
-          </Text>
-        )}
-      </View>
-      
-      {/* Chevron indicator - now just visual, not interactive */}
-      <View style={tw`p-1`}>
-        <Ionicons 
-          name={isSearchInfoExpanded ? "chevron-up" : "chevron-down"} 
-          size={14} 
-          color="#9CA3AF" 
-        />
-      </View>
-    </View>
-    
-    {/* Streaming progress message */}
-    {isStreamingSearch && streamingProgress.message && (
-      <Text 
-        style={tw`text-xs text-blue-500 mt-1`}
-        numberOfLines={isSearchInfoExpanded ? undefined : 1}
+    <View style={tw`flex-row items-center`}>
+      <Ionicons name="location-outline" size={14} color="#6B7280" />
+      <Text
+        style={[tw`flex-1 text-[11px] text-gray-600 ml-1`, { flexShrink: 1 }]}
+        numberOfLines={isSearchInfoExpanded ? undefined : 2}
+        ellipsizeMode="tail"
       >
-        {streamingProgress.message}
+        {(
+          isStreamingSearch && displayHotels.length > 0
+            ? `${displayHotels.length} hotels • `
+            : displayHotels.length > 0
+              ? `${displayHotels.length} hotels • `
+              : ''
+        )}
+        “{searchQuery}”
+        {` • ${checkInDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}–${checkOutDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`}
+        {` • ${adults} adult${adults !== 1 ? 's' : ''}${children ? `, ${children} child${children !== 1 ? 'ren' : ''}` : ''}`}
+        {isStreamingSearch && streamingProgress.message ? ` • ${streamingProgress.message}` : ''}
       </Text>
-    )}
+
+      {!TEST_MODE && stage1Results && (
+        <Ionicons name="checkmark-circle" size={12} color="#10B981" style={tw`ml-1`} />
+      )}
+      {!TEST_MODE && stage2Results && (
+        <Ionicons name="checkmark-circle" size={12} color="#3B82F6" style={tw`ml-1`} />
+      )}
+      {isLoadingAiSuggestions && (
+        <Ionicons name={TEST_MODE ? 'flask' : 'sparkles'} size={12} color={TEST_MODE ? '#EA580C' : '#3B82F6'} style={tw`ml-1`} />
+      )}
+      <Ionicons
+        name={isSearchInfoExpanded ? 'chevron-up' : 'chevron-down'}
+        size={14}
+        color="#9CA3AF"
+        style={tw`ml-1`}
+      />
+    </View>
   </TouchableOpacity>
 )}
             </View>
