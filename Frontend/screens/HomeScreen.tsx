@@ -21,6 +21,7 @@ import LoadingScreen from '../components/HomeScreenTop/LoadingScreen';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import type { StackNavigationProp } from '@react-navigation/stack';
 import EventSource from 'react-native-sse';
+import Constants from 'expo-constants';
 
 const OVERLAY_BACKDROP = 'rgba(0,0,0,0.7)';
 
@@ -307,8 +308,9 @@ interface Hotel {
   allHotelInfo?: string;
 }
 
-//const BASE_URL = 'https://staygenie-wwpa.onrender.com';
-const BASE_URL = 'http://localhost:3003';
+
+//const BASE_URL="localhost:3003"
+const BASE_URL="https://staygenie-wwpa.onrender.com"
 
 
 
