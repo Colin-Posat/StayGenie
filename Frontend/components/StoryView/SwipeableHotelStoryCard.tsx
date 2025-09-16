@@ -72,7 +72,9 @@ interface Hotel {
   funFacts?: string[];
   aiMatchPercent?: number;
   matchType?: string;
-  
+  aiSafetyRating?: number;
+  safetyJustification?: string;
+
   // Enhanced pricing structure from two-stage API
   pricePerNight?: {
     amount: number;
@@ -151,6 +153,15 @@ interface SwipeableHotelStoryCardProps {
   placeId?: string;
   occupancies?: any[];
   searchParams?: any;
+  topAmenities?: string[];
+  
+  // ADD THESE SAFETY RATING PROPS:
+  safetyRating?: number;
+  safetyJustification?: string;
+  safetySource?: string;
+  hasAISafetyRating?: boolean;
+  showSafetyRating?: boolean;
+  safetyRatingThreshold?: number;
 }
 
 
@@ -605,6 +616,7 @@ const HotelOverviewSlide: React.FC<{
           </View>
         </View>
       </View>
+      
 
       <View style={tw`absolute bottom-6 left-4 right-4 z-10`}>
         {/* Small availability chip above price */}
@@ -653,6 +665,37 @@ const HotelOverviewSlide: React.FC<{
             </View>
           </View>
         </View>
+        {/* Top Amenities (compact pills, no icons) */}
+{Array.isArray(hotel.topAmenities) && hotel.topAmenities.length > 0 && (
+  <View style={tw`mb-2 flex-row flex-wrap`}>
+    {hotel.topAmenities.slice(0, 3).map((amenity, idx) => (
+      <View
+        key={`${amenity}-${idx}`}
+        style={[
+          tw`px-2 py-1 mr-1 mb-1 rounded-full`,
+          { backgroundColor: 'rgba(0,0,0,0.4)', borderColor: 'rgba(255,255,255,0.2)', borderWidth: 1 }
+        ]}
+      >
+        <Text style={tw`text-white text-[10px]`} numberOfLines={1}>
+          {amenity}
+        </Text>
+      </View>
+    ))}
+    {hotel.topAmenities.length > 6 && (
+      <View
+        style={[
+          tw`px-2 py-1 mr-1 mb-1 rounded-full`,
+          { backgroundColor: 'rgba(0,0,0,0.4)', borderColor: 'rgba(255,255,255,0.2)', borderWidth: 1 }
+        ]}
+      >
+        <Text style={tw`text-white text-[10px]`} numberOfLines={1}>
+          +{hotel.topAmenities.length - 6}
+        </Text>
+      </View>
+    )}
+  </View>
+)}
+
 
         <View style={tw`bg-black/50 p-2.5 rounded-lg border border-white/20`}>
           <View style={tw`flex-row items-center mb-1`}>
@@ -747,13 +790,28 @@ const LocationSlide: React.FC<{ hotel: EnhancedHotel; insightsStatus?: string }>
 const AmenitiesSlide: React.FC<{ 
   hotel: EnhancedHotel; 
   insightsStatus?: string;
+  // Add these new props for safety rating
+  safetyRating?: number;
+  safetyJustification?: string;
+  safetySource?: string;
+  hasAISafetyRating?: boolean;
+  showSafetyRating?: boolean;
+  safetyRatingThreshold?: number;
 }> = ({ 
   hotel, 
-  insightsStatus = 'complete'
+  insightsStatus = 'complete',
+  safetyRating,
+  safetyJustification,
+  safetySource = 'Standard',
+  hasAISafetyRating = false,
+  showSafetyRating = true,
+  safetyRatingThreshold = 6.0,
 }) => {
   console.log(`🏨 AmenitiesSlide for ${hotel.name}:`);
   console.log(`- firstRoomImage: ${hotel.firstRoomImage ? 'Available' : 'Not available'}`);
   console.log(`- secondRoomImage: ${hotel.secondRoomImage ? 'Available' : 'Not available'}`);
+  console.log(`- safetyRating: ${safetyRating}`);
+  console.log(`- safetyJustification: ${safetyJustification}`);
 
   // Get stacked room images
   const getStackedRoomImages = () => {
@@ -844,6 +902,18 @@ const AmenitiesSlide: React.FC<{
     return "#FFFFFF";
   };
 
+  // Safety rating color logic
+  const getSafetyRatingColor = (rating: number): string => {
+    if (rating >= safetyRatingThreshold) return '#10B981'; // Green for safe
+    if (rating >= 5.0) return '#F59E0B'; // Amber for moderate
+    return '#EF4444'; // Red for unsafe
+  };
+
+  // Use the passed safety rating or fall back to hotel's safety rating
+  const displaySafetyRating = safetyRating || hotel.aiSafetyRating || hotel.safetyRating;
+  const displaySafetyJustification = safetyJustification || hotel.safetyJustification;
+  const displayHasAISafetyRating = hasAISafetyRating || !!hotel.aiSafetyRating;
+
   return (
     <View style={tw`flex-1 relative overflow-hidden`}>
       {/* Background Images - Stacked Room Images */}
@@ -887,6 +957,7 @@ const AmenitiesSlide: React.FC<{
       
       <View style={tw`absolute bottom-6 left-4 right-4 z-10`}>
         <View style={tw`gap-1`}>
+          {/* Category Ratings - First Row */}
           <View style={tw`flex-row gap-1`}>
             <View style={tw`flex-1 bg-black/50 border border-white/20 rounded-md p-1.5 flex-row items-center`}>
               <View 
@@ -937,6 +1008,7 @@ const AmenitiesSlide: React.FC<{
             </View>
           </View>
 
+          {/* Category Ratings - Second Row */}
           <View style={tw`flex-row gap-1`}>
             <View style={tw`flex-1 bg-black/50 border border-white/20 rounded-md p-1.5 flex-row items-center`}>
               <View 
@@ -986,6 +1058,51 @@ const AmenitiesSlide: React.FC<{
               <Text style={tw`text-white text-xs font-medium ml-1.5`}>Rooms</Text>
             </View>
           </View>
+
+          {/* NEW: Safety Rating Section */}
+          {showSafetyRating && displaySafetyRating && (
+            <View style={tw`mt-1`}>
+              <View style={tw`bg-black/50 border border-white/20 rounded-md p-2`}>
+                <View style={tw`flex-row items-center justify-between mb-1`}>
+                  <View style={tw`flex-row items-center`}>
+                    <View 
+                      style={[
+                        tw`w-7 h-7 rounded-full items-center justify-center`,
+                        { backgroundColor: getSafetyRatingColor(displaySafetyRating) }
+                      ]}
+                    >
+                      <Text 
+                        style={[
+                          tw`text-xs font-bold text-white`,
+                          {
+                            textShadowColor: '#000000',
+                            textShadowOffset: { width: 0.5, height: 0.5 },
+                            textShadowRadius: 1
+                          }
+                        ]}
+                      >
+                        {insightsStatus === 'loading' ? '-' : displaySafetyRating.toFixed(1)}
+                      </Text>
+                    </View>
+                    <Text style={tw`text-white text-xs font-medium ml-2`}>Safety Rating</Text>
+                  </View>
+
+                </View>
+                
+                {displaySafetyJustification && displaySafetyJustification.trim() !== '' && (
+                  <Text style={tw`text-white/90 text-xs leading-4 mt-1`}>
+                    {displaySafetyJustification}
+                  </Text>
+                )}
+                
+                {insightsStatus === 'loading' && (
+                  <Text style={tw`text-white/60 text-xs mt-1`}>
+                    Analyzing safety data...
+                  </Text>
+                )}
+              </View>
+            </View>
+          )}
         </View>
       </View>
     </View>
@@ -1006,7 +1123,16 @@ const SwipeableHotelStoryCard: React.FC<SwipeableHotelStoryCardProps> = ({
   insightsStatus = 'complete',
   searchMode = 'two-stage',
   placeId,
-  occupancies
+  occupancies,
+
+  
+  // ADD THESE DESTRUCTURED SAFETY PROPS:
+  safetyRating,
+  safetyJustification,
+  safetySource = 'Standard',
+  hasAISafetyRating = false,
+  showSafetyRating = true,
+  safetyRatingThreshold = 6.0,
 }) => {
 
   const [showFavoritePopup, setShowFavoritePopup] = useState(false);
@@ -1340,9 +1466,16 @@ scrollsToTop={false}
           </View>
           <View style={{ width: CARD_WIDTH, height: CARD_HEIGHT }}>
             <AmenitiesSlide 
-              hotel={hotel} 
-              insightsStatus={insightsStatus}
-            />
+    hotel={hotel} 
+    insightsStatus={insightsStatus}
+    // Pass the safety rating props
+    safetyRating={safetyRating}
+    safetyJustification={safetyJustification}
+    safetySource={safetySource}
+    hasAISafetyRating={hasAISafetyRating}
+    showSafetyRating={showSafetyRating}
+    safetyRatingThreshold={safetyRatingThreshold}
+  />
           </View>
         </ScrollView>
      </View>

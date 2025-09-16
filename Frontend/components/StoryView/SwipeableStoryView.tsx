@@ -1,4 +1,4 @@
-// SwipeableStoryView.tsx - Updated with Enhanced Room Image Support and Loading Preview
+// SwipeableStoryView.tsx - Updated with Enhanced Room Image Support, Loading Preview, and Safety Rating Support
 import React, { useState, useEffect } from 'react';
 import {
   View,
@@ -36,6 +36,8 @@ interface SwipeableStoryViewProps {
     message: string;
   };
   searchParams?: any;
+  showSafetyRatings?: boolean;
+  safetyRatingThreshold?: number;
 }
 
 const SwipeableStoryView: React.FC<SwipeableStoryViewProps> = ({
@@ -55,6 +57,8 @@ const SwipeableStoryView: React.FC<SwipeableStoryViewProps> = ({
   isStreaming = false,
   streamingProgress = { step: 0, totalSteps: 8, message: '' },
   searchParams,
+  showSafetyRatings = true,
+  safetyRatingThreshold = 6.0,
 }) => {
   // Streaming state
   const [streamingHotelsCount, setStreamingHotelsCount] = useState(0);
@@ -93,7 +97,7 @@ const SwipeableStoryView: React.FC<SwipeableStoryViewProps> = ({
     }
   }, [isStreaming, streamingHotelsCount, hotels.length]);
 
-  // Enhanced hotel processing with priority room image handling
+  // Enhanced hotel processing with priority room image handling and safety data preservation
   const enhanceHotel = (hotel: Hotel): EnhancedHotel => {
     const generateImages = (hotel: Hotel): string[] => {
       console.log(`🖼️ Processing images for ${hotel.name}:`);
@@ -109,9 +113,9 @@ const SwipeableStoryView: React.FC<SwipeableStoryViewProps> = ({
         for (const image of hotel.images) {
           if (finalImages.length >= 3) break;
           
-          if (image && 
-              typeof image === 'string' && 
-              image.trim() !== '' && 
+          if (image &&
+              typeof image === 'string' &&
+              image.trim() !== '' &&
               !finalImages.includes(image)) {
             console.log(`✅ Adding image from array: ${image.substring(0, 50)}...`);
             finalImages.push(image);
@@ -120,9 +124,9 @@ const SwipeableStoryView: React.FC<SwipeableStoryViewProps> = ({
       }
       
       // PRIORITY 2: Use fallback hotel.image if still need more (but NOT room images)
-      if (finalImages.length < 3 && hotel.image && 
-          typeof hotel.image === 'string' && 
-          hotel.image.trim() !== '' && 
+      if (finalImages.length < 3 && hotel.image &&
+          typeof hotel.image === 'string' &&
+          hotel.image.trim() !== '' &&
           !finalImages.includes(hotel.image)) {
         console.log(`✅ Adding fallback image: ${hotel.image.substring(0, 50)}...`);
         finalImages.push(hotel.image);
@@ -191,6 +195,12 @@ const SwipeableStoryView: React.FC<SwipeableStoryViewProps> = ({
       nearbyAttractions: hotel.nearbyAttractions && hotel.nearbyAttractions.length > 0
         ? hotel.nearbyAttractions
         : ["Exploring nearby attractions..."],
+      topAmenities: hotel.topAmenities || [],
+
+      // Preserve safety rating fields
+      safetyRating: hotel.safetyRating,
+      aiSafetyRating: hotel.aiSafetyRating,
+      safetyJustification: hotel.safetyJustification,
     };
 
     return enhancedHotel;
@@ -241,6 +251,15 @@ const SwipeableStoryView: React.FC<SwipeableStoryViewProps> = ({
     } else {
       console.log(`📍 Opening map with location: ${hotel.city || hotel.location}`);
     }
+    
+    // Log safety details for debugging
+    if (hotel.aiSafetyRating) {
+      console.log(`🛡️ Safety Details - AI Rating: ${hotel.aiSafetyRating}/10`);
+      console.log(`🛡️ Safety Justification: ${hotel.safetyJustification || 'Not provided'}`);
+    } else {
+      console.log(`🛡️ Safety Details - Standard Rating: ${hotel.safetyRating}/10`);
+    }
+    
     onViewDetails?.(hotel);
   };
 
@@ -250,6 +269,14 @@ const SwipeableStoryView: React.FC<SwipeableStoryViewProps> = ({
     console.log(`💰 Pricing: ${hotel.pricePerNight?.display || `$${hotel.price}/night`}`);
     console.log(`📊 Insights Status: ${getHotelInsightsStatus(hotel)}`);
     console.log(`🖼️ Room Images: First=${hotel.firstRoomImage ? 'Yes' : 'No'}, Second=${hotel.secondRoomImage ? 'Yes' : 'No'}`);
+    
+    // Log safety information
+    if (hotel.aiSafetyRating) {
+      console.log(`🛡️ AI Safety Rating: ${hotel.aiSafetyRating}/10 - ${hotel.safetyJustification || 'No justification provided'}`);
+    } else {
+      console.log(`🛡️ General Safety Rating: ${hotel.safetyRating}/10`);
+    }
+    
     onHotelPress?.(hotel);
   };
 
@@ -275,6 +302,11 @@ const SwipeableStoryView: React.FC<SwipeableStoryViewProps> = ({
     // Render real hotel card
     const insightsStatus = getHotelInsightsStatus(hotel);
     const isNewlyStreamed = isStreaming && index === realHotels.length - 1 && showNewHotelAnimation;
+    
+    // Determine safety display values
+    const displaySafetyRating = hotel.aiSafetyRating || hotel.safetyRating;
+    const hasSafetyJustification = hotel.safetyJustification && hotel.safetyJustification.trim() !== '';
+    const safetySource = hotel.aiSafetyRating ? 'AI-Enhanced' : 'Standard';
     
     return (
       <View style={tw`px-5 mb-6`}>
@@ -304,6 +336,14 @@ const SwipeableStoryView: React.FC<SwipeableStoryViewProps> = ({
             insightsStatus={insightsStatus}
             searchMode={searchMode}
             searchParams={searchParams}
+            topAmenities={hotel.topAmenities}
+            // Safety rating props
+            safetyRating={displaySafetyRating}
+            safetyJustification={hotel.safetyJustification}
+            safetySource={safetySource}
+            hasAISafetyRating={!!hotel.aiSafetyRating}
+            showSafetyRating={showSafetyRatings}
+            safetyRatingThreshold={safetyRatingThreshold}
           />
         </View>
       </View>
@@ -365,13 +405,13 @@ const SwipeableStoryView: React.FC<SwipeableStoryViewProps> = ({
       <FlatList
         data={dataToRender as (EnhancedHotel | { isPlaceholder: boolean; id: string })[]}
         renderItem={({ item, index }) => 
-          showPlaceholders 
+          showPlaceholders
             ? renderPlaceholderCard(index)
             : renderHotelCard({ item, index })
         }
         keyExtractor={(item, index) => 
-          showPlaceholders 
-            ? `placeholder-${index}` 
+          showPlaceholders
+            ? `placeholder-${index}`
             : `hotel-${item.id}`
         }
         showsVerticalScrollIndicator={false}

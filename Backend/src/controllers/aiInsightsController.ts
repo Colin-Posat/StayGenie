@@ -22,6 +22,9 @@ export interface AIRecommendation {
   firstRoomImage: string | null;  // CHANGE FROM thirdImageHd
   secondRoomImage: string | null;
   allHotelInfo: string;
+  safetyRating: number;           // NEW: Safety rating out of 10
+  safetyJustification: string; 
+  topAmenities: string[];
 }
 
 // Load environment variables
@@ -252,14 +255,16 @@ interface HotelSummaryForInsights {
     name: string;
     description: string;
     amenities: string[];
+    // ADD THIS: Include amenitiesText in the interface
+    amenitiesText?: string; // Made optional for backward compatibility
     starRating: number;
     reviewCount: number;
     pricePerNight: string;
     location: string;
     city: string;
     country: string;
-    latitude: number | null;  // ADD THIS
-    longitude: number | null; // ADD THIS
+    latitude: number | null;
+    longitude: number | null;
   };
 }
 const getHotelSentimentOptimized = async (hotelId: string): Promise<HotelSentimentData | null> => {
@@ -596,6 +601,252 @@ const generateInsightsFromSentiment = async (hotelName: string, sentimentData: H
     return `Cleanliness: 5.9/10\nService: 7.6/10\nLocation: 8.3/10\nRoom Quality: 4.9/10`;
   }
 };
+const generateSafetyRating = async (
+  hotelName: string,
+  city: string,
+  country: string,
+  hotelDescription: string,
+  address: string,
+  searchId?: string
+): Promise<{ safetyRating: number; safetyJustification: string }> => {
+  
+  console.log(`🛡️ Generating safety rating for ${hotelName} in ${city}, ${country}`);
+  
+const prompt = `HOTEL SAFETY ASSESSMENT
+
+INPUTS
+- HOTEL: ${hotelName}
+- CITY/COUNTRY: ${city}, ${country}
+- ADDRESS: ${address}
+- DESCRIPTION (RAW): ${hotelDescription}
+
+GOAL
+Return a realistic safety score for *staying at this hotel* based only on the information above and widely known city-level context. Do NOT invent crime statistics or specific incidents.
+
+
+
+INSTRUCTIONS
+Assess how safe it feels for a typical visitor to stay and walk immediately around the hotel. Prioritize the *surroundings* over hotel security features. Use only the inputs and widely known city-level context. Do NOT invent exact statistics or attractions not mentioned.
+
+SCORING RUBRIC (100 pts, harsher weighting)
+1) Neighborhood & Surroundings (40)
+   • Tourist/business core with steady lighting & foot traffic (+)
+   • Adjacent to vacant lots, highway underpasses, industrial strips, fringe blocks, or visibly run-down areas (—)
+   • Surroundings outweigh hotel security
+
+2) Area Reputation & City Crime Context (25)
+   • Neighborhood reputation for visitors (tourist core/luxury/embassy ↑; terminals/red-light/fringe ↓)
+   • City’s general crime perception (low-crime global cities ↑; high-crime US cores ↓)
+
+3) Day vs Night Contrast (15)
+   • Empties or gets rowdy after midnight (—)
+   • 24/7 activity cores/waterfronts/plazas (+)
+
+4) Proximity Hazards (10)
+   • Next to late-night clubs/bars, bus/rail terminals, isolated parking lots, border zones (—)
+   • Near family/cultural/business hubs (+)
+
+5) Mobility & Access (5)
+   • Safe, well-lit walkability to transit/attractions; easy rideshare pickup (+)
+   • Forced to traverse dark/empty streets (—)
+
+6) Hotel Security Features (5)
+   • CCTV, key-card elevators/floors, 24/7 staff, gated parking = small bonus only
+   • Cannot offset bad surroundings
+
+SCORING RULES
+• Start from a neutral urban baseline of 6 (not the final score; just a mindset).
+• Apply rubric add/penalties; total 0–100.
+• Map total to integer 1–10 using:
+  90–100 → 10
+  80–89  → 9
+  70–79  → 8
+  60–69  → 7
+  50–59  → 6
+  40–49  → 5
+  30–39  → 4
+  20–29  → 3
+  10–19  → 2
+  0–9    → 1
+• If evidence is thin/ambiguous, keep closer to 5–6 and note uncertainty.
+• Never cite precise crime stats. Be conservative and visitor-centric.
+You can infer general area reputation from well-known city-level context, but do NOT invent specific incidents or statistics.
+
+OUTPUT FORMAT (JSON ONLY)
+{
+  "safetyRating": <integer 1–10>,
+  "safetyJustification": "<15–25 words, concrete location/security reasons; mention day/night if relevant>"
+}`;
+
+  try {
+    const completion = await openai.chat.completions.create({
+      model: 'gpt-4o-mini',
+      messages: [
+        {
+          role: 'system',
+          content: `You are a travel safety expert who assesses hotel locations based on description details and general area knowledge. 
+          Provide realistic safety ratings considering both tourist safety and local area reputation.
+          Reply ONLY with valid JSON.`
+        },
+        { role: 'user', content: prompt }
+      ],
+      temperature: 0.3, // Lower temperature for more consistent safety assessments
+      max_tokens: 150,
+    });
+
+    if (searchId) {
+  const tokens = extractTokens(completion);
+  searchCostTracker.addGptUsage(searchId, 'aiInsights', tokens.prompt, tokens.completion); // Changed from 'safetyRating' to 'aiInsights'
+}
+
+    const content = completion.choices[0]?.message?.content?.trim() || '{}';
+    const cleanContent = content.replace(/```json\n?|\n?```/g, '').trim();
+    const parsedContent = JSON.parse(cleanContent);
+    
+    // Validate the response
+    const safetyRating = Math.max(1, Math.min(10, Math.round(parsedContent.safetyRating || 7)));
+    const safetyJustification = parsedContent.safetyJustification || "Generally safe area with standard city precautions recommended";
+    
+  
+
+    console.log(`✅ Safety rating generated for ${hotelName}: ${safetyRating}/10`);
+    
+    return {
+      safetyRating,
+      safetyJustification
+    };
+    
+  } catch (error) {
+    console.warn(`⚠️ Safety rating generation failed for ${hotelName}:`, error);
+    
+    // Fallback safety rating based on basic city knowledge
+    const fallbackRating = getFallbackSafetyRating(city, country);
+    
+    return {
+      safetyRating: fallbackRating,
+      safetyJustification: "Safety assessment based on general area knowledge and standard precautions"
+    };
+  }
+};
+const getFallbackSafetyRating = (city: string, country: string): number => {
+  const cityLower = city.toLowerCase();
+  const countryLower = country.toLowerCase();
+  
+  // High safety countries/cities (8-9 rating)
+  const highSafetyCities = ['singapore', 'zurich', 'geneva', 'vienna', 'copenhagen', 'stockholm', 'oslo', 'helsinki', 'reykjavik', 'luxembourg'];
+  const highSafetyCountries = ['singapore', 'switzerland', 'denmark', 'norway', 'finland', 'iceland', 'japan', 'canada', 'australia', 'new zealand'];
+  
+  // Major tourist cities (7-8 rating)
+  const majorTouristCities = ['london', 'paris', 'amsterdam', 'berlin', 'munich', 'madrid', 'barcelona', 'rome', 'milan', 'dubai', 'hong kong', 'seoul', 'tokyo', 'sydney', 'melbourne'];
+  
+  // US cities vary widely (6-8 rating)
+  const saferUSCities = ['san francisco', 'seattle', 'boston', 'washington dc', 'chicago', 'denver'];
+  
+  if (highSafetyCities.includes(cityLower) || highSafetyCountries.includes(countryLower)) {
+    return 8;
+  } else if (majorTouristCities.includes(cityLower)) {
+    return 7;
+  } else if (countryLower === 'united states' && saferUSCities.some(city => cityLower.includes(city))) {
+    return 7;
+  } else if (countryLower === 'united states') {
+    return 6; // General US city rating
+  } else if (['united kingdom', 'germany', 'france', 'italy', 'spain', 'netherlands', 'austria'].includes(countryLower)) {
+    return 7; // General Western Europe
+  } else {
+    return 6; // Conservative default
+  }
+};
+// Helper function to extract default amenities when AI fails
+const getDefaultAmenities = (amenitiesText: string): string[] => {
+  if (!amenitiesText || amenitiesText.trim() === '') {
+    return ["Free Wi-Fi", "24-hour reception", "Air conditioning"];
+  }
+  
+  // Split amenities and clean them up
+  const amenitiesList = amenitiesText.split(',').map(amenity => amenity.trim());
+  
+  // Priority amenities to look for
+  const priorityAmenities = [
+    'wifi', 'pool', 'gym', 'spa', 'restaurant', 'bar', 'parking', 
+    'breakfast', 'concierge', 'business center', 'meeting room', 
+    'air conditioning', 'balcony', 'room service'
+  ];
+  
+  const selectedAmenities: string[] = [];
+  
+  // First, try to find priority amenities
+  for (const priority of priorityAmenities) {
+    if (selectedAmenities.length >= 3) break;
+    
+    const matchingAmenity = amenitiesList.find(amenity => 
+      amenity.toLowerCase().includes(priority.toLowerCase())
+    );
+    
+    if (matchingAmenity) {
+      selectedAmenities.push(matchingAmenity);
+    }
+  }
+  
+  // If we still need more, add the first available ones
+  while (selectedAmenities.length < 3 && selectedAmenities.length < amenitiesList.length) {
+    const nextAmenity = amenitiesList[selectedAmenities.length];
+    if (nextAmenity && !selectedAmenities.includes(nextAmenity)) {
+      selectedAmenities.push(nextAmenity);
+    } else {
+      break;
+    }
+  }
+  
+  // Fallback if we still don't have 3
+  while (selectedAmenities.length < 3) {
+    const fallbacks = ["Free Wi-Fi", "24-hour reception", "Air conditioning"];
+    const fallback = fallbacks[selectedAmenities.length];
+    if (!selectedAmenities.includes(fallback)) {
+      selectedAmenities.push(fallback);
+    } else {
+      selectedAmenities.push(`Standard amenity ${selectedAmenities.length + 1}`);
+    }
+  }
+  
+  return selectedAmenities.slice(0, 3);
+};
+
+const generateDetailedAIContentWithSafety = async (
+  hotel: HotelSummaryForInsights,
+  userQuery?: string,
+  nights?: number,
+  searchId?: string
+): Promise<{
+  whyItMatches: string;
+  funFacts: string[];
+  nearbyAttractions: string[];
+  locationHighlight: string;
+  safetyRating: number;
+  safetyJustification: string;
+  topAmenities: string[]; 
+}> => {
+  
+  // Run both AI content and safety rating generation in parallel
+  const [aiContent, safetyData] = await Promise.all([
+    generateDetailedAIContent(hotel, userQuery, nights, searchId),
+    generateSafetyRating(
+      hotel.name,
+      hotel.summarizedInfo.city,
+      hotel.summarizedInfo.country,
+      hotel.summarizedInfo.description,
+      hotel.summarizedInfo.location,
+      searchId
+    )
+  ]);
+  
+  return {
+    ...aiContent,
+    safetyRating: safetyData.safetyRating,
+    safetyJustification: safetyData.safetyJustification
+  };
+};
+
+
 
 // Enhanced generateDetailedAIContent function with search-relevant nearby attractions
 const generateDetailedAIContent = async (
@@ -608,87 +859,98 @@ const generateDetailedAIContent = async (
   funFacts: string[];
   nearbyAttractions: string[];
   locationHighlight: string;
+  safetyRating: number;
+  safetyJustification: string;
+  topAmenities: string[];
 }> => {
 
-  
   console.log(`🧠 GPT-4o Mini generating detailed content for ${hotel.name}`);
   
   const hasSpecificPreferences = userQuery && userQuery.trim() !== '';
   const summary = hotel.summarizedInfo;
   
-  // Enhanced prompt that focuses on search-relevant attractions
-  const prompt = hasSpecificPreferences ? 
-    `USER SEARCH REQUEST: "${userQuery}"
+  // IMPROVED: Use amenitiesText if available, otherwise fallback to joining amenities array
+  const amenitiesForAI = summary.amenitiesText || 
+                         (summary.amenities && summary.amenities.length > 0 
+                           ? summary.amenities.join(', ') 
+                           : 'Standard hotel amenities');
+  
+  console.log(`🏨 Using amenities for AI: ${amenitiesForAI}`);
+  
+  // Run both AI content and safety rating generation in parallel
+  const [standardContent, safetyData] = await Promise.all([
+    // AI Content Generation with FULL amenities information
+    (async () => {
+      const prompt = hasSpecificPreferences ? 
+  `USER SEARCH REQUEST: "${userQuery}"
 HOTEL: ${summary.name}
 FULL ADDRESS: ${summary.location}
 COORDINATES: ${summary.latitude}, ${summary.longitude}
 LOCATION: ${summary.city}, ${summary.country}
 FULL DESCRIPTION: ${summary.description}
-AMENITIES: ${summary.amenities.join(', ')}
+FULL AMENITIES LIST: ${amenitiesForAI}
 PRICE: ${summary.pricePerNight}
 RATING: ${summary.starRating} stars
 MATCH PERCENTAGE: ${hotel.aiMatchPercent}%
 
 TASK: Generate engaging content explaining why this hotel matches the user's request.
-Use the COORDINATES and FULL ADDRESS to identify real nearby attractions that are RELEVANT to the user's search intent.
+Use the COORDINATES, FULL ADDRESS, DESCRIPTION, and COMPLETE AMENITIES LIST to create compelling content.
 
 SEARCH RELEVANCE INSTRUCTIONS:
 - Analyze the user's search "${userQuery}" for interests, activities, or preferences
-- If they mention business/work: prioritize business districts, conference centers, airports
-- If they mention romance/honeymoon: focus on romantic spots, fine dining, scenic views
-- If they mention family/kids: highlight family attractions, parks, kid-friendly activities  
-- If they mention culture/history: emphasize museums, historical sites, cultural landmarks
-- If they mention shopping: include shopping districts, markets, luxury stores
-- If they mention nightlife: feature entertainment districts, bars, clubs
-- If they mention beaches/nature: prioritize natural attractions, beaches, outdoor activities
-- If they mention specific activities (e.g., "skiing", "diving"): find related facilities nearby
+- Use the FULL AMENITIES LIST to highlight features that match the user's needs
+- If they mention business/work: prioritize business facilities, conference rooms, business centers from amenities
+- If they mention romance/honeymoon: focus on spa services, fine dining, romantic amenities
+- If they mention family/kids: highlight family amenities, pools, kids' clubs from the amenities list
+- If they mention fitness/wellness: emphasize gym, spa, wellness facilities from amenities
+- If they mention specific amenities in their search: definitely mention if the hotel has them
 
 Return JSON:
 {
-  "whyItMatches": "25 words max - why it fits their specific request and why it's a great choice",
-  "funFacts": ["fact1", "fact2"],  
+  "whyItMatches": "25 words max - why it fits their specific request, mentioning relevant amenities when applicable",
+  "funFacts": ["fact1 mentioning amenities", "fact2"],  
   "nearbyAttractions": [
     "attraction name - brief description relevant to user search - X min by transportation_mode",
     "attraction name - brief description relevant to user search - X min by transportation_mode"
   ],
-  "locationHighlight": "key location advantage that relates to user search"
+  "locationHighlight": "key location advantage that relates to user search",
+  "topAmenities": ["amenity1 that matches user search", "amenity2 that matches user search", "amenity3 that matches user search"]
 }
 
+AMENITIES SELECTION RULES:
+1. If user search mentions specific amenities/features, prioritize those from the amenities list
+2. If user search implies needs (business=wifi/meeting rooms, family=pool/kids club, etc), select matching amenities
+3. No explanations/adjectives—just the amenity name. Normal punctuation only (Wi-Fi, Fitness Center, /, +).
+4. For fitness faciliteis (surcharge), use "Fitness Center" remove the surcharge note!!
+3. Always pick exactly 3 amenities from the FULL AMENITIES LIST
+4. If no specific preferences, choose the 3 most impressive/useful amenities available stuff like "Free Wi-Fi", "24-hour reception", "Air conditioning" "Fitness Center" "Pool" "Hot Tub" "Spa" Cool stuff like that people really value
+
 CRITICAL REQUIREMENTS:
-1. If what the user requested in "${userQuery}" is in the description, mention it in whyItMatches
-2. Do not say anything in whyItMatches that is not mentioned in the description unless obvious
-3. If something is not mentioned in the description, say "WHAT THE USER REQUESTED is not specifically mentioned"
-4. Make it engaging like a fun travel agent (around 20 words)
-5. In whyItMatches, start with hotel name UNLESS something is not mentioned, then start with "While"
-6. When mentioning the query, put it into words that fit the sentence smoothly
+1. If what the user requested in "${userQuery}" matches amenities in "${amenitiesForAI}", mention it in whyItMatches
+2. If amenities relevant to the search are in "${amenitiesForAI}", highlight them
+3. Do not say anything in whyItMatches that is not mentioned in description OR amenities
+4. If something is not mentioned in description/amenities, say "WHAT THE USER REQUESTED is not specifically mentioned"
+5. Make it engaging like a fun travel agent (around 20 words)
+6. In whyItMatches, start with hotel name UNLESS something is not mentioned, then start with "While"
 
-NEARBY ATTRACTIONS FORMAT:
-"Attraction Name - brief description that relates to "${userQuery}" - X min by walk/metro/bus/taxi"
+Use the FULL AMENITIES LIST (${amenitiesForAI}) extensively in your analysis!` :
 
-Examples based on search intent:
-For business search: "Financial District - major business hub with corporate offices - 10 min by metro"
-For family search: "Children's Museum - interactive exhibits for kids - 15 min by walk"  
-For romantic search: "Sunset Viewpoint - romantic city views perfect for couples - 8 min by taxi"
-For cultural search: "National Gallery - world-class art collection - 12 min by bus"
-
-Use coordinates (${summary.latitude}, ${summary.longitude}) to find REAL attractions that match the user's interests.` :
-
-    `HOTEL: ${summary.name}
+        `HOTEL: ${summary.name}
 FULL ADDRESS: ${summary.location}
 COORDINATES: ${summary.latitude}, ${summary.longitude}
 LOCATION: ${summary.city}, ${summary.country}
 FULL DESCRIPTION: ${summary.description}
-AMENITIES: ${summary.amenities.join(', ')}
+COMPLETE AMENITIES: ${amenitiesForAI}
 PRICE: ${summary.pricePerNight}
 RATING: ${summary.starRating} stars
 
 TASK: Generate engaging content for this hotel recommendation.
-Use the COORDINATES and ADDRESS to identify real nearby attractions suitable for general travelers.
+Use the COORDINATES, ADDRESS, DESCRIPTION, and COMPLETE AMENITIES list to create compelling content.
 
 Return JSON:
 {
-  "whyItMatches": "20 words max - why it's a great choice based on location and amenities",
-  "funFacts": ["fact1", "fact2"],
+  "whyItMatches": "20 words max - why it's a great choice based on location, amenities, and features",
+  "funFacts": ["fact1 about amenities/features", "fact2"],
   "nearbyAttractions": [
     "attraction name - brief description - X min by transportation_mode",
     "attraction name - brief description - X min by transportation_mode"  
@@ -697,90 +959,81 @@ Return JSON:
 }
 
 REQUIREMENTS:
-1. Do not say anything in whyItMatches not mentioned in description unless obvious
-2. If something is not mentioned, say "WHAT IS NOT MENTIONED is not specifically mentioned"
-3. Keep it engaging like a fun travel agent (around 20 words)
-4. Start with hotel name UNLESS something is not mentioned, then start with "While"
+1. Highlight impressive amenities from: ${amenitiesForAI}
+2. Do not say anything in whyItMatches not mentioned in description OR amenities
+3. If something is not mentioned, say "WHAT IS NOT MENTIONED is not specifically mentioned"
+4. Keep it engaging like a fun travel agent (around 20 words)
+5. Start with hotel name UNLESS something is not mentioned, then start with "While"
 
-NEARBY ATTRACTIONS FORMAT:
-"Attraction Name - brief description - X min by walk/metro/bus/taxi"
+Use the COMPLETE AMENITIES LIST (${amenitiesForAI}) to make the content more appealing!`;
 
-Examples:
-"Louvre Museum - world famous art collection - 10 min by metro"
-"Central Park - green oasis perfect for relaxation - 5 min by walk"
-"Shopping District - luxury boutiques and local stores - 20 min by bus"
+      try {
+        const completion = await openai.chat.completions.create({
+          model: 'gpt-4o-mini',
+          messages: [
+            {
+              role: 'system', 
+              content: `You are a travel content expert who specializes in matching hotel amenities and features to traveler interests. 
+              When analyzing hotels, pay special attention to the complete amenities list provided and highlight relevant amenities that match user preferences.
+              Generate engaging, accurate hotel descriptions. Reply ONLY with valid JSON. 
+              Always consider the full amenities list when creating content.`
+            },
+            { role: 'user', content: prompt }
+          ],
+          temperature: 0.7,
+          max_tokens: 400,
+        });
 
-Use coordinates (${summary.latitude}, ${summary.longitude}) for real attractions with accurate travel times.`;
+        if (searchId) {
+          const tokens = extractTokens(completion);
+          searchCostTracker.addGptUsage(searchId, 'aiInsights', tokens.prompt, tokens.completion);
+        }
 
-  try {
-    const completion = await openai.chat.completions.create({
-      model: 'gpt-4o-mini',
-      messages: [
-        {
-          role: 'system', 
-          content: `You are a travel content expert who specializes in matching attractions to traveler interests. 
-          When a user has specific search preferences, prioritize nearby attractions that align with their interests.
-          Generate engaging, accurate hotel descriptions. Reply ONLY with valid JSON. 
-          Make nearbyAttractions descriptions 5-8 words maximum and ensure they relate to the user's search when possible.`
-        },
-        { role: 'user', content: prompt }
-      ],
-      temperature: 0.7,
-      max_tokens: 400,
-    });
-
-    if (searchId) {
-      const tokens = extractTokens(completion);
-      searchCostTracker.addGptUsage(searchId, 'aiInsights', tokens.prompt, tokens.completion);
-    }
-
-    const content = completion.choices[0]?.message?.content?.trim() || '{}';
-    const cleanContent = content.replace(/```json\n?|\n?```/g, '').trim();
-    const parsedContent = JSON.parse(cleanContent);
+        const content = completion.choices[0]?.message?.content?.trim() || '{}';
+        const cleanContent = content.replace(/```json\n?|\n?```/g, '').trim();
+        const parsedContent = JSON.parse(cleanContent);
+        
+        console.log(`✅ GPT-4o Mini generated amenity-aware content for ${hotel.name}`);
+        
+        return {
+          whyItMatches: parsedContent.whyItMatches || "Great choice for your stay",
+          funFacts: parsedContent.funFacts || ["Modern amenities", "Excellent service"],
+          nearbyAttractions: parsedContent.nearbyAttractions || getDefaultAttractionsBySearch(userQuery, summary.city),
+          locationHighlight: parsedContent.locationHighlight || "Convenient location",
+          topAmenities: parsedContent.topAmenities || getDefaultAmenities(amenitiesForAI)
+        };
+        
+      } catch (error) {
+        console.warn(`⚠️ GPT-4o Mini failed for ${hotel.name}:`, error);
+        
+        return {
+          whyItMatches: hasSpecificPreferences ? 
+            `Perfect match for your ${extractSearchIntent(userQuery!)} requirements with great amenities` : 
+            `Excellent choice with ${amenitiesForAI.split(',').slice(0,2).join(' and')} and prime location`,
+          funFacts: ["Modern facilities including " + amenitiesForAI.split(',')[0], "Excellent guest reviews"],
+          nearbyAttractions: getDefaultAttractionsBySearch(userQuery, summary.city),
+          locationHighlight: "Prime location",
+          topAmenities: getDefaultAmenities(amenitiesForAI)
+        };
+      }
+    })(),
     
-    console.log(`✅ GPT-4o Mini generated search-relevant content for ${hotel.name}`);
-    
-    // Enhanced processing to ensure attractions are properly formatted and search-relevant
-    const nearbyAttractions = Array.isArray(parsedContent.nearbyAttractions) 
-      ? parsedContent.nearbyAttractions.map((attraction: any) => {
-          if (typeof attraction === 'string') {
-            // Ensure proper format with search relevance
-            if (attraction.includes(' - ') && attraction.split(' - ').length >= 3) {
-              return attraction; // Already has description and travel time
-            } else if (attraction.includes(' - ')) {
-              return `${attraction} - 8 min walk`; // Has description, add travel time
-            } else {
-              // Add search-relevant description based on user query
-              const searchRelevantDesc = hasSpecificPreferences ? 
-                getSearchRelevantDescription(userQuery!, attraction) : 
-                "popular local attraction";
-              return `${attraction} - ${searchRelevantDesc} - 12 min walk`;
-            }
-          }
-          return `${attraction.name || "Local attraction"} - ${attraction.description || "worth visiting during stay"} - ${attraction.travelTime || "15 min walk"}`;
-        })
-      : getDefaultAttractionsBySearch(userQuery, summary.city);
-    
-    return {
-      whyItMatches: parsedContent.whyItMatches || "Great choice for your stay",
-      funFacts: parsedContent.funFacts || ["Modern amenities", "Excellent service"],
-      nearbyAttractions: nearbyAttractions,
-      locationHighlight: parsedContent.locationHighlight || "Convenient location"
-    };
-    
-  } catch (error) {
-    console.warn(`⚠️ GPT-4o Mini failed for ${hotel.name}:`, error);
-    
-    // Enhanced fallback content that considers search relevance
-    return {
-      whyItMatches: hasSpecificPreferences ? 
-        `Perfect match for your ${extractSearchIntent(userQuery!)} requirements` : 
-        "Excellent choice with great amenities and location",
-      funFacts: ["Modern facilities", "Excellent guest reviews"],
-      nearbyAttractions: getDefaultAttractionsBySearch(userQuery, summary.city),
-      locationHighlight: "Prime location"
-    };
-  }
+    // Safety rating generation (unchanged)
+    generateSafetyRating(
+      hotel.name,
+      summary.city,
+      summary.country,
+      summary.description,
+      summary.location,
+      searchId
+    )
+  ]);
+  
+  return {
+    ...standardContent,
+    safetyRating: safetyData.safetyRating,
+    safetyJustification: safetyData.safetyJustification
+  };
 };
 
 // Helper function to generate search-relevant description
@@ -998,14 +1251,17 @@ export const aiInsightsController = async (req: Request, res: Response) => {
         
         // Return fallback content
         return {
-          hotelId: hotel.hotelId,
-          name: hotel.name,
-          aiMatchPercent: hotel.aiMatchPercent,
-          whyItMatches: "Great choice with excellent amenities and location",
-          funFacts: ["Modern facilities", "Excellent guest reviews"],
-          nearbyAttractions: [`${hotel.summarizedInfo.city} center`, "Local landmarks"],
-          locationHighlight: "Prime location"
-        };
+  hotelId: hotel.hotelId,
+  name: hotel.name,
+  aiMatchPercent: hotel.aiMatchPercent,
+  whyItMatches: "Great choice with excellent amenities and location",
+  funFacts: ["Modern facilities", "Excellent guest reviews"],
+  nearbyAttractions: [`${hotel.summarizedInfo.city} center`, "Local landmarks"],
+  locationHighlight: "Prime location",
+  safetyRating: 7, // Add missing property with default value
+  safetyJustification: "Generally safe area with standard city precautions recommended" ,
+  topAmenities: getDefaultAmenities(hotel.summarizedInfo.amenitiesText || hotel.summarizedInfo.amenities?.join(', ') || "") // Add missing property
+};
       }
     });
 
@@ -1048,10 +1304,9 @@ const hotelDetailsInsightsPromises = validHotels.map(async (hotel, index) => {
       hotelDetailsInsightsResults.map(result => [result.hotelId, result])
     );
 
-    const finalRecommendations: AIRecommendation[] = aiContentResults.map(aiContent => {
-  
+const finalRecommendations: AIRecommendation[] = aiContentResults.map(aiContent => {
   const hotelDetailsInsights = hotelDetailsInsightsMap.get(aiContent.hotelId);
-  console.log('shit: ', hotelDetailsInsights?.firstRoomImage);
+
   return {
     hotelId: aiContent.hotelId,
     hotelName: aiContent.name,
@@ -1062,9 +1317,12 @@ const hotelDetailsInsightsPromises = validHotels.map(async (hotel, index) => {
     locationHighlight: aiContent.locationHighlight,
     guestInsights: hotelDetailsInsights?.guestInsights || "Loading insights...",
     sentimentData: hotelDetailsInsights?.sentimentData || null,
-    firstRoomImage: hotelDetailsInsights?.firstRoomImage || null,   // CHANGE FROM thirdImageHd
-    secondRoomImage: hotelDetailsInsights?.secondRoomImage || null, // ADD THIS
-    allHotelInfo: hotelDetailsInsights?.allHotelInfo || 'Detailed information not available'
+    firstRoomImage: hotelDetailsInsights?.firstRoomImage || null,
+    secondRoomImage: hotelDetailsInsights?.secondRoomImage || null,
+    allHotelInfo: hotelDetailsInsights?.allHotelInfo || 'Detailed information not available',
+    safetyRating: aiContent.safetyRating,
+    safetyJustification: aiContent.safetyJustification,
+    topAmenities: aiContent.topAmenities  // ADD THIS LINE
   };
 });
 

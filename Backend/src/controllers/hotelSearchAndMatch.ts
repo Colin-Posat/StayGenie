@@ -11,6 +11,7 @@ import {
   HotelSummaryForAI
 } from '../types/hotel';
 import { searchCostTracker, extractTokens } from '../utils/searchCostTracker';
+import { FACILITIES_ID_TO_NAME } from '../utils/facilities-dict';
 
 // Load environment variables
 dotenv.config({ path: path.resolve(__dirname, '../../.env') });
@@ -189,31 +190,8 @@ const extractRefundablePolicy = (hotel: HotelWithRates): { isRefundable: boolean
   };
 };
 
-// Helper functions
-// Alternative: Keep the function name but change behavior
 const getTop3Amenities = (hotelInfo: any): string[] => {
-  const amenities: string[] = [];
-  
-  if (hotelInfo?.amenities && Array.isArray(hotelInfo.amenities)) {
-    const amenityNames = hotelInfo.amenities
-      .map((amenity: unknown) => {
-        if (typeof amenity === 'string') return amenity;
-        if (typeof amenity === 'object' && amenity !== null && 'name' in amenity) return (amenity as any).name;
-        return null;
-      })
-      .filter(Boolean);  // ✅ GET ALL AMENITIES NOW
-    
-    amenities.push(...amenityNames);
-  }
-  
-  // Only add defaults if NO amenities were found
-  if (amenities.length === 0) {
-    const defaultAmenities = ['Wi-Fi', 'Air Conditioning', 'Private Bathroom'];
-    amenities.push(...defaultAmenities);
-  }
-  
-  // Remove duplicates and return ALL amenities
-  return [...new Set(amenities)];
+  return getCombinedAmenities(hotelInfo);
 };
 
 const processHotelWithImmediateInsights = async (
@@ -223,7 +201,8 @@ const processHotelWithImmediateInsights = async (
   parsedQuery: ParsedSearchQuery,
   nights: number,
   hotelMetadataMap: Map<string, Record<string, unknown>>,
-  sendUpdate: (type: string, data: any) => void
+  sendUpdate: (type: string, data: any) => void,
+  searchId?: string  // ADD searchId parameter
 ): Promise<void> => {
   try {
     console.log(`🔥 Processing hotel ${hotelIndex} with immediate AI insights: ${hotel.name}`);
@@ -241,38 +220,45 @@ const processHotelWithImmediateInsights = async (
     
     // Prepare single hotel for AI insights
     const singleHotelForInsights = {
-      hotelId: enrichedHotelSummary.hotelId,
-      name: enrichedHotelSummary.name,
-      aiMatchPercent: hotel.aiMatchPercent,
-      summarizedInfo: {
-        name: enrichedHotelSummary.name,
-        description: (hotelMetadata?.hotelDescription || hotelMetadata?.description || 'Quality accommodation').toString().substring(0, 1000),
-        amenities: enrichedHotelSummary.topAmenities,
-        starRating: enrichedHotelSummary.starRating,
-        reviewCount: enrichedHotelSummary.reviewCount,
-        pricePerNight: enrichedHotelSummary.pricePerNight?.display || 'Price not available',
-        location: enrichedHotelSummary.address,
-        city: enrichedHotelSummary.city,
-        country: enrichedHotelSummary.country,
-        latitude: enrichedHotelSummary.latitude,
-        longitude: enrichedHotelSummary.longitude,
-        isRefundable: enrichedHotelSummary.isRefundable,
-        refundableInfo: enrichedHotelSummary.refundableInfo
-      }
-    };
+  hotelId: enrichedHotelSummary.hotelId,
+  name: enrichedHotelSummary.name,
+  aiMatchPercent: hotel.aiMatchPercent,
+  summarizedInfo: {
+    name: enrichedHotelSummary.name,
+    description: (hotelMetadata?.hotelDescription || hotelMetadata?.description || 'Quality accommodation').toString().substring(0, 1000),
+    amenities: enrichedHotelSummary.topAmenities,
+    // ADD THIS: Include the full amenities text for AI processing
+    amenitiesText: enrichedHotelSummary.topAmenities && enrichedHotelSummary.topAmenities.length > 0 
+      ? enrichedHotelSummary.topAmenities.join(', ') 
+      : 'Standard hotel amenities',
+    starRating: enrichedHotelSummary.starRating,
+    reviewCount: enrichedHotelSummary.reviewCount,
+    pricePerNight: enrichedHotelSummary.pricePerNight?.display || 'Price not available',
+    location: enrichedHotelSummary.address,
+    city: enrichedHotelSummary.city,
+    country: enrichedHotelSummary.country,
+    latitude: enrichedHotelSummary.latitude,
+    longitude: enrichedHotelSummary.longitude,
+    isRefundable: enrichedHotelSummary.isRefundable,
+    refundableInfo: enrichedHotelSummary.refundableInfo
+  }
+};
 
     // Send hotel immediately without insights first (for instant display)
     const basicHotelData = {
-      ...enrichedHotelSummary,
-      aiMatchPercent: hotel.aiMatchPercent,
-      // Basic placeholder content while AI insights generate
-      whyItMatches: "Analyzing perfect match reasons...",
-      funFacts: ["Generating interesting facts..."],
-      nearbyAttractions: ["Finding nearby attractions..."],
-      locationHighlight: "Analyzing location advantages...",
-      guestInsights: "Processing guest insights...",
-      summarizedInfo: singleHotelForInsights.summarizedInfo
-    };
+  ...enrichedHotelSummary,
+  aiMatchPercent: hotel.aiMatchPercent,
+  // Basic placeholder content while AI insights generate
+  whyItMatches: "Analyzing perfect match reasons...",
+  funFacts: ["Generating interesting facts..."],
+  nearbyAttractions: ["Finding nearby attractions..."],
+  locationHighlight: "Analyzing location advantages...",
+  guestInsights: "Processing guest insights...",
+  safetyRating: 0, // Placeholder while generating
+  safetyJustification: "Analyzing safety information...",
+  topAmenities: [], // CHANGE TO EMPTY ARRAY - no amenities until AI insights complete
+  summarizedInfo: singleHotelForInsights.summarizedInfo
+};
 
     // Stream basic hotel data immediately
     sendUpdate('hotel_found', {
@@ -286,30 +272,34 @@ const processHotelWithImmediateInsights = async (
     console.log(`🧠 Generating AI insights for individual hotel: ${enrichedHotelSummary.name}`);
     
     try {
-      // Call AI insights for single hotel
+      // Call AI insights for single hotel - PASS searchId
       const insightsResponse = await axios.post(`${process.env.BASE_URL || 'http://localhost:3003'}/api/hotels/ai-insights`, {
         hotels: [singleHotelForInsights],
         userQuery: userInput,
-        nights: nights
+        nights: nights,
+        searchId: searchId  // Pass searchId for cost tracking
       }, {
         timeout: 8000 // Shorter timeout for individual hotels
       });
 
       if (insightsResponse.data?.recommendations?.[0]) {
-        const aiRecommendation = insightsResponse.data.recommendations[0];
-          const enhancedHotelData = {
-  ...basicHotelData,
-  whyItMatches: aiRecommendation.whyItMatches || "Great choice with excellent amenities",
-  funFacts: aiRecommendation.funFacts || ["Modern facilities", "Excellent service"],
-  nearbyAttractions: aiRecommendation.nearbyAttractions || [`${enrichedHotelSummary.city} center`, "Local landmarks"],
-  locationHighlight: aiRecommendation.locationHighlight || "Prime location",
-  guestInsights: aiRecommendation.guestInsights || "Guests appreciate the quality and service",
-  firstRoomImage: aiRecommendation.firstRoomImage || null,    // CHANGE FROM thirdImageHd
-  secondRoomImage: aiRecommendation.secondRoomImage || null,  // ADD THIS
-  allHotelInfo: aiRecommendation.allHotelInfo || 'Detailed information not available'
-};
+  const aiRecommendation = insightsResponse.data.recommendations[0];
+  const enhancedHotelData = {
+    ...basicHotelData,
+    whyItMatches: aiRecommendation.whyItMatches || "Great choice with excellent amenities",
+    funFacts: aiRecommendation.funFacts || ["Modern facilities", "Excellent service"],
+    nearbyAttractions: aiRecommendation.nearbyAttractions || [`${enrichedHotelSummary.city} center`, "Local landmarks"],
+    locationHighlight: aiRecommendation.locationHighlight || "Prime location",
+    guestInsights: aiRecommendation.guestInsights || "Guests appreciate the quality and service",
+    firstRoomImage: aiRecommendation.firstRoomImage || null,
+    secondRoomImage: aiRecommendation.secondRoomImage || null,
+    allHotelInfo: aiRecommendation.allHotelInfo || 'Detailed information not available',
+    safetyRating: aiRecommendation.safetyRating || 7,
+    safetyJustification: aiRecommendation.safetyJustification || "Generally safe area with standard precautions recommended",
+    topAmenities: aiRecommendation.topAmenities || enrichedHotelSummary.topAmenities || ["Wi-Fi", "AC", "Service"] // ONLY populate when AI insights are available
+  };
 
-        // Stream enhanced hotel data with AI insights
+        // Stream enhanced hotel data with AI insights INCLUDING safety data
         sendUpdate('hotel_enhanced', {
           hotelIndex: hotelIndex,
           hotelId: enrichedHotelSummary.hotelId,
@@ -317,11 +307,11 @@ const processHotelWithImmediateInsights = async (
           message: `✨ ${enrichedHotelSummary.name} enhanced with AI insights!`
         });
 
-        console.log(`✅ AI insights completed for ${enrichedHotelSummary.name}`);
+        console.log(`✅ AI insights completed for ${enrichedHotelSummary.name} - Safety: ${enhancedHotelData.safetyRating}/10`);
       } else {
         console.warn(`⚠️ No AI insights returned for ${enrichedHotelSummary.name}`);
         
-        // Send fallback enhanced data
+        // Send fallback enhanced data with default safety rating
         const fallbackEnhancedData = {
   ...basicHotelData,
   whyItMatches: "Excellent choice with great amenities and location",
@@ -329,8 +319,11 @@ const processHotelWithImmediateInsights = async (
   nearbyAttractions: [`${enrichedHotelSummary.city} center`, "Local attractions"],
   locationHighlight: "Well-located property",
   guestInsights: "Consistently rated well by guests",
-  firstRoomImage: null,   // ADD THIS
-  secondRoomImage: null   // ADD THIS
+  firstRoomImage: null,
+  secondRoomImage: null,
+  safetyRating: 7,
+  safetyJustification: "Generally safe area with standard city precautions recommended",
+  topAmenities: enrichedHotelSummary.topAmenities || ["Wi-Fi", "AC", "Service"] // Use actual amenities as fallback
 };
 
         sendUpdate('hotel_enhanced', {
@@ -344,7 +337,7 @@ const processHotelWithImmediateInsights = async (
     } catch (insightsError) {
       console.error(`❌ AI insights failed for ${enrichedHotelSummary.name}:`, insightsError);
       
-      // Send fallback data on insights failure
+      // Send fallback data on insights failure with default safety
       const fallbackData = {
   ...basicHotelData,
   whyItMatches: "Quality choice with excellent facilities",
@@ -352,8 +345,11 @@ const processHotelWithImmediateInsights = async (
   nearbyAttractions: [`${enrichedHotelSummary.city} attractions`, "Local points of interest"],
   locationHighlight: "Convenient location",
   guestInsights: "Popular choice among travelers",
-  firstRoomImage: null,   // ADD THIS
-  secondRoomImage: null   // ADD THIS
+  firstRoomImage: null,
+  secondRoomImage: null,
+  safetyRating: 7,
+  safetyJustification: "Safety assessment unavailable - standard city precautions recommended",
+  topAmenities: enrichedHotelSummary.topAmenities || ["Wi-Fi", "AC", "Service"] // Use actual amenities as fallback
 };
 
       sendUpdate('hotel_enhanced', {
@@ -385,13 +381,18 @@ const gptHotelMatchingSSE = async (
 ): Promise<Array<{ hotelName: string; aiMatchPercent: number; hotelData: HotelSummaryForAI }>> => {
   
   
-  const hasSpecificPreferences = parsedQuery.aiSearch && parsedQuery.aiSearch.trim() !== '';
+const hasSpecificPreferences = parsedQuery.aiSearch && 
+  typeof parsedQuery.aiSearch === 'string' && 
+  parsedQuery.aiSearch.trim() !== '';
+  
   
   // Build the hotel summary for GPT with better formatting
   const hotelSummary = hotelSummaries.map((hotel, index) => {
     const priceMatch = hotel.pricePerNight.match(/(\d+)/);
     const numericPrice = priceMatch ? parseInt(priceMatch[1]) : 999999;
-    
+    const amenitiesText = hotel.topAmenities && hotel.topAmenities.length > 0
+  ? hotel.topAmenities.join(', ')
+  : '';
     const locationInfo = [
       hotel.city !== 'Unknown City' ? hotel.city : '',
       hotel.country !== 'Unknown Country' ? hotel.country : ''
@@ -405,8 +406,7 @@ const gptHotelMatchingSSE = async (
       .replace(/&gt;/g, '>')
       .replace(/&quot;/g, '"')
       .trim()
-    
-    return `${index + 1}: ${hotel.name} | $${numericPrice}/night | ${hotel.starRating}⭐ | ${locationInfo} | ${hotel.topAmenities.slice(0,2).join(',')} | ${shortDescription}`;
+    return `${index + 1}: ${hotel.name} | $${numericPrice}/night | ${hotel.starRating}⭐ | ${locationInfo} | ${shortDescription}| ${amenitiesText} `;
   }).join('\n');
   
   // FIXED: Better budget handling in prompts
@@ -545,32 +545,35 @@ REMEMBER: Always select 15 hotels using exact names from the list above.`;
 
           if (matchingHotel) {
             const insightPromise = processHotelWithImmediateInsights(
-              { ...matchingHotel, aiMatchPercent: parsed.aiMatchPercent },
-              parsed.rank,
-              userInput,
-              parsedQuery,
-              nights,
-              hotelMetadataMap,
-              sendUpdate
-            ).catch(error => {
-              console.error(`❌ Insight processing failed for ${parsed.hotelName}:`, error);
-              sendUpdate('hotel_enhanced', {
-                hotelIndex: parsed.rank,
-                hotelId: parsed.hotelData.hotelId,
-                hotel: {
-                  name: parsed.hotelName,
-                  aiMatchPercent: parsed.aiMatchPercent,
-                  whyItMatches: "Great choice with excellent amenities",
-                  funFacts: ["Quality accommodations", "Convenient location"],
-                  nearbyAttractions: ["City center", "Local attractions"],
-                  locationHighlight: "Well-located property",
-                  guestInsights: "Consistently rated well by guests",
-                  firstRoomImage: null,   // ADD THIS
-                  secondRoomImage: null   // ADD THIS
-                },
-                message: `${parsed.hotelName} ready (insights unavailable)`
-              });
-            });
+    { ...matchingHotel, aiMatchPercent: parsed.aiMatchPercent },
+    parsed.rank,
+    userInput,
+    parsedQuery,
+    nights,
+    hotelMetadataMap,
+    sendUpdate,
+    searchId  // ADD THIS
+  ).catch(error => {
+    console.error(`❌ Insight processing failed for ${parsed.hotelName}:`, error);
+    sendUpdate('hotel_enhanced', {
+      hotelIndex: parsed.rank,
+      hotelId: parsed.hotelData.hotelId,
+      hotel: {
+        name: parsed.hotelName,
+        aiMatchPercent: parsed.aiMatchPercent,
+        whyItMatches: "Great choice with excellent amenities",
+        funFacts: ["Quality accommodations", "Convenient location"],
+        nearbyAttractions: ["City center", "Local attractions"],
+        locationHighlight: "Well-located property",
+        guestInsights: "Consistently rated well by guests",
+        firstRoomImage: null,
+        secondRoomImage: null,
+        safetyRating: 7, // Default safety rating
+        safetyJustification: "Safety assessment unavailable"
+      },
+      message: `${parsed.hotelName} ready (insights unavailable)`
+    });
+  });
             
             insightPromises.push(insightPromise);
             hotelsStreamed++;
@@ -731,16 +734,17 @@ REMEMBER: Always select 15 hotels using exact names from the list above.`;
 
           if (matchingHotel) {
             const insightPromise = processHotelWithImmediateInsights(
-              { ...matchingHotel, aiMatchPercent: hasSpecificPreferences ? 25 + (i * 3) : 50 + (i * 3) },
-              nextRank,
-              userInput,
-              parsedQuery,
-              nights,
-              hotelMetadataMap,
-              sendUpdate
-            ).catch(error => {
-              console.error(`❌ Fallback insight processing failed for ${hotel.name}:`, error);
-            });
+    { ...matchingHotel, aiMatchPercent: hasSpecificPreferences ? 25 + (i * 3) : 50 + (i * 3) },
+    nextRank,
+    userInput,
+    parsedQuery,
+    nights,
+    hotelMetadataMap,
+    sendUpdate,
+    searchId  // ADD THIS
+  ).catch(error => {
+    console.error(`❌ Fallback insight processing failed for ${hotel.name}:`, error);
+  });
             
             insightPromises.push(insightPromise);
           }
@@ -793,6 +797,26 @@ REMEMBER: Always select 15 hotels using exact names from the list above.`;
   
   return orderedMatches.slice(0, 15);
 };
+
+
+function topRatedCap(hotels: HotelSummaryForAI[], limit = 250): HotelSummaryForAI[] {
+  return hotels
+    .slice()
+    .sort((a, b) => {
+      const sa = Number(a.starRating || 0);
+      const sb = Number(b.starRating || 0);
+      if (sb !== sa) return sb - sa;               // higher stars first
+
+      const ra = Number(a.reviewCount || 0);
+      const rb = Number(b.reviewCount || 0);
+      if (rb !== ra) return rb - ra;               // tie-break by reviews
+
+      const pa = parseInt(a.pricePerNight.match(/(\d+)/)?.[1] || '999999', 10);
+      const pb = parseInt(b.pricePerNight.match(/(\d+)/)?.[1] || '999999', 10);
+      return pa - pb;                              // last tie-break: cheaper first
+    })
+    .slice(0, limit);
+}
 
 // Optimized function to extract images from hotel data
 const extractHotelImages = (hotelInfo: any): string[] => {
@@ -975,7 +999,9 @@ const gptHotelMatching = async (
   searchId: string 
 ): Promise<Array<{ hotelName: string; aiMatchPercent: number; hotelData: HotelSummaryForAI }>> => {
   
-  const hasSpecificPreferences = parsedQuery.aiSearch && parsedQuery.aiSearch.trim() !== '';
+  const hasSpecificPreferences = parsedQuery.aiSearch && 
+  typeof parsedQuery.aiSearch === 'string' && 
+  parsedQuery.aiSearch.trim() !== '';
   
   // Budget context - only apply if user specified a budget
   let budgetContext = '';
@@ -1262,109 +1288,37 @@ const parseRankedHotelLine = (
   }
 };
 
-// 🔥 EXTRACT AND IMPROVE sendHotelViaSSE function
-const sendHotelViaSSE = async (
-  parsedHotel: { hotelName: string; aiMatchPercent: number; hotelData: HotelSummaryForAI },
-  hotelIndex: number,
-  hotelsWithRates: any[],
-  hotelMetadataMap: Map<string, Record<string, unknown>>,
-  nights: number,
-  sendUpdate: (type: string, data: any) => void
-): Promise<boolean> => {
-  try {
-    const matchingHotel = hotelsWithRates.find((hotel: any) => {
-      const hotelId = hotel.hotelId || hotel.id || hotel.hotel_id;
-      return hotelId === parsedHotel.hotelData.hotelId;
-    });
-
-    if (!matchingHotel) {
-      console.warn(`⚠️ No matching hotel found for: ${parsedHotel.hotelName}`);
-      return false;
-    }
-
-    const hotelId = matchingHotel.hotelId || matchingHotel.id || matchingHotel.hotel_id;
-    const hotelMetadata = hotelMetadataMap.get(String(hotelId));
-    
-    if (!hotelMetadata) {
-      console.warn(`⚠️ No metadata found for hotel: ${parsedHotel.hotelName} (ID: ${hotelId})`);
-      return false;
-    }
-
-    const enrichedHotelSummary = createHotelSummaryForInsights(matchingHotel, hotelMetadata, nights);
-    
-    const enrichedHotel = {
-      ...enrichedHotelSummary,
-      aiMatchPercent: parsedHotel.aiMatchPercent,
-      summarizedInfo: {
-        name: enrichedHotelSummary.name,
-        description: hotelMetadata?.hotelDescription || hotelMetadata?.description || 'No description available',
-        amenities: enrichedHotelSummary.topAmenities,
-        starRating: enrichedHotelSummary.starRating,
-        reviewCount: enrichedHotelSummary.reviewCount,
-        pricePerNight: enrichedHotelSummary.pricePerNight?.display || 'Price not available',
-        location: enrichedHotelSummary.address,
-        city: enrichedHotelSummary.city,
-        country: enrichedHotelSummary.country,
-        latitude: enrichedHotelSummary.latitude,
-        longitude: enrichedHotelSummary.longitude
-      }
-    };
-
-    // SEND HOTEL via SSE
-    sendUpdate('hotel_found', {
-  hotelIndex: hotelIndex,
-  totalExpected: TARGET_HOTEL_COUNT, // Changed from: 5
-  hotel: enrichedHotel,
-  message: `Found perfect match: ${enrichedHotel.name} (${parsedHotel.aiMatchPercent}% match)`
-});
-
-    console.log(`📡 Streamed hotel ${hotelIndex}/5: ${enrichedHotel.name} (${parsedHotel.aiMatchPercent}%)`);
-    return true;
-
-  } catch (error) {
-    console.error(`❌ Error streaming hotel ${parsedHotel.hotelName}:`, error);
-    return false;
+// NEW: Function to get combined amenities (facilities + amenities)
+const getCombinedAmenities = (hotelInfo: any): string[] => {
+  const allAmenities: string[] = [];
+  
+  // Get facilities from facilityIds and convert to names
+  if (hotelInfo?.facilityIds && Array.isArray(hotelInfo.facilityIds)) {
+    const facilities = hotelInfo.facilityIds
+      .map((id: number) => FACILITIES_ID_TO_NAME[id])
+      .filter(Boolean); // Remove undefined entries
+    allAmenities.push(...facilities);
   }
-};
-
-// 3. ADD THIS HELPER FUNCTION (same as before)
-const parseHotelLine = (
-  line: string, 
-  hotelSummaries: HotelSummaryForAI[]
-): { hotelName: string; aiMatchPercent: number; hotelData: HotelSummaryForAI } | null => {
-  try {
-    // Parse format: HOTEL1: Hotel Name|MATCH: 85|REASON: Some reason
-    const hotelMatch = line.match(/HOTEL\d+:\s*([^|]+)\|MATCH:\s*(\d+)/i);
-    if (!hotelMatch) {
-      console.warn(`⚠️ Could not parse line: "${line}"`);
-      return null;
-    }
-    
-    const hotelName = hotelMatch[1].trim();
-    const aiMatchPercent = parseInt(hotelMatch[2]);
-    
-    // Find matching hotel data
-    const hotelData = hotelSummaries.find(hotel => 
-      hotel.name.toLowerCase() === hotelName.toLowerCase() ||
-      hotel.name.toLowerCase().includes(hotelName.toLowerCase()) ||
-      hotelName.toLowerCase().includes(hotel.name.toLowerCase())
-    );
-    
-    if (!hotelData) {
-      console.warn(`⚠️ Hotel "${hotelName}" not found in hotel summaries`);
-      return null;
-    }
-    
-    return {
-      hotelName: hotelData.name, // Use exact name from data
-      aiMatchPercent: Math.min(Math.max(aiMatchPercent, 1), 100), // Clamp between 1-100
-      hotelData
-    };
-    
-  } catch (error) {
-    console.warn(`⚠️ Error parsing line "${line}":`, error);
-    return null;
+  
+  // Get existing amenities
+  if (hotelInfo?.amenities && Array.isArray(hotelInfo.amenities)) {
+    const amenities = hotelInfo.amenities
+      .map((amenity: unknown) => {
+        if (typeof amenity === 'string') return amenity;
+        if (typeof amenity === 'object' && amenity !== null && 'name' in amenity) return (amenity as any).name;
+        return null;
+      })
+      .filter(Boolean);
+    allAmenities.push(...amenities);
   }
+  
+  // Add defaults only if nothing found
+  if (allAmenities.length === 0) {
+    allAmenities.push('Wi-Fi', 'Air Conditioning', 'Private Bathroom');
+  }
+  
+  // Remove duplicates and return
+  return [...new Set(allAmenities)];
 };
 
 // OPTIMIZED: Create hotel summary using existing data (no additional API calls)
@@ -1436,10 +1390,9 @@ const createHotelSummaryForInsights = (hotel: HotelWithRates, hotelMetadata: any
 };
 
 const applyHardPriceFilter = (
-  hotelSummaries: HotelSummaryForAI[], 
+  hotelSummaries: HotelSummaryForAI[],
   parsedQuery: ParsedSearchQuery
 ): HotelSummaryForAI[] => {
-  
   if (!parsedQuery.minCost && !parsedQuery.maxCost) {
     console.log('💰 No price filter applied - using all hotels');
     return hotelSummaries;
@@ -1456,13 +1409,13 @@ const applyHardPriceFilter = (
       console.warn(`⚠️ Could not extract price from: "${hotel.pricePerNight}"`);
       return;
     }
-    
+        
     const price = parseInt(priceMatch[1]);
-    
+        
     // Check if within budget
     const withinMin = !parsedQuery.minCost || price >= parsedQuery.minCost;
     const withinMax = !parsedQuery.maxCost || price <= parsedQuery.maxCost;
-    
+        
     if (withinMin && withinMax) {
       withinBudget.push(hotel);
       console.log(`✅ ${hotel.name}: ${price} (WITHIN BUDGET)`);
@@ -1479,23 +1432,28 @@ const applyHardPriceFilter = (
     }
   });
 
-  // Ensure AI gets at least 20 hotels for good selection
-  const minHotelsForAI = 30;
+  // Special case: if maxCost is $25 (cheapest filter), use 50 hotels minimum
+  // Otherwise use 30 hotels minimum
+  const minHotelsForAI = parsedQuery.maxCost === 25 ? 50 : 30;
   
-  // If we have enough hotels within budget, use only those (but at least 20)
+  if (parsedQuery.maxCost === 25) {
+    console.log('🏷️ Cheapest filter detected ($25 max) - using 50 hotels minimum for better selection');
+  }
+    
+  // If we have enough hotels within budget, use only those (but at least minHotelsForAI)
   if (withinBudget.length >= minHotelsForAI) {
     console.log(`🎯 Found ${withinBudget.length} hotels within budget - using only these`);
     return withinBudget;
   }
 
-  // If not enough within budget, add closest ones to reach 20 hotels
+  // If not enough within budget, add closest ones to reach minimum hotels
   const neededHotels = minHotelsForAI - withinBudget.length;
   const sortedOutside = outsideBudget
     .sort((a, b) => a.distance - b.distance)
     .slice(0, neededHotels);
 
   const finalHotels = [...withinBudget, ...sortedOutside.map(item => item.hotel)];
-  
+    
   console.log(`⚠️ Only ${withinBudget.length} within budget, adding ${sortedOutside.length} closest hotels (total: ${finalHotels.length})`);
   sortedOutside.forEach(item => {
     console.log(`  Adding: ${item.hotel.name} (${item.price}, distance: ${item.distance})`);
@@ -1627,7 +1585,9 @@ export const hotelSearchAndMatchController = async (req: Request, res: Response)
         countryCode: parsedQuery.countryCode,
         cityName: parsedQuery.cityName,
         language: 'en',
-        limit: SMART_HOTEL_LIMIT
+        limit: SMART_HOTEL_LIMIT,
+        aiSearch: `the hotels shoud be under ${parsedQuery.maxCost}`
+
       },
       timeout: 30000
     });
@@ -1699,9 +1659,10 @@ export const hotelSearchAndMatchController = async (req: Request, res: Response)
           children: parsedQuery.children ? Array(parsedQuery.children).fill(10) : []
         }
       ],
-      timeout: 3,
+      timeout: 4,
       maxRatesPerHotel: 1,
-      hotelIds: hotelIds
+      hotelIds: hotelIds,
+      limit: 500
     };
 
     const ratesResponse = await liteApiInstance.post('/hotels/rates', ratesRequestBody, {
@@ -1825,6 +1786,8 @@ export const hotelSearchAndMatchController = async (req: Request, res: Response)
 
     const priceFilteredHotels = applyHardPriceFilter(hotelSummariesForAI, parsedQuery);
 
+    const cappedForLLM = topRatedCap(priceFilteredHotels, 250);
+
     logger.endStep('6-PriceFilter', { 
       filteredCount: priceFilteredHotels.length,
       removedCount: hotelSummariesForAI.length - priceFilteredHotels.length
@@ -1837,13 +1800,13 @@ export const hotelSearchAndMatchController = async (req: Request, res: Response)
       totalSteps: 8
     });
 
-    logger.startStep('7-GPTMatching', { hotelCount: priceFilteredHotels.length });
+    logger.startStep('7-GPTMatching', { hotelCount: cappedForLLM.length });
     
     let gptMatches;
     if (isSSERequest) {
       // Use streaming GPT matching for SSE
       gptMatches = await gptHotelMatchingSSE(
-        priceFilteredHotels, 
+        cappedForLLM, 
         parsedQuery, 
         nights,
         sendUpdate,
@@ -1854,7 +1817,7 @@ export const hotelSearchAndMatchController = async (req: Request, res: Response)
       );
     } else {
       // Use regular GPT matching for POST requests
-      gptMatches = await gptHotelMatching(priceFilteredHotels, parsedQuery, nights, searchId);
+      gptMatches = await gptHotelMatching(cappedForLLM, parsedQuery, nights, searchId);
     }
     
     logger.endStep('7-GPTMatching', { matches: gptMatches.length });
@@ -1879,46 +1842,50 @@ export const hotelSearchAndMatchController = async (req: Request, res: Response)
     logger.startStep('8-BuildEnrichedData', { selectedHotels: gptMatches.length });
 
     const enrichedHotels = gptMatches.map(match => {
-      const matchingHotel = hotelsWithRates.find((hotel: any) => {
-        const hotelId = hotel.hotelId || hotel.id || hotel.hotel_id;
-        return hotelId === match.hotelData.hotelId;
-      });
+  const matchingHotel = hotelsWithRates.find((hotel: any) => {
+    const hotelId = hotel.hotelId || hotel.id || hotel.hotel_id;
+    return hotelId === match.hotelData.hotelId;
+  });
 
-      if (!matchingHotel) {
-        console.warn(`Warning: Could not find hotel "${match.hotelName}" in original data`);
-        return null;
-      }
+  if (!matchingHotel) {
+    console.warn(`Warning: Could not find hotel "${match.hotelName}" in original data`);
+    return null;
+  }
 
-      const hotelId = matchingHotel.hotelId || matchingHotel.id || matchingHotel.hotel_id;
-      const hotelMetadata = hotelMetadataMap.get(String(hotelId));
-      
-      if (!hotelMetadata) {
-        console.warn(`Warning: Could not find metadata for hotel "${match.hotelName}"`);
-        return null;
-      }
+  const hotelId = matchingHotel.hotelId || matchingHotel.id || matchingHotel.hotel_id;
+  const hotelMetadata = hotelMetadataMap.get(String(hotelId));
+  
+  if (!hotelMetadata) {
+    console.warn(`Warning: Could not find metadata for hotel "${match.hotelName}"`);
+    return null;
+  }
 
-      const enrichedHotelSummary = createHotelSummaryForInsights(matchingHotel, hotelMetadata, nights);
-      
-      return {
-        ...enrichedHotelSummary,
-        aiMatchPercent: match.aiMatchPercent,
-        summarizedInfo: {
-          name: enrichedHotelSummary.name,
-          description: hotelMetadata?.hotelDescription || hotelMetadata?.description || 'No description available',
-          amenities: enrichedHotelSummary.topAmenities,
-          starRating: enrichedHotelSummary.starRating,
-          reviewCount: enrichedHotelSummary.reviewCount,
-          pricePerNight: enrichedHotelSummary.pricePerNight?.display || 'Price not available',
-          location: enrichedHotelSummary.address,
-          city: enrichedHotelSummary.city,
-          country: enrichedHotelSummary.country,
-          latitude: enrichedHotelSummary.latitude,
-          longitude: enrichedHotelSummary.longitude,
-          isRefundable: enrichedHotelSummary.isRefundable,
-          refundableInfo: enrichedHotelSummary.refundableInfo
-        }
-      };
-    }).filter(Boolean);
+  const enrichedHotelSummary = createHotelSummaryForInsights(matchingHotel, hotelMetadata, nights);
+  
+  return {
+    ...enrichedHotelSummary,
+    aiMatchPercent: match.aiMatchPercent,
+    summarizedInfo: {
+      name: enrichedHotelSummary.name,
+      description: hotelMetadata?.hotelDescription || hotelMetadata?.description || 'No description available',
+      amenities: enrichedHotelSummary.topAmenities,
+      // ADD THIS: Include full amenities text
+      amenitiesText: enrichedHotelSummary.topAmenities && enrichedHotelSummary.topAmenities.length > 0 
+        ? enrichedHotelSummary.topAmenities.join(', ') 
+        : 'Standard hotel amenities',
+      starRating: enrichedHotelSummary.starRating,
+      reviewCount: enrichedHotelSummary.reviewCount,
+      pricePerNight: enrichedHotelSummary.pricePerNight?.display || 'Price not available',
+      location: enrichedHotelSummary.address,
+      city: enrichedHotelSummary.city,
+      country: enrichedHotelSummary.country,
+      latitude: enrichedHotelSummary.latitude,
+      longitude: enrichedHotelSummary.longitude,
+      isRefundable: enrichedHotelSummary.isRefundable,
+      refundableInfo: enrichedHotelSummary.refundableInfo
+    }
+  };
+}).filter(Boolean);
 
     logger.endStep('8-BuildEnrichedData', { enrichedHotels: enrichedHotels.length });
 

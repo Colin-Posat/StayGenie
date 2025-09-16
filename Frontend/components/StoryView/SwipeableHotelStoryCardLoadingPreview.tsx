@@ -192,6 +192,7 @@ const SwipeableHotelStoryCardLoadingPreview: React.FC<LoadingPreviewProps> = ({
             </View>
           </View>
         </View>
+        
 
         {/* Bottom Content */}
         <View style={tw`absolute bottom-6 left-4 right-4 z-10`}>

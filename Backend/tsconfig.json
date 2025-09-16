@@ -9,6 +9,6 @@
     "strict": true,
     "skipLibCheck": true,
   },
-  "include": ["src"],
+  "include": ["src", "tests/generate-facilities-dict.js"],
   "exclude": ["node_modules"]
 }

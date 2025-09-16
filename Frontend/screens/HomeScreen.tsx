@@ -162,6 +162,9 @@ interface AIRecommendation {
   firstRoomImage?: string | null;
   secondRoomImage?: string | null;
   allHotelInfo?: string;
+  // ADD THESE NEW FIELDS:
+  safetyRating: number;           // Safety rating out of 10
+  safetyJustification: string;    // Brief explanation of rating
 }
 
 // Legacy interface for backward compatibility
@@ -274,6 +277,8 @@ interface Hotel {
   aiMatchPercent?: number;
   images?: string[];
   
+  
+  
   pricePerNight?: {
     amount: number;
     totalAmount: number;
@@ -306,11 +311,14 @@ interface Hotel {
   firstRoomImage?: string | null;
   secondRoomImage?: string | null;
   allHotelInfo?: string;
+
+  aiSafetyRating?: number;        // AI-generated safety rating (1-10)
+  safetyJustification?: string; 
 }
 
 
-//const BASE_URL="localhost:3003"
-const BASE_URL="https://staygenie-wwpa.onrender.com"
+const BASE_URL='http://localhost:3003';
+//const BASE_URL="https://staygenie-wwpa.onrender.com"
 
 
 
@@ -484,6 +492,7 @@ const handleStreamingUpdate = async (data: any, userInput?: string) => {
     case 'hotel_enhanced':
       if (data.hotel && data.hotelId) {
         console.log(`✨ Received AI-enhanced hotel: ${data.hotel.name}`);
+        console.log('🏨 Enhanced topAmenities:', data.hotel.topAmenities); 
         
         const enhancedHotel = convertStreamedHotelToDisplay(data.hotel, data.hotelIndex - 1);
         
@@ -501,10 +510,22 @@ const handleStreamingUpdate = async (data: any, userInput?: string) => {
               guestInsights: enhancedHotel.guestInsights || "AI-enhanced guest insights",
               nearbyAttractions: enhancedHotel.nearbyAttractions || ["AI-found attractions"],
               locationHighlight: enhancedHotel.locationHighlight || "AI-analyzed location",
-              allHotelInfo: enhancedHotel.allHotelInfo || "Comprehensive hotel details available"
+              allHotelInfo: enhancedHotel.allHotelInfo || "Comprehensive hotel details available",
+              topAmenities: enhancedHotel.topAmenities || updatedHotels[existingIndex].topAmenities || [],
+          tags: enhancedHotel.topAmenities?.slice(0, 3) || updatedHotels[existingIndex].tags || ["Premium amenities"],
+
+              // NEW: Update safety fields with AI-enhanced data
+              safetyRating: enhancedHotel.aiSafetyRating || enhancedHotel.safetyRating || updatedHotels[existingIndex].safetyRating,
+              aiSafetyRating: enhancedHotel.aiSafetyRating,
+              safetyJustification: enhancedHotel.safetyJustification || "AI-enhanced safety assessment"
             };
             
             console.log(`🎨 Enhanced existing hotel with AI insights: ${data.hotel.name}`);
+            
+            // Log safety rating update if present
+            if (enhancedHotel.aiSafetyRating) {
+              console.log(`🛡️ Updated safety rating for ${data.hotel.name}: ${enhancedHotel.aiSafetyRating}/10 - ${enhancedHotel.safetyJustification}`);
+            }
           } else {
             console.warn(`⚠️ Could not find hotel ${data.hotelId} to enhance`);
           }
@@ -583,8 +604,6 @@ const confirmedCheckOutDate = hasFinalizedDates
 const convertStreamedHotelToDisplay = (streamedHotel: any, index: number): Hotel => {
   console.log('🔄 Converting streamed hotel:', streamedHotel.name);
 
-
-    
   const getHotelImage = (hotel: any): string => {
     const defaultImage = "https://images.unsplash.com/photo-1564501049412-61c2a3083791?auto=format&fit=crop&w=800&q=80";
     
@@ -609,7 +628,6 @@ const convertStreamedHotelToDisplay = (streamedHotel: any, index: number): Hotel
     return defaultImage;
   };
 
-
   let price = 200;
   let originalPrice = price * 1.15;
   let priceComparison = "Standard rate";
@@ -620,14 +638,11 @@ const convertStreamedHotelToDisplay = (streamedHotel: any, index: number): Hotel
     priceComparison = streamedHotel.pricePerNight.display || `${price}/night`;
   }
 
-  
-
   // Handle both basic hotels and AI-enhanced hotels
   const isAIEnhanced = streamedHotel.whyItMatches && 
                       !streamedHotel.whyItMatches.includes('Analyzing') && 
                       !streamedHotel.whyItMatches.includes('progress');
 
-                      console.log('SHIT: {firstRoomImage: ', streamedHotel.firstRoomImage);
   return {
     id: streamedHotel.hotelId || streamedHotel.id,
     name: streamedHotel.name,
@@ -638,13 +653,17 @@ const convertStreamedHotelToDisplay = (streamedHotel: any, index: number): Hotel
     priceComparison: priceComparison,
     rating: streamedHotel.starRating || 4.0,
     reviews: streamedHotel.reviewCount || Math.floor(Math.random() * 1000) + 100,
-    safetyRating: 8.5 + Math.random() * 1.5,
+    
+    // UPDATED: Use AI safety rating if available, otherwise use fallback calculation
+    safetyRating: streamedHotel.safetyRating || streamedHotel.aiSafetyRating || (8.5 + Math.random() * 1.5),
+    
     transitDistance: '5 min walk to main area',
     tags: streamedHotel.topAmenities?.slice(0, 3) || ["Premium amenities"],
     location: streamedHotel.address || streamedHotel.summarizedInfo?.location || 'Prime location',
     features: streamedHotel.amenities || streamedHotel.topAmenities || ["Excellent features"],
     firstRoomImage: streamedHotel.firstRoomImage || null,
     secondRoomImage: streamedHotel.secondRoomImage || null,
+    topAmenities: streamedHotel.topAmenities || [],
     
     // AI content - use enhanced if available, otherwise show loading
     aiExcerpt: isAIEnhanced 
@@ -693,7 +712,7 @@ const convertStreamedHotelToDisplay = (streamedHotel: any, index: number): Hotel
     country: streamedHotel.country || streamedHotel.summarizedInfo?.country,
     latitude: streamedHotel.latitude,
     longitude: streamedHotel.longitude,
-    topAmenities: streamedHotel.topAmenities || [],
+
     hasAvailability: true,
     totalRooms: streamedHotel.totalRooms || 1,
     fullDescription: streamedHotel.description || streamedHotel.summarizedInfo?.description,
@@ -704,10 +723,15 @@ const convertStreamedHotelToDisplay = (streamedHotel: any, index: number): Hotel
     refundableTag: streamedHotel.refundableTag,
     refundableInfo: streamedHotel.refundableInfo || streamedHotel.summarizedInfo?.refundableInfo,
     
-    // ADD THIS: All hotel info
-    allHotelInfo: streamedHotel.allHotelInfo || "Detailed hotel information loading..."
+    // All hotel info
+    allHotelInfo: streamedHotel.allHotelInfo || "Detailed hotel information loading...",
+    
+    // NEW: AI Safety fields
+    aiSafetyRating: streamedHotel.safetyRating || streamedHotel.aiSafetyRating,
+    safetyJustification: streamedHotel.safetyJustification || "Safety assessment based on location and area knowledge"
   };
 };
+
 
 // FINAL FIX: Remove all custom event listeners - everything goes through 'message'
 const fmtDate = (iso: string) =>
@@ -1310,7 +1334,6 @@ const handleBookNow = useCallback((hotel: Hotel) => {
   );
 }, [stage1Results, searchResults]);
 
-  // Enhanced handleViewDetails
 const handleViewDetails = useCallback((hotel: Hotel) => {
   console.log('View details pressed for:', hotel.name);
   
@@ -1337,6 +1360,20 @@ const handleViewDetails = useCallback((hotel: Hotel) => {
     }
     detailsMessage += `\n`;
   }
+  
+  // NEW: Add safety information section
+  detailsMessage += `🛡️ Safety Assessment:\n`;
+  if (hotel.aiSafetyRating) {
+    detailsMessage += `• AI Safety Rating: ${hotel.aiSafetyRating}/10\n`;
+    if (hotel.safetyJustification) {
+      detailsMessage += `• Assessment: ${hotel.safetyJustification}\n`;
+    }
+    detailsMessage += `• ✨ AI-enhanced safety analysis\n`;
+  } else {
+    detailsMessage += `• General Safety: ${hotel.safetyRating.toFixed(1)}/10\n`;
+    detailsMessage += `• Standard area assessment\n`;
+  }
+  detailsMessage += `\n`;
   
   detailsMessage += `📍 Location Details:\n`;
   if (hotel.city && hotel.country) {

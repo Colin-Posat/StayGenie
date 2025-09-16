@@ -1,0 +1,642 @@
+[
+  {
+    "timestamp": "2025-09-15T05:45:20.034Z",
+    "searchId": "59d64143-d59d-4b83-affb-311eef66d917",
+    "userQuery": "Luxury safari lodges in Kenya with pools",
+    "destination": "Nairobi, KE",
+    "hotelCount": 227,
+    "totalTokensUsed": 10884,
+    "totalCost": 0.0017783999999999999,
+    "searchDurationMs": 5728,
+    "operations": {
+      "hotelMatching": {
+        "tokens": 10884,
+        "cost": 0.0017783999999999999
+      },
+      "aiInsights": {
+        "tokens": 0,
+        "cost": 0
+      }
+    }
+  },
+  {
+    "timestamp": "2025-09-15T05:45:30.715Z",
+    "searchId": "ea25832c-d4c2-426b-baf8-b91cd4e82854",
+    "userQuery": "hotels under 90 in tokyo",
+    "destination": "Tokyo, JP",
+    "hotelCount": 300,
+    "totalTokensUsed": 11920,
+    "totalCost": 0.0019662,
+    "searchDurationMs": 6307,
+    "operations": {
+      "hotelMatching": {
+        "tokens": 11920,
+        "cost": 0.0019662
+      },
+      "aiInsights": {
+        "tokens": 0,
+        "cost": 0
+      }
+    }
+  },
+  {
+    "timestamp": "2025-09-15T05:46:08.581Z",
+    "searchId": "6c0b6d84-5c6c-4d99-ae81-77400e25bae4",
+    "userQuery": "hotels under 60 in tokyo",
+    "destination": "Tokyo, JP",
+    "hotelCount": 300,
+    "totalTokensUsed": 11934,
+    "totalCost": 0.0019746,
+    "searchDurationMs": 6372,
+    "operations": {
+      "hotelMatching": {
+        "tokens": 11934,
+        "cost": 0.0019746
+      },
+      "aiInsights": {
+        "tokens": 0,
+        "cost": 0
+      }
+    }
+  },
+  {
+    "timestamp": "2025-09-15T05:47:35.277Z",
+    "searchId": "d5ec8bcc-ed7d-47c5-bc73-e66edc1da9e9",
+    "userQuery": "hotels under 60 tokyo",
+    "destination": "Tokyo, JP",
+    "hotelCount": 300,
+    "totalTokensUsed": 11946,
+    "totalCost": 0.0019817999999999997,
+    "searchDurationMs": 6000,
+    "operations": {
+      "hotelMatching": {
+        "tokens": 11946,
+        "cost": 0.0019817999999999997
+      },
+      "aiInsights": {
+        "tokens": 0,
+        "cost": 0
+      }
+    }
+  },
+  {
+    "timestamp": "2025-09-15T05:48:32.116Z",
+    "searchId": "ffd1c538-b7a1-4c02-9e74-382e79d3ecc5",
+    "userQuery": "hotels under 200 in new york",
+    "destination": "New York, US",
+    "hotelCount": 271,
+    "totalTokensUsed": 11390,
+    "totalCost": 0.0018696,
+    "searchDurationMs": 6841,
+    "operations": {
+      "hotelMatching": {
+        "tokens": 11390,
+        "cost": 0.0018696
+      },
+      "aiInsights": {
+        "tokens": 0,
+        "cost": 0
+      }
+    }
+  },
+  {
+    "timestamp": "2025-09-15T05:53:26.924Z",
+    "searchId": "a6adcf39-9de2-4ec7-83b1-b4f4df0e7477",
+    "userQuery": "hotels under 300 new york",
+    "destination": "New York, US",
+    "hotelCount": 271,
+    "totalTokensUsed": 11386,
+    "totalCost": 0.0018636,
+    "searchDurationMs": 8634,
+    "operations": {
+      "hotelMatching": {
+        "tokens": 11386,
+        "cost": 0.0018636
+      },
+      "aiInsights": {
+        "tokens": 0,
+        "cost": 0
+      }
+    }
+  },
+  {
+    "timestamp": "2025-09-15T06:02:04.840Z",
+    "searchId": "bb570a3f-1748-45c3-89e9-0104df4313df",
+    "userQuery": "hotels in tokyo under 50",
+    "destination": "Tokyo, JP",
+    "hotelCount": 333,
+    "totalTokensUsed": 11944,
+    "totalCost": 0.0019833,
+    "searchDurationMs": 10625,
+    "operations": {
+      "hotelMatching": {
+        "tokens": 11944,
+        "cost": 0.0019833
+      },
+      "aiInsights": {
+        "tokens": 0,
+        "cost": 0
+      }
+    }
+  },
+  {
+    "timestamp": "2025-09-15T06:02:47.634Z",
+    "searchId": "75b7f04d-b143-4966-96ba-ca6598ed6885",
+    "userQuery": "hotels in new york under 300",
+    "destination": "New York, US",
+    "hotelCount": 290,
+    "totalTokensUsed": 11312,
+    "totalCost": 0.0018462,
+    "searchDurationMs": 8716,
+    "operations": {
+      "hotelMatching": {
+        "tokens": 11312,
+        "cost": 0.0018462
+      },
+      "aiInsights": {
+        "tokens": 0,
+        "cost": 0
+      }
+    }
+  },
+  {
+    "timestamp": "2025-09-15T06:07:07.922Z",
+    "searchId": "24d45820-2fa7-4414-bfdf-1e4fc95bcb5e",
+    "userQuery": "hotels under 300 new york",
+    "destination": "New York, US",
+    "hotelCount": 290,
+    "totalTokensUsed": 11312,
+    "totalCost": 0.0018462,
+    "searchDurationMs": 8744,
+    "operations": {
+      "hotelMatching": {
+        "tokens": 11312,
+        "cost": 0.0018462
+      },
+      "aiInsights": {
+        "tokens": 0,
+        "cost": 0
+      }
+    }
+  },
+  {
+    "timestamp": "2025-09-15T06:07:27.287Z",
+    "searchId": "ffcf8892-7bcf-4463-91c0-1577e01ff5df",
+    "userQuery": "hotels under 100 in florida",
+    "destination": "Miami, US",
+    "hotelCount": 181,
+    "totalTokensUsed": 10526,
+    "totalCost": 0.0017445,
+    "searchDurationMs": 5639,
+    "operations": {
+      "hotelMatching": {
+        "tokens": 10526,
+        "cost": 0.0017445
+      },
+      "aiInsights": {
+        "tokens": 0,
+        "cost": 0
+      }
+    }
+  },
+  {
+    "timestamp": "2025-09-15T06:08:10.381Z",
+    "searchId": "e32a045c-1c87-4f66-9a87-4dccd63e46fe",
+    "userQuery": "hotels under 100 near Disneyland",
+    "destination": "Anaheim, US",
+    "hotelCount": 71,
+    "totalTokensUsed": 10516,
+    "totalCost": 0.0017142,
+    "searchDurationMs": 6776,
+    "operations": {
+      "hotelMatching": {
+        "tokens": 10516,
+        "cost": 0.0017142
+      },
+      "aiInsights": {
+        "tokens": 0,
+        "cost": 0
+      }
+    }
+  },
+  {
+    "timestamp": "2025-09-15T06:32:41.113Z",
+    "searchId": "735c1740-4b2f-4349-bafd-ae06ec741744",
+    "userQuery": "hotels under 200 close to eiffel tower",
+    "destination": "Paris, FR",
+    "hotelCount": 456,
+    "totalTokensUsed": 11618,
+    "totalCost": 0.0018921,
+    "searchDurationMs": 8612,
+    "operations": {
+      "hotelMatching": {
+        "tokens": 11618,
+        "cost": 0.0018921
+      },
+      "aiInsights": {
+        "tokens": 0,
+        "cost": 0
+      }
+    }
+  },
+  {
+    "timestamp": "2025-09-15T06:33:51.438Z",
+    "searchId": "0e9a8c8e-297f-4e20-8597-b9ad56982541",
+    "userQuery": "hotels close to eiffel tower",
+    "destination": "Paris, FR",
+    "hotelCount": 456,
+    "totalTokensUsed": 165622,
+    "totalCost": 0.0250017,
+    "searchDurationMs": 9833,
+    "operations": {
+      "hotelMatching": {
+        "tokens": 165622,
+        "cost": 0.0250017
+      },
+      "aiInsights": {
+        "tokens": 0,
+        "cost": 0
+      }
+    }
+  },
+  {
+    "timestamp": "2025-09-15T06:37:27.681Z",
+    "searchId": "4a071250-3465-4a6f-be3b-f26dd8e71d28",
+    "userQuery": "Lake-view hotels in Banff National Park",
+    "destination": "Banff, CA",
+    "hotelCount": 29,
+    "totalTokensUsed": 10028,
+    "totalCost": 0.0016392,
+    "searchDurationMs": 8841,
+    "operations": {
+      "hotelMatching": {
+        "tokens": 10028,
+        "cost": 0.0016392
+      },
+      "aiInsights": {
+        "tokens": 0,
+        "cost": 0
+      }
+    }
+  },
+  {
+    "timestamp": "2025-09-15T07:03:16.048Z",
+    "searchId": "d03e3000-699c-4b1a-9f63-888affaed4cf",
+    "userQuery": "hotels with canal view under 200",
+    "destination": "Venice, US",
+    "hotelCount": 14,
+    "totalTokensUsed": 5802,
+    "totalCost": 0.001035,
+    "searchDurationMs": 7691,
+    "operations": {
+      "hotelMatching": {
+        "tokens": 5802,
+        "cost": 0.001035
+      },
+      "aiInsights": {
+        "tokens": 0,
+        "cost": 0
+      }
+    }
+  },
+  {
+    "timestamp": "2025-09-15T07:04:06.891Z",
+    "searchId": "eee57cc4-f296-4c4f-86ed-40e2a713562b",
+    "userQuery": "in venice",
+    "destination": "Venice, IT",
+    "hotelCount": 198,
+    "totalTokensUsed": 71494,
+    "totalCost": 0.0108645,
+    "searchDurationMs": 8750,
+    "operations": {
+      "hotelMatching": {
+        "tokens": 71494,
+        "cost": 0.0108645
+      },
+      "aiInsights": {
+        "tokens": 0,
+        "cost": 0
+      }
+    }
+  },
+  {
+    "timestamp": "2025-09-15T07:22:12.047Z",
+    "searchId": "6cce6b3b-ce3e-44be-bb2a-05b4adde81ac",
+    "userQuery": "Boutique hotels in Kyoto with gardens",
+    "destination": "Kyoto, JP",
+    "hotelCount": 102,
+    "totalTokensUsed": 38134,
+    "totalCost": 0.0058812,
+    "searchDurationMs": 7601,
+    "operations": {
+      "hotelMatching": {
+        "tokens": 38134,
+        "cost": 0.0058812
+      },
+      "aiInsights": {
+        "tokens": 0,
+        "cost": 0
+      }
+    }
+  },
+  {
+    "timestamp": "2025-09-15T07:35:30.382Z",
+    "searchId": "034fec7d-9b41-42ff-86bf-47d1b12d032f",
+    "userQuery": "i want hotels in venice",
+    "destination": "Venice, IT",
+    "hotelCount": 198,
+    "totalTokensUsed": 71466,
+    "totalCost": 0.0108585,
+    "searchDurationMs": 8477,
+    "operations": {
+      "hotelMatching": {
+        "tokens": 71466,
+        "cost": 0.0108585
+      },
+      "aiInsights": {
+        "tokens": 0,
+        "cost": 0
+      }
+    }
+  },
+  {
+    "timestamp": "2025-09-15T07:36:52.900Z",
+    "searchId": "278d9e35-9894-4371-81d4-1d0057eb9d4d",
+    "userQuery": "hotels in venice",
+    "destination": "Venice, IT",
+    "hotelCount": 198,
+    "totalTokensUsed": 71468,
+    "totalCost": 0.0108597,
+    "searchDurationMs": 11460,
+    "operations": {
+      "hotelMatching": {
+        "tokens": 71468,
+        "cost": 0.0108597
+      },
+      "aiInsights": {
+        "tokens": 0,
+        "cost": 0
+      }
+    }
+  },
+  {
+    "timestamp": "2025-09-15T07:37:20.029Z",
+    "searchId": "08341da8-2553-4641-8df6-1001adb6f12f",
+    "userQuery": "hotels in venice",
+    "destination": "Venice, IT",
+    "hotelCount": 198,
+    "totalTokensUsed": 71466,
+    "totalCost": 0.0108585,
+    "searchDurationMs": 8489,
+    "operations": {
+      "hotelMatching": {
+        "tokens": 71466,
+        "cost": 0.0108585
+      },
+      "aiInsights": {
+        "tokens": 0,
+        "cost": 0
+      }
+    }
+  },
+  {
+    "timestamp": "2025-09-15T07:41:18.388Z",
+    "searchId": "b6b2263b-c1c8-4d5f-9c70-ff5ae85b8dfe",
+    "userQuery": "hotels in venice",
+    "destination": "Venice, IT",
+    "hotelCount": 198,
+    "totalTokensUsed": 71468,
+    "totalCost": 0.0108597,
+    "searchDurationMs": 11100,
+    "operations": {
+      "hotelMatching": {
+        "tokens": 71468,
+        "cost": 0.0108597
+      },
+      "aiInsights": {
+        "tokens": 0,
+        "cost": 0
+      }
+    }
+  },
+  {
+    "timestamp": "2025-09-15T07:45:11.649Z",
+    "searchId": "3390c7b9-c18a-414a-b250-9af18e012a05",
+    "userQuery": "hotels in venice",
+    "destination": "Venice, IT",
+    "hotelCount": 198,
+    "totalTokensUsed": 71464,
+    "totalCost": 0.0108573,
+    "searchDurationMs": 9089,
+    "operations": {
+      "hotelMatching": {
+        "tokens": 71464,
+        "cost": 0.0108573
+      },
+      "aiInsights": {
+        "tokens": 0,
+        "cost": 0
+      }
+    }
+  },
+  {
+    "timestamp": "2025-09-15T07:53:42.911Z",
+    "searchId": "619aa5fc-4a05-47f0-bf93-d72c715406de",
+    "userQuery": "hotels in venice",
+    "destination": "Venice, IT",
+    "hotelCount": 198,
+    "totalTokensUsed": 71468,
+    "totalCost": 0.0108597,
+    "searchDurationMs": 8508,
+    "operations": {
+      "hotelMatching": {
+        "tokens": 71468,
+        "cost": 0.0108597
+      },
+      "aiInsights": {
+        "tokens": 0,
+        "cost": 0
+      }
+    }
+  },
+  {
+    "timestamp": "2025-09-15T08:17:51.833Z",
+    "searchId": "064d6c04-68cd-46f4-9836-fcb813a8475c",
+    "userQuery": "hotels in venice",
+    "destination": "Venice, IT",
+    "hotelCount": 196,
+    "totalTokensUsed": 71152,
+    "totalCost": 0.0108078,
+    "searchDurationMs": 12337,
+    "operations": {
+      "hotelMatching": {
+        "tokens": 71152,
+        "cost": 0.0108078
+      },
+      "aiInsights": {
+        "tokens": 0,
+        "cost": 0
+      }
+    }
+  },
+  {
+    "timestamp": "2025-09-15T23:04:08.098Z",
+    "searchId": "f9b9052a-fefd-4f6e-8bfd-6ed70bc31a5f",
+    "userQuery": "Boutique hotels in Kyoto with gardens",
+    "destination": "Kyoto, JP",
+    "hotelCount": 102,
+    "totalTokensUsed": 38300,
+    "totalCost": 0.0059142,
+    "searchDurationMs": 10166,
+    "operations": {
+      "hotelMatching": {
+        "tokens": 38300,
+        "cost": 0.0059142
+      },
+      "aiInsights": {
+        "tokens": 0,
+        "cost": 0
+      }
+    }
+  },
+  {
+    "timestamp": "2025-09-15T23:05:33.827Z",
+    "searchId": "c4b6a58e-8ddf-47bb-810b-8cd577a5be8c",
+    "userQuery": "hotels in monte carlo",
+    "destination": "Monte Carlo, MC",
+    "hotelCount": 9,
+    "totalTokensUsed": 4366,
+    "totalCost": 0.0008132999999999999,
+    "searchDurationMs": 9231,
+    "operations": {
+      "hotelMatching": {
+        "tokens": 4366,
+        "cost": 0.0008132999999999999
+      },
+      "aiInsights": {
+        "tokens": 0,
+        "cost": 0
+      }
+    }
+  },
+  {
+    "timestamp": "2025-09-15T23:05:51.162Z",
+    "searchId": "1c66add2-3aa8-4a9e-b4bd-43b4a2294c67",
+    "userQuery": "hotels in monte carlo under $200",
+    "destination": "Monte Carlo, MC",
+    "hotelCount": 9,
+    "totalTokensUsed": 4280,
+    "totalCost": 0.0007959,
+    "searchDurationMs": 7606,
+    "operations": {
+      "hotelMatching": {
+        "tokens": 4280,
+        "cost": 0.0007959
+      },
+      "aiInsights": {
+        "tokens": 0,
+        "cost": 0
+      }
+    }
+  },
+  {
+    "timestamp": "2025-09-15T23:06:33.547Z",
+    "searchId": "aaec3c50-5d57-4520-b8dd-f7e78231f2cc",
+    "userQuery": "cheapest hotels in tokyo",
+    "destination": "Tokyo, JP",
+    "hotelCount": 327,
+    "totalTokensUsed": 49386,
+    "totalCost": 0.0075978,
+    "searchDurationMs": 10533,
+    "operations": {
+      "hotelMatching": {
+        "tokens": 49386,
+        "cost": 0.0075978
+      },
+      "aiInsights": {
+        "tokens": 0,
+        "cost": 0
+      }
+    }
+  },
+  {
+    "timestamp": "2025-09-15T23:11:38.857Z",
+    "searchId": "0f1d6e29-2603-466e-b193-0a5ca013abb5",
+    "userQuery": "cheapest hotels in tokyo",
+    "destination": "Tokyo, JP",
+    "hotelCount": 327,
+    "totalTokensUsed": 49360,
+    "totalCost": 0.007580399999999999,
+    "searchDurationMs": 11115,
+    "operations": {
+      "hotelMatching": {
+        "tokens": 49360,
+        "cost": 0.007580399999999999
+      },
+      "aiInsights": {
+        "tokens": 0,
+        "cost": 0
+      }
+    }
+  },
+  {
+    "timestamp": "2025-09-15T23:14:18.983Z",
+    "searchId": "049b6431-f2ac-44ff-8cfd-34b95f9ef792",
+    "userQuery": "cheapest hotels in paris",
+    "destination": "Paris, FR",
+    "hotelCount": 453,
+    "totalTokensUsed": 164534,
+    "totalCost": 0.0248538,
+    "searchDurationMs": 11178,
+    "operations": {
+      "hotelMatching": {
+        "tokens": 164534,
+        "cost": 0.0248538
+      },
+      "aiInsights": {
+        "tokens": 0,
+        "cost": 0
+      }
+    }
+  },
+  {
+    "timestamp": "2025-09-15T23:15:09.086Z",
+    "searchId": "dff49e0c-575c-4792-85a9-4881ea025976",
+    "userQuery": "hotels in bali luxurious",
+    "destination": "Ubud, ID",
+    "hotelCount": 240,
+    "totalTokensUsed": 12038,
+    "totalCost": 0.0019622999999999997,
+    "searchDurationMs": 8346,
+    "operations": {
+      "hotelMatching": {
+        "tokens": 12038,
+        "cost": 0.0019622999999999997
+      },
+      "aiInsights": {
+        "tokens": 0,
+        "cost": 0
+      }
+    }
+  },
+  {
+    "timestamp": "2025-09-15T23:45:18.083Z",
+    "searchId": "97112926-536c-4439-b6e7-f9e404de0878",
+    "userQuery": "chepaest hotels tokyo",
+    "destination": "Tokyo, JP",
+    "hotelCount": 329,
+    "totalTokensUsed": 49836,
+    "totalCost": 0.007664399999999999,
+    "searchDurationMs": 10301,
+    "operations": {
+      "hotelMatching": {
+        "tokens": 49836,
+        "cost": 0.007664399999999999
+      },
+      "aiInsights": {
+        "tokens": 0,
+        "cost": 0
+      }
+    }
+  }
+]

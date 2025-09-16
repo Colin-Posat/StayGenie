@@ -59,6 +59,26 @@ const ensureFutureDates = (parsed: any) => {
   return parsed;
 };
 
+/**
+ * Forces maxCost to $25 if the query contains "cheapest" keyword
+ */
+const applyCheapestPricing = (parsed: any, userInput: string) => {
+  const lowerInput = userInput.toLowerCase();
+  
+  // Check if the input contains "cheapest" keyword
+  if (lowerInput.includes('cheapest')) {
+    console.log('🏷️ "Cheapest" keyword detected - setting maxCost to $25');
+    parsed.maxCost = 25;
+    
+    // If minCost was set higher than 25, adjust it
+    if (parsed.minCost !== null && parsed.minCost > 25) {
+      parsed.minCost = null;
+      console.log('🏷️ Removed minCost as it was higher than $25 limit');
+    }
+  }
+  
+  return parsed;
+};
 
 const validateAndCorrectCity = (parsed: any) => {
   const cityCorrections: { [key: string]: { city: string, country?: string } } = {
@@ -222,6 +242,7 @@ You are a travel assistant converting user hotel search requests into structured
   "children": number (default 0),
   "minCost": number or null (USD/night),
   "maxCost": number or null (USD/night),
+  "findCheapestOnes": boolean (true ONLY if query is purely about finding cheapest options with no other criteria),
   "aiSearch": "All other preferences, descriptors, trip purpose, vibe, hotel style, etc."
 }
 
@@ -314,27 +335,79 @@ You are a travel assistant converting user hotel search requests into structured
 - Adventure: Queenstown, Reykjavik, Cusco, Cape Town
 - Business: London, Singapore, Dubai, Frankfurt, Tokyo
 
-**Price/Budget Parsing:**
-- "$X to $Y" → minCost: X, maxCost: Y
-- "under $X" → maxCost: X
-- "over/at least $X" → minCost: X
-- Budget keywords:
-  - "budget", "cheap", "affordable" → maxCost: 100
-  - "mid-range", "moderate" → minCost: 100, maxCost: 250
-  - "luxury", "premium" → minCost: 300
-  - "ultra-luxury", "5-star" → minCost: 500
-- If no budget mentioned, set both to null.
+**SPECIAL CITY ROUTING RULES:**
+- "Bali" → Use "Ubud" (cultural/wellness hub with best hotel options)
+- "Monaco" → Use "Monte Carlo" (main hotel district)
+- Always prefer the specific district/area with the best hotel infrastructure over the general region/country name
 
-**aiSearch Content:**
-- Include trip purpose, vibe, and hotel style preferences
-- Infer context: honeymoon=romantic luxury, business=reliable mid-range, family=family-friendly
-- Default if unclear: "well-reviewed, good-value hotels"
-
-**EXAMPLES:**
-- "Paris next Friday for 4 nights" → checkin: [next Friday date], checkout: [+4 days]
-- "Tokyo in March" → checkin: 2025-03-01 (or appropriate March date), checkout: 2025-03-04
-- "Christmas in London" → checkin: 2025-12-25, checkout: 2025-12-28
-- "Vegas this weekend" → checkin: [next Saturday], checkout: [next Monday]
+{
+  "CityPricing": {
+    "UltraExpensive": {
+      "budget": { "maxCost": 200 },
+      "affordable": { "maxCost": 400 },
+      "midRange": { "minCost": 300, "maxCost": 600 },
+      "luxury": { "minCost": 600 },
+      "ultraLuxury": { "minCost": 1000 }
+    },
+    "VeryExpensive": {
+      "budget": { "maxCost": 150 },
+      "affordable": { "maxCost": 350 },
+      "midRange": { "minCost": 250, "maxCost": 500 },
+      "luxury": { "minCost": 500 },
+      "ultraLuxury": { "minCost": 800 }
+    },
+    "Expensive": {
+      "budget": { "maxCost": 120 },
+      "affordable": { "maxCost": 300 },
+      "midRange": { "minCost": 200, "maxCost": 400 },
+      "luxury": { "minCost": 400 },
+      "ultraLuxury": { "minCost": 600 }
+    },
+    "Moderate": {
+      "budget": { "maxCost": 80 },
+      "affordable": { "maxCost": 250 },
+      "midRange": { "minCost": 150, "maxCost": 300 },
+      "luxury": { "minCost": 300 },
+      "ultraLuxury": { "minCost": 500 }
+    },
+    "BudgetFriendly": {
+      "budget": { "maxCost": 60 },
+      "affordable": { "maxCost": 180 },
+      "midRange": { "minCost": 100, "maxCost": 220 },
+      "luxury": { "minCost": 220 },
+      "ultraLuxury": { "minCost": 400 }
+    }
+  },
+  "ExplicitPriceParsing": {
+    "range": "$X to $Y → { minCost: X, maxCost: Y }",
+    "under": "under $X → { maxCost: X }",
+    "over": "over/at least $X → { minCost: X }",
+    "around": "around $X → { minCost: X-20, maxCost: X+20 }"
+  },
+  "SpecialCases": {
+    "cheapestPossible": "use lowest maxCost for city tier",
+    "moneyNoObject": "minCost = top tier",
+    "splurge": "minCost = luxury tier",
+    "honeymoon": "minCost = luxury tier"
+  },
+  "FindCheapestOnes": {
+    "rule": "true if query has 'cheapest' + city only (no amenities/features/quality/location extras)"
+  },
+  "IfNoBudget": { "minCost": null, "maxCost": null },
+  "aiSearch": {
+    "include": ["purpose", "vibe", "style", "budgetContext"],
+    "infer": { "honeymoon": "romantic luxury", "business": "reliable mid-range", "family": "family-friendly" },
+    "default": "well-reviewed, good-value hotels"
+  },
+  "Examples": {
+    "Cheapest hotels in Tokyo": { "maxCost": 150 },
+    "Cheapest hotels in Bangkok": { "maxCost": 80 },
+    "Budget hotels in Monaco": { "maxCost": 200 },
+    "Luxury hotels in Prague": { "minCost": 300 },
+    "Luxury hotels in New York": { "minCost": 500 },
+    "Paris hotels under $200": { "maxCost": 200 }
+  }
+}
 
 Output ONLY the JSON object - no explanations or extra text.
 
@@ -344,6 +417,7 @@ User input: "${userInput}"
     const completion = await openai.chat.completions.create({
       model: 'gpt-3.5-turbo-0125',
       messages: [{ role: 'user', content: prompt }],
+      response_format: { type: "json_object" }, 
       temperature: 0.3,
       max_tokens: 1000,
     });
@@ -365,6 +439,9 @@ User input: "${userInput}"
     // Apply city corrections and validation
     parsed = validateAndCorrectCity(parsed);
     parsed = validateParsedData(parsed);
+    
+    // NEW: Apply cheapest pricing override
+    parsed = applyCheapestPricing(parsed, userInput);
 
     const parseTime = Date.now() - parseStartTime;
     console.log(`✅ Query parsed and validated in ${parseTime}ms:`, parsed);
