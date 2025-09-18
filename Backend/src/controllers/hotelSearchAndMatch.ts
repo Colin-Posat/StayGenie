@@ -202,12 +202,11 @@ const processHotelWithImmediateInsights = async (
   nights: number,
   hotelMetadataMap: Map<string, Record<string, unknown>>,
   sendUpdate: (type: string, data: any) => void,
-  searchId?: string  // ADD searchId parameter
+  searchId?: string
 ): Promise<void> => {
   try {
     console.log(`🔥 Processing hotel ${hotelIndex} with immediate AI insights: ${hotel.name}`);
     
-    // Create enriched hotel summary immediately
     const hotelId = hotel.hotelId || hotel.id || hotel.hotel_id;
     const hotelMetadata = hotelMetadataMap.get(String(hotelId));
     
@@ -218,49 +217,21 @@ const processHotelWithImmediateInsights = async (
 
     const enrichedHotelSummary = createHotelSummaryForInsights(hotel, hotelMetadata, nights);
     
-    // Prepare single hotel for AI insights
-    const singleHotelForInsights = {
-  hotelId: enrichedHotelSummary.hotelId,
-  name: enrichedHotelSummary.name,
-  aiMatchPercent: hotel.aiMatchPercent,
-  summarizedInfo: {
-    name: enrichedHotelSummary.name,
-    description: (hotelMetadata?.hotelDescription || hotelMetadata?.description || 'Quality accommodation').toString().substring(0, 1000),
-    amenities: enrichedHotelSummary.topAmenities,
-    // ADD THIS: Include the full amenities text for AI processing
-    amenitiesText: enrichedHotelSummary.topAmenities && enrichedHotelSummary.topAmenities.length > 0 
-      ? enrichedHotelSummary.topAmenities.join(', ') 
-      : 'Standard hotel amenities',
-    starRating: enrichedHotelSummary.starRating,
-    reviewCount: enrichedHotelSummary.reviewCount,
-    pricePerNight: enrichedHotelSummary.pricePerNight?.display || 'Price not available',
-    location: enrichedHotelSummary.address,
-    city: enrichedHotelSummary.city,
-    country: enrichedHotelSummary.country,
-    latitude: enrichedHotelSummary.latitude,
-    longitude: enrichedHotelSummary.longitude,
-    isRefundable: enrichedHotelSummary.isRefundable,
-    refundableInfo: enrichedHotelSummary.refundableInfo
-  }
-};
-
-    // Send hotel immediately without insights first (for instant display)
+    // CRITICAL FIX: Send hotel_found IMMEDIATELY with basic data
     const basicHotelData = {
-  ...enrichedHotelSummary,
-  aiMatchPercent: hotel.aiMatchPercent,
-  // Basic placeholder content while AI insights generate
-  whyItMatches: "Analyzing perfect match reasons...",
-  funFacts: ["Generating interesting facts..."],
-  nearbyAttractions: ["Finding nearby attractions..."],
-  locationHighlight: "Analyzing location advantages...",
-  guestInsights: "Processing guest insights...",
-  safetyRating: 0, // Placeholder while generating
-  safetyJustification: "Analyzing safety information...",
-  topAmenities: [], // CHANGE TO EMPTY ARRAY - no amenities until AI insights complete
-  summarizedInfo: singleHotelForInsights.summarizedInfo
-};
+      ...enrichedHotelSummary,
+      aiMatchPercent: hotel.aiMatchPercent,
+      whyItMatches: "Analyzing perfect match reasons...",
+      funFacts: ["Generating interesting facts..."],
+      nearbyAttractions: ["Finding nearby attractions..."],
+      locationHighlight: "Analyzing location advantages...",
+      guestInsights: "Processing guest insights...",
+      safetyRating: 0,
+      safetyJustification: "Analyzing safety information...",
+      topAmenities: []
+    };
 
-    // Stream basic hotel data immediately
+    // Send basic hotel data FIRST
     sendUpdate('hotel_found', {
       hotelIndex: hotelIndex,
       totalExpected: 15,
@@ -268,38 +239,64 @@ const processHotelWithImmediateInsights = async (
       message: `Found: ${enrichedHotelSummary.name} (${hotel.aiMatchPercent}% match) - Enhancing with AI...`
     });
 
-    // Generate AI insights for this single hotel in parallel
-    console.log(`🧠 Generating AI insights for individual hotel: ${enrichedHotelSummary.name}`);
-    
+    // CRITICAL FIX: Add delay to ensure client receives hotel_found first
+    await new Promise(resolve => setTimeout(resolve, 100));
+
+    // Now generate AI insights
+    const singleHotelForInsights = {
+      hotelId: enrichedHotelSummary.hotelId,
+      name: enrichedHotelSummary.name,
+      aiMatchPercent: hotel.aiMatchPercent,
+      summarizedInfo: {
+        name: enrichedHotelSummary.name,
+        description: (hotelMetadata?.hotelDescription || hotelMetadata?.description || 'Quality accommodation').toString().substring(0, 1000),
+        amenities: enrichedHotelSummary.topAmenities,
+        amenitiesText: enrichedHotelSummary.topAmenities && enrichedHotelSummary.topAmenities.length > 0 
+          ? enrichedHotelSummary.topAmenities.join(', ') 
+          : 'Standard hotel amenities',
+        starRating: enrichedHotelSummary.starRating,
+        reviewCount: enrichedHotelSummary.reviewCount,
+        pricePerNight: enrichedHotelSummary.pricePerNight?.display || 'Price not available',
+        location: enrichedHotelSummary.address,
+        city: enrichedHotelSummary.city,
+        country: enrichedHotelSummary.country,
+        latitude: enrichedHotelSummary.latitude,
+        longitude: enrichedHotelSummary.longitude,
+        isRefundable: enrichedHotelSummary.isRefundable,
+        refundableInfo: enrichedHotelSummary.refundableInfo
+      }
+    };
+
     try {
-      // Call AI insights for single hotel - PASS searchId
       const insightsResponse = await axios.post(`${process.env.BASE_URL || 'http://localhost:3003'}/api/hotels/ai-insights`, {
         hotels: [singleHotelForInsights],
         userQuery: userInput,
         nights: nights,
-        searchId: searchId  // Pass searchId for cost tracking
+        searchId: searchId
       }, {
-        timeout: 8000 // Shorter timeout for individual hotels
+        timeout: 20000
       });
 
       if (insightsResponse.data?.recommendations?.[0]) {
-  const aiRecommendation = insightsResponse.data.recommendations[0];
-  const enhancedHotelData = {
-    ...basicHotelData,
-    whyItMatches: aiRecommendation.whyItMatches || "Great choice with excellent amenities",
-    funFacts: aiRecommendation.funFacts || ["Modern facilities", "Excellent service"],
-    nearbyAttractions: aiRecommendation.nearbyAttractions || [`${enrichedHotelSummary.city} center`, "Local landmarks"],
-    locationHighlight: aiRecommendation.locationHighlight || "Prime location",
-    guestInsights: aiRecommendation.guestInsights || "Guests appreciate the quality and service",
-    firstRoomImage: aiRecommendation.firstRoomImage || null,
-    secondRoomImage: aiRecommendation.secondRoomImage || null,
-    allHotelInfo: aiRecommendation.allHotelInfo || 'Detailed information not available',
-    safetyRating: aiRecommendation.safetyRating || 7,
-    safetyJustification: aiRecommendation.safetyJustification || "Generally safe area with standard precautions recommended",
-    topAmenities: aiRecommendation.topAmenities || enrichedHotelSummary.topAmenities || ["Wi-Fi", "AC", "Service"] // ONLY populate when AI insights are available
-  };
+        const aiRecommendation = insightsResponse.data.recommendations[0];
+        const enhancedHotelData = {
+          ...basicHotelData,
+          whyItMatches: aiRecommendation.whyItMatches || "Great choice with excellent amenities",
+          funFacts: aiRecommendation.funFacts || ["Modern facilities", "Excellent service"],
+          nearbyAttractions: aiRecommendation.nearbyAttractions || [`${enrichedHotelSummary.city} center`, "Local landmarks"],
+          locationHighlight: aiRecommendation.locationHighlight || "Prime location",
+          guestInsights: aiRecommendation.guestInsights || "Guests appreciate the quality and service",
+          firstRoomImage: aiRecommendation.firstRoomImage || null,
+          secondRoomImage: aiRecommendation.secondRoomImage || null,
+          allHotelInfo: aiRecommendation.allHotelInfo || 'Detailed information not available',
+          safetyRating: aiRecommendation.safetyRating || 7,
+          safetyJustification: aiRecommendation.safetyJustification || "Generally safe area with standard precautions recommended",
+          topAmenities: aiRecommendation.topAmenities || enrichedHotelSummary.topAmenities || ["Wi-Fi", "AC", "Service"]
+        };
 
-        // Stream enhanced hotel data with AI insights INCLUDING safety data
+        // Send enhanced hotel data with small delay to ensure proper order
+        await new Promise(resolve => setTimeout(resolve, 200));
+        
         sendUpdate('hotel_enhanced', {
           hotelIndex: hotelIndex,
           hotelId: enrichedHotelSummary.hotelId,
@@ -309,53 +306,35 @@ const processHotelWithImmediateInsights = async (
 
         console.log(`✅ AI insights completed for ${enrichedHotelSummary.name} - Safety: ${enhancedHotelData.safetyRating}/10`);
       } else {
-        console.warn(`⚠️ No AI insights returned for ${enrichedHotelSummary.name}`);
-        
-        // Send fallback enhanced data with default safety rating
-        const fallbackEnhancedData = {
-  ...basicHotelData,
-  whyItMatches: "Excellent choice with great amenities and location",
-  funFacts: ["Quality accommodations", "Convenient location"],
-  nearbyAttractions: [`${enrichedHotelSummary.city} center`, "Local attractions"],
-  locationHighlight: "Well-located property",
-  guestInsights: "Consistently rated well by guests",
-  firstRoomImage: null,
-  secondRoomImage: null,
-  safetyRating: 7,
-  safetyJustification: "Generally safe area with standard city precautions recommended",
-  topAmenities: enrichedHotelSummary.topAmenities || ["Wi-Fi", "AC", "Service"] // Use actual amenities as fallback
-};
+        // Send fallback data
+        const fallbackData = {
+          ...basicHotelData,
+          whyItMatches: "Excellent choice with great amenities and location",
+          funFacts: ["Quality accommodations", "Convenient location"],
+          topAmenities: enrichedHotelSummary.topAmenities || ["Wi-Fi", "AC", "Service"]
+        };
 
         sendUpdate('hotel_enhanced', {
           hotelIndex: hotelIndex,
           hotelId: enrichedHotelSummary.hotelId,
-          hotel: fallbackEnhancedData,
+          hotel: fallbackData,
           message: `${enrichedHotelSummary.name} ready with standard insights`
         });
       }
       
     } catch (insightsError) {
       console.error(`❌ AI insights failed for ${enrichedHotelSummary.name}:`, insightsError);
-      
-      // Send fallback data on insights failure with default safety
-      const fallbackData = {
-  ...basicHotelData,
-  whyItMatches: "Quality choice with excellent facilities",
-  funFacts: ["Well-appointed rooms", "Good location"],
-  nearbyAttractions: [`${enrichedHotelSummary.city} attractions`, "Local points of interest"],
-  locationHighlight: "Convenient location",
-  guestInsights: "Popular choice among travelers",
-  firstRoomImage: null,
-  secondRoomImage: null,
-  safetyRating: 7,
-  safetyJustification: "Safety assessment unavailable - standard city precautions recommended",
-  topAmenities: enrichedHotelSummary.topAmenities || ["Wi-Fi", "AC", "Service"] // Use actual amenities as fallback
-};
+      // Send error fallback but still ensure the hotel appears
+      const errorFallbackData = {
+        ...basicHotelData,
+        whyItMatches: "Quality choice with excellent facilities",
+        topAmenities: enrichedHotelSummary.topAmenities || ["Wi-Fi", "AC", "Service"]
+      };
 
       sendUpdate('hotel_enhanced', {
         hotelIndex: hotelIndex,
         hotelId: enrichedHotelSummary.hotelId,
-        hotel: fallbackData,
+        hotel: errorFallbackData,
         message: `${enrichedHotelSummary.name} ready (insights unavailable)`
       });
     }

@@ -58,5 +58,105 @@
         "cost": 0.007919249999999997
       }
     }
+  },
+  {
+    "timestamp": "2025-09-18T14:11:27.737Z",
+    "searchId": "3f08e679-e634-4887-8e07-0ae00db828cb",
+    "userQuery": "Boutique hotels in Kyoto with gardens",
+    "destination": "Kyoto, JP",
+    "hotelCount": 69,
+    "totalTokensUsed": 91343,
+    "totalCost": 0.015277350000000002,
+    "searchDurationMs": 34626,
+    "operations": {
+      "hotelMatching": {
+        "tokens": 47516,
+        "cost": 0.0072948
+      },
+      "aiInsights": {
+        "tokens": 43827,
+        "cost": 0.007982550000000001
+      }
+    }
+  },
+  {
+    "timestamp": "2025-09-18T17:23:20.688Z",
+    "searchId": "029bdd55-0272-45df-8345-a129f8b0cab7",
+    "userQuery": "hotels wnear central park with fireplace in room",
+    "destination": "New York, US",
+    "hotelCount": 196,
+    "totalTokensUsed": 195827,
+    "totalCost": 0.030895500000000003,
+    "searchDurationMs": 15312,
+    "operations": {
+      "hotelMatching": {
+        "tokens": 152546,
+        "cost": 0.0230358
+      },
+      "aiInsights": {
+        "tokens": 43281,
+        "cost": 0.0078597
+      }
+    }
+  },
+  {
+    "timestamp": "2025-09-18T17:26:18.383Z",
+    "searchId": "2e7c5c36-a94b-458a-a013-891a1569a39b",
+    "userQuery": "hotels in miami by beach",
+    "destination": "Miami, US",
+    "hotelCount": 116,
+    "totalTokensUsed": 125069,
+    "totalCost": 0.01990919999999999,
+    "searchDurationMs": 19714,
+    "operations": {
+      "hotelMatching": {
+        "tokens": 92644,
+        "cost": 0.0140757
+      },
+      "aiInsights": {
+        "tokens": 32425,
+        "cost": 0.0058335
+      }
+    }
+  },
+  {
+    "timestamp": "2025-09-18T17:38:29.379Z",
+    "searchId": "ff9a570f-b46a-4e8c-ae1b-002dd30693df",
+    "userQuery": "hotels in miami by beach",
+    "destination": "Miami, US",
+    "hotelCount": 116,
+    "totalTokensUsed": 136740,
+    "totalCost": 0.02207115,
+    "searchDurationMs": 26785,
+    "operations": {
+      "hotelMatching": {
+        "tokens": 92630,
+        "cost": 0.0140673
+      },
+      "aiInsights": {
+        "tokens": 44110,
+        "cost": 0.008003850000000002
+      }
+    }
+  },
+  {
+    "timestamp": "2025-09-18T17:39:31.468Z",
+    "searchId": "34f9b8e7-39ed-47e2-8347-9e0274521399",
+    "userQuery": "hotels in miami by beach",
+    "destination": "Miami, US",
+    "hotelCount": 116,
+    "totalTokensUsed": 137049,
+    "totalCost": 0.02212334999999999,
+    "searchDurationMs": 18615,
+    "operations": {
+      "hotelMatching": {
+        "tokens": 92624,
+        "cost": 0.014063699999999998
+      },
+      "aiInsights": {
+        "tokens": 44425,
+        "cost": 0.00805965
+      }
+    }
   }
 ]

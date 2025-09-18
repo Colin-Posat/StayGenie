@@ -27,7 +27,7 @@ import { Easing } from 'react-native';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 const CARD_WIDTH = screenWidth - 42;
-const CARD_HEIGHT = screenHeight * 0.51;
+const CARD_HEIGHT = screenHeight * 0.52;
 const TURQUOISE_SUBTLE = '#f0feff';
 const TURQUOISE_BORDER = '#b3f7ff';
 
@@ -491,7 +491,6 @@ const HotelOverviewSlide: React.FC<{
   const panAnimation = useRef(new Animated.Value(0)).current;
   const scaleAnimation = useRef(new Animated.Value(IMAGE_SCALE_MIN)).current;
 
-
   useEffect(() => {
     const panningAnimation = Animated.loop(
       Animated.sequence([
@@ -532,8 +531,7 @@ const HotelOverviewSlide: React.FC<{
     };
   }, [panAnimation, scaleAnimation]);
 
- const translateX = panAnimation.interpolate({ inputRange: [0, 1], outputRange: [-IMAGE_PAN_X, IMAGE_PAN_X] });
-
+  const translateX = panAnimation.interpolate({ inputRange: [0, 1], outputRange: [-IMAGE_PAN_X, IMAGE_PAN_X] });
   const translateY = panAnimation.interpolate({ inputRange: [0, 1], outputRange: [-IMAGE_PAN_Y, IMAGE_PAN_Y] });
 
   const getDisplayPrice = () => {
@@ -573,10 +571,10 @@ const HotelOverviewSlide: React.FC<{
         source={{ uri: hotel.images[0] }} 
         style={[
           {
-             width: `${100 + IMAGE_BLEED * 200}%`,
+            width: `${100 + IMAGE_BLEED * 200}%`,
             height: `${100 + IMAGE_BLEED * 200}%`,
             left: `${-IMAGE_BLEED * 100}%`,
-            top:  `${-IMAGE_BLEED * 100}%`,
+            top: `${-IMAGE_BLEED * 100}%`,
           },
           {
             transform: [
@@ -589,122 +587,103 @@ const HotelOverviewSlide: React.FC<{
         resizeMode={IMAGE_RESIZE_MODE}
       />
       
-      <View style={tw`absolute bottom-0 left-0 right-0 h-52 bg-gradient-to-t from-black/70 to-transparent z-1`} />
+      {/* Reduced gradient height and opacity for less obstruction */}
+      <View style={tw`absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-black/50 to-transparent z-1`} />
       
-      <View style={tw`absolute top-10 left-4 z-10`}>
-        <View style={[tw`bg-black/30 border border-white/20 px-2.5 py-1.5 rounded-lg`, { maxWidth: screenWidth * 0.6 }]}>
+      {/* COMPACT TOP: Hotel info sized to content */}
+      <View style={tw`absolute top-12 left-2 right-2 z-10`}>
+        <View style={[
+          tw`bg-black/30 border border-white/15 px-2 py-1 rounded-lg self-start`,
+        ]}>
           <Text 
             style={[
-              tw`text-white text-sm font-semibold`,
+              tw`text-white text-xs font-semibold`,
               { textShadowColor: 'rgba(0, 0, 0, 0.8)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 2 }
             ]}
-            numberOfLines={2}
           >
             {hotel.name}
           </Text>
-        </View>
-        
-        <View style={tw`flex-row items-center mt-1.5`}>
-          <View style={tw`bg-black/30 border border-white/20 px-2 py-1 rounded-md flex-row items-center`}>
-            <Ionicons name="location" size={12} color="#FFFFFF" />
+          <View style={tw`flex-row items-center mt-0.5`}>
+            <Ionicons name="location" size={10} color="#FFFFFF" />
             <Text style={[
-              tw`text-white text-xs font-medium ml-1`,
+              tw`text-white text-[10px] font-medium ml-1`,
               { textShadowColor: 'rgba(0, 0, 0, 0.8)', textShadowOffset: { width: 0, height: 1 }, textShadowRadius: 2 }
-            ]}>
+            ]}
+            >
               {getLocationDisplay()}
             </Text>
           </View>
         </View>
       </View>
-      
 
-      <View style={tw`absolute bottom-6 left-4 right-4 z-10`}>
-        {/* Small availability chip above price */}
-        {showAvailability && formatAvailabilityText() && (
-          <View style={tw`mb-1.5`}>
-          </View>
-        )}
-
-        <View style={tw`flex-row items-end gap-2 mb-2.5`}>
-          <View style={tw`bg-black/50 border border-white/20 px-3 py-1.5 rounded-lg`}>
+      {/* COMPACT BOTTOM: Essential info only with tighter spacing */}
+      <View style={tw`absolute bottom-4 left-2 right-2 z-10`}>
+        {/* Compact price and rating row */}
+        <View style={tw`flex-row items-center justify-between mb-2`}>
+          <View style={tw`bg-black/45 border border-white/15 px-2 py-1 rounded-md`}>
             <View style={tw`flex-row items-baseline`}>
-              <Text style={tw`text-xl font-bold text-white`}>
+              <Text style={tw`text-lg font-bold text-white`}>
                 {getDisplayPrice()}
               </Text>
-              <Text style={tw`text-white/80 text-xs ml-1`}>
-                /night
-              </Text>
+              <Text style={tw`text-white/80 text-[10px] ml-1`}>/night</Text>
             </View>
           </View>
           
-          <View style={tw`bg-black/50 border border-white/20 px-3 py-1.5 rounded-lg`}>
-            <View style={tw`flex-row items-center`}>
-              <View 
-                style={[
-                  tw`w-5 h-5 rounded-full items-center justify-center mr-1`,
-                  { backgroundColor: getRatingColor(hotel.rating) }
-                ]}
-              >
-                <Ionicons 
-                  name="thumbs-up" 
-                  size={10} 
-                  color="#FFFFFF"
-                  style={{
-                    textShadowColor: '#000000',
-                    textShadowOffset: { width: 0.5, height: 0.5 },
-                    textShadowRadius: 1
-                  }}
-                />
-              </View>
-              <Text style={tw`text-white text-xs font-semibold`}>
-                {hotel.rating.toFixed(1)}
-              </Text>
-              <Text style={tw`text-white/70 text-xs ml-1`}>
-                ({hotel.reviews || 0})
-              </Text>
+          <View style={tw`bg-black/45 border border-white/15 px-2 py-1 rounded-md flex-row items-center`}>
+            <View 
+              style={[
+                tw`w-4 h-4 rounded-full items-center justify-center mr-1`,
+                { backgroundColor: getRatingColor(hotel.rating) }
+              ]}
+            >
+              <Ionicons 
+                name="thumbs-up" 
+                size={8} 
+                color="#FFFFFF"
+                style={{
+                  textShadowColor: '#000000',
+                  textShadowOffset: { width: 0.5, height: 0.5 },
+                  textShadowRadius: 1
+                }}
+              />
             </View>
+            <Text style={tw`text-white text-xs font-semibold`}>
+              {hotel.rating.toFixed(1)}
+            </Text>
+            <Text style={tw`text-white/70 text-[10px] ml-1`}>
+              ({hotel.reviews || 0})
+            </Text>
           </View>
         </View>
-        {/* Top Amenities (compact pills, no icons) */}
-{Array.isArray(hotel.topAmenities) && hotel.topAmenities.length > 0 && (
-  <View style={tw`mb-2 flex-row flex-wrap`}>
-    {hotel.topAmenities.slice(0, 3).map((amenity, idx) => (
-      <View
-        key={`${amenity}-${idx}`}
-        style={[
-          tw`px-2 py-1 mr-1 mb-1 rounded-full`,
-          { backgroundColor: 'rgba(0,0,0,0.4)', borderColor: 'rgba(255,255,255,0.2)', borderWidth: 1 }
-        ]}
-      >
-        <Text style={tw`text-white text-[10px]`} numberOfLines={1}>
-          {amenity}
-        </Text>
-      </View>
-    ))}
-    {hotel.topAmenities.length > 6 && (
-      <View
-        style={[
-          tw`px-2 py-1 mr-1 mb-1 rounded-full`,
-          { backgroundColor: 'rgba(0,0,0,0.4)', borderColor: 'rgba(255,255,255,0.2)', borderWidth: 1 }
-        ]}
-      >
-        <Text style={tw`text-white text-[10px]`} numberOfLines={1}>
-          +{hotel.topAmenities.length - 6}
-        </Text>
-      </View>
-    )}
-  </View>
-)}
 
+        {/* Flexible amenities row - adapts to text length */}
+        {Array.isArray(hotel.topAmenities) && hotel.topAmenities.length > 0 && (
+          <View style={tw`mb-2 flex-row flex-wrap gap-1`}>
+            {hotel.topAmenities.slice(0, 3).map((amenity, idx) => (
+              <View
+                key={`${amenity}-${idx}`}
+                style={[
+                  tw`px-1.5 py-0.5 rounded-full`,
+                  { backgroundColor: 'rgba(0,0,0,0.4)', borderColor: 'rgba(255,255,255,0.15)', borderWidth: 1 }
+                ]}
+              >
+                <Text style={tw`text-white text-[9px]`}>
+                  {amenity}
+                </Text>
+              </View>
+            ))}
+          </View>
+        )}
 
-        <View style={tw`bg-black/50 p-2.5 rounded-lg border border-white/20`}>
+        {/* Compact AI insight with smaller text */}
+        <View style={tw`bg-black/40 p-2 rounded-md border border-white/15`}>
           <View style={tw`flex-row items-center mb-1`}>
             <Ionicons 
               name={insightsStatus === 'loading' ? "sync" : searchMode === 'test' ? "flask" : "sparkles"} 
-              size={12} 
+              size={10} 
               color={searchMode === 'test' ? "#EA580C" : "#1df9ff"} 
             />
-            <Text style={tw`text-white text-xs font-semibold ml-1`}>
+            <Text style={tw`text-white text-[10px] font-semibold ml-1`}>
               {hotel.aiMatchPercent 
                 ? `AI Match ${hotel.aiMatchPercent}%`
                 : searchMode === 'test' 
@@ -714,11 +693,11 @@ const HotelOverviewSlide: React.FC<{
             </Text>
             {insightsStatus === 'loading' && (
               <View style={tw`ml-2`}>
-                <Text style={tw`text-white/60 text-xs`}>Loading...</Text>
+                <Text style={tw`text-white/60 text-[10px]`}>Loading...</Text>
               </View>
             )}
           </View>
-          <Text style={tw`text-white text-xs leading-4`}>
+          <Text style={tw`text-white text-[10px] leading-3`} numberOfLines={4}>
             {aiInsight}
           </Text>
         </View>
@@ -745,8 +724,19 @@ const LocationSlide: React.FC<{ hotel: EnhancedHotel; insightsStatus?: string }>
     return hotel.images?.[0] || hotel.image;
   };
 
+  const getLocationDisplayText = () => {
+    if (hotel.city && hotel.country) {
+      return `${hotel.city}, ${getCountryName(hotel.country)}`;
+    }
+    if (hotel.fullAddress) {
+      return hotel.fullAddress;
+    }
+    return hotel.location;
+  };
+
   return (
     <View style={tw`flex-1 relative overflow-hidden`}>
+      {/* Background Image */}
       <Image 
         source={{ uri: getLocationImage() }} 
         style={{
@@ -759,27 +749,61 @@ const LocationSlide: React.FC<{ hotel: EnhancedHotel; insightsStatus?: string }>
         resizeMode="cover"
       />
       
-      <View style={tw`absolute bottom-0 left-0 right-0 h-52 bg-gradient-to-t from-black/70 to-transparent z-1`} />
-      
-      <View style={tw`absolute bottom-6 left-4 right-4 z-10`}>
-        {hotel.nearbyAttractions && hotel.nearbyAttractions.length > 0 && (
-          <View style={tw`bg-black/50 p-2.5 rounded-lg border border-white/20 mb-2.5`}>
+      {/* Simple gradient for readability */}
+      <View style={tw`absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-black/60 to-transparent z-1`} />
+
+      {/* Removed top hotel location badge */}
+
+      {/* Compact bottom content */}
+      <View style={tw`absolute bottom-4 left-2 right-2 z-10`}>
+        {hotel.nearbyAttractions && hotel.nearbyAttractions.length > 0 ? (
+          <View style={tw`bg-black/50 border border-white/20 rounded-lg p-2`}>
             <View style={tw`flex-row items-center mb-1`}>
               <Ionicons 
-                name={insightsStatus === 'loading' && hotel.nearbyAttractions.some(attr => attr.includes('Loading')) ? "sync" : "location"} 
-                size={12} 
+                name={insightsStatus === 'loading' && hotel.nearbyAttractions.some(attr => attr.includes('Loading')) ? "sync" : "compass"} 
+                size={10} 
                 color="#1df9ff" 
               />
-              <Text style={tw`text-white text-xs font-semibold ml-1`}>Nearby Attractions</Text>
+              <Text style={tw`text-white text-[10px] font-semibold ml-1`}>
+                Nearby
+              </Text>
               {insightsStatus === 'loading' && hotel.nearbyAttractions.some(attr => attr.includes('Loading')) && (
-                <Text style={tw`text-white/60 text-xs ml-2`}>Loading...</Text>
+                <Text style={tw`text-white/60 text-[10px] ml-2`}>Loading...</Text>
               )}
             </View>
-            {hotel.nearbyAttractions.slice(0, 3).map((attraction, index) => (
-              <Text key={index} style={tw`text-white text-xs leading-4 ${index === 0 ? '' : 'mt-1'}`}>
-                • {attraction}
+            
+            <View style={tw`gap-0.5`}>
+              {hotel.nearbyAttractions.slice(0, 3).map((attraction, index) => (
+                <Text key={index} style={tw`text-white/90 text-[10px] leading-3`} numberOfLines={3}>
+                  • {attraction}
+                </Text>
+              ))}
+              {hotel.nearbyAttractions.length > 3 && (
+                <Text style={tw`text-white/70 text-[10px] mt-0.5`}>
+                  +{hotel.nearbyAttractions.length - 3} more
+                </Text>
+              )}
+            </View>
+          </View>
+        ) : (
+          <View style={tw`bg-black/50 border border-white/20 rounded-lg p-2`}>
+            <View style={tw`flex-row items-center`}>
+              <Ionicons name="compass" size={10} color="#1df9ff" />
+              <Text style={tw`text-white/80 text-[10px] ml-1`}>
+                {insightsStatus === 'loading' ? 'Finding nearby places...' : 'Exploring the area'}
               </Text>
-            ))}
+            </View>
+          </View>
+        )}
+
+        {/* Compact location highlight if available */}
+        {hotel.locationHighlight && 
+         !hotel.locationHighlight.includes('Analyzing') && 
+         !hotel.nearbyAttractions?.some(attr => attr.includes(hotel.locationHighlight?.substring(0, 200) || '')) && (
+          <View style={tw`bg-black/50 border border-white/20 rounded-lg p-2 mt-1`}>
+            <Text style={tw`text-white/90 text-[10px] leading-3`} numberOfLines={2}>
+              💡 {hotel.locationHighlight}
+            </Text>
           </View>
         )}
       </View>
@@ -790,7 +814,7 @@ const LocationSlide: React.FC<{ hotel: EnhancedHotel; insightsStatus?: string }>
 const AmenitiesSlide: React.FC<{ 
   hotel: EnhancedHotel; 
   insightsStatus?: string;
-  // Add these new props for safety rating
+  // Safety rating props
   safetyRating?: number;
   safetyJustification?: string;
   safetySource?: string;
@@ -807,31 +831,21 @@ const AmenitiesSlide: React.FC<{
   showSafetyRating = true,
   safetyRatingThreshold = 6.0,
 }) => {
-  console.log(`🏨 AmenitiesSlide for ${hotel.name}:`);
-  console.log(`- firstRoomImage: ${hotel.firstRoomImage ? 'Available' : 'Not available'}`);
-  console.log(`- secondRoomImage: ${hotel.secondRoomImage ? 'Available' : 'Not available'}`);
-  console.log(`- safetyRating: ${safetyRating}`);
-  console.log(`- safetyJustification: ${safetyJustification}`);
+  const [showDetails, setShowDetails] = useState(false);
 
-  // Get stacked room images
+  // Get stacked room images (same logic as before)
   const getStackedRoomImages = () => {
     const roomImages: string[] = [];
     
-    // Priority 1: Add firstRoomImage if available
     if (hotel.firstRoomImage && typeof hotel.firstRoomImage === 'string' && hotel.firstRoomImage.trim() !== '') {
       roomImages.push(hotel.firstRoomImage);
-      console.log(`✅ Using firstRoomImage: ${hotel.firstRoomImage.substring(0, 50)}...`);
     }
     
-    // Priority 2: Add secondRoomImage if available
     if (hotel.secondRoomImage && typeof hotel.secondRoomImage === 'string' && hotel.secondRoomImage.trim() !== '') {
       roomImages.push(hotel.secondRoomImage);
-      console.log(`✅ Using secondRoomImage: ${hotel.secondRoomImage.substring(0, 50)}...`);
     }
     
-    // Fallback: If we don't have both room images, use regular images array
     if (roomImages.length === 0) {
-      console.log(`⚠️ No room images available, using fallback from images array`);
       if (hotel.images && hotel.images.length > 2) {
         return [{ uri: hotel.images[2], type: 'fallback' }];
       }
@@ -890,40 +904,38 @@ const AmenitiesSlide: React.FC<{
   const ratings = parseRatings(hotel.guestInsights);
 
   const getRatingColor = (rating: number): string => {
-    if (rating >= 8.0) return "#06B6D4";
-    if (rating >= 7.0) return "#22D3EE";
-    if (rating >= 6.0) return "#67E8F9";
-    if (rating >= 5.0) return "#A5F3FC";
-    if (rating >= 4.0) return "#CFFAFE";
-    return "#E0F7FA";
+    if (rating >= 8.0) return "#1df9ff";
+    if (rating >= 7.0) return "#1df9ffE6";
+    if (rating >= 6.0) return "#1df9ffCC";
+    if (rating >= 5.0) return "#1df9ffB3";
+    if (rating >= 4.0) return "#1df9ff99";
+    return "#1df9ff80";
   };
 
-  const getRatingTextColor = (rating: number): string => {
-    return "#FFFFFF";
-  };
-
-  // Safety rating color logic
   const getSafetyRatingColor = (rating: number): string => {
-    if (rating >= safetyRatingThreshold) return '#10B981'; // Green for safe
-    if (rating >= 5.0) return '#F59E0B'; // Amber for moderate
-    return '#EF4444'; // Red for unsafe
+    if (rating >= safetyRatingThreshold) return '#10B981';
+    if (rating >= 5.0) return '#F59E0B';
+    return '#EF4444';
   };
 
-  // Use the passed safety rating or fall back to hotel's safety rating
   const displaySafetyRating = safetyRating || hotel.aiSafetyRating || hotel.safetyRating;
   const displaySafetyJustification = safetyJustification || hotel.safetyJustification;
-  const displayHasAISafetyRating = hasAISafetyRating || !!hotel.aiSafetyRating;
+
+  // Calculate overall guest score
+  const overallScore = ((ratings.cleanliness + ratings.service + ratings.location + ratings.roomQuality) / 4);
 
   return (
+    
     <View style={tw`flex-1 relative overflow-hidden`}>
-      {/* Background Images - Stacked Room Images */}
+      
+      {/* Background Images - same as before */}
       {hasRoomImages && stackedImages.length > 0 ? (
         <View style={tw`flex-1`}>
           {stackedImages.map((imageData, index) => (
             <View key={index} style={[
               tw`absolute left-0 right-0`,
               {
-                top: index * (CARD_HEIGHT * 0.5), // Stack vertically
+                top: index * (CARD_HEIGHT * 0.5),
                 height: CARD_HEIGHT * 0.5,
               }
             ]}>
@@ -939,7 +951,6 @@ const AmenitiesSlide: React.FC<{
           ))}
         </View>
       ) : (
-        // Fallback: Single image with animation (original behavior)
         <Image 
           source={{ uri: stackedImages[0]?.uri }}
           style={{
@@ -953,157 +964,238 @@ const AmenitiesSlide: React.FC<{
         />
       )}
       
-      <View style={tw`absolute bottom-0 left-0 right-0 h-52 bg-gradient-to-t from-black/70 to-transparent z-1`} />
+      <View style={tw`absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-black/50 to-transparent z-1`} />
       
-      <View style={tw`absolute bottom-6 left-4 right-4 z-10`}>
-        <View style={tw`gap-1`}>
-          {/* Category Ratings - First Row */}
-          <View style={tw`flex-row gap-1`}>
-            <View style={tw`flex-1 bg-black/50 border border-white/20 rounded-md p-1.5 flex-row items-center`}>
-              <View 
-                style={[
-                  tw`w-7 h-7 rounded-full items-center justify-center`,
-                  { backgroundColor: getRatingColor(ratings.cleanliness) }
-                ]}
-              >
-                <Text 
-                  style={[
-                    tw`text-xs font-bold`,
-                    { 
-                      color: getRatingTextColor(ratings.cleanliness),
-                      textShadowColor: '#000000',
-                      textShadowOffset: { width: 0.5, height: 0.5 },
-                      textShadowRadius: 1
-                    }
-                  ]}
-                >
-                  {insightsStatus === 'loading' ? '-' : ratings.cleanliness.toFixed(1)}
-                </Text>
-              </View>
-              <Text style={tw`text-white text-xs font-medium ml-1.5`}>Cleanliness</Text>
-            </View>
+      {/* Removed top guest score - now only expandable from bottom */}
 
-            <View style={tw`flex-1 bg-black/50 border border-white/20 rounded-md p-1.5 flex-row items-center`}>
-              <View 
-                style={[
-                  tw`w-7 h-7 rounded-full items-center justify-center`,
-                  { backgroundColor: getRatingColor(ratings.service) }
-                ]}
-              >
-                <Text 
-                  style={[
-                    tw`text-xs font-bold`,
-                    { 
-                      color: getRatingTextColor(ratings.service),
-                      textShadowColor: '#000000',
-                      textShadowOffset: { width: 0.5, height: 0.5 },
-                      textShadowRadius: 1
-                    }
-                  ]}
-                >
-                  {insightsStatus === 'loading' ? '-' : ratings.service.toFixed(1)}
-                </Text>
-              </View>
-              <Text style={tw`text-white text-xs font-medium ml-1.5`}>Service</Text>
-            </View>
-          </View>
+      {/* BOTTOM: Expandable ratings section with clear tap prompt */}
+      <View style={tw`absolute bottom-4 left-2 right-2 z-10`}>
+        <TouchableOpacity
+          style={[
+            tw`bg-black/45 border border-white/15 rounded-md`,
+            { shadowColor: '#000000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.3, shadowRadius: 4 }
+          ]}
+          onPress={() => setShowDetails(!showDetails)}
+          activeOpacity={0.8}
+        >
+          {!showDetails ? (
+            // Collapsed: Show icons with clear "Tap for more details" prompt
+            <View>
+              <View style={tw`p-2 flex-row items-center justify-between`}>
+                {/* Rating icons */}
+                <View style={tw`items-center`}>
+                  <View 
+                    style={[
+                      tw`w-6 h-6 rounded-full items-center justify-center mb-1`,
+                      { backgroundColor: getRatingColor(ratings.cleanliness) }
+                    ]}
+                  >
+                    <Ionicons name="sparkles" size={12} color="#FFFFFF" />
+                  </View>
+                  <Text style={tw`text-white text-[8px]`}>
+                    {insightsStatus === 'loading' ? '-' : ratings.cleanliness.toFixed(1)}
+                  </Text>
+                </View>
 
-          {/* Category Ratings - Second Row */}
-          <View style={tw`flex-row gap-1`}>
-            <View style={tw`flex-1 bg-black/50 border border-white/20 rounded-md p-1.5 flex-row items-center`}>
-              <View 
-                style={[
-                  tw`w-7 h-7 rounded-full items-center justify-center`,
-                  { backgroundColor: getRatingColor(ratings.location) }
-                ]}
-              >
-                <Text 
-                  style={[
-                    tw`text-xs font-bold`,
-                    { 
-                      color: getRatingTextColor(ratings.location),
-                      textShadowColor: '#000000',
-                      textShadowOffset: { width: 0.5, height: 0.5 },
-                      textShadowRadius: 1
-                    }
-                  ]}
-                >
-                  {insightsStatus === 'loading' ? '-' : ratings.location.toFixed(1)}
-                </Text>
-              </View>
-              <Text style={tw`text-white text-xs font-medium ml-1.5`}>Location</Text>
-            </View>
+                <View style={tw`items-center`}>
+                  <View 
+                    style={[
+                      tw`w-6 h-6 rounded-full items-center justify-center mb-1`,
+                      { backgroundColor: getRatingColor(ratings.service) }
+                    ]}
+                  >
+                    <Ionicons name="person" size={12} color="#FFFFFF" />
+                  </View>
+                  <Text style={tw`text-white text-[8px]`}>
+                    {insightsStatus === 'loading' ? '-' : ratings.service.toFixed(1)}
+                  </Text>
+                </View>
 
-            <View style={tw`flex-1 bg-black/50 border border-white/20 rounded-md p-1.5 flex-row items-center`}>
-              <View 
-                style={[
-                  tw`w-7 h-7 rounded-full items-center justify-center`,
-                  { backgroundColor: getRatingColor(ratings.roomQuality) }
-                ]}
-              >
-                <Text 
-                  style={[
-                    tw`text-xs font-bold`,
-                    { 
-                      color: getRatingTextColor(ratings.roomQuality),
-                      textShadowColor: '#000000',
-                      textShadowOffset: { width: 0.5, height: 0.5 },
-                      textShadowRadius: 1
-                    }
-                  ]}
-                >
-                  {insightsStatus === 'loading' ? '-' : ratings.roomQuality.toFixed(1)}
-                </Text>
-              </View>
-              <Text style={tw`text-white text-xs font-medium ml-1.5`}>Rooms</Text>
-            </View>
-          </View>
+                <View style={tw`items-center`}>
+                  <View 
+                    style={[
+                      tw`w-6 h-6 rounded-full items-center justify-center mb-1`,
+                      { backgroundColor: getRatingColor(ratings.location) }
+                    ]}
+                  >
+                    <Ionicons name="location" size={12} color="#FFFFFF" />
+                  </View>
+                  <Text style={tw`text-white text-[8px]`}>
+                    {insightsStatus === 'loading' ? '-' : ratings.location.toFixed(1)}
+                  </Text>
+                </View>
 
-          {/* NEW: Safety Rating Section */}
-          {showSafetyRating && displaySafetyRating && (
-            <View style={tw`mt-1`}>
-              <View style={tw`bg-black/50 border border-white/20 rounded-md p-2`}>
-                <View style={tw`flex-row items-center justify-between mb-1`}>
-                  <View style={tw`flex-row items-center`}>
+                <View style={tw`items-center`}>
+                  <View 
+                    style={[
+                      tw`w-6 h-6 rounded-full items-center justify-center mb-1`,
+                      { backgroundColor: getRatingColor(ratings.roomQuality) }
+                    ]}
+                  >
+                    <Ionicons name="bed" size={12} color="#FFFFFF" />
+                  </View>
+                  <Text style={tw`text-white text-[8px]`}>
+                    {insightsStatus === 'loading' ? '-' : ratings.roomQuality.toFixed(1)}
+                  </Text>
+                </View>
+
+                {showSafetyRating && displaySafetyRating && (
+                  <View style={tw`items-center`}>
                     <View 
                       style={[
-                        tw`w-7 h-7 rounded-full items-center justify-center`,
+                        tw`w-6 h-6 rounded-full items-center justify-center mb-1`,
                         { backgroundColor: getSafetyRatingColor(displaySafetyRating) }
                       ]}
                     >
-                      <Text 
-                        style={[
-                          tw`text-xs font-bold text-white`,
-                          {
-                            textShadowColor: '#000000',
-                            textShadowOffset: { width: 0.5, height: 0.5 },
-                            textShadowRadius: 1
-                          }
-                        ]}
-                      >
-                        {insightsStatus === 'loading' ? '-' : displaySafetyRating.toFixed(1)}
+                      <Ionicons name="shield-checkmark" size={12} color="#FFFFFF" />
+                    </View>
+                    <Text style={tw`text-white text-[8px]`}>
+                      {insightsStatus === 'loading' ? '-' : displaySafetyRating.toFixed(1)}
+                    </Text>
+                  </View>
+                )}
+              </View>
+              
+              {/* Clear "Tap for more details" prompt */}
+              <View style={tw`border-t border-white/20 px-3 py-2`}>
+                <View style={tw`flex-row items-center justify-center`}>
+                  <Text style={tw`text-white/80 text-[10px] font-medium mr-1`}>Tap here for more details</Text>
+                  <Ionicons name="chevron-down" size={12} color="rgba(255,255,255,0.8)" />
+                </View>
+              </View>
+            </View>
+          ) : (
+            // Expanded: Detailed view with close option
+            <View style={tw`p-3`}>
+              {/* Header with overall score and close */}
+              <View style={tw`flex-row items-center justify-between mb-3`}>
+                <View style={tw`flex-row items-center`}>
+                  <View 
+                    style={[
+                      tw`w-8 h-8 rounded-full items-center justify-center mr-2`,
+                      { backgroundColor: getRatingColor(overallScore) }
+                    ]}
+                  >
+                    <Text 
+                      style={[
+                        tw`text-[11px] font-bold text-white`,
+                        {
+                          textShadowColor: '#000000',
+                          textShadowOffset: { width: 0.5, height: 0.5 },
+                          textShadowRadius: 1
+                        }
+                      ]}
+                    >
+                      {insightsStatus === 'loading' ? '-' : overallScore.toFixed(1)}
+                    </Text>
+                  </View>
+                  <Text style={tw`text-white text-sm font-semibold`}>Guest Ratings</Text>
+                </View>
+                <Ionicons name="chevron-up" size={16} color="rgba(255,255,255,0.8)" />
+              </View>
+
+              {/* Category ratings with labels */}
+              <View style={tw`gap-2`}>
+                <View style={tw`flex-row gap-2`}>
+                  <View style={tw`flex-1 bg-black/30 border border-white/20 rounded-md p-2 flex-row items-center`}>
+                    <View 
+                      style={[
+                        tw`w-6 h-6 rounded-full items-center justify-center`,
+                        { backgroundColor: getRatingColor(ratings.cleanliness) }
+                      ]}
+                    >
+                      <Ionicons name="sparkles" size={12} color="#FFFFFF" />
+                    </View>
+                    <View style={tw`ml-2`}>
+                      <Text style={tw`text-white text-[10px] font-medium`}>Cleanliness</Text>
+                      <Text style={tw`text-white/80 text-[9px]`}>
+                        {insightsStatus === 'loading' ? '-' : ratings.cleanliness.toFixed(1)}
                       </Text>
                     </View>
-                    <Text style={tw`text-white text-xs font-medium ml-2`}>Safety Rating</Text>
                   </View>
 
+                  <View style={tw`flex-1 bg-black/30 border border-white/20 rounded-md p-2 flex-row items-center`}>
+                    <View 
+                      style={[
+                        tw`w-6 h-6 rounded-full items-center justify-center`,
+                        { backgroundColor: getRatingColor(ratings.service) }
+                      ]}
+                    >
+                      <Ionicons name="person" size={12} color="#FFFFFF" />
+                    </View>
+                    <View style={tw`ml-2`}>
+                      <Text style={tw`text-white text-[10px] font-medium`}>Service</Text>
+                      <Text style={tw`text-white/80 text-[9px]`}>
+                        {insightsStatus === 'loading' ? '-' : ratings.service.toFixed(1)}
+                      </Text>
+                    </View>
+                  </View>
                 </View>
-                
-                {displaySafetyJustification && displaySafetyJustification.trim() !== '' && (
-                  <Text style={tw`text-white/90 text-xs leading-4 mt-1`}>
-                    {displaySafetyJustification}
-                  </Text>
-                )}
-                
-                {insightsStatus === 'loading' && (
-                  <Text style={tw`text-white/60 text-xs mt-1`}>
-                    Analyzing safety data...
-                  </Text>
+
+                <View style={tw`flex-row gap-2`}>
+                  <View style={tw`flex-1 bg-black/30 border border-white/20 rounded-md p-2 flex-row items-center`}>
+                    <View 
+                      style={[
+                        tw`w-6 h-6 rounded-full items-center justify-center`,
+                        { backgroundColor: getRatingColor(ratings.location) }
+                      ]}
+                    >
+                      <Ionicons name="location" size={12} color="#FFFFFF" />
+                    </View>
+                    <View style={tw`ml-2`}>
+                      <Text style={tw`text-white text-[10px] font-medium`}>Location</Text>
+                      <Text style={tw`text-white/80 text-[9px]`}>
+                        {insightsStatus === 'loading' ? '-' : ratings.location.toFixed(1)}
+                      </Text>
+                    </View>
+                  </View>
+
+                  <View style={tw`flex-1 bg-black/30 border border-white/20 rounded-md p-2 flex-row items-center`}>
+                    <View 
+                      style={[
+                        tw`w-6 h-6 rounded-full items-center justify-center`,
+                        { backgroundColor: getRatingColor(ratings.roomQuality) }
+                      ]}
+                    >
+                      <Ionicons name="bed" size={12} color="#FFFFFF" />
+                    </View>
+                    <View style={tw`ml-2`}>
+                      <Text style={tw`text-white text-[10px] font-medium`}>Rooms</Text>
+                      <Text style={tw`text-white/80 text-[9px]`}>
+                        {insightsStatus === 'loading' ? '-' : ratings.roomQuality.toFixed(1)}
+                      </Text>
+                    </View>
+                  </View>
+                </View>
+
+                {/* Safety rating expanded */}
+                {showSafetyRating && displaySafetyRating && (
+                  <View style={tw`bg-black/30 border border-white/20 rounded-md p-2`}>
+                    <View style={tw`flex-row items-center mb-1`}>
+                      <View 
+                        style={[
+                          tw`w-6 h-6 rounded-full items-center justify-center`,
+                          { backgroundColor: getSafetyRatingColor(displaySafetyRating) }
+                        ]}
+                      >
+                        <Ionicons name="shield-checkmark" size={12} color="#FFFFFF" />
+                      </View>
+                      <Text style={tw`text-white text-[10px] font-medium ml-2`}>
+                        Safety {insightsStatus === 'loading' ? '-' : displaySafetyRating.toFixed(1)}
+                      </Text>
+                    </View>
+                    
+                    {displaySafetyJustification && displaySafetyJustification.trim() !== '' && (
+                      <Text style={tw`text-white/90 text-[10px] leading-3`} numberOfLines={2}>
+                        {displaySafetyJustification}
+                      </Text>
+                    )}
+                  </View>
                 )}
               </View>
             </View>
           )}
-        </View>
+        </TouchableOpacity>
       </View>
     </View>
   );
@@ -1195,7 +1287,7 @@ const { isAuthenticated, addFavoriteHotel, isFavoriteHotel, toggleFavoriteHotel,
   // Add this new section for the swipe hint
   if (!hasUserInteracted) {
     const timer = setTimeout(() => {
-      performSimpleSwipeHint();
+
     }, 1000);
 
     return () => clearTimeout(timer);
@@ -1323,7 +1415,7 @@ const performSimpleSwipeHint = () => {
           animated: true 
         });
       }
-    }, 800);
+    }, 400);
   }
 };
   const generateGoogleMapsLink = (hotel: Hotel, checkin?: Date, checkout?: Date, adults: number = 2, children: number = 0): string => {
@@ -1484,78 +1576,63 @@ scrollsToTop={false}
   
 {/* Action Buttons - Original spacing, prevents text truncation */}
 <View style={tw`flex-row items-center px-4 py-3 gap-2`}>
-  {/* Heart/Save Button */}
-  <AnimatedHeartButton
-    hotel={hotel}
-    size={24}
-    onShowSignUpModal={handleShowSignUpModal}
-  />
+  {/* Heart - Minimal */}
+  <TouchableOpacity style={tw`w-8 h-8 items-center justify-center`}>
+    <AnimatedHeartButton
+      hotel={hotel}
+      size={18}
+      onShowSignUpModal={handleShowSignUpModal}
+    />
+  </TouchableOpacity>
 
-  {/* Ask Button */}
+  {/* Ask - Ghost button */}
   <TouchableOpacity
     style={[
-      tw`py-3 px-4 rounded-xl border-2 flex-row items-center flex-1 justify-center`,
-      {
-        backgroundColor: TURQUOISE + '10',
-        borderColor: TURQUOISE + '30',
-      },
+      tw`py-3 px-3 rounded-lg flex-row items-center flex-1 justify-center`,
+      { backgroundColor: 'rgba(0,0,0,0.04)' }
     ]}
     onPress={() => setShowHotelChat(true)}
-    activeOpacity={0.8}
+    activeOpacity={0.6}
   >
-    <Ionicons name="chatbubble" size={14} color={TURQUOISE_DARK} />
-    <Text
-      style={[tw`ml-2 font-medium text-xs`, { color: BLACK }]}
-      allowFontScaling={false}
-    >
-      Ask
-    </Text>
+    <Ionicons name="chatbubble-outline" size={14} color="#666666" />
+    <Text style={tw`ml-1 font-medium text-xs text-gray-600`}>Ask</Text>
   </TouchableOpacity>
 
-  {/* View Details (Map) Button */}
+  {/* Map - Ghost button */}
   <TouchableOpacity
     style={[
-      tw`py-3 px-4 rounded-xl border-2 flex-row items-center flex-1 justify-center`,
-      {
-        backgroundColor: TURQUOISE + '10',
-        borderColor: TURQUOISE + '30',
-      },
+      tw`py-3 px-3 rounded-lg flex-row items-center flex-1 justify-center`,
+      { backgroundColor: 'rgba(0,0,0,0.04)' }
     ]}
     onPress={handleViewDetails}
-    activeOpacity={0.8}
+    activeOpacity={0.6}
   >
-    <Ionicons name="map" size={14} color={TURQUOISE_DARK} />
-    <Text
-      style={[tw`ml-2 font-medium text-xs`, { color: BLACK }]}
-      allowFontScaling={false}
-    >
-      Map
-    </Text>
+    <Ionicons name="map-outline" size={14} color="#666666" />
+    <Text style={tw`ml-1 font-medium text-xs text-gray-600`}>Map</Text>
   </TouchableOpacity>
 
-  {/* Book Button */}
+  {/* Book - Solid turquoise */}
   <TouchableOpacity
     style={[
-      tw`py-3 px-4 rounded-xl border-2 flex-row items-center flex-1 justify-center`,
-      {
-        backgroundColor: TURQUOISE + '10',
-        borderColor: TURQUOISE + '30',
-      },
+      tw`py-3 px-4 rounded-lg flex-row items-center flex-1 justify-center`,
+      { 
+        backgroundColor: TURQUOISE,
+        shadowColor: TURQUOISE,
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.2,
+        shadowRadius: 2,
+        elevation: 2,
+      }
     ]}
     onPress={handleDeepLink}
     activeOpacity={0.8}
   >
     <Image
       source={require('../../assets/images/logo.png')}
-      style={{ width: 14, height: 14 }}
+      style={{ width: 14, height: 14, tintColor: '#FFFFFF' }}
       resizeMode="contain"
     />
-    <Text
-      style={[tw`ml-2 font-medium text-xs`, { color: BLACK }]}
-      allowFontScaling={false}
-    >
-      Book
-    </Text>
+    <Text style={tw`ml-1 font-semibold text-xs text-white`}>Book</Text>
   </TouchableOpacity>
 </View>
 </View>

@@ -1,4 +1,4 @@
-// SwipeableHotelStoryCardLoadingPreview.tsx
+// SwipeableHotelStoryCardLoadingPreview.tsx - Updated to match new card layout
 import React, { useEffect, useRef } from 'react';
 import {
   View,
@@ -6,17 +6,16 @@ import {
   Dimensions,
   Animated,
   StyleSheet,
+  TouchableOpacity,
+  Image,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import tw from 'twrnc';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 const CARD_WIDTH = screenWidth - 42;
-const CARD_HEIGHT = screenHeight * 0.51;
+const CARD_HEIGHT = screenHeight * 0.52; // Updated to match new card height
 const TURQUOISE = '#1df9ff';
-const TURQUOISE_LIGHT = '#5dfbff';
-const TURQUOISE_DARK = '#00d4e6';
-const BLACK = "#000000";
 
 interface LoadingPreviewProps {
   index?: number;
@@ -122,15 +121,21 @@ const LoadingProgressBar: React.FC = () => {
       }
     ]}>
       {[0, 1, 2].map((index) => (
-        <View
+        <TouchableOpacity
           key={index}
           style={[
-            tw`flex-1 rounded-full overflow-hidden`,
+            tw`flex-1 rounded-full overflow-hidden`, 
             {
               height: 4,
               backgroundColor: 'rgba(255, 255, 255, 0.3)',
+              shadowColor: '#000000',
+              shadowOffset: { width: 0, height: 1 },
+              shadowOpacity: 0.2,
+              shadowRadius: 2,
+              elevation: 2,
             }
           ]}
+          activeOpacity={0.7}
         >
           <Animated.View
             style={[
@@ -145,7 +150,7 @@ const LoadingProgressBar: React.FC = () => {
               }
             ]}
           />
-        </View>
+        </TouchableOpacity>
       ))}
     </View>
   );
@@ -174,132 +179,150 @@ const SwipeableHotelStoryCardLoadingPreview: React.FC<LoadingPreviewProps> = ({
           borderRadius={0}
         />
 
-        {/* Gradient Overlay */}
-        <View style={tw`absolute bottom-0 left-0 right-0 h-52 bg-gradient-to-t from-black/70 to-transparent z-1`} />
+        {/* Reduced gradient for less obstruction - matches real card */}
+        <View style={tw`absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-black/50 to-transparent z-1`} />
 
-        {/* Top Content - Hotel Name and Location */}
-        <View style={tw`absolute top-10 left-4 z-10`}>
-          <View style={[tw`bg-black/30 border border-white/20 px-2.5 py-1.5 rounded-lg`, { maxWidth: screenWidth * 0.6 }]}>
-            <ShimmerEffect width={120} height={16} borderRadius={4} />
-          </View>
-          
-          <View style={tw`flex-row items-center mt-1.5`}>
-            <View style={tw`bg-black/30 border border-white/20 px-2 py-1 rounded-md flex-row items-center`}>
-              <Ionicons name="location" size={12} color="#FFFFFF" style={{ opacity: 0.6 }} />
+        {/* COMPACT TOP: Hotel info sized to content - matches real card */}
+        <View style={tw`absolute top-12 left-2 right-2 z-10`}>
+          <View style={[
+            tw`bg-black/30 border border-white/15 px-2 py-1 rounded-lg self-start`,
+          ]}>
+            <ShimmerEffect width={120} height={12} borderRadius={4} />
+            <View style={tw`flex-row items-center mt-0.5`}>
+              <Ionicons name="location" size={10} color="#FFFFFF" />
               <View style={tw`ml-1`}>
-                <ShimmerEffect width={80} height={12} borderRadius={4} />
+                <ShimmerEffect width={80} height={10} borderRadius={4} />
               </View>
             </View>
           </View>
         </View>
-        
 
-        {/* Bottom Content */}
-        <View style={tw`absolute bottom-6 left-4 right-4 z-10`}>
-          {/* Price and Rating Row */}
-          <View style={tw`flex-row items-end gap-2 mb-2.5`}>
-            <View style={tw`bg-black/50 border border-white/20 px-3 py-1.5 rounded-lg`}>
-              <ShimmerEffect width={60} height={20} borderRadius={4} />
+        {/* COMPACT BOTTOM: Essential info only with tighter spacing - matches real card */}
+        <View style={tw`absolute bottom-4 left-2 right-2 z-10`}>
+          {/* Compact price and rating row */}
+          <View style={tw`flex-row items-center justify-between mb-2`}>
+            <View style={tw`bg-black/45 border border-white/15 px-2 py-1 rounded-md`}>
+              <View style={tw`flex-row items-baseline`}>
+                <ShimmerEffect width={40} height={18} borderRadius={4} />
+                <View style={tw`ml-1`}>
+                  <ShimmerEffect width={25} height={10} borderRadius={4} />
+                </View>
+              </View>
             </View>
             
-            <View style={tw`bg-black/50 border border-white/20 px-3 py-1.5 rounded-lg`}>
-              <View style={tw`flex-row items-center`}>
-                <View 
-                  style={[
-                    tw`w-5 h-5 rounded-full items-center justify-center mr-1`,
-                    { backgroundColor: '#E5E7EB' }
-                  ]}
-                >
-                  <Ionicons 
-                    name="thumbs-up" 
-                    size={10} 
-                    color="#9CA3AF"
-                  />
-                </View>
-                <ShimmerEffect width={40} height={12} borderRadius={4} />
+            <View style={tw`bg-black/45 border border-white/15 px-2 py-1 rounded-md flex-row items-center`}>
+              <View 
+                style={[
+                  tw`w-4 h-4 rounded-full items-center justify-center mr-1`,
+                  { backgroundColor: '#E5E7EB' }
+                ]}
+              >
+                <Ionicons 
+                  name="thumbs-up" 
+                  size={8} 
+                  color="#9CA3AF"
+                />
+              </View>
+              <ShimmerEffect width={20} height={12} borderRadius={4} />
+              <View style={tw`ml-1`}>
+                <ShimmerEffect width={25} height={10} borderRadius={4} />
               </View>
             </View>
           </View>
 
-          {/* AI Insight Box */}
-          <View style={tw`bg-black/50 p-2.5 rounded-lg border border-white/20`}>
+          {/* Flexible amenities row - adapts to text length */}
+          <View style={tw`mb-2 flex-row flex-wrap gap-1`}>
+            {[0, 1, 2].map((idx) => (
+              <View
+                key={idx}
+                style={[
+                  tw`px-1.5 py-0.5 rounded-full`,
+                  { backgroundColor: 'rgba(0,0,0,0.4)', borderColor: 'rgba(255,255,255,0.15)', borderWidth: 1 }
+                ]}
+              >
+                <ShimmerEffect width={idx === 0 ? 40 : idx === 1 ? 35 : 30} height={9} borderRadius={4} />
+              </View>
+            ))}
+          </View>
 
-            <View style={tw`gap-1`}>
-              <ShimmerEffect width="100%" height={12} borderRadius={4} />
-              <ShimmerEffect width="85%" height={12} borderRadius={4} />
-              <ShimmerEffect width="92%" height={12} borderRadius={4} />
+          {/* Compact AI insight with smaller text */}
+          <View style={tw`bg-black/40 p-2 rounded-md border border-white/15`}>
+            <View style={tw`flex-row items-center mb-1`}>
+              <Ionicons 
+                name="sparkles" 
+                size={10} 
+                color="#1df9ff" 
+              />
+              <Text style={tw`text-white text-[10px] font-semibold ml-1`}>
+                AI Insight
+              </Text>
+              <View style={tw`ml-2`}>
+                <Text style={tw`text-white/60 text-[10px]`}>Loading...</Text>
+              </View>
+            </View>
+            <View style={tw`gap-0.5`}>
+              <ShimmerEffect width="100%" height={10} borderRadius={4} />
+              <ShimmerEffect width="85%" height={10} borderRadius={4} />
+              <ShimmerEffect width="92%" height={10} borderRadius={4} />
             </View>
           </View>
         </View>
       </View>
 
-      {/* Bottom Action Buttons */}
+      {/* Bottom Action Buttons - Updated to match new compact button layout */}
       <View style={tw`bg-white rounded-b-2xl`}>
         <View style={tw`flex-row items-center px-4 py-3 gap-2`}>
-          {/* Heart Button - Disabled State */}
-          <View
-            style={[
-              tw`w-12 h-12 rounded-xl border-2 items-center justify-center`,
-              {
-                backgroundColor: '#F3F4F6',
-                borderColor: '#E5E7EB',
-              },
-            ]}
-          >
-            <Ionicons name="heart-outline" size={24} color="#9CA3AF" />
+          {/* Heart Button - Minimal */}
+          <View style={tw`w-8 h-8 items-center justify-center`}>
+            <Ionicons name="heart-outline" size={18} color="#9CA3AF" />
           </View>
 
-          {/* Ask Button - Loading */}
+          {/* Ask Button - Ghost button */}
           <View
             style={[
-              tw`py-3 px-4 rounded-xl border-2 flex-row items-center flex-1 justify-center`,
-              {
-                backgroundColor: '#F3F4F6',
-                borderColor: '#E5E7EB',
-              },
+              tw`py-3 px-3 rounded-lg flex-row items-center flex-1 justify-center`,
+              { backgroundColor: 'rgba(0,0,0,0.04)' }
             ]}
           >
-            <Ionicons name="chatbubble" size={14} color="#9CA3AF" />
+            <Ionicons name="chatbubble-outline" size={14} color="#9CA3AF" />
             <Text
-              style={[tw`ml-2 font-medium text-xs`, { color: '#9CA3AF' }]}
+              style={[tw`ml-1 font-medium text-xs`, { color: '#9CA3AF' }]}
               allowFontScaling={false}
             >
               Ask
             </Text>
           </View>
 
-          {/* Map Button - Loading */}
+          {/* Map Button - Ghost button */}
           <View
             style={[
-              tw`py-3 px-4 rounded-xl border-2 flex-row items-center flex-1 justify-center`,
-              {
-                backgroundColor: '#F3F4F6',
-                borderColor: '#E5E7EB',
-              },
+              tw`py-3 px-3 rounded-lg flex-row items-center flex-1 justify-center`,
+              { backgroundColor: 'rgba(0,0,0,0.04)' }
             ]}
           >
-            <Ionicons name="map" size={14} color="#9CA3AF" />
+            <Ionicons name="map-outline" size={14} color="#9CA3AF" />
             <Text
-              style={[tw`ml-2 font-medium text-xs`, { color: '#9CA3AF' }]}
+              style={[tw`ml-1 font-medium text-xs`, { color: '#9CA3AF' }]}
               allowFontScaling={false}
             >
               Map
             </Text>
           </View>
 
-          {/* Book Button - Loading */}
+          {/* Book Button - Disabled turquoise */}
           <View
             style={[
-              tw`py-3 px-4 rounded-xl border-2 flex-row items-center flex-1 justify-center`,
+              tw`py-3 px-4 rounded-lg flex-row items-center flex-1 justify-center`,
               {
                 backgroundColor: '#F3F4F6',
                 borderColor: '#E5E7EB',
+                borderWidth: 1,
               },
             ]}
           >
             <View style={{ width: 14, height: 14, backgroundColor: '#9CA3AF', borderRadius: 2 }} />
             <Text
-              style={[tw`ml-2 font-medium text-xs`, { color: '#9CA3AF' }]}
+              style={[tw`ml-1 font-semibold text-xs`, { color: '#9CA3AF' }]}
               allowFontScaling={false}
             >
               Book

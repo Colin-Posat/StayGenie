@@ -325,6 +325,7 @@ const BASE_URL="https://staygenie-wwpa.onrender.com"
 import { Dimensions } from 'react-native';
 
 
+
 const HomeScreen = () => {
   const { addRecentSearch } = useAuth();
   const screenSlideOut = useRef(new Animated.Value(0)).current;
@@ -406,6 +407,18 @@ const saveRecentSearch = useCallback(async (searchQuery: string) => {
     console.error('Failed to save search:', error);
   }
 }, [addRecentSearch]);
+
+const debugHotelState = () => {
+  console.log('🔍 HOTEL STATE DEBUG:', {
+    displayHotelsCount: displayHotels.length,
+    showPlaceholders,
+    isStreamingSearch,
+    firstHotelFound,
+    placeholderCount: displayHotels.filter(h => h.isPlaceholder).length,
+    realHotelCount: displayHotels.filter(h => !h.isPlaceholder).length,
+    hotelNames: displayHotels.map(h => ({ name: h.name || 'NO_NAME', id: h.id, isPlaceholder: h.isPlaceholder }))
+  });
+};
 
 const generatePlaceholderHotels = useCallback((count: number = 10): Hotel[] => {
   return Array.from({ length: count }, (_, index) => ({
@@ -497,43 +510,41 @@ const handleStreamingUpdate = async (data: any, userInput?: string) => {
         const enhancedHotel = convertStreamedHotelToDisplay(data.hotel, data.hotelIndex - 1);
         
         setDisplayHotels(prevHotels => {
-          const updatedHotels = [...prevHotels];
-          const existingIndex = updatedHotels.findIndex(h => h.id === data.hotelId);
-          
-          if (existingIndex >= 0) {
-            updatedHotels[existingIndex] = {
-              ...updatedHotels[existingIndex],
-              ...enhancedHotel,
-              aiExcerpt: enhancedHotel.whyItMatches || enhancedHotel.aiExcerpt,
-              whyItMatches: enhancedHotel.whyItMatches || "Enhanced with AI insights",
-              funFacts: enhancedHotel.funFacts || ["AI-curated facts"],
-              guestInsights: enhancedHotel.guestInsights || "AI-enhanced guest insights",
-              nearbyAttractions: enhancedHotel.nearbyAttractions || ["AI-found attractions"],
-              locationHighlight: enhancedHotel.locationHighlight || "AI-analyzed location",
-              allHotelInfo: enhancedHotel.allHotelInfo || "Comprehensive hotel details available",
-              topAmenities: enhancedHotel.topAmenities || updatedHotels[existingIndex].topAmenities || [],
+      // CRITICAL FIX: Don't filter by placeholder status here
+      const updatedHotels = [...prevHotels];
+      const existingIndex = updatedHotels.findIndex(h => h.id === data.hotelId);
+      
+      if (existingIndex >= 0) {
+        console.log(`🔄 Updating hotel at index ${existingIndex}: ${data.hotel.name}`);
+        updatedHotels[existingIndex] = {
+          ...updatedHotels[existingIndex],
+          ...enhancedHotel,
+          // Ensure these fields are properly updated
+          aiExcerpt: enhancedHotel.whyItMatches || enhancedHotel.aiExcerpt,
+          whyItMatches: enhancedHotel.whyItMatches || "Enhanced with AI insights",
+          funFacts: enhancedHotel.funFacts || ["AI-curated facts"],
+          guestInsights: enhancedHotel.guestInsights || "AI-enhanced guest insights",
+          nearbyAttractions: enhancedHotel.nearbyAttractions || ["AI-found attractions"],
+          locationHighlight: enhancedHotel.locationHighlight || "AI-analyzed location",
+          allHotelInfo: enhancedHotel.allHotelInfo || "Comprehensive hotel details available",
+          topAmenities: enhancedHotel.topAmenities || updatedHotels[existingIndex].topAmenities || [],
           tags: enhancedHotel.topAmenities?.slice(0, 3) || updatedHotels[existingIndex].tags || ["Premium amenities"],
-
-              // NEW: Update safety fields with AI-enhanced data
-              safetyRating: enhancedHotel.aiSafetyRating || enhancedHotel.safetyRating || updatedHotels[existingIndex].safetyRating,
-              aiSafetyRating: enhancedHotel.aiSafetyRating,
-              safetyJustification: enhancedHotel.safetyJustification || "AI-enhanced safety assessment"
-            };
-            
-            console.log(`🎨 Enhanced existing hotel with AI insights: ${data.hotel.name}`);
-            
-            // Log safety rating update if present
-            if (enhancedHotel.aiSafetyRating) {
-              console.log(`🛡️ Updated safety rating for ${data.hotel.name}: ${enhancedHotel.aiSafetyRating}/10 - ${enhancedHotel.safetyJustification}`);
-            }
-          } else {
-            console.warn(`⚠️ Could not find hotel ${data.hotelId} to enhance`);
-          }
-          
-          return updatedHotels.sort((a, b) => (b.aiMatchPercent || 0) - (a.aiMatchPercent || 0));
-        });
+          safetyRating: enhancedHotel.aiSafetyRating || enhancedHotel.safetyRating || updatedHotels[existingIndex].safetyRating,
+          aiSafetyRating: enhancedHotel.aiSafetyRating,
+          safetyJustification: enhancedHotel.safetyJustification || "AI-enhanced safety assessment"
+        };
+        
+        console.log(`🎨 Successfully enhanced hotel: ${data.hotel.name}`);
+      } else {
+        console.warn(`⚠️ Could not find hotel ${data.hotelId} to enhance in current hotels list of ${updatedHotels.length}`);
+        console.log(`Current hotel IDs:`, updatedHotels.map(h => h.id));
       }
-      break;
+      
+      // Return sorted list
+      return updatedHotels.sort((a, b) => (b.aiMatchPercent || 0) - (a.aiMatchPercent || 0));
+    });
+  }
+  break;
 
     case 'complete':
       console.log('🎉 All hotels found and AI-enhanced!');
@@ -603,9 +614,18 @@ const confirmedCheckOutDate = hasFinalizedDates
 
 const convertStreamedHotelToDisplay = (streamedHotel: any, index: number): Hotel => {
   console.log('🔄 Converting streamed hotel:', streamedHotel.name);
+console.log(`   Hotel ID: ${streamedHotel.hotelId || streamedHotel.id || 'NO_ID'}`);
+  
+  // CRITICAL: Ensure we always have a valid ID
+  const hotelId = streamedHotel.hotelId || streamedHotel.id || `fallback-${Date.now()}-${index}`;
+
+  if (!streamedHotel.name) {
+    console.error('❌ CRITICAL: Hotel has no name!', streamedHotel);
+  }
 
   const getHotelImage = (hotel: any): string => {
     const defaultImage = "https://images.unsplash.com/photo-1564501049412-61c2a3083791?auto=format&fit=crop&w=800&q=80";
+    
     
     // PRIORITY 1: Use firstRoomImage if available
     if (hotel.firstRoomImage && typeof hotel.firstRoomImage === 'string' && hotel.firstRoomImage.trim() !== '') {
@@ -884,7 +904,7 @@ const executeStreamingSearch = async (userInput: string) => {
       setIsStreamingSearch(false);
       
       Alert.alert('Search Timeout', 'Search took too long. Please try again.', [{ text: 'OK' }]);
-    }, 30000);
+    }, 40000);
 
   } catch (error: any) {
     console.error('💥 SSE streaming search failed:', error);
@@ -1193,6 +1213,12 @@ const executeSearch = async (userInput: string) => {
     }
   }
 };
+
+useEffect(() => {
+  if (displayHotels.length > 0) {
+    debugHotelState();
+  }
+}, [displayHotels, showPlaceholders, isStreamingSearch]);
 
 
   // Handle search query from InitialSearchScreen
