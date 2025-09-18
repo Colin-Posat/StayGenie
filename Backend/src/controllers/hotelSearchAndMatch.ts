@@ -1659,7 +1659,7 @@ export const hotelSearchAndMatchController = async (req: Request, res: Response)
           children: parsedQuery.children ? Array(parsedQuery.children).fill(10) : []
         }
       ],
-      timeout: 4,
+      timeout: 2,
       maxRatesPerHotel: 1,
       hotelIds: hotelIds,
       limit: 500
