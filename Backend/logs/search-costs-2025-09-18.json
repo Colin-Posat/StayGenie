@@ -1,0 +1,62 @@
+[
+  {
+    "timestamp": "2025-09-18T01:53:05.004Z",
+    "searchId": "72d1097c-0a82-4c66-960f-9da471ff0bbf",
+    "userQuery": "hotels in la with gym",
+    "destination": "Los Angeles, US",
+    "hotelCount": 220,
+    "totalTokensUsed": 225469,
+    "totalCost": 0.035407499999999995,
+    "searchDurationMs": 29109,
+    "operations": {
+      "hotelMatching": {
+        "tokens": 175998,
+        "cost": 0.0265923
+      },
+      "aiInsights": {
+        "tokens": 49471,
+        "cost": 0.008815199999999999
+      }
+    }
+  },
+  {
+    "timestamp": "2025-09-18T01:54:24.086Z",
+    "searchId": "02e41dae-0898-4030-8bd2-8c04f3d80f67",
+    "userQuery": "hotels in new york with rooftop bar",
+    "destination": "New York, US",
+    "hotelCount": 307,
+    "totalTokensUsed": 247692,
+    "totalCost": 0.03870359999999999,
+    "searchDurationMs": 15149,
+    "operations": {
+      "hotelMatching": {
+        "tokens": 202102,
+        "cost": 0.0304854
+      },
+      "aiInsights": {
+        "tokens": 45590,
+        "cost": 0.0082182
+      }
+    }
+  },
+  {
+    "timestamp": "2025-09-18T01:57:11.896Z",
+    "searchId": "a573547f-41f2-4297-b70e-342412cfd77b",
+    "userQuery": "hotels in istanbul hamam",
+    "destination": "Istanbul, TR",
+    "hotelCount": 417,
+    "totalTokensUsed": 287923,
+    "totalCost": 0.04460414999999998,
+    "searchDurationMs": 12441,
+    "operations": {
+      "hotelMatching": {
+        "tokens": 243630,
+        "cost": 0.0366849
+      },
+      "aiInsights": {
+        "tokens": 44293,
+        "cost": 0.007919249999999997
+      }
+    }
+  }
+]
