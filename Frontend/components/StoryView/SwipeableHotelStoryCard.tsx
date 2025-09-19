@@ -1585,55 +1585,83 @@ scrollsToTop={false}
     />
   </TouchableOpacity>
 
-  {/* Ask - Ghost button */}
+{/* Ask - Search guide pill style */}
   <TouchableOpacity
     style={[
-      tw`py-3 px-3 rounded-lg flex-row items-center flex-1 justify-center`,
-      { backgroundColor: 'rgba(0,0,0,0.04)' }
+      tw`py-2 px-3 rounded-xl flex-row items-center flex-1 justify-center bg-white border border-gray-200`,
+      {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.1,
+        shadowRadius: 2,
+        elevation: 3,
+      }
     ]}
     onPress={() => setShowHotelChat(true)}
-    activeOpacity={0.6}
+    activeOpacity={0.8}
   >
-    <Ionicons name="chatbubble-outline" size={14} color="#666666" />
-    <Text style={tw`ml-1 font-medium text-xs text-gray-600`}>Ask</Text>
+    <View style={[
+      tw`w-5 h-5 rounded-full items-center justify-center mr-1.5`,
+      { backgroundColor: 'rgba(29, 249, 255, 0.15)' }
+    ]}>
+      <Ionicons name="chatbubble-outline" size={12} color={TURQUOISE_DARK} />
+    </View>
+    <Text style={tw`text-xs font-medium text-gray-800`}>Ask</Text>
   </TouchableOpacity>
 
-  {/* Map - Ghost button */}
+  {/* Map - Search guide pill style */}
   <TouchableOpacity
     style={[
-      tw`py-3 px-3 rounded-lg flex-row items-center flex-1 justify-center`,
-      { backgroundColor: 'rgba(0,0,0,0.04)' }
+      tw`py-2 px-3 rounded-xl flex-row items-center flex-1 justify-center bg-white border border-gray-200`,
+      {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.1,
+        shadowRadius: 2,
+        elevation: 3,
+      }
     ]}
     onPress={handleViewDetails}
-    activeOpacity={0.6}
+    activeOpacity={0.8}
   >
-    <Ionicons name="map-outline" size={14} color="#666666" />
-    <Text style={tw`ml-1 font-medium text-xs text-gray-600`}>Map</Text>
+    <View style={[
+      tw`w-5 h-5 rounded-full items-center justify-center mr-1.5`,
+      { backgroundColor: 'rgba(29, 249, 255, 0.15)' }
+    ]}>
+      <Ionicons name="map-outline" size={12} color={TURQUOISE_DARK} />
+    </View>
+    <Text style={tw`text-xs font-medium text-gray-800`}>Map</Text>
   </TouchableOpacity>
 
-  {/* Book - Solid turquoise */}
+  {/* Book - Same pill style as others */}
   <TouchableOpacity
     style={[
-      tw`py-3 px-4 rounded-lg flex-row items-center flex-1 justify-center`,
-      { 
-        backgroundColor: TURQUOISE,
-        shadowColor: TURQUOISE,
+      tw`py-2 px-3 rounded-xl flex-row items-center flex-1 justify-center bg-white border border-gray-200`,
+      {
+        shadowColor: '#000',
         shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.2,
+        shadowOpacity: 0.1,
         shadowRadius: 2,
-        elevation: 2,
+        elevation: 3,
       }
     ]}
     onPress={handleDeepLink}
     activeOpacity={0.8}
   >
-    <Image
-      source={require('../../assets/images/logo.png')}
-      style={{ width: 14, height: 14, tintColor: '#FFFFFF' }}
-      resizeMode="contain"
-    />
-    <Text style={tw`ml-1 font-semibold text-xs text-white`}>Book</Text>
+    <View style={[
+      tw`w-5 h-5 rounded-full items-center justify-center mr-1.5`,
+      { backgroundColor: 'rgba(29, 249, 255, 0.15)' }
+    ]}>
+      <Image
+        source={require('../../assets/images/logo.png')}
+        style={{ width: 12, height: 12, tintColor: TURQUOISE_DARK }}
+        resizeMode="contain"
+      />
+    </View>
+    <Text style={tw`text-xs font-medium text-gray-800`}>Book</Text>
   </TouchableOpacity>
+
+
 </View>
 </View>
 

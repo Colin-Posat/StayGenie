@@ -13,6 +13,7 @@ import BudgetSelectionModal from '../SearchGuideModals/BudgetSelectionModal';
 import GuestsSelectionModal from '../SearchGuideModals/GuestSelectionModal';
 import AmenitiesSelectionModal from '../SearchGuideModals/AmenitiesSelectionModal';
 import HotelStylesSelectionModal from '../SearchGuideModals/HotelStylesSelectionModal';
+import { Keyboard, Platform } from 'react-native';
 
 const TURQUOISE = '#1df9ff';
 const TURQUOISE_DARK = '#00d4e6';
@@ -82,9 +83,13 @@ const SearchGuidePills: React.FC<SearchGuidePillsProps> = ({
   ];
 
   const handlePillPress = (pill: SearchGuidePill) => {
-    console.log('Pill pressed:', pill.id, pill.action);
-    
-    // Handle specific actions
+  console.log('Pill pressed:', pill.id, pill.action);
+  
+  // Force dismiss keyboard first, then handle the action
+  Keyboard.dismiss();
+  
+  // Use setTimeout to ensure keyboard dismissal completes before opening modal
+  setTimeout(() => {
     if (pill.action === 'ADD_DATES') {
       setShowDateModal(true);
       return;
@@ -112,7 +117,8 @@ const SearchGuidePills: React.FC<SearchGuidePillsProps> = ({
     
     // Call the callback for other actions
     onPillPress?.(pill.action, pill);
-  };
+  }, 100); // Small delay to let keyboard dismiss
+};
 
   const handleDateSelect = (checkIn: Date, checkOut: Date) => {
     const formatDateForSearch = (date: Date): string => {
@@ -188,6 +194,8 @@ const SearchGuidePills: React.FC<SearchGuidePillsProps> = ({
         horizontal
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={tw`px-1 py-1`}
+        keyboardShouldPersistTaps="always"  
+   keyboardDismissMode="on-drag"  
       >
         {searchGuidePills.map((pill) => (
           <TouchableOpacity

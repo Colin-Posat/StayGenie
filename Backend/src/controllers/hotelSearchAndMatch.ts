@@ -205,6 +205,15 @@ const processHotelWithImmediateInsights = async (
   searchId?: string
 ): Promise<void> => {
   try {
+    if (!hotel) {
+    console.error(`❌ Hotel object is undefined for index ${hotelIndex}`);
+    return;
+  }
+  
+  if (!hotel.name) {
+    console.error(`❌ Hotel missing name:`, hotel);
+    return;
+  }
     console.log(`🔥 Processing hotel ${hotelIndex} with immediate AI insights: ${hotel.name}`);
     
     const hotelId = hotel.hotelId || hotel.id || hotel.hotel_id;
@@ -523,8 +532,18 @@ REMEMBER: Always select 15 hotels using exact names from the list above.`;
           });
 
           if (matchingHotel) {
+            const hotelId = matchingHotel.hotelId || matchingHotel.id || matchingHotel.hotel_id;
+  const hotelMetadata = hotelMetadataMap.get(String(hotelId));
+  
+  const enrichedHotel = {
+    ...matchingHotel,
+    name: hotelMetadata?.name || `Hotel ${hotelId}`, // ADD NAME
+    aiMatchPercent: parsed.aiMatchPercent
+  };
             const insightPromise = processHotelWithImmediateInsights(
+              
     { ...matchingHotel, aiMatchPercent: parsed.aiMatchPercent },
+    
     parsed.rank,
     userInput,
     parsedQuery,
@@ -591,6 +610,7 @@ REMEMBER: Always select 15 hotels using exact names from the list above.`;
             });
 
             if (matchingHotel) {
+              
               const insightPromise = processHotelWithImmediateInsights(
                 { ...matchingHotel, aiMatchPercent: parsed.aiMatchPercent },
                 parsed.rank,

@@ -11,7 +11,8 @@ import {
   Animated,
   Modal,
   TouchableWithoutFeedback,
-  StyleSheet
+  StyleSheet,
+  TextInput
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import tw from 'twrnc';
@@ -22,6 +23,9 @@ import { useNavigation, useRoute } from '@react-navigation/native';
 import type { StackNavigationProp } from '@react-navigation/stack';
 import EventSource from 'react-native-sse';
 import Constants from 'expo-constants';
+import SearchGuidePills from '../components/InitalSearch/SearchGuidePills';
+import { Easing, Keyboard, KeyboardAvoidingView, ScrollView } from 'react-native';
+
 
 const OVERLAY_BACKDROP = 'rgba(0,0,0,0.7)';
 
@@ -367,6 +371,15 @@ const [isLoadingAiSuggestions, setIsLoadingAiSuggestions] = useState(false);
 const [aiSuggestionsError, setAiSuggestionsError] = useState<string | null>(null);
 const [aiSuggestionsLoaded, setAiSuggestionsLoaded] = useState(false);
   
+const [isEditingSearch, setIsEditingSearch] = useState(false);
+const [editedSearchQuery, setEditedSearchQuery] = useState('');
+
+const editContainerHeight = useRef(new Animated.Value(0)).current;
+const editContentOpacity = useRef(new Animated.Value(0)).current;
+const editBackgroundScale = useRef(new Animated.Value(1)).current;
+const normalModeOpacity = useRef(new Animated.Value(1)).current;
+
+
   // Polling management
   const sentimentPollingRef = useRef<NodeJS.Timeout | null>(null);
   const pollingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -384,6 +397,7 @@ const [aiSuggestionsLoaded, setAiSuggestionsLoaded] = useState(false);
   const [adults, setAdults] = useState(2);
   const [children, setChildren] = useState(0);
   const [showAiOverlay, setShowAiOverlay] = useState(false);
+const editModeOpacity = useRef(new Animated.Value(0)).current;
 
   // Cleanup polling on unmount
   useEffect(() => {
@@ -396,6 +410,34 @@ const [aiSuggestionsLoaded, setAiSuggestionsLoaded] = useState(false);
       }
     };
   }, []);
+
+  const editModeAnimation = useRef(new Animated.Value(0)).current;
+const editContentHeight = useRef(new Animated.Value(0)).current;
+const editOpacity = useRef(new Animated.Value(0)).current;
+
+
+// One driver for the whole edit mode animation: 0 = closed, 1 = open
+const editAnim = useRef(new Animated.Value(0)).current;
+
+const overlayOpacity = editAnim.interpolate({
+  inputRange: [0, 1],
+  outputRange: [0, 1],
+});
+
+const cardTranslateY = editAnim.interpolate({
+  inputRange: [0, 1],
+  outputRange: [-8, 0], // small slide down
+});
+
+const cardOpacity = editAnim.interpolate({
+  inputRange: [0, 1],
+  outputRange: [0, 1],
+});
+
+const normalHeaderScale = editAnim.interpolate({
+  inputRange: [0, 1],
+  outputRange: [1, 0.98], // subtle scale when edit is open
+});
 
 
 const saveRecentSearch = useCallback(async (searchQuery: string) => {
@@ -419,6 +461,76 @@ const debugHotelState = () => {
     hotelNames: displayHotels.map(h => ({ name: h.name || 'NO_NAME', id: h.id, isPlaceholder: h.isPlaceholder }))
   });
 };
+
+const editSearchInputRef = useRef<TextInput>(null);
+
+// Add these helper functions before the return statement:
+const formatDateRange = (checkin: Date, checkout: Date) => {
+  const checkinStr = checkin.toLocaleDateString('en-US', { 
+    month: 'short', 
+    day: 'numeric' 
+  });
+  const checkoutStr = checkout.toLocaleDateString('en-US', { 
+    month: 'short', 
+    day: 'numeric' 
+  });
+  return `${checkinStr} - ${checkoutStr}`;
+};
+
+const formatGuestInfo = (adults: number, children: number) => {
+  let guestStr = `${adults} adult${adults !== 1 ? 's' : ''}`;
+  if (children > 0) {
+    guestStr += `, ${children} child${children !== 1 ? 'ren' : ''}`;
+  }
+  return guestStr;
+};
+
+
+// Simple edit handlers without animations
+const handleEditSearchPress = () => {
+  setEditedSearchQuery(searchQuery);
+  setIsEditingSearch(true);
+
+  // start with rAF for immediate responsiveness
+  requestAnimationFrame(() => {
+    Animated.spring(editAnim, {
+      toValue: 1,
+      // tuned for crisp, quick snap
+      stiffness: 520,
+      damping: 36,
+      mass: 0.9,
+      useNativeDriver: true,
+    }).start(() => {
+      // focus ASAP after the first frame
+      requestAnimationFrame(() => editSearchInputRef.current?.focus());
+    });
+  });
+};
+const handleCancelEdit = () => {
+  Keyboard.dismiss();
+  Animated.timing(editAnim, {
+    toValue: 0,
+    duration: 150,            // faster close
+    easing: Easing.out(Easing.cubic),
+    useNativeDriver: true,
+  }).start(() => {
+    setEditedSearchQuery(searchQuery);
+    setIsEditingSearch(false);
+  });
+};
+
+
+
+const handleSaveSearch = async () => {
+  if (editedSearchQuery.trim() && editedSearchQuery.trim() !== searchQuery) {
+    const newQuery = editedSearchQuery.trim();
+    setSearchQuery(newQuery);
+    await executeSearch(newQuery);
+    await saveRecentSearch(newQuery);
+  }
+  handleCancelEdit();
+};
+
 
 const generatePlaceholderHotels = useCallback((count: number = 10): Hotel[] => {
   return Array.from({ length: count }, (_, index) => ({
@@ -470,6 +582,18 @@ const handleStreamingUpdate = async (data: any, userInput?: string) => {
       break;
 
     case 'hotel_found':
+      console.log('🏨 hotel_found event:', {
+    hasHotel: !!data.hotel,
+    hotelName: data.hotel?.name,
+    hotelId: data.hotel?.hotelId || data.hotel?.id,
+    hotelIndex: data.hotelIndex,
+    currentHotelCount: displayHotels.length
+  });
+  
+  if (!data.hotel || !data.hotel.name) {
+    console.error('❌ Invalid hotel_found data:', data);
+    break;
+  }
       if (data.hotel) {
         const newHotel = convertStreamedHotelToDisplay(data.hotel, data.hotelIndex - 1);
         
@@ -1620,144 +1744,267 @@ const handleBackPress = useCallback(() => {
       ]}
     >
 
-      {/* SLEEK HEADER */}
-      <View style={tw`px-5 pt-3 pb-4 bg-gray-50`}>
-        {/* Back button and AI Search button */}
-        <View style={tw`flex-row items-center gap-3 mb-4`}>
-          <TouchableOpacity
-            style={tw`w-11 h-11 items-center justify-center rounded-full bg-white border border-gray-200 shadow-sm`}
-            onPress={handleBackPress}
-            activeOpacity={0.7}
-          >
-            <Ionicons name="arrow-back" size={20} color="#374151" />
-          </TouchableOpacity>
-<TouchableOpacity
-  // keep visuals CONSTANT
-  style={[
-    tw`flex-1 py-3 px-8 rounded-2xl flex-row items-center justify-center shadow-lg`,
-    { 
-      backgroundColor: '#1df9ff',
-      shadowColor: '#1df9ff',
-      shadowOffset: { width: 0, height: 4 },
-      shadowOpacity: 0.3,
-      shadowRadius: 12,
-      elevation: 8,
-    }
-  ]}
-  onPress={handleAiSearch}
-  activeOpacity={0.9}
-  disabled={isBusy}                    // blocks taps, no visual change
-  accessibilityState={{ disabled: isBusy }}  // a11y
->
-  <Ionicons name="sparkles" size={20} color="#FFFFFF" />
-  <Text style={tw`text-white font-semibold text-base ml-3`}>
-    {isBusy ? 'Searching…' : 'Refine Search'}
-  </Text>
-</TouchableOpacity>
+      {/* COMPACT HEADER WITH INTEGRATED BACK BUTTON */}
 
 
-
-        </View>
-{/* ONE-LINE (now two-line max) SEARCH SUMMARY PILL */}
-{searchQuery.trim().length > 0 && (
-  <TouchableOpacity
-    style={tw`bg-white px-3 py-2 rounded-lg border border-gray-200`}
-    onPress={() => setIsSearchInfoExpanded(!isSearchInfoExpanded)}
-    activeOpacity={0.7}
-  >
-    <View style={tw`flex-row items-center`}>
-      <Ionicons name="location-outline" size={14} color="#6B7280" />
-      <Text
-        style={[tw`flex-1 text-[11px] text-gray-600 ml-1`, { flexShrink: 1 }]}
-        numberOfLines={isSearchInfoExpanded ? undefined : 2}
-        ellipsizeMode="tail"
-      >
-        {(
-          isStreamingSearch && displayHotels.length > 0
-            ? `${displayHotels.length} hotels • `
-            : displayHotels.length > 0
-              ? `${displayHotels.length} hotels • `
-              : ''
-        )}
-        “{searchQuery}”
-        {` • ${checkInDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}–${checkOutDate.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })}`}
-        {` • ${adults} adult${adults !== 1 ? 's' : ''}${children ? `, ${children} child${children !== 1 ? 'ren' : ''}` : ''}`}
-        {isStreamingSearch && streamingProgress.message ? ` • ${streamingProgress.message}` : ''}
-      </Text>
-
-      {!TEST_MODE && stage1Results && (
-        <Ionicons name="checkmark-circle" size={12} color="#10B981" style={tw`ml-1`} />
-      )}
-      {!TEST_MODE && stage2Results && (
-        <Ionicons name="checkmark-circle" size={12} color="#3B82F6" style={tw`ml-1`} />
-      )}
-      {isLoadingAiSuggestions && (
-        <Ionicons name={TEST_MODE ? 'flask' : 'sparkles'} size={12} color={TEST_MODE ? '#EA580C' : '#3B82F6'} style={tw`ml-1`} />
-      )}
-      <Ionicons
-        name={isSearchInfoExpanded ? 'chevron-up' : 'chevron-down'}
-        size={14}
-        color="#9CA3AF"
-        style={tw`ml-1`}
-      />
-    </View>
-  </TouchableOpacity>
-)}
-            </View>
-            
-            {/* Search info with dates and insights loading indicator */}
-            {(stage1Results?.searchParams || searchResults?.searchParams) && (
-              <View style={tw`flex-row items-center justify-between mt-1`}>
-                <Text style={tw`text-xs text-gray-400`}>
-                  {(stage1Results?.searchParams || searchResults?.searchParams)!.cityName}, {(stage1Results?.searchParams || searchResults?.searchParams)!.countryCode.toUpperCase()} • 
-                  {new Date((stage1Results?.searchParams || searchResults?.searchParams)!.checkin).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} - {new Date((stage1Results?.searchParams || searchResults?.searchParams)!.checkout).toLocaleDateString('en-US', { month: 'short', day: 'numeric' })} • 
-                  {(stage1Results?.searchParams || searchResults?.searchParams)!.adults} adults
-                  {((stage1Results?.searchParams || searchResults?.searchParams)!.children || 0) > 0 ? `, ${(stage1Results?.searchParams || searchResults?.searchParams)!.children} children` : ''}
+{/* ENHANCED COMPACT HEADER WITH INTEGRATED SEARCH PILLS */}
+{/* SLEEK MODERN COMPACT HEADER */}
+<View style={tw`px-4 pt-2 pb-3 bg-gray-50`}>
+  {searchQuery.trim().length > 0 ? (
+    <Animated.View
+      style={[
+        tw`bg-white rounded-2xl border overflow-hidden`,
+        { 
+          borderColor: '#E5E7EB',
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 2 },
+          shadowOpacity: 0.08,
+          shadowRadius: 12,
+          elevation: 4,
+          transform: [{ scale: normalHeaderScale }] 
+        },
+      ]}
+    >
+      {!isEditingSearch ? (
+        // NORMAL MODE - Sleek compact design
+        <TouchableOpacity
+          style={tw`px-4 py-3`}
+          onPress={handleEditSearchPress}
+          activeOpacity={0.8}
+          disabled={isBusy}
+        >
+          <View style={tw`flex-row items-center justify-between`}>
+            {/* Left section - Back button + Search content */}
+            <View style={tw`flex-row items-center flex-1 min-w-0`}>
+              <TouchableOpacity
+                style={[
+                  tw`w-7 h-7 items-center justify-center rounded-full mr-3 flex-shrink-0`,
+                  { backgroundColor: '#F8FAFC' }
+                ]}
+                onPress={handleBackPress}
+                activeOpacity={0.8}
+              >
+                <Ionicons name="arrow-back" size={14} color="#64748B" />
+              </TouchableOpacity>
+              
+              {/* Search query and details in compact layout */}
+              <View style={tw`flex-1 min-w-0`}>
+                <Text 
+                  style={tw`text-gray-900 text-sm font-semibold leading-tight mb-0.5`}
+                  numberOfLines={2}
+                  ellipsizeMode="tail"
+                >
+                  {searchQuery}
                 </Text>
                 
-                {/* Combined loading indicators */}
-                <View style={tw`flex-row items-center ml-2 gap-2`}>
-                  {/* Insights loading indicator - only show in production */}
-                  {!TEST_MODE && isInsightsLoading && (
-                    <View style={tw`flex-row items-center`}>
-                      <Ionicons name="sync" size={12} color="#6B7280" />
-                      <Text style={tw`text-xs text-gray-500 ml-1`}>
-                        Insights...
-                      </Text>
-                    </View>
-                  )}
+                {/* Inline trip details with minimal spacing */}
+                <View style={tw`flex-row items-center`}>
+                  <View style={tw`flex-row items-center`}>
+                    <Ionicons name="calendar" size={11} color="#00d4e6" />
+                    <Text style={tw`text-gray-500 text-xs font-medium ml-1`}>
+                      {hasFinalizedDates && confirmedCheckInDate && confirmedCheckOutDate
+                        ? formatDateRange(confirmedCheckInDate, confirmedCheckOutDate)
+                        : formatDateRange(checkInDate, checkOutDate)
+                      }
+                    </Text>
+                  </View>
                   
-                  {/* AI Suggestions loading indicator */}
-                  {isLoadingAiSuggestions && (
-                    <View style={tw`flex-row items-center`}>
-                      <Ionicons name={TEST_MODE ? "flask" : "sparkles"} size={12} color={TEST_MODE ? "#EA580C" : "#3B82F6"} />
-                      <Text style={tw`text-xs ${TEST_MODE ? 'text-orange-500' : 'text-blue-500'} ml-1`}>
-                        {TEST_MODE ? 'Test...' : 'AI...'}
-                      </Text>
-                    </View>
-                  )}
+                  <View style={tw`w-1 h-1 rounded-full bg-gray-300 mx-2`} />
                   
-                  {/* Stage completion indicators */}
-                  {stage1Results && !TEST_MODE && (
-                    <View style={tw`flex-row items-center`}>
-                      <Ionicons name="checkmark-circle" size={12} color="#10B981" />
-                      <Text style={tw`text-xs text-green-600 ml-1`}>
-                        Stage 1
-                      </Text>
-                    </View>
-                  )}
+                  <View style={tw`flex-row items-center`}>
+                    <Ionicons name="people" size={11} color="#00d4e6" />
+                    <Text style={tw`text-gray-500 text-xs font-medium ml-1`}>
+                      {formatGuestInfo(adults, children)}
+                    </Text>
+                  </View>
                   
-                  {stage2Results && !TEST_MODE && (
-                    <View style={tw`flex-row items-center`}>
-                      <Ionicons name="checkmark-circle" size={12} color="#3B82F6" />
-                      <Text style={tw`text-xs text-blue-600 ml-1`}>
-                        Stage 2
-                      </Text>
-                    </View>
+                  {/* Compact status indicator */}
+                  {(isBusy || displayHotels.length > 0) && (
+                    <>
+                      <View style={tw`w-1 h-1 rounded-full bg-gray-300 mx-2`} />
+                      <View style={tw`flex-row items-center`}>
+                        <Ionicons 
+                          name={isBusy ? "sync" : "checkmark-circle"} 
+                          size={11} 
+                          color={isBusy ? "#00d4e6" : "#10B981"} 
+                        />
+                        <Text style={[
+                          tw`text-xs font-semibold ml-1`,
+                          { color: isBusy ? "#00d4e6" : "#10B981" }
+                        ]}>
+                          {displayHotels.length}
+                        </Text>
+                      </View>
+                    </>
                   )}
+                </View>
               </View>
             </View>
-          )}
+
+            {/* Right section - Edit icon */}
+            <View style={[
+               tw`w-7 h-7 rounded-full items-center justify-center flex-shrink-0`,
+  { 
+    backgroundColor: 'rgba(29, 249, 255, 0.1)',
+    marginLeft: 16,    // Custom left margin
+    marginRight: -5,   // Pull it closer to edge
+  }
+            ]}>
+              <Ionicons name="pencil" size={13} color="#00d4e6" />
+            </View>
+          </View>
+        </TouchableOpacity>
+        
+      ) : (
+        
+        // EDIT MODE - Modern streamlined design
+        <KeyboardAvoidingView
+  behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+  keyboardVerticalOffset={Platform.OS === 'ios' ? 8 : 0}
+>
+  <ScrollView
+    keyboardShouldPersistTaps="handled"   // 🔧 FIX: allow first tap to hit buttons
+    contentContainerStyle={tw`p-4 pb-3`}  // keep your spacing
+  >
+          
+          {/* Compact header with inline actions */}
+          <View style={tw`flex-row items-center justify-between mb-3`}>
+            <View style={tw`flex-row items-center flex-1`}>
+              <TouchableOpacity
+                style={[
+                  tw`w-7 h-7 items-center justify-center rounded-full mr-3`,
+                  { backgroundColor: '#F1F5F9' }
+                ]}
+                onPress={handleCancelEdit}
+                activeOpacity={0.8}
+              >
+                <Ionicons name="close" size={14} color="#64748B" />
+              </TouchableOpacity>
+              <Text style={tw`text-gray-900 text-base font-semibold`}>
+                Edit search
+              </Text>
+            </View>
+
+            {/* Sleek search button */}
+            <TouchableOpacity
+              style={[
+                tw`px-4 py-2 rounded-full`,
+                editedSearchQuery.trim() && editedSearchQuery.trim() !== searchQuery
+                  ? [
+                      { 
+                        backgroundColor: '#00d4e6',
+                        shadowColor: '#00d4e6',
+                        shadowOffset: { width: 0, height: 2 },
+                        shadowOpacity: 0.2,
+                        shadowRadius: 8,
+                      },
+                      tw`shadow-lg`
+                    ]
+                  : [tw`bg-gray-100`]
+              ]}
+              onPress={handleSaveSearch}
+              activeOpacity={0.8}
+              disabled={!editedSearchQuery.trim() || editedSearchQuery.trim() === searchQuery}
+            >
+              <Text style={[
+                tw`text-sm font-semibold`,
+                editedSearchQuery.trim() && editedSearchQuery.trim() !== searchQuery
+                  ? tw`text-white`
+                  : tw`text-gray-400`
+              ]}>
+                Search
+              </Text>
+            </TouchableOpacity>
+          </View>
+
+          {/* Modern text input with subtle styling */}
+          <View style={tw`mb-4`}>
+            <View style={[
+              tw`bg-gray-50 rounded-xl border`,
+              { borderColor: '#F1F5F9' }
+            ]}>
+              <TextInput
+                ref={editSearchInputRef}
+                style={[
+                  tw`text-gray-900 text-base px-4 py-3`,
+                  Platform.OS === 'android' && { fontFamily: 'sans-serif' },
+                  {
+                    fontSize: 16,
+                    lineHeight: 22,
+                    minHeight: 80,
+                    maxHeight: 120,
+                    textAlignVertical: 'top',
+                  }
+                ]}
+                value={editedSearchQuery}
+                onChangeText={setEditedSearchQuery}
+                placeholder="Describe your perfect stay..."
+                placeholderTextColor="#94A3B8"
+                multiline
+                maxLength={1600}
+                selectionColor="#00d4e6"
+                autoFocus={false}
+              />
+            </View>
+          </View>
+
+          {/* Search Guide Pills with tighter spacing */}
+          <View style={tw`-mx-1`}>
+            <SearchGuidePills
+              onDateSelect={(dateText) => {
+                setEditedSearchQuery(prev => 
+                  prev.trim() ? `${prev.trim()} • ${dateText}` : dateText
+                );
+              }}
+              onBudgetSelect={(budgetText) => {
+                setEditedSearchQuery(prev => 
+                  prev.trim() ? `${prev.trim()} • ${budgetText}` : budgetText
+                );
+              }}
+              onGuestsSelect={(guestsText) => {
+                setEditedSearchQuery(prev => 
+                  prev.trim() ? `${prev.trim()} • ${guestsText}` : guestsText
+                );
+              }}
+              onAmenitiesSelect={(amenitiesText) => {
+                setEditedSearchQuery(prev => 
+                  prev.trim() ? `${prev.trim()} • ${amenitiesText}` : amenitiesText
+                );
+              }}
+              onStyleSelect={(styleText) => {
+                setEditedSearchQuery(prev => 
+                  prev.trim() ? `${prev.trim()} • ${styleText}` : styleText
+                );
+              }}
+            />
+          </View>
+            </ScrollView>
+</KeyboardAvoidingView>
+    
+      )}
+    </Animated.View>
+  ) : (
+    /* Fallback - Minimal floating back button */
+    <View style={tw`flex-row items-center`}>
+      <TouchableOpacity
+        style={[
+          tw`w-10 h-10 items-center justify-center rounded-full bg-white`,
+          {
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 2 },
+            shadowOpacity: 0.1,
+            shadowRadius: 8,
+            elevation: 3,
+          }
+        ]}
+        onPress={handleBackPress}
+        activeOpacity={0.8}
+      >
+        <Ionicons name="arrow-back" size={18} color="#374151" />
+      </TouchableOpacity>
+    </View>
+  )}
+</View>
 
 
       {/* CONTENT VIEW - Story View */}

@@ -312,17 +312,17 @@ const SwipeableHotelStoryCardLoadingPreview: React.FC<LoadingPreviewProps> = ({
           {/* Book Button - Disabled turquoise */}
           <View
             style={[
-              tw`py-3 px-4 rounded-lg flex-row items-center flex-1 justify-center`,
-              {
-                backgroundColor: '#F3F4F6',
-                borderColor: '#E5E7EB',
-                borderWidth: 1,
-              },
+              tw`py-3 px-3 rounded-lg flex-row items-center flex-1 justify-center`,
+              { backgroundColor: 'rgba(0,0,0,0.04)' }
             ]}
           >
-            <View style={{ width: 14, height: 14, backgroundColor: '#9CA3AF', borderRadius: 2 }} />
+            <Image
+                    source={require('../../assets/images/logo.png')}
+                    style={{ width: 14, height: 14, tintColor: '#9CA3AF' }}
+                    resizeMode="contain"
+                  />
             <Text
-              style={[tw`ml-1 font-semibold text-xs`, { color: '#9CA3AF' }]}
+              style={[tw`ml-1 font-medium text-xs`, { color: '#9CA3AF' }]}
               allowFontScaling={false}
             >
               Book

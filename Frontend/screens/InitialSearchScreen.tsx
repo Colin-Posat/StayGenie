@@ -329,6 +329,14 @@ useFocusEffect(
     });
   };
 
+  // add near other constants
+const SHOW_HINT_WHEN_EMPTY = true;
+
+// add inside component, above return()
+const focusInput = () => {
+  textInputRef.current?.focus();
+};
+
   const handleStyleSelect = (styleText: string) => {
     console.log('Hotel style selected from pills:', styleText);
     
@@ -636,208 +644,132 @@ useFocusEffect(
               </View>
 
               {/* Mobile-optimized Search Bar */}
-              <View style={tw`w-full items-center px-2`}>
-                <Animated.View 
-                  style={[
-                    tw`relative mb-4 w-full`,
-                    {
-                      transform: [{ scale: searchBarScale }],
-                    }
-                  ]}
-                >
-<Animated.View 
-  style={[
-    tw`bg-white rounded-2xl shadow-lg border`,
-    { 
-      shadowColor: Animated.add(
-        turquoiseGlow.interpolate({
-          inputRange: [0, 1],
-          outputRange: [0, 1],
-        }),
-        pulsingShadow.interpolate({
-          inputRange: [0, 1],
-          outputRange: [0, 0.5],
-        })
-      ).interpolate({
-        inputRange: [0, 0.5, 1, 1.5],
-        outputRange: ['#000', TURQUOISE, TURQUOISE, TURQUOISE],
-      }),
-      shadowOffset: { width: 0, height: 4 },
-      shadowOpacity: Animated.add(
-        turquoiseGlow.interpolate({
-          inputRange: [0, 1],
-          outputRange: [0, 0.3],
-        }),
-        pulsingShadow.interpolate({
-          inputRange: [0, 1],
-          outputRange: [0.1, 0.25],
-        })
-      ),
-      shadowRadius: Animated.add(
-        turquoiseGlow.interpolate({
-          inputRange: [0, 1],
-          outputRange: [0, 15],
-        }),
-        pulsingShadow.interpolate({
-          inputRange: [0, 1],
-          outputRange: [15, 20],
-        })
-      ),
-      elevation: 8,
-      borderColor: Animated.add(
-        turquoiseGlow.interpolate({
-          inputRange: [0, 1],
-          outputRange: [0, 1],
-        }),
-        pulsingShadow.interpolate({
-          inputRange: [0, 1],
-          outputRange: [0, 0.3],
-        })
-      ).interpolate({
-        inputRange: [0, 0.3, 1, 1.3],
-        outputRange: ['#E5E7EB', 'rgba(29, 249, 255, 0.3)', TURQUOISE, TURQUOISE],
-      }),
-      borderWidth: 1,
-    },
-  ]}
->
-<Animated.View 
-  style={[
-    tw`bg-white rounded-2xl shadow-lg border`,
-    { 
-      // Keep shadow color consistent - no turquoise animation
-      shadowColor: '#000000', // Always black shadow
-      shadowOffset: { width: 0, height: 4 },
-      shadowOpacity: pulsingShadow.interpolate({
-        inputRange: [0, 1],
-        outputRange: [0.1, 0.15], // Subtle pulsing opacity only
-      }),
-      shadowRadius: pulsingShadow.interpolate({
-        inputRange: [0, 1],
-        outputRange: [4, 6], // Smaller shadow radius
-      }),
-      elevation: 8,
-      
-      // Only animate the border to turquoise
-      borderColor: Animated.add(
-        turquoiseGlow.interpolate({
-          inputRange: [0, 1],
-          outputRange: [0, 1],
-        }),
-        pulsingShadow.interpolate({
-          inputRange: [0, 1],
-          outputRange: [0, 0.3],
-        })
-      ).interpolate({
-        inputRange: [0, 0.3, 1, 1.3],
-        outputRange: ['#E5E7EB', 'rgba(29, 249, 255, 0.5)', TURQUOISE, TURQUOISE],
-      }),
-      borderWidth: turquoiseGlow.interpolate({
-        inputRange: [0, 1],
-        outputRange: [1, 2], // Slightly thicker border when focused
-      }),
-    },
-  ]}
->
-  
-{/* Main input area — fixed to 2 lines, scrolls after that */}
-<View style={tw`px-4 pt-4`}>
-  <View style={tw`flex-row items-start`}>
-    {/* (optional icon spot) */}
-    <View style={tw`flex-1`}>
-      <TextInput
-        ref={textInputRef}
-        multiline
-        numberOfLines={INPUT_VISIBLE_LINES} // Android initial height
+             <View style={tw`w-full items-center px-2`}>
+  <Animated.View 
+    style={[
+      tw`relative mb-4 w-full`,
+      { transform: [{ scale: searchBarScale }] }
+    ]}
+  >
+    {/* Make the entire container tappable */}
+    <TouchableOpacity activeOpacity={0.9} onPress={focusInput} accessibilityRole="search">
+      <Animated.View 
         style={[
-          tw`text-base text-gray-900 font-normal`,
-          Platform.OS === 'android' && { fontFamily: 'sans-serif' },
+          tw`bg-white rounded-2xl shadow-lg border`,
           {
-            fontSize: INPUT_FONT_SIZE,
-            lineHeight: INPUT_LINE_HEIGHT,
-            height: INPUT_HEIGHT,             // <- fixed height (2 lines)
-            textAlignVertical: 'top',         // <- show from top
-            paddingVertical: -10,
-            paddingHorizontal: 0,
-            margin: 0,
-            paddingBottom: INPUT_BOTTOM_PAD + (Platform.OS === 'android' ? ANDROID_EXTRA_PAD : 0),
+            shadowColor: '#000', // consistent shadow
+            shadowOffset: { width: 0, height: 4 },
+            shadowOpacity: pulsingShadow.interpolate({ inputRange: [0, 1], outputRange: [0.1, 0.15] }),
+            shadowRadius: pulsingShadow.interpolate({ inputRange: [0, 1], outputRange: [4, 6] }),
+            elevation: 8,
+            borderColor: Animated.add(
+              turquoiseGlow.interpolate({ inputRange: [0, 1], outputRange: [0, 1] }),
+              pulsingShadow.interpolate({ inputRange: [0, 1], outputRange: [0, 0.3] })
+            ).interpolate({
+              inputRange: [0, 0.3, 1, 1.3],
+              outputRange: ['#E5E7EB', 'rgba(29, 249, 255, 0.5)', TURQUOISE, TURQUOISE],
+            }),
+            borderWidth: turquoiseGlow.interpolate({ inputRange: [0, 1], outputRange: [1, 2] }),
           },
         ]}
-        placeholder={getPlaceholderText()}
-        placeholderTextColor="#9CA3AF"
-        value={searchQuery}
-        onChangeText={setSearchQuery}
-        onFocus={handleFocus}
-        onBlur={() => setIsFocused(false)}
-        onSubmitEditing={handleSearch}
-        maxLength={400}
-        autoCorrect={false}
-        autoCapitalize="none"
-        returnKeyType="search"
-        selectionColor={TURQUOISE}
-        editable={!isTransitioning}
-        blurOnSubmit
-        scrollEnabled       // <- internal scroll once content > 2 lines
-      />
-    </View>
-  </View>
+      >
+        {/* Leading search icon (affordance) */}
+        <View style={tw`absolute left-4 top-4`}>
+          <Ionicons
+            name="sparkles"
+            size={18}
+            color={isFocused || searchQuery ? TURQUOISE : '#9CA3AF'}
+          />
+        </View>
+
+        {/* Main input area — fixed to 2 lines, scrolls after that */}
+        <View style={tw`px-4 pt-3.5`}>
+          <View style={tw`flex-row items-start`}>
+            <View style={tw`flex-1`}>
+              <TextInput
+                ref={textInputRef}
+                multiline
+                numberOfLines={INPUT_VISIBLE_LINES}
+                style={[
+                  tw`text-base text-gray-900 font-normal`,
+                  Platform.OS === 'android' && { fontFamily: 'sans-serif' },
+                  {
+                    fontSize: INPUT_FONT_SIZE,
+                    lineHeight: INPUT_LINE_HEIGHT,
+                    height: INPUT_HEIGHT,
+                    textAlignVertical: 'top',
+                    paddingVertical: -10,
+                    paddingHorizontal: 0,
+                    margin: 0,
+                    paddingLeft: 28, // make room for the icon
+                    paddingBottom: INPUT_BOTTOM_PAD + (Platform.OS === 'android' ? ANDROID_EXTRA_PAD : 0),
+                  },
+                ]}
+                placeholder={getPlaceholderText()}
+                placeholderTextColor="#9CA3AF"
+                value={searchQuery}
+                onChangeText={setSearchQuery}
+                onFocus={handleFocus}
+                onBlur={() => setIsFocused(false)}
+                onSubmitEditing={handleSearch}
+                maxLength={400}
+                autoCorrect={false}
+                autoCapitalize="none"
+                returnKeyType="search"
+                selectionColor={TURQUOISE}
+                editable={!isTransitioning}
+                blurOnSubmit
+                scrollEnabled
+                accessibilityLabel="Search hotels and stays"
+              />
+            </View>
+          </View>
+        </View>
+
+
+        {/* Bottom action bar */}
+        <View style={tw`flex-row items-center justify-end px-4 py-3 border-t border-gray-100`}>
+          <View style={tw`flex-row items-center`}>
+            {searchQuery.length > 0 && (
+              <TouchableOpacity
+                onPress={handleClear}
+                activeOpacity={0.7}
+                style={tw`w-8 h-8 items-center justify-center`}
+                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+              >
+                <Ionicons name="close" size={18} color="#6B7280" />
+              </TouchableOpacity>
+            )}
+
+            <TouchableOpacity
+              onPress={focusInput}
+              style={tw`w-8 h-8 items-center justify-center`}
+              activeOpacity={0.7}
+            >
+              <Ionicons name="mic" size={18} color="#6B7280" />
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[
+                tw`w-8 h-8 items-center justify-center rounded-full`,
+                { backgroundColor: searchQuery.trim().length > 0 && !isTransitioning ? TURQUOISE : '#E5E7EB' }
+              ]}
+              onPress={handleSearch}
+              activeOpacity={0.8}
+              disabled={!searchQuery.trim() || isTransitioning}
+            >
+              <Ionicons 
+                name={isTransitioning ? 'hourglass' : 'arrow-forward'} 
+                size={16} 
+                color={searchQuery.trim().length > 0 && !isTransitioning ? 'white' : '#9CA3AF'} 
+              />
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Animated.View>
+    </TouchableOpacity>
+  </Animated.View>
 </View>
-
-
-  
-  {/* Bottom action bar - unchanged */}
-  <View style={tw`flex-row items-center justify-end px-4 py-3 border-t border-gray-100`}>
-
-
-    
-    {/* Right side - Action buttons */}
-    <View style={tw`flex-row items-center space-x-3`}>
-      {/* Clear button */}
-      {searchQuery.length > 0 && (
-        <TouchableOpacity
-          onPress={handleClear}
-          activeOpacity={0.7}
-          style={tw`w-8 h-8 items-center justify-center`}
-          hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-        >
-          <Ionicons name="close" size={18} color="#6B7280" />
-        </TouchableOpacity>
-      )}
-      
-      {/* Voice button */}
-      <TouchableOpacity
-        style={tw`w-8 h-8 items-center justify-center`}
-        activeOpacity={0.7}
-      >
-        <Ionicons name="mic" size={18} color="#6B7280" />
-      </TouchableOpacity>
-      
-      {/* Send button */}
-      <TouchableOpacity
-        style={[
-          tw`w-8 h-8 items-center justify-center rounded-full`,
-          {
-            backgroundColor: searchQuery.trim().length > 0 && !isTransitioning ? TURQUOISE : '#E5E7EB',
-          }
-        ]}
-        onPress={handleSearch}
-        activeOpacity={0.8}
-        disabled={!searchQuery.trim() || isTransitioning}
-      >
-        <Ionicons 
-          name={isTransitioning ? "hourglass" : "arrow-forward"} 
-          size={16} 
-          color={searchQuery.trim().length > 0 && !isTransitioning ? "white" : "#9CA3AF"} 
-        />
-      </TouchableOpacity>
-    </View>
-  </View>
-</Animated.View>
-</Animated.View>
-                  
-                
-                </Animated.View>
-              </View>
 
               {/* Mobile-optimized Suggestions section */}
               <View style={tw`w-full px-2 mb-5`}>

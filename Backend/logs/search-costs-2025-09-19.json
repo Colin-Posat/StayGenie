@@ -1,0 +1,22 @@
+[
+  {
+    "timestamp": "2025-09-19T01:31:49.599Z",
+    "searchId": "fcbc408d-2d78-4860-9ccb-5c0b9ef876a3",
+    "userQuery": "hotels in venice with canal view and private balconies 200-400",
+    "destination": "Venice, IT",
+    "hotelCount": 239,
+    "totalTokensUsed": 101144,
+    "totalCost": 0.015312,
+    "searchDurationMs": 7370,
+    "operations": {
+      "hotelMatching": {
+        "tokens": 101144,
+        "cost": 0.015312
+      },
+      "aiInsights": {
+        "tokens": 0,
+        "cost": 0
+      }
+    }
+  }
+]

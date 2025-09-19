@@ -158,5 +158,25 @@
         "cost": 0.00805965
       }
     }
+  },
+  {
+    "timestamp": "2025-09-19T01:17:38.043Z",
+    "searchId": "82a31b03-9c68-4277-afa4-ed7466ca24d0",
+    "userQuery": "hotels in venice with canal views and private balconies",
+    "destination": "Venice, IT",
+    "hotelCount": 239,
+    "totalTokensUsed": 189239,
+    "totalCost": 0.0293637,
+    "searchDurationMs": 15129,
+    "operations": {
+      "hotelMatching": {
+        "tokens": 166484,
+        "cost": 0.0251517
+      },
+      "aiInsights": {
+        "tokens": 22755,
+        "cost": 0.0042120000000000005
+      }
+    }
   }
 ]
