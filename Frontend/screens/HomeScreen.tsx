@@ -582,18 +582,6 @@ const handleStreamingUpdate = async (data: any, userInput?: string) => {
       break;
 
     case 'hotel_found':
-      console.log('🏨 hotel_found event:', {
-    hasHotel: !!data.hotel,
-    hotelName: data.hotel?.name,
-    hotelId: data.hotel?.hotelId || data.hotel?.id,
-    hotelIndex: data.hotelIndex,
-    currentHotelCount: displayHotels.length
-  });
-  
-  if (!data.hotel || !data.hotel.name) {
-    console.error('❌ Invalid hotel_found data:', data);
-    break;
-  }
       if (data.hotel) {
         const newHotel = convertStreamedHotelToDisplay(data.hotel, data.hotelIndex - 1);
         
