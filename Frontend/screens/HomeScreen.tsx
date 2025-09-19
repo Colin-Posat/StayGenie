@@ -606,6 +606,10 @@ const handleStreamingUpdate = async (data: any, userInput?: string) => {
               console.log(`➕ Added new hotel: ${newHotel.name}`);
             }
             
+            if (updatedHotels.length > 0 && !updatedHotels[0].isPlaceholder) {
+          setShowPlaceholders(false);
+        }
+        
             return updatedHotels.sort((a, b) => (b.aiMatchPercent || 0) - (a.aiMatchPercent || 0));
           });
         }
@@ -628,6 +632,15 @@ const handleStreamingUpdate = async (data: any, userInput?: string) => {
       
       if (existingIndex >= 0) {
         console.log(`🔄 Updating hotel at index ${existingIndex}: ${data.hotel.name}`);
+
+        console.log('🔍 HOTEL STATE UPDATE:', {
+    showPlaceholders,
+    firstHotelFound,
+    newCount: updatedHotels.length,
+    hasPlaceholders: updatedHotels.some(h => h.isPlaceholder),
+    realHotels: updatedHotels.filter(h => !h.isPlaceholder).length
+  });
+
         updatedHotels[existingIndex] = {
           ...updatedHotels[existingIndex],
           ...enhancedHotel,
@@ -877,22 +890,21 @@ const executeStreamingSearch = async (userInput: string) => {
 
   try {
     console.log('🌊 Starting SSE Real-time Streaming Search...');
+    
+    // Clear state first
+    setStage1Results(null);
+    setStage2Results(null);
+    setCurrentSearchId(null);
+    
+    // Set loading state
     setShowPlaceholders(true);
     setIsStreamingSearch(true);
     setFirstHotelFound(false);
     setStreamingProgress({ step: 0, totalSteps: 8, message: 'Starting search...' });
 
+    // Set placeholders and KEEP them
     const placeholderHotels = generatePlaceholderHotels(10);
     setDisplayHotels(placeholderHotels);
-
-    setStage1Results(null);
-    setStage2Results(null);
-    
-    // Clear previous results
-    setDisplayHotels([]);
-    setStage1Results(null);
-    setStage2Results(null);
-
     const searchParams = new URLSearchParams({
       userInput: userInput,
       q: userInput
@@ -1807,24 +1819,24 @@ const handleBackPress = useCallback(() => {
                   </View>
                   
                   {/* Compact status indicator */}
-                  {(isBusy || displayHotels.length > 0) && (
-                    <>
-                      <View style={tw`w-1 h-1 rounded-full bg-gray-300 mx-2`} />
-                      <View style={tw`flex-row items-center`}>
-                        <Ionicons 
-                          name={isBusy ? "sync" : "checkmark-circle"} 
-                          size={11} 
-                          color={isBusy ? "#00d4e6" : "#10B981"} 
-                        />
-                        <Text style={[
-                          tw`text-xs font-semibold ml-1`,
-                          { color: isBusy ? "#00d4e6" : "#10B981" }
-                        ]}>
-                          {displayHotels.length}
-                        </Text>
-                      </View>
-                    </>
-                  )}
+                {(isBusy || displayHotels.filter(h => !h.isPlaceholder).length > 0) && (
+                  <>
+                    <View style={tw`w-1 h-1 rounded-full bg-gray-300 mx-2`} />
+                    <View style={tw`flex-row items-center`}>
+                      <Ionicons 
+                        name={isBusy ? "sync" : "checkmark-circle"} 
+                        size={11} 
+                        color={isBusy ? "#00d4e6" : "#00d4e6"} 
+                      />
+                      <Text style={[
+                        tw`text-xs font-semibold ml-1`,
+                        { color: isBusy ? "#00d4e6" : "#00d4e6" }
+                      ]}>
+                        {displayHotels.filter(h => !h.isPlaceholder).length}
+                      </Text>
+                    </View>
+                  </>
+                )}
                 </View>
               </View>
             </View>
@@ -2005,7 +2017,7 @@ const handleBackPress = useCallback(() => {
   checkOutDate={confirmedCheckOutDate}
   adults={adults}
   children={children}
-  showPlaceholders={showPlaceholders}
+  showPlaceholders={showPlaceholders && displayHotels.length > 0 && displayHotels.every(h => h.isPlaceholder)}
   isInsightsLoading={isInsightsLoading}
   stage1Complete={!!stage1Results}
   stage2Complete={!!stage2Results}

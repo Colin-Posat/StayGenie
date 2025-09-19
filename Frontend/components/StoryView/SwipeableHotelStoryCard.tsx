@@ -24,6 +24,7 @@ import AnimatedHeartButton from './AnimatedHeartButton';
 import HotelChatOverlay from '../../components/HomeScreenTop/HotelChatOverlay';
 import * as WebBrowser from 'expo-web-browser';
 import { Easing } from 'react-native';
+import PhotoGallerySlide from './PhotoGallerySlide';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 const CARD_WIDTH = screenWidth - 42;
@@ -163,6 +164,30 @@ interface SwipeableHotelStoryCardProps {
   showSafetyRating?: boolean;
   safetyRatingThreshold?: number;
 }
+
+const calculateTotalStayCost = (
+  checkInDate?: Date,
+  checkOutDate?: Date,
+  pricePerNight?: { amount: number; currency: string } | null,
+  fallbackPrice?: number
+): { nights: number; totalCost: string; currency: string } | null => {
+  if (!checkInDate || !checkOutDate) return null;
+  
+  const timeDiff = checkOutDate.getTime() - checkInDate.getTime();
+  const nights = Math.ceil(timeDiff / (1000 * 3600 * 24));
+  
+  if (nights <= 0) return null;
+  
+  const nightlyRate = pricePerNight?.amount || fallbackPrice || 0;
+  const currency = pricePerNight?.currency || '$';
+  const totalCost = nightlyRate * nights;
+  
+  return {
+    nights,
+    totalCost: `${currency}${totalCost.toLocaleString()}`,
+    currency
+  };
+};
 
 
 // Helper function to generate hotel deep link URL
@@ -616,11 +641,26 @@ const HotelOverviewSlide: React.FC<{
         </View>
       </View>
 
+      
+
       {/* COMPACT BOTTOM: Essential info only with tighter spacing */}
       <View style={tw`absolute bottom-4 left-2 right-2 z-10`}>
         {/* Compact price and rating row */}
         <View style={tw`flex-row items-center justify-between mb-2`}>
           <View style={tw`bg-black/45 border border-white/15 px-2 py-1 rounded-md`}>
+          {(() => {
+                const stayTotal = calculateTotalStayCost(checkInDate, checkOutDate, hotel.pricePerNight, hotel.price);
+                return stayTotal ? (
+                  <View style={tw`mb-0.5`}>
+                    <Text style={tw`text-white/80 text-[9px]`}>
+                      {stayTotal.nights} night{stayTotal.nights > 1 ? 's' : ''} total
+                    </Text>
+                    <Text style={tw`text-white text-sm font-bold`}>
+                      {stayTotal.totalCost}
+                    </Text>
+                  </View>
+                ) : null;
+              })()}
             <View style={tw`flex-row items-baseline`}>
               <Text style={tw`text-lg font-bold text-white`}>
                 {getDisplayPrice()}
@@ -1186,7 +1226,7 @@ const AmenitiesSlide: React.FC<{
                     </View>
                     
                     {displaySafetyJustification && displaySafetyJustification.trim() !== '' && (
-                      <Text style={tw`text-white/90 text-[10px] leading-3`} numberOfLines={2}>
+                      <Text style={tw`text-white/90 text-[10px] leading-3`} numberOfLines={3}>
                         {displaySafetyJustification}
                       </Text>
                     )}
@@ -1518,7 +1558,7 @@ const handleSlideChange = (slideIndex: number) => {
 >
         <StoryProgressBar
           currentSlide={currentSlide}
-          totalSlides={3}
+          totalSlides={4}
           onSlideChange={handleSlideChange}
         />
         
@@ -1569,6 +1609,14 @@ scrollsToTop={false}
     safetyRatingThreshold={safetyRatingThreshold}
   />
           </View>
+          {/* Slide 4: Photo Gallery - NEW! */}
+  <View style={{ width: CARD_WIDTH, height: CARD_HEIGHT }}>
+    <PhotoGallerySlide 
+      hotel={hotel} 
+      insightsStatus={insightsStatus}
+    />
+  </View>
+  
         </ScrollView>
      </View>
 
