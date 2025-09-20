@@ -100,114 +100,131 @@ const SwipeableStoryView: React.FC<SwipeableStoryViewProps> = ({
     }
   }, [isStreaming, streamingHotelsCount, hotels.length]);
 
-  // Enhanced hotel processing with priority room image handling and safety data preservation
-  const enhanceHotel = (hotel: Hotel): EnhancedHotel => {
-    const generateImages = (hotel: Hotel): string[] => {
-      console.log(`🖼️ Processing images for ${hotel.name}:`);
-      console.log(`- firstRoomImage: ${hotel.firstRoomImage ? 'Present' : 'Not available'}`);
-      console.log(`- secondRoomImage: ${hotel.secondRoomImage ? 'Present' : 'Not available'}`);
-      console.log(`- images array: ${hotel.images ? hotel.images.length + ' images' : 'Not available'}`);
-      console.log(`- fallback image: ${hotel.image ? 'Present' : 'Not available'}`);
+const enhanceHotel = (hotel: Hotel): EnhancedHotel => {
+  const generateImages = (hotel: Hotel): string[] => {
+    console.log(`🖼️ Processing images for ${hotel.name}:`);
+    console.log(`- photoGalleryImages: ${hotel.photoGalleryImages ? hotel.photoGalleryImages.length + ' images' : 'Not available'}`);
+    console.log(`- firstRoomImage: ${hotel.firstRoomImage ? 'Present' : 'Not available'}`);
+    console.log(`- secondRoomImage: ${hotel.secondRoomImage ? 'Present' : 'Not available'}`);
+    console.log(`- images array: ${hotel.images ? hotel.images.length + ' images' : 'Not available'}`);
+    console.log(`- fallback image: ${hotel.image ? 'Present' : 'Not available'}`);
 
-      const finalImages: string[] = [];
-      
-      // PRIORITY 1: Use existing images array first (don't mix with room images)
-      if (hotel.images && hotel.images.length > 0) {
-        for (const image of hotel.images) {
-          if (finalImages.length >= 3) break;
+    const finalImages: string[] = [];
+    
+    // PRIORITY 1: Use photo gallery images first (best quality, up to 10 images)
+    if (hotel.photoGalleryImages && hotel.photoGalleryImages.length > 0) {
+      for (const image of hotel.photoGalleryImages.slice(0, 3)) { // Take first 3 from gallery
+        if (finalImages.length >= 3) break;
+        
+        if (image &&
+            typeof image === 'string' &&
+            image.trim() !== '' &&
+            !finalImages.includes(image)) {
+          console.log(`✅ Adding image from photo gallery: ${image.substring(0, 50)}...`);
+          finalImages.push(image);
+        }
+      }
+    }
+    
+    // PRIORITY 2: Use existing images array if still need more
+    if (finalImages.length < 3 && hotel.images && hotel.images.length > 0) {
+      for (const image of hotel.images) {
+        if (finalImages.length >= 3) break;
+        
+        if (image &&
+            typeof image === 'string' &&
+            image.trim() !== '' &&
+            !finalImages.includes(image)) {
+          console.log(`✅ Adding image from images array: ${image.substring(0, 50)}...`);
+          finalImages.push(image);
+        }
+      }
+    }
+    
+    // PRIORITY 3: Use fallback hotel.image if still need more
+    if (finalImages.length < 3 && hotel.image &&
+        typeof hotel.image === 'string' &&
+        hotel.image.trim() !== '' &&
+        !finalImages.includes(hotel.image)) {
+      console.log(`✅ Adding fallback image: ${hotel.image.substring(0, 50)}...`);
+      finalImages.push(hotel.image);
+    }
+    
+    // PRIORITY 4: Generate variations if we have a base image
+    if (finalImages.length > 0 && finalImages.length < 3) {
+      const baseImage = finalImages[0];
+      if (baseImage.includes('unsplash.com') || baseImage.includes('http') || baseImage.startsWith('//')) {
+        const baseUrl = baseImage.split('?')[0];
+        
+        while (finalImages.length < 3) {
+          let variation = '';
+          if (finalImages.length === 1) {
+            variation = `${baseUrl}?auto=format&fit=crop&w=800&q=80&crop=entropy&v=${Date.now()}`;
+          } else if (finalImages.length === 2) {
+            variation = `${baseUrl}?auto=format&fit=crop&w=800&q=80&crop=faces&v=${Date.now()}`;
+          }
           
-          if (image &&
-              typeof image === 'string' &&
-              image.trim() !== '' &&
-              !finalImages.includes(image)) {
-            console.log(`✅ Adding image from array: ${image.substring(0, 50)}...`);
-            finalImages.push(image);
+          if (variation && !finalImages.includes(variation)) {
+            console.log(`✅ Generated variation: ${variation.substring(0, 50)}...`);
+            finalImages.push(variation);
+          } else {
+            break;
           }
         }
       }
-      
-      // PRIORITY 2: Use fallback hotel.image if still need more (but NOT room images)
-      if (finalImages.length < 3 && hotel.image &&
-          typeof hotel.image === 'string' &&
-          hotel.image.trim() !== '' &&
-          !finalImages.includes(hotel.image)) {
-        console.log(`✅ Adding fallback image: ${hotel.image.substring(0, 50)}...`);
-        finalImages.push(hotel.image);
+    }
+    
+    // FALLBACK: Use default images if still don't have enough
+    const defaultImages = [
+      "https://images.unsplash.com/photo-1564501049412-61c2a3083791?auto=format&fit=crop&w=800&q=80",
+      "https://images.unsplash.com/photo-1571896349842-33c89424de2d?auto=format&fit=crop&w=800&q=80",
+      "https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?auto=format&fit=crop&w=800&q=80",
+    ];
+    
+    while (finalImages.length < 3) {
+      const defaultImage = defaultImages[finalImages.length];
+      if (defaultImage && !finalImages.includes(defaultImage)) {
+        console.log(`⚠️ Using default image ${finalImages.length + 1}: ${defaultImage.substring(0, 50)}...`);
+        finalImages.push(defaultImage);
+      } else {
+        break;
       }
-      
-      // PRIORITY 3: Generate variations from existing images if we have a base
-      if (finalImages.length > 0 && finalImages.length < 3) {
-        const baseImage = finalImages[0];
-        if (baseImage.includes('unsplash.com') || baseImage.includes('http') || baseImage.startsWith('//')) {
-          const baseUrl = baseImage.split('?')[0];
-          
-          while (finalImages.length < 3) {
-            let variation = '';
-            if (finalImages.length === 1) {
-              variation = `${baseUrl}?auto=format&fit=crop&w=800&q=80&crop=entropy&v=${Date.now()}`;
-            } else if (finalImages.length === 2) {
-              variation = `${baseUrl}?auto=format&fit=crop&w=800&q=80&crop=faces&v=${Date.now()}`;
-            }
-            
-            if (variation && !finalImages.includes(variation)) {
-              console.log(`✅ Generated variation: ${variation.substring(0, 50)}...`);
-              finalImages.push(variation);
-            } else {
-              break;
-            }
-          }
-        }
-      }
-      
-      // FALLBACK: Use default images if still don't have enough
-      const defaultImages = [
-        "https://images.unsplash.com/photo-1564501049412-61c2a3083791?auto=format&fit=crop&w=800&q=80",
-        "https://images.unsplash.com/photo-1571896349842-33c89424de2d?auto=format&fit=crop&w=800&q=80",
-        "https://images.unsplash.com/photo-1551882547-ff40c63fe5fa?auto=format&fit=crop&w=800&q=80",
-      ];
-      
-      while (finalImages.length < 3) {
-        const defaultImage = defaultImages[finalImages.length];
-        if (defaultImage && !finalImages.includes(defaultImage)) {
-          console.log(`⚠️ Using default image ${finalImages.length + 1}: ${defaultImage.substring(0, 50)}...`);
-          finalImages.push(defaultImage);
-        } else {
-          break;
-        }
-      }
-      
-      // Ensure we return exactly 3 images
-      const result = finalImages.slice(0, 3);
-      console.log(`✅ Final images for ${hotel.name}: ${result.length} images (room images preserved separately)`);
-      
-      return result;
-    };
-
-    const enhancedHotel: EnhancedHotel = {
-      ...hotel,
-      // Use our enhanced image generation that prioritizes room images
-      images: generateImages(hotel),
-      // Preserve the original room images for reference
-      firstRoomImage: hotel.firstRoomImage,
-      secondRoomImage: hotel.secondRoomImage,
-      // Generate map image
-      mapImage: hotel.latitude && hotel.longitude
-        ? `https://maps.googleapis.com/maps/api/staticmap?center=${hotel.latitude},${hotel.longitude}&zoom=15&size=400x200&markers=color:red%7C${hotel.latitude},${hotel.longitude}&key=YOUR_API_KEY`
-        : "https://maps.googleapis.com/maps/api/staticmap?center=",
-      // Handle nearby attractions
-      nearbyAttractions: hotel.nearbyAttractions && hotel.nearbyAttractions.length > 0
-        ? hotel.nearbyAttractions
-        : ["Exploring nearby attractions..."],
-      topAmenities: hotel.topAmenities || [],
-
-      // Preserve safety rating fields
-      safetyRating: hotel.safetyRating,
-      aiSafetyRating: hotel.aiSafetyRating,
-      safetyJustification: hotel.safetyJustification,
-    };
-
-    return enhancedHotel;
+    }
+    
+    // Ensure we return exactly 3 images
+    const result = finalImages.slice(0, 3);
+    console.log(`✅ Final images for ${hotel.name}: ${result.length} images (prioritizing photo gallery)`);
+    
+    return result;
   };
+
+  const enhancedHotel: EnhancedHotel = {
+    ...hotel,
+    // Use our enhanced image generation that prioritizes photo gallery
+    images: generateImages(hotel),
+    // Preserve the full photo gallery for the PhotoGallerySlide
+    photoGalleryImages: hotel.photoGalleryImages || [], // ADD: Preserve full photo gallery
+    // Preserve the original room images for reference
+    firstRoomImage: hotel.firstRoomImage,
+    secondRoomImage: hotel.secondRoomImage,
+    // Generate map image
+    mapImage: hotel.latitude && hotel.longitude
+      ? `https://maps.locationiq.com/v3/staticmap?key=pk.79c544ae745ee83f91a7523c99939210&center=${hotel.latitude},${hotel.longitude}&zoom=15&size=400x200&markers=color:red%7C${hotel.latitude},${hotel.longitude}`
+      : "https://maps.googleapis.com/maps/api/staticmap?center=",
+    // Handle nearby attractions
+    nearbyAttractions: hotel.nearbyAttractions && hotel.nearbyAttractions.length > 0
+      ? hotel.nearbyAttractions
+      : ["Exploring nearby attractions..."],
+    topAmenities: hotel.topAmenities || [],
+
+    // Preserve safety rating fields
+    safetyRating: hotel.safetyRating,
+    aiSafetyRating: hotel.aiSafetyRating,
+    safetyJustification: hotel.safetyJustification,
+  };
+
+  return enhancedHotel;
+};
 
   // Process hotels - filter out placeholders for enhancement
   const realHotels = hotels.filter(h => !h.isPlaceholder);

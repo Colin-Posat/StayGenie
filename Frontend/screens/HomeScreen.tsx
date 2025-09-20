@@ -92,12 +92,29 @@ interface Stage1SearchResponse {
   generatedAt: string;
 }
 
+interface Stage2InsightsResponse {
+  insightsId: string;
+  processedHotels: number;
+  recommendations: AIRecommendation[];
+  aiModels: {
+    content: string;
+    insights: string;
+  };
+  generatedAt: string;
+  performance: {
+    totalTimeMs: number;
+    stepBreakdown: any[];
+    bottlenecks: any[];
+  };
+}
+
 interface Stage1Hotel {
   hotelId: string;
   name: string;
   aiMatchPercent: number;
   starRating: number;
   images: string[];
+  photoGalleryImages?: string[]; // ADD: Photo gallery from stage 1
   pricePerNight: {
     amount: number;
     totalAmount: number;
@@ -125,11 +142,9 @@ interface Stage1Hotel {
   latitude: number | null;
   longitude: number | null;
   topAmenities: string[];
-  // NEW: Refundable policy fields
   isRefundable: boolean;
   refundableTag: string | null;
   refundableInfo: string;
-  // Contains summarized info for Stage 2
   summarizedInfo: {
     name: string;
     description: string;
@@ -140,25 +155,9 @@ interface Stage1Hotel {
     location: string;
     city: string;
     country: string;
-    // NEW: Refundable info in summary
     isRefundable: boolean;
     refundableInfo: string;
-  };
-}
-
-interface Stage2InsightsResponse {
-  insightsId: string;
-  processedHotels: number;
-  recommendations: AIRecommendation[];
-  aiModels: {
-    content: string;
-    insights: string;
-  };
-  generatedAt: string;
-  performance: {
-    totalTimeMs: number;
-    stepBreakdown: any[];
-    bottlenecks: any[];
+    photoGalleryImages?: string[]; // ADD: Also in summarized info
   };
 }
 
@@ -175,10 +174,11 @@ interface AIRecommendation {
   firstRoomImage?: string | null;
   secondRoomImage?: string | null;
   allHotelInfo?: string;
-  // ADD THESE NEW FIELDS:
-  safetyRating: number;           // Safety rating out of 10
-  safetyJustification: string;    // Brief explanation of rating
+  safetyRating: number;
+  safetyJustification: string;
+  photoGalleryImages: string[]; // ADD: Photo gallery array
 }
+
 
 // Legacy interface for backward compatibility
 interface OptimizedSearchResponse {
@@ -289,8 +289,7 @@ interface Hotel {
   funFacts?: string[];
   aiMatchPercent?: number;
   images?: string[];
-  
-  
+  photoGalleryImages?: string[]; // ADD: Photo gallery for hotels
   
   pricePerNight?: {
     amount: number;
@@ -325,13 +324,12 @@ interface Hotel {
   secondRoomImage?: string | null;
   allHotelInfo?: string;
 
-  aiSafetyRating?: number;        // AI-generated safety rating (1-10)
+  aiSafetyRating?: number;
   safetyJustification?: string; 
 }
 
-
-//const BASE_URL='http://localhost:3003';
-const BASE_URL="https://staygenie-wwpa.onrender.com"
+const BASE_URL='http://localhost:3003';
+//const BASE_URL="https://staygenie-wwpa.onrender.com"
 
 
 
@@ -587,9 +585,7 @@ const handleStreamingUpdate = async (data: any, userInput?: string) => {
         message: data.message || 'Processing...'
       });
       
-      // UPDATE DATES AND GUEST INFO AS SOON AS WE HAVE DESTINATION INFO
       if (data.destination && !checkInDate) {
-        // Set default dates if not already set
         const defaultCheckIn = new Date();
         defaultCheckIn.setDate(defaultCheckIn.getDate() + 7);
         const defaultCheckOut = new Date();
@@ -597,7 +593,7 @@ const handleStreamingUpdate = async (data: any, userInput?: string) => {
         
         setCheckInDate(defaultCheckIn);
         setCheckOutDate(defaultCheckOut);
-        setAdults(2); // Set default if not set
+        setAdults(2);
       }
       break;
 
@@ -627,9 +623,9 @@ const handleStreamingUpdate = async (data: any, userInput?: string) => {
             }
             
             if (updatedHotels.length > 0 && !updatedHotels[0].isPlaceholder) {
-          setShowPlaceholders(false);
-        }
-        
+              setShowPlaceholders(false);
+            }
+            
             return updatedHotels.sort((a, b) => (b.aiMatchPercent || 0) - (a.aiMatchPercent || 0));
           });
         }
@@ -641,55 +637,47 @@ const handleStreamingUpdate = async (data: any, userInput?: string) => {
     case 'hotel_enhanced':
       if (data.hotel && data.hotelId) {
         console.log(`✨ Received AI-enhanced hotel: ${data.hotel.name}`);
-        console.log('🏨 Enhanced topAmenities:', data.hotel.topAmenities); 
+        console.log('🏨 Enhanced topAmenities:', data.hotel.topAmenities);
+        console.log('📸 Photo gallery images:', data.hotel.photoGalleryImages?.length || 0); // ADD: Log photo gallery
         
         const enhancedHotel = convertStreamedHotelToDisplay(data.hotel, data.hotelIndex - 1);
         
         setDisplayHotels(prevHotels => {
-      // CRITICAL FIX: Don't filter by placeholder status here
-      const updatedHotels = [...prevHotels];
-      const existingIndex = updatedHotels.findIndex(h => h.id === data.hotelId);
-      
-      if (existingIndex >= 0) {
-        console.log(`🔄 Updating hotel at index ${existingIndex}: ${data.hotel.name}`);
+          const updatedHotels = [...prevHotels];
+          const existingIndex = updatedHotels.findIndex(h => h.id === data.hotelId);
+          
+          if (existingIndex >= 0) {
+            console.log(`🔄 Updating hotel at index ${existingIndex}: ${data.hotel.name}`);
 
-        console.log('🔍 HOTEL STATE UPDATE:', {
-    showPlaceholders,
-    firstHotelFound,
-    newCount: updatedHotels.length,
-    hasPlaceholders: updatedHotels.some(h => h.isPlaceholder),
-    realHotels: updatedHotels.filter(h => !h.isPlaceholder).length
-  });
-
-        updatedHotels[existingIndex] = {
-          ...updatedHotels[existingIndex],
-          ...enhancedHotel,
-          // Ensure these fields are properly updated
-          aiExcerpt: enhancedHotel.whyItMatches || enhancedHotel.aiExcerpt,
-          whyItMatches: enhancedHotel.whyItMatches || "Enhanced with AI insights",
-          funFacts: enhancedHotel.funFacts || ["AI-curated facts"],
-          guestInsights: enhancedHotel.guestInsights || "AI-enhanced guest insights",
-          nearbyAttractions: enhancedHotel.nearbyAttractions || ["AI-found attractions"],
-          locationHighlight: enhancedHotel.locationHighlight || "AI-analyzed location",
-          allHotelInfo: enhancedHotel.allHotelInfo || "Comprehensive hotel details available",
-          topAmenities: enhancedHotel.topAmenities || updatedHotels[existingIndex].topAmenities || [],
-          tags: enhancedHotel.topAmenities?.slice(0, 3) || updatedHotels[existingIndex].tags || ["Premium amenities"],
-          safetyRating: enhancedHotel.aiSafetyRating || enhancedHotel.safetyRating || updatedHotels[existingIndex].safetyRating,
-          aiSafetyRating: enhancedHotel.aiSafetyRating,
-          safetyJustification: enhancedHotel.safetyJustification || "AI-enhanced safety assessment"
-        };
-        
-        console.log(`🎨 Successfully enhanced hotel: ${data.hotel.name}`);
-      } else {
-        console.warn(`⚠️ Could not find hotel ${data.hotelId} to enhance in current hotels list of ${updatedHotels.length}`);
-        console.log(`Current hotel IDs:`, updatedHotels.map(h => h.id));
+            updatedHotels[existingIndex] = {
+              ...updatedHotels[existingIndex],
+              ...enhancedHotel,
+              // Ensure these fields are properly updated
+              aiExcerpt: enhancedHotel.whyItMatches || enhancedHotel.aiExcerpt,
+              whyItMatches: enhancedHotel.whyItMatches || "Enhanced with AI insights",
+              funFacts: enhancedHotel.funFacts || ["AI-curated facts"],
+              guestInsights: enhancedHotel.guestInsights || "AI-enhanced guest insights",
+              nearbyAttractions: enhancedHotel.nearbyAttractions || ["AI-found attractions"],
+              locationHighlight: enhancedHotel.locationHighlight || "AI-analyzed location",
+              allHotelInfo: enhancedHotel.allHotelInfo || "Comprehensive hotel details available",
+              topAmenities: enhancedHotel.topAmenities || updatedHotels[existingIndex].topAmenities || [],
+              tags: enhancedHotel.topAmenities?.slice(0, 3) || updatedHotels[existingIndex].tags || ["Premium amenities"],
+              safetyRating: enhancedHotel.aiSafetyRating || enhancedHotel.safetyRating || updatedHotels[existingIndex].safetyRating,
+              aiSafetyRating: enhancedHotel.aiSafetyRating,
+              safetyJustification: enhancedHotel.safetyJustification || "AI-enhanced safety assessment",
+              photoGalleryImages: enhancedHotel.photoGalleryImages || [] // ADD: Update photo gallery
+            };
+            
+            console.log(`🎨 Successfully enhanced hotel: ${data.hotel.name} with ${enhancedHotel.photoGalleryImages?.length || 0} gallery images`);
+          } else {
+            console.warn(`⚠️ Could not find hotel ${data.hotelId} to enhance in current hotels list of ${updatedHotels.length}`);
+            console.log(`Current hotel IDs:`, updatedHotels.map(h => h.id));
+          }
+          
+          return updatedHotels.sort((a, b) => (b.aiMatchPercent || 0) - (a.aiMatchPercent || 0));
+        });
       }
-      
-      // Return sorted list
-      return updatedHotels.sort((a, b) => (b.aiMatchPercent || 0) - (a.aiMatchPercent || 0));
-    });
-  }
-  break;
+      break;
 
     case 'complete':
       console.log('🎉 All hotels found and AI-enhanced!');
@@ -704,19 +692,18 @@ const handleStreamingUpdate = async (data: any, userInput?: string) => {
         setCurrentSearchId(data.searchId);
       }
 
-      // CRITICAL FIX: Update dates from search parameters
       if (data.searchParams) {
         console.log('📅 Updating dates from search params:', data.searchParams);
         setStreamingSearchParams(data.searchParams);
         
         if (data.searchParams.checkin) {
-  const checkinDate = new Date(data.searchParams.checkin + 'T12:00:00');
-  setCheckInDate(checkinDate);
-}
-if (data.searchParams.checkout) {
-  const checkoutDate = new Date(data.searchParams.checkout + 'T12:00:00');
-  setCheckOutDate(checkoutDate);
-}
+          const checkinDate = new Date(data.searchParams.checkin + 'T12:00:00');
+          setCheckInDate(checkinDate);
+        }
+        if (data.searchParams.checkout) {
+          const checkoutDate = new Date(data.searchParams.checkout + 'T12:00:00');
+          setCheckOutDate(checkoutDate);
+        }
         if (data.searchParams.adults) {
           console.log('Setting adults:', data.searchParams.adults);
           setAdults(data.searchParams.adults);
@@ -740,6 +727,7 @@ if (data.searchParams.checkout) {
   }
 };
 
+
 const confirmedParams =
   stage1Results?.searchParams ||
   searchResults?.searchParams ||
@@ -759,9 +747,9 @@ const confirmedCheckOutDate = hasFinalizedDates
 
 const convertStreamedHotelToDisplay = (streamedHotel: any, index: number): Hotel => {
   console.log('🔄 Converting streamed hotel:', streamedHotel.name);
-console.log(`   Hotel ID: ${streamedHotel.hotelId || streamedHotel.id || 'NO_ID'}`);
+  console.log(`   Hotel ID: ${streamedHotel.hotelId || streamedHotel.id || 'NO_ID'}`);
+  console.log(`   Photo gallery images: ${streamedHotel.photoGalleryImages?.length || 0}`); // ADD: Log photo gallery
   
-  // CRITICAL: Ensure we always have a valid ID
   const hotelId = streamedHotel.hotelId || streamedHotel.id || `fallback-${Date.now()}-${index}`;
 
   if (!streamedHotel.name) {
@@ -770,7 +758,6 @@ console.log(`   Hotel ID: ${streamedHotel.hotelId || streamedHotel.id || 'NO_ID'
 
   const getHotelImage = (hotel: any): string => {
     const defaultImage = "https://images.unsplash.com/photo-1564501049412-61c2a3083791?auto=format&fit=crop&w=800&q=80";
-    
     
     // PRIORITY 1: Use firstRoomImage if available
     if (hotel.firstRoomImage && typeof hotel.firstRoomImage === 'string' && hotel.firstRoomImage.trim() !== '') {
@@ -782,7 +769,15 @@ console.log(`   Hotel ID: ${streamedHotel.hotelId || streamedHotel.id || 'NO_ID'
       return hotel.secondRoomImage;
     }
     
-    // FALLBACK 1: Use existing images array
+    // PRIORITY 3: Use first image from photo gallery
+    if (hotel.photoGalleryImages && hotel.photoGalleryImages.length > 0) {
+      const firstGalleryImage = hotel.photoGalleryImages[0];
+      if (firstGalleryImage && typeof firstGalleryImage === 'string' && firstGalleryImage.trim() !== '') {
+        return firstGalleryImage;
+      }
+    }
+    
+    // FALLBACK: Use existing images array
     if (hotel.images && hotel.images.length > 0) {
       const firstImage = hotel.images[0];
       if (firstImage && typeof firstImage === 'string' && firstImage.trim() !== '') {
@@ -803,7 +798,6 @@ console.log(`   Hotel ID: ${streamedHotel.hotelId || streamedHotel.id || 'NO_ID'
     priceComparison = streamedHotel.pricePerNight.display || `${price}/night`;
   }
 
-  // Handle both basic hotels and AI-enhanced hotels
   const isAIEnhanced = streamedHotel.whyItMatches && 
                       !streamedHotel.whyItMatches.includes('Analyzing') && 
                       !streamedHotel.whyItMatches.includes('progress');
@@ -813,13 +807,13 @@ console.log(`   Hotel ID: ${streamedHotel.hotelId || streamedHotel.id || 'NO_ID'
     name: streamedHotel.name,
     image: getHotelImage(streamedHotel),
     images: streamedHotel.images || [],
+    photoGalleryImages: streamedHotel.photoGalleryImages || [], // ADD: Include photo gallery
     price: Math.round(price),
     originalPrice: Math.round(originalPrice),
     priceComparison: priceComparison,
     rating: streamedHotel.starRating || 4.0,
     reviews: streamedHotel.reviewCount || Math.floor(Math.random() * 1000) + 100,
     
-    // UPDATED: Use AI safety rating if available, otherwise use fallback calculation
     safetyRating: streamedHotel.safetyRating || streamedHotel.aiSafetyRating || (8.5 + Math.random() * 1.5),
     
     transitDistance: '5 min walk to main area',
@@ -891,11 +885,12 @@ console.log(`   Hotel ID: ${streamedHotel.hotelId || streamedHotel.id || 'NO_ID'
     // All hotel info
     allHotelInfo: streamedHotel.allHotelInfo || "Detailed hotel information loading...",
     
-    // NEW: AI Safety fields
+    // AI Safety fields
     aiSafetyRating: streamedHotel.safetyRating || streamedHotel.aiSafetyRating,
     safetyJustification: streamedHotel.safetyJustification || "Safety assessment based on location and area knowledge"
   };
 };
+
 
 
 // FINAL FIX: Remove all custom event listeners - everything goes through 'message'
@@ -1212,103 +1207,7 @@ const executeStreamingSearch = async (userInput: string) => {
   }, []);
 
   // NEW: Convert Stage 1 hotel to display format (basic info with loading placeholders)
-  const convertStage1HotelToDisplay = (hotel: Stage1Hotel, index: number): Hotel => {
-  console.log('🔍 Converting Stage 1 hotel (basic data):', hotel.name);
   
-  const getHotelImage = (hotel: Stage1Hotel): string => {
-    const defaultImage = "https://images.unsplash.com/photo-1564501049412-61c2a3083791?auto=format&fit=crop&w=800&q=80";
-    
-    if (hotel.images && hotel.images.length > 0) {
-      const firstImage = hotel.images[0];
-      if (firstImage && typeof firstImage === 'string' && firstImage.trim() !== '') {
-        if (firstImage.startsWith('http://') || firstImage.startsWith('https://') || firstImage.startsWith('//')) {
-          return firstImage;
-        }
-      }
-    }
-    
-    return defaultImage;
-  };
-
-  let price = 200;
-  let originalPrice = price * 1.15;
-  let priceComparison = "Standard rate";
-
-  if (hotel.pricePerNight) {
-    price = hotel.pricePerNight.amount;
-    originalPrice = Math.round(price * 1.15);
-    priceComparison = hotel.pricePerNight.display;
-    
-    if (hotel.pricePerNight.provider) {
-      priceComparison += ` (${hotel.pricePerNight.provider})`;
-    }
-  } else if (hotel.priceRange) {
-    price = hotel.priceRange.min;
-    originalPrice = Math.round(price * 1.15);
-    priceComparison = hotel.priceRange.display;
-  }
-
-  const generateTransitDistance = (city: string, topAmenities: string[]): string => {
-    const cityDistances: Record<string, string> = {
-      'Tokyo': '2 min walk to subway',
-      'Paris': '5 min walk to Metro',
-      'New York': '3 min walk to subway',
-      'London': '4 min walk to tube',
-      'Miami': '3 min walk to beach',
-      'Los Angeles': '5 min walk to metro',
-      'Vail': '2 min walk to ski lift',
-      'Chicago': '4 min walk to L train'
-    };
-    
-    return cityDistances[city] || '5 min walk to main area';
-  };
-
-  return {
-    // FIX: Use the actual hotel ID from the API instead of array index
-    id: hotel.hotelId, // Changed from: index + 1
-    name: hotel.name,
-    image: getHotelImage(hotel),
-    images: hotel.images || [],
-    price: Math.round(price),
-    originalPrice: Math.round(originalPrice),
-    priceComparison: priceComparison,
-    rating: hotel.starRating || 4.0,
-    reviews: hotel.reviewCount || Math.floor(Math.random() * 1000) + 100,
-    safetyRating: 8.5 + Math.random() * 1.5,
-    transitDistance: generateTransitDistance(hotel.city, hotel.topAmenities),
-    tags: hotel.topAmenities?.slice(0, 3) || hotel.amenities?.slice(0, 3) || ["Standard amenities"],
-    location: hotel.address,
-    features: hotel.amenities || ["Standard features"],
-    
-    // Stage 1: Show loading placeholders for AI content
-    aiExcerpt: "AI is analyzing this hotel for you...", 
-    whyItMatches: "AI match analysis in progress...", 
-    funFacts: ["Loading interesting facts..."], 
-    guestInsights: "Loading guest insights...", 
-    nearbyAttractions: ["Finding nearby attractions..."], 
-    locationHighlight: "Analyzing location advantages...", 
-    
-    // Basic data available immediately
-    aiMatchPercent: hotel.aiMatchPercent,
-    pricePerNight: hotel.pricePerNight,
-    roomTypes: hotel.roomTypes,
-    city: hotel.city,
-    country: hotel.country,
-    latitude: hotel.latitude,
-    longitude: hotel.longitude,
-    topAmenities: hotel.topAmenities,
-    matchType: "analyzing", // Will be updated in Stage 2
-    hasAvailability: hotel.hasAvailability,
-    totalRooms: hotel.totalRooms,
-    fullDescription: hotel.description,
-    fullAddress: hotel.address,
-    
-    // NEW: Refundable policy data from Stage 1
-    isRefundable: hotel.isRefundable,
-    refundableTag: hotel.refundableTag,
-    refundableInfo: hotel.refundableInfo
-  };
-};
 
   
 
@@ -1878,7 +1777,8 @@ const handleBackPress = useCallback(() => {
       ) : (
         
         // EDIT MODE - Modern streamlined design
-        <KeyboardAvoidingView
+       // EDIT MODE - Modern streamlined design with top-right buttons
+<KeyboardAvoidingView
   behavior={Platform.OS === 'ios' ? 'padding' : undefined}
   keyboardVerticalOffset={Platform.OS === 'ios' ? 8 : 0}
 >
@@ -1886,119 +1786,120 @@ const handleBackPress = useCallback(() => {
     keyboardShouldPersistTaps="handled"   // 🔧 FIX: allow first tap to hit buttons
     contentContainerStyle={tw`p-4 pb-3`}  // keep your spacing
   >
-          
-          {/* Compact header with inline actions */}
-          <View style={tw`flex-row items-center justify-between mb-3`}>
-            <View style={tw`flex-row items-center flex-1`}>
-              <TouchableOpacity
-                style={[
-                  tw`w-7 h-7 items-center justify-center rounded-full mr-3`,
-                  { backgroundColor: '#F1F5F9' }
-                ]}
-                onPress={handleCancelEdit}
-                activeOpacity={0.8}
-              >
-                <Ionicons name="close" size={14} color="#64748B" />
-              </TouchableOpacity>
-              <Text style={tw`text-gray-900 text-base font-semibold`}>
-                Edit search
-              </Text>
-            </View>
+    
 
-            {/* Sleek search button */}
-            <TouchableOpacity
-              style={[
-                tw`px-4 py-2 rounded-full`,
-                editedSearchQuery.trim() && editedSearchQuery.trim() !== searchQuery
-                  ? [
-                      { 
-                        backgroundColor: '#00d4e6',
-                        shadowColor: '#00d4e6',
-                        shadowOffset: { width: 0, height: 2 },
-                        shadowOpacity: 0.2,
-                        shadowRadius: 8,
-                      },
-                      tw`shadow-lg`
-                    ]
-                  : [tw`bg-gray-100`]
-              ]}
-              onPress={handleSaveSearch}
-              activeOpacity={0.8}
-              disabled={!editedSearchQuery.trim() || editedSearchQuery.trim() === searchQuery}
-            >
-              <Text style={[
-                tw`text-sm font-semibold`,
-                editedSearchQuery.trim() && editedSearchQuery.trim() !== searchQuery
-                  ? tw`text-white`
-                  : tw`text-gray-400`
-              ]}>
-                Search
-              </Text>
-            </TouchableOpacity>
-          </View>
 
-          {/* Modern text input with subtle styling */}
-          <View style={tw`mb-4`}>
-            <View style={[
-              tw`bg-gray-50 rounded-xl border`,
-              { borderColor: '#F1F5F9' }
-            ]}>
-              <TextInput
-                ref={editSearchInputRef}
-                style={[
-                  tw`text-gray-900 text-base px-4 py-3`,
-                  Platform.OS === 'android' && { fontFamily: 'sans-serif' },
-                  {
-                    fontSize: 16,
-                    lineHeight: 22,
-                    minHeight: 80,
-                    maxHeight: 120,
-                    textAlignVertical: 'top',
-                  }
-                ]}
-                value={editedSearchQuery}
-                onChangeText={setEditedSearchQuery}
-                placeholder="Describe your perfect stay..."
-                placeholderTextColor="#94A3B8"
-                multiline
-                maxLength={1600}
-                selectionColor="#00d4e6"
-                autoFocus={false}
-              />
-            </View>
-          </View>
+    {/* Modern text input with subtle styling */}
+    <View style={tw`mb-4`}>
+      <View style={[
+        tw`bg-gray-50 rounded-xl border`,
+        { borderColor: '#F1F5F9' }
+      ]}>
+        <TextInput
+          ref={editSearchInputRef}
+          style={[
+            tw`text-gray-900 text-base px-4 py-3`,
+            Platform.OS === 'android' && { fontFamily: 'sans-serif' },
+            {
+              fontSize: 16,
+              lineHeight: 22,
+              minHeight: 80,
+              maxHeight: 120,
+              textAlignVertical: 'top',
+            }
+          ]}
+          value={editedSearchQuery}
+          onChangeText={setEditedSearchQuery}
+          placeholder="Describe your perfect stay..."
+          placeholderTextColor="#94A3B8"
+          multiline
+          maxLength={1600}
+          selectionColor="#00d4e6"
+          autoFocus={false}
+        />
+      </View>
+    </View>
 
-          {/* Search Guide Pills with tighter spacing */}
-          <View style={tw`-mx-1`}>
-            <SearchGuidePills
-              onDateSelect={(dateText) => {
-                setEditedSearchQuery(prev => 
-                  prev.trim() ? `${prev.trim()} • ${dateText}` : dateText
-                );
-              }}
-              onBudgetSelect={(budgetText) => {
-                setEditedSearchQuery(prev => 
-                  prev.trim() ? `${prev.trim()} • ${budgetText}` : budgetText
-                );
-              }}
-              onGuestsSelect={(guestsText) => {
-                setEditedSearchQuery(prev => 
-                  prev.trim() ? `${prev.trim()} • ${guestsText}` : guestsText
-                );
-              }}
-              onAmenitiesSelect={(amenitiesText) => {
-                setEditedSearchQuery(prev => 
-                  prev.trim() ? `${prev.trim()} • ${amenitiesText}` : amenitiesText
-                );
-              }}
-              onStyleSelect={(styleText) => {
-                setEditedSearchQuery(prev => 
-                  prev.trim() ? `${prev.trim()} • ${styleText}` : styleText
-                );
-              }}
-            />
-          </View>
-            </ScrollView>
+    {/* Search Guide Pills with tighter spacing */}
+    <View style={tw`-mx-1 mt--1`}>
+      <SearchGuidePills
+        onDateSelect={(dateText) => {
+          setEditedSearchQuery(prev => 
+            prev.trim() ? `${prev.trim()} • ${dateText}` : dateText
+          );
+        }}
+        onBudgetSelect={(budgetText) => {
+          setEditedSearchQuery(prev => 
+            prev.trim() ? `${prev.trim()} • ${budgetText}` : budgetText
+          );
+        }}
+        onGuestsSelect={(guestsText) => {
+          setEditedSearchQuery(prev => 
+            prev.trim() ? `${prev.trim()} • ${guestsText}` : guestsText
+          );
+        }}
+        onAmenitiesSelect={(amenitiesText) => {
+          setEditedSearchQuery(prev => 
+            prev.trim() ? `${prev.trim()} • ${amenitiesText}` : amenitiesText
+          );
+        }}
+        onStyleSelect={(styleText) => {
+          setEditedSearchQuery(prev => 
+            prev.trim() ? `${prev.trim()} • ${styleText}` : styleText
+          );
+        }}
+      />
+    </View>
+
+    {/* Bottom section with Cancel and Search buttons positioned at bottom right */}
+    <View style={tw`flex-row justify-end items-center mt--1.5`}>
+      {/* Cancel Button */}
+      <TouchableOpacity
+        style={[
+          tw`px-3 py-1.5 rounded-full mr-2`,
+          { backgroundColor: '#F1F5F9' }
+        ]}
+        onPress={handleCancelEdit}
+        activeOpacity={0.8}
+      >
+        <Text style={tw`text-gray-600 text-sm font-medium`}>
+          Cancel
+        </Text>
+      </TouchableOpacity>
+
+      {/* Search button */}
+      <TouchableOpacity
+        style={[
+          tw`px-4 py-2 rounded-full`,
+          editedSearchQuery.trim() && editedSearchQuery.trim() !== searchQuery
+            ? [
+                { 
+                  backgroundColor: '#00d4e6',
+                  shadowColor: '#00d4e6',
+                  shadowOffset: { width: 0, height: 2 },
+                  shadowOpacity: 0.2,
+                  shadowRadius: 8,
+                },
+                tw`shadow-lg`
+              ]
+            : [tw`bg-gray-100`]
+        ]}
+        onPress={handleSaveSearch}
+        activeOpacity={0.8}
+        disabled={!editedSearchQuery.trim() || editedSearchQuery.trim() === searchQuery}
+      >
+        <Text style={[
+          tw`text-sm font-semibold`,
+          editedSearchQuery.trim() && editedSearchQuery.trim() !== searchQuery
+            ? tw`text-white`
+            : tw`text-gray-400`
+        ]}>
+          Search
+        </Text>
+      </TouchableOpacity>
+    </View>
+
+  </ScrollView>
 </KeyboardAvoidingView>
     
       )}

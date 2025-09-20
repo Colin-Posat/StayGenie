@@ -125,13 +125,13 @@ const FavoritesPopup: React.FC<FavoritesPopupProps> = ({
               width: 32,
               height: 32,
               borderRadius: 16,
-              backgroundColor: '#10B981',
+              backgroundColor: '#1df9ff',
               alignItems: 'center',
               justifyContent: 'center',
               marginRight: 12,
             }}
           >
-            <Ionicons name="checkmark" size={18} color='#1df9ff' />
+            <Ionicons name="checkmark" size={18} color='white' />
           </View>
           
           <View style={{ flex: 1 }}>

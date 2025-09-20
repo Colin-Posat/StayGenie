@@ -1,4 +1,4 @@
-// FavoriteHotelCard.tsx - Fixed with proper shadow rendering
+// FavoriteHotelCard.tsx - Updated with trash icon and consistent button styling
 import React, { useRef, useEffect, useState } from 'react';
 import {
   View,
@@ -536,23 +536,21 @@ const FavoriteHotelCard: React.FC<FavoriteHotelCardProps> = ({
     setShowConfirmModal(false);
   };
 
-
-// Updated WebBrowser call with better configuration
-const handleViewDetails = async () => {
-  const mapsLink = generateGoogleMapsLink(hotel, checkInDate, checkOutDate, adults, children);
-  
-  await WebBrowser.openBrowserAsync(mapsLink, {
-    presentationStyle: WebBrowser.WebBrowserPresentationStyle.PAGE_SHEET,
-    dismissButtonStyle: 'done',
-    // These options help keep it in web view
-    controlsColor: '#000000ff',
-    toolbarColor: '#ffffff',
-    // Prevent automatic app switching
-    showTitle: true,
-    showInRecents: false,
-  });
-};
-
+  // Updated WebBrowser call with better configuration
+  const handleViewDetails = async () => {
+    const mapsLink = generateGoogleMapsLink(hotel, checkInDate, checkOutDate, adults, children);
+    
+    await WebBrowser.openBrowserAsync(mapsLink, {
+      presentationStyle: WebBrowser.WebBrowserPresentationStyle.PAGE_SHEET,
+      dismissButtonStyle: 'done',
+      // These options help keep it in web view
+      controlsColor: '#000000ff',
+      toolbarColor: '#ffffff',
+      // Prevent automatic app switching
+      showTitle: true,
+      showInRecents: false,
+    });
+  };
 
   const handleBookNow = async () => {
     const deepLinkUrl = generateHotelDeepLink(hotel, checkInDate, checkOutDate, adults, children, placeId, occupancies);
@@ -667,13 +665,13 @@ const handleViewDetails = async () => {
                     </View>
                   </View>
                   
-                  {/* Remove button */}
+                  {/* Updated Remove button with trash icon */}
                   <TouchableOpacity
-                    style={tw`w-8 h-8 bg-gray-100 rounded-full items-center justify-center`}
+                    style={tw`w-8 h-8 bg-red-50 rounded-full items-center justify-center`}
                     onPress={handleRemove}
                     activeOpacity={0.7}
                   >
-                    <Ionicons name="close" size={16} color="#6B7280" />
+                    <Ionicons name="trash-outline" size={16} color="#EF4444" />
                   </TouchableOpacity>
                 </View>
 
@@ -688,66 +686,107 @@ const handleViewDetails = async () => {
             </View>
           </TouchableOpacity>
 
-          {/* Action Buttons */}
-          <View style={tw`px-4 py-3 border-t border-gray-50`}>
-            <View style={tw`flex-row gap-2`}>
-              {/* Ask Button */}
-              <TouchableOpacity
-                style={[
-                  tw`flex-1 py-3 rounded-xl border-2 flex-row items-center justify-center`,
-                  { 
-                    backgroundColor: TURQUOISE + '10',
-                    borderColor: TURQUOISE + '30',
-                  }
-                ]}
-                onPress={() => setShowHotelChat(true)}
-                activeOpacity={0.8}
+          {/* Updated Action Buttons - Consistent with SwipeableHotelStoryCard */}
+          <View style={tw`flex-row items-center px-3 py-3 gap-2 border-t border-gray-50`}>
+            {/* Ask - Responsive pill that shrinks gracefully */}
+            <TouchableOpacity
+              style={[
+                tw`py-2.5 px-3 rounded-xl flex-row items-center flex-1 justify-center bg-white border border-gray-200`,
+                {
+                  shadowColor: '#000',
+                  shadowOffset: { width: 0, height: 2 },
+                  shadowOpacity: 0.08,
+                  shadowRadius: 3,
+                  elevation: 2,
+                  minHeight: 40,
+                }
+              ]}
+              onPress={() => setShowHotelChat(true)}
+              activeOpacity={0.8}
+            >
+              <View style={[
+                tw`w-5 h-5 rounded-full items-center justify-center mr-1.5`,
+                { backgroundColor: 'rgba(29, 249, 255, 0.15)' }
+              ]}>
+                <Ionicons name="chatbubble-outline" size={12} color={TURQUOISE_DARK} />
+              </View>
+              <Text 
+                style={tw`text-xs font-medium text-gray-800`}
+                numberOfLines={1}
+                adjustsFontSizeToFit
+                minimumFontScale={0.8}
               >
-                <Ionicons name="chatbubble" size={16} color={TURQUOISE_DARK} />
-                <Text style={[tw`ml-2 font-medium text-sm`, { color: '#000000' }]}>
-                  Ask
-                </Text>
-              </TouchableOpacity>
+                Ask
+              </Text>
+            </TouchableOpacity>
 
-              {/* View on Map Button */}
-              <TouchableOpacity
-                style={[
-                  tw`flex-1 py-3 rounded-xl border-2 flex-row items-center justify-center`,
-                  { 
-                    backgroundColor: TURQUOISE + '10',
-                    borderColor: TURQUOISE + '30',
-                  }
-                ]}
-                onPress={handleViewDetails}
-                activeOpacity={0.8}
+            {/* Map - Responsive pill that shrinks gracefully */}
+            <TouchableOpacity
+              style={[
+                tw`py-2.5 px-3 rounded-xl flex-row items-center flex-1 justify-center bg-white border border-gray-200`,
+                {
+                  shadowColor: '#000',
+                  shadowOffset: { width: 0, height: 2 },
+                  shadowOpacity: 0.08,
+                  shadowRadius: 3,
+                  elevation: 2,
+                  minHeight: 40,
+                }
+              ]}
+              onPress={handleViewDetails}
+              activeOpacity={0.8}
+            >
+              <View style={[
+                tw`w-5 h-5 rounded-full items-center justify-center mr-1.5`,
+                { backgroundColor: 'rgba(29, 249, 255, 0.15)' }
+              ]}>
+                <Ionicons name="map-outline" size={12} color={TURQUOISE_DARK} />
+              </View>
+              <Text 
+                style={tw`text-xs font-medium text-gray-800`}
+                numberOfLines={1}
+                adjustsFontSizeToFit
+                minimumFontScale={0.8}
               >
-                <Ionicons name="map" size={16} color={TURQUOISE_DARK} />
-                <Text style={[tw`ml-2 font-medium text-sm`, { color: '#000000' }]}>
-                  Map
-                </Text>
-              </TouchableOpacity>
+                Map
+              </Text>
+            </TouchableOpacity>
 
-              <TouchableOpacity
-                style={[
-                  tw`flex-1 py-3 rounded-xl border-2 flex-row items-center justify-center`,
-                  { 
-                    backgroundColor: TURQUOISE + '10',
-                    borderColor: TURQUOISE + '30',
-                  }
-                ]}
-                onPress={handleBookNow}
-                activeOpacity={0.8}
-              >
-                <Image 
-                  source={require('../../assets/images/logo.png')} 
-                  style={{ width: 16, height: 16 }} 
+            {/* Book - Responsive pill that shrinks gracefully */}
+            <TouchableOpacity
+              style={[
+                tw`py-2.5 px-3 rounded-xl flex-row items-center flex-1 justify-center bg-white border border-gray-200`,
+                {
+                  shadowColor: '#000',
+                  shadowOffset: { width: 0, height: 2 },
+                  shadowOpacity: 0.08,
+                  shadowRadius: 3,
+                  elevation: 2,
+                  minHeight: 40,
+                }
+              ]}
+              onPress={handleBookNow}
+              activeOpacity={0.8}
+            >
+              <View style={[
+                tw`w-5 h-5 rounded-full items-center justify-center mr-1.5`,
+                { backgroundColor: 'rgba(29, 249, 255, 0.15)' }
+              ]}>
+                <Image
+                  source={require('../../assets/images/logo.png')}
+                  style={{ width: 12, height: 12, tintColor: TURQUOISE_DARK }}
                   resizeMode="contain"
                 />
-                <Text style={[tw`ml-2 font-medium text-sm`, { color: '#000000' }]}>
-                  Book
-                </Text>
-              </TouchableOpacity>
-            </View>
+              </View>
+              <Text 
+                style={tw`text-xs font-medium text-gray-800`}
+                numberOfLines={1}
+                adjustsFontSizeToFit
+                minimumFontScale={0.8}
+              >
+                Book
+              </Text>
+            </TouchableOpacity>
           </View>
 
           {/* AI Insights Dropdown */}

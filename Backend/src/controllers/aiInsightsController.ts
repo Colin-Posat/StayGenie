@@ -25,6 +25,7 @@ export interface AIRecommendation {
   safetyRating: number;           // NEW: Safety rating out of 10
   safetyJustification: string; 
   topAmenities: string[];
+  photoGalleryImages: string[];
 }
 
 // Load environment variables
@@ -312,6 +313,36 @@ const getHotelSentimentOptimized = async (hotelId: string): Promise<HotelSentime
     
     console.warn(`Failed to get hotel details for ${hotelId}:`, error.response?.status || error.message);
     return null;
+  }
+};
+
+const getPhotoGalleryImages = (hotelDetailsData: HotelSentimentData | null): string[] => {
+  try {
+    if (!hotelDetailsData?.data?.hotelImages || !Array.isArray(hotelDetailsData.data.hotelImages)) {
+      console.warn('⚠️ No hotel images array found for photo gallery');
+      return [];
+    }
+    
+    const images = hotelDetailsData.data.hotelImages;
+    console.log(`📸 Processing ${images.length} hotel images for photo gallery`);
+    
+    // Extract up to 10 images, prioritizing HD URLs
+    const photoGallery = images
+      .slice(0, 10) // Take first 10 images
+      .map(image => {
+        // Prefer HD URL, fallback to regular URL
+        const imageUrl = image.urlHd || image.url;
+        console.log(`   Adding image to gallery: ${imageUrl}`);
+        return imageUrl;
+      })
+      .filter(url => url && url.trim() !== ''); // Remove any null/empty URLs
+    
+    console.log(`✅ Photo gallery created with ${photoGallery.length} images`);
+    return photoGallery;
+    
+  } catch (error) {
+    console.warn('❌ Error extracting photo gallery images:', error);
+    return [];
   }
 };
 
@@ -1153,6 +1184,7 @@ const fetchHotelDetailsAndGenerateInsights = async (
   firstRoomImage: string | null;
   secondRoomImage: string | null;
   allHotelInfo: string;
+  photoGalleryImages: string[]; // NEW: Add photo gallery to return type
 }> => {
 
   if (delayMs > 0) {
@@ -1166,17 +1198,19 @@ const fetchHotelDetailsAndGenerateInsights = async (
     const guestInsights = await generateInsightsFromSentiment(hotel.name, hotelDetailsData);
     const roomImages = getRoomOrHotelImages(hotelDetailsData);
     const allHotelInfo = consolidateAllHotelInfo(hotelDetailsData);
+    const photoGalleryImages = getPhotoGalleryImages(hotelDetailsData); // NEW: Extract photo gallery
 
     console.log(`✅ Completed hotel details and insights for ${hotel.name}`);
-    console.log(`🖼️  Images found: first=${!!roomImages.firstImage}, second=${!!roomImages.secondImage}`);
+    console.log(`🖼️  Images found: first=${!!roomImages.firstImage}, second=${!!roomImages.secondImage}, gallery=${photoGalleryImages.length}`);
     
     return {
       hotelId: hotel.hotelId,
       guestInsights,
       sentimentData: hotelDetailsData,
-      firstRoomImage: roomImages.firstImage,   // ✅ USE THE ACTUAL VALUES
-      secondRoomImage: roomImages.secondImage, // ✅ USE THE ACTUAL VALUES
-      allHotelInfo
+      firstRoomImage: roomImages.firstImage,
+      secondRoomImage: roomImages.secondImage,
+      allHotelInfo,
+      photoGalleryImages // NEW: Include photo gallery in return
     };
     
   } catch (error) {
@@ -1188,10 +1222,12 @@ const fetchHotelDetailsAndGenerateInsights = async (
       sentimentData: null,
       firstRoomImage: null,
       secondRoomImage: null,
-      allHotelInfo: 'Detailed hotel information not available'
+      allHotelInfo: 'Detailed hotel information not available',
+      photoGalleryImages: [] // NEW: Empty array as fallback
     };
   }
 };
+
 
 // Main controller function for AI insights
 export const aiInsightsController = async (req: Request, res: Response) => {
@@ -1322,7 +1358,8 @@ const finalRecommendations: AIRecommendation[] = aiContentResults.map(aiContent 
     allHotelInfo: hotelDetailsInsights?.allHotelInfo || 'Detailed information not available',
     safetyRating: aiContent.safetyRating,
     safetyJustification: aiContent.safetyJustification,
-    topAmenities: aiContent.topAmenities  // ADD THIS LINE
+    topAmenities: aiContent.topAmenities,
+    photoGalleryImages: hotelDetailsInsights?.photoGalleryImages || [] // NEW: Add photo gallery to final response
   };
 });
 

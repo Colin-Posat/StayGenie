@@ -64,9 +64,11 @@ interface Hotel {
   location: string;
   features: string[];
   images?: string[];
+  photoGalleryImages?: string[]; // ADD: Photo gallery images array
   allHotelInfo?: string;
   firstRoomImage?: string | null;
   secondRoomImage?: string | null;
+  
   // AI-powered fields from two-stage API
   aiExcerpt?: string;
   whyItMatches?: string;
@@ -131,6 +133,7 @@ interface Hotel {
 interface EnhancedHotel extends Hotel {
   images: string[];
   mapImage: string;
+  photoGalleryImages: string[]; // ADD: Ensure photo gallery is in enhanced hotel
   firstRoomImage?: string | null;
   secondRoomImage?: string | null;
 }
@@ -1648,11 +1651,14 @@ scrollsToTop={false}
           </View>
           {/* Slide 4: Photo Gallery - NEW! */}
   <View style={{ width: CARD_WIDTH, height: CARD_HEIGHT }}>
-    <PhotoGallerySlide 
-      hotel={hotel} 
-      insightsStatus={insightsStatus}
-    />
-  </View>
+  <PhotoGallerySlide 
+    hotel={{
+      ...hotel,
+      photoGalleryImages: hotel.photoGalleryImages || [] // ADD: Pass photo gallery images
+    }}
+    insightsStatus={insightsStatus}
+  />
+</View>
   
         </ScrollView>
      </View>

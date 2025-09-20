@@ -228,7 +228,8 @@ const processHotelWithImmediateInsights = async (
       guestInsights: "Processing guest insights...",
       safetyRating: 0,
       safetyJustification: "Analyzing safety information...",
-      topAmenities: []
+      topAmenities: [],
+      photoGalleryImages: [] // ADD: Initialize empty photo gallery
     };
 
     // Send basic hotel data FIRST
@@ -242,7 +243,7 @@ const processHotelWithImmediateInsights = async (
     // CRITICAL FIX: Add delay to ensure client receives hotel_found first
     await new Promise(resolve => setTimeout(resolve, 100));
 
-    // Now generate AI insights
+    // Now generate AI insights (this will include photoGalleryImages from AI insights endpoint)
     const singleHotelForInsights = {
       hotelId: enrichedHotelSummary.hotelId,
       name: enrichedHotelSummary.name,
@@ -291,7 +292,8 @@ const processHotelWithImmediateInsights = async (
           allHotelInfo: aiRecommendation.allHotelInfo || 'Detailed information not available',
           safetyRating: aiRecommendation.safetyRating || 7,
           safetyJustification: aiRecommendation.safetyJustification || "Generally safe area with standard precautions recommended",
-          topAmenities: aiRecommendation.topAmenities || enrichedHotelSummary.topAmenities || ["Wi-Fi", "AC", "Service"]
+          topAmenities: aiRecommendation.topAmenities || enrichedHotelSummary.topAmenities || ["Wi-Fi", "AC", "Service"],
+          photoGalleryImages: aiRecommendation.photoGalleryImages || [] // ADD: Include photo gallery from AI insights
         };
 
         // Send enhanced hotel data with small delay to ensure proper order
@@ -304,14 +306,15 @@ const processHotelWithImmediateInsights = async (
           message: `✨ ${enrichedHotelSummary.name} enhanced with AI insights!`
         });
 
-        console.log(`✅ AI insights completed for ${enrichedHotelSummary.name} - Safety: ${enhancedHotelData.safetyRating}/10`);
+        console.log(`✅ AI insights completed for ${enrichedHotelSummary.name} - Safety: ${enhancedHotelData.safetyRating}/10, Gallery: ${enhancedHotelData.photoGalleryImages.length} images`);
       } else {
         // Send fallback data
         const fallbackData = {
           ...basicHotelData,
           whyItMatches: "Excellent choice with great amenities and location",
           funFacts: ["Quality accommodations", "Convenient location"],
-          topAmenities: enrichedHotelSummary.topAmenities || ["Wi-Fi", "AC", "Service"]
+          topAmenities: enrichedHotelSummary.topAmenities || ["Wi-Fi", "AC", "Service"],
+          photoGalleryImages: [] // ADD: Empty array for fallback
         };
 
         sendUpdate('hotel_enhanced', {
@@ -328,7 +331,8 @@ const processHotelWithImmediateInsights = async (
       const errorFallbackData = {
         ...basicHotelData,
         whyItMatches: "Quality choice with excellent facilities",
-        topAmenities: enrichedHotelSummary.topAmenities || ["Wi-Fi", "AC", "Service"]
+        topAmenities: enrichedHotelSummary.topAmenities || ["Wi-Fi", "AC", "Service"],
+        photoGalleryImages: [] // ADD: Empty array for error fallback
       };
 
       sendUpdate('hotel_enhanced', {
@@ -1307,6 +1311,9 @@ const createHotelSummaryForInsights = (hotel: HotelWithRates, hotelMetadata: any
   const topAmenities = getTop3Amenities(hotelMetadata);
   const images = extractHotelImages(hotelMetadata);
   
+  // NEW: Extract photo gallery images from metadata (up to 10 images)
+  const photoGalleryImages = extractPhotoGalleryFromMetadata(hotelMetadata);
+  
   let pricePerNight = null;
   if (suggestedPrice && nights > 0) {
     pricePerNight = {
@@ -1358,6 +1365,7 @@ const createHotelSummaryForInsights = (hotel: HotelWithRates, hotelMetadata: any
     isRefundable: refundablePolicy.isRefundable,
     refundableTag: refundablePolicy.refundableTag,
     refundableInfo: refundablePolicy.refundableInfo,
+    photoGalleryImages: photoGalleryImages, // ADD: Include photo gallery in hotel summary
     cancellationPolicies: hotel.roomTypes?.flatMap(room => 
       room.rates?.map(rate => ({
         refundableTag: rate.cancellationPolicies?.refundableTag,
@@ -1366,6 +1374,74 @@ const createHotelSummaryForInsights = (hotel: HotelWithRates, hotelMetadata: any
       })) || []
     ) || []
   };
+};
+
+// 3. ADD NEW FUNCTION TO EXTRACT PHOTO GALLERY FROM METADATA
+const extractPhotoGalleryFromMetadata = (hotelMetadata: any): string[] => {
+  try {
+    console.log('📸 Extracting photo gallery from hotel metadata...');
+    
+    if (!hotelMetadata) {
+      console.warn('⚠️ No hotel metadata available for photo gallery');
+      return [];
+    }
+
+    const photoGallery: string[] = [];
+
+    // First, try to get images from hotelImages array if available
+    if (hotelMetadata.hotelImages && Array.isArray(hotelMetadata.hotelImages)) {
+      console.log(`📷 Found ${hotelMetadata.hotelImages.length} hotel images in metadata`);
+      
+      const imageUrls = hotelMetadata.hotelImages
+        .slice(0, 10) // Take up to 10 images
+        .map((imageObj: any) => {
+          if (typeof imageObj === 'string') {
+            return imageObj;
+          }
+          // Prefer HD URL over regular URL
+          return imageObj.urlHd || imageObj.url;
+        })
+        .filter((url: string | null | undefined): url is string => Boolean(url)); // Type-safe filter
+      
+      photoGallery.push(...imageUrls);
+    }
+
+    // If we don't have enough images, try other image sources
+    if (photoGallery.length < 10) {
+      // Add main_photo if available and not already included
+      if (hotelMetadata.main_photo && !photoGallery.includes(hotelMetadata.main_photo)) {
+        photoGallery.push(hotelMetadata.main_photo);
+      }
+
+      // Add thumbnail if available and not already included
+      if (hotelMetadata.thumbnail && 
+          hotelMetadata.thumbnail !== hotelMetadata.main_photo && 
+          !photoGallery.includes(hotelMetadata.thumbnail)) {
+        photoGallery.push(hotelMetadata.thumbnail);
+      }
+
+      // Try images array if it exists
+      if (hotelMetadata.images && Array.isArray(hotelMetadata.images) && photoGallery.length < 10) {
+        const additionalImages = hotelMetadata.images
+          .slice(0, 10 - photoGallery.length)
+          .map((img: any) => typeof img === 'string' ? img : (img.url || img.urlHd))
+          .filter((url: string | null | undefined): url is string => Boolean(url)) // Type-safe filter
+          .filter((url: string) => !photoGallery.includes(url)); // Now url is guaranteed to be string
+        
+        photoGallery.push(...additionalImages);
+      }
+    }
+
+    // Remove duplicates and limit to 10
+    const finalGallery = [...new Set(photoGallery)].slice(0, 10);
+    
+    console.log(`✅ Photo gallery extracted: ${finalGallery.length} images`);
+    return finalGallery;
+    
+  } catch (error) {
+    console.warn('❌ Error extracting photo gallery from metadata:', error);
+    return [];
+  }
 };
 
 const applyHardPriceFilter = (
@@ -1844,11 +1920,11 @@ export const hotelSearchAndMatchController = async (req: Request, res: Response)
   return {
     ...enrichedHotelSummary,
     aiMatchPercent: match.aiMatchPercent,
+    photoGalleryImages: enrichedHotelSummary.photoGalleryImages || [], // ADD: Ensure photo gallery is included
     summarizedInfo: {
       name: enrichedHotelSummary.name,
       description: hotelMetadata?.hotelDescription || hotelMetadata?.description || 'No description available',
       amenities: enrichedHotelSummary.topAmenities,
-      // ADD THIS: Include full amenities text
       amenitiesText: enrichedHotelSummary.topAmenities && enrichedHotelSummary.topAmenities.length > 0 
         ? enrichedHotelSummary.topAmenities.join(', ') 
         : 'Standard hotel amenities',
@@ -1861,7 +1937,8 @@ export const hotelSearchAndMatchController = async (req: Request, res: Response)
       latitude: enrichedHotelSummary.latitude,
       longitude: enrichedHotelSummary.longitude,
       isRefundable: enrichedHotelSummary.isRefundable,
-      refundableInfo: enrichedHotelSummary.refundableInfo
+      refundableInfo: enrichedHotelSummary.refundableInfo,
+      photoGalleryImages: enrichedHotelSummary.photoGalleryImages || [] // ADD: Include in summarized info too
     }
   };
 }).filter(Boolean);

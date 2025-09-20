@@ -1,0 +1,322 @@
+[
+  {
+    "timestamp": "2025-09-20T20:06:49.363Z",
+    "searchId": "4794a600-515e-484c-8434-0e6c32a14b59",
+    "userQuery": "Lake-view hotels in Banff National Park",
+    "destination": "Banff, CA",
+    "hotelCount": 30,
+    "totalTokensUsed": 66727,
+    "totalCost": 0.011562900000000001,
+    "searchDurationMs": 9915,
+    "operations": {
+      "hotelMatching": {
+        "tokens": 23402,
+        "cost": 0.0036498
+      },
+      "aiInsights": {
+        "tokens": 43325,
+        "cost": 0.0079131
+      }
+    }
+  },
+  {
+    "timestamp": "2025-09-20T20:07:33.174Z",
+    "searchId": "e78823bc-5ce6-4304-b9c4-66e1ee8294cd",
+    "userQuery": "Boutique hotels in Kyoto with gardens",
+    "destination": "Kyoto, JP",
+    "hotelCount": 69,
+    "totalTokensUsed": 90784,
+    "totalCost": 0.015193949999999996,
+    "searchDurationMs": 11355,
+    "operations": {
+      "hotelMatching": {
+        "tokens": 46572,
+        "cost": 0.0071576999999999995
+      },
+      "aiInsights": {
+        "tokens": 44212,
+        "cost": 0.00803625
+      }
+    }
+  },
+  {
+    "timestamp": "2025-09-20T20:09:35.196Z",
+    "searchId": "f8ea1bae-bbd3-409f-a89e-68231ce4dce4",
+    "userQuery": "Luxury safari lodges in Kenya with pools",
+    "destination": "Nairobi, KE",
+    "hotelCount": 225,
+    "totalTokensUsed": 73269,
+    "totalCost": 0.012500549999999997,
+    "searchDurationMs": 7668,
+    "operations": {
+      "hotelMatching": {
+        "tokens": 25772,
+        "cost": 0.0040008
+      },
+      "aiInsights": {
+        "tokens": 47497,
+        "cost": 0.008499749999999999
+      }
+    }
+  },
+  {
+    "timestamp": "2025-09-20T20:10:48.880Z",
+    "searchId": "5420f7ba-9bb0-42cb-af90-20d01861a603",
+    "userQuery": "Boutique hotels in Kyoto with gardens",
+    "destination": "Kyoto, JP",
+    "hotelCount": 69,
+    "totalTokensUsed": 90503,
+    "totalCost": 0.015132449999999999,
+    "searchDurationMs": 9499,
+    "operations": {
+      "hotelMatching": {
+        "tokens": 46562,
+        "cost": 0.0071516999999999996
+      },
+      "aiInsights": {
+        "tokens": 43941,
+        "cost": 0.007980749999999998
+      }
+    }
+  },
+  {
+    "timestamp": "2025-09-20T20:11:53.058Z",
+    "searchId": "b0a37800-cf36-4e3a-bd4a-46d71e786df7",
+    "userQuery": "hotels in paris",
+    "destination": "Paris, FR",
+    "hotelCount": 322,
+    "totalTokensUsed": 248301,
+    "totalCost": 0.03881565,
+    "searchDurationMs": 12806,
+    "operations": {
+      "hotelMatching": {
+        "tokens": 204416,
+        "cost": 0.0308244
+      },
+      "aiInsights": {
+        "tokens": 43885,
+        "cost": 0.00799125
+      }
+    }
+  },
+  {
+    "timestamp": "2025-09-20T20:12:57.518Z",
+    "searchId": "7658cb7e-ef8f-4a38-b1c1-10d2a83d3b8b",
+    "userQuery": "hotels in orlando",
+    "destination": "Orlando, US",
+    "hotelCount": 180,
+    "totalTokensUsed": 197003,
+    "totalCost": 0.0311304,
+    "searchDurationMs": 12797,
+    "operations": {
+      "hotelMatching": {
+        "tokens": 150022,
+        "cost": 0.022689599999999997
+      },
+      "aiInsights": {
+        "tokens": 46981,
+        "cost": 0.0084408
+      }
+    }
+  },
+  {
+    "timestamp": "2025-09-20T20:13:27.657Z",
+    "searchId": "2cd09b87-8438-4d4b-8fde-b81c1ba115a8",
+    "userQuery": "Boutique hotels in Kyoto with gardens",
+    "destination": "Kyoto, JP",
+    "hotelCount": 69,
+    "totalTokensUsed": 90107,
+    "totalCost": 0.015081599999999995,
+    "searchDurationMs": 8393,
+    "operations": {
+      "hotelMatching": {
+        "tokens": 46552,
+        "cost": 0.0071457
+      },
+      "aiInsights": {
+        "tokens": 43555,
+        "cost": 0.007935900000000001
+      }
+    }
+  },
+  {
+    "timestamp": "2025-09-20T20:37:42.662Z",
+    "searchId": "8eccb4f2-bba0-47e4-baed-3c716b22eca6",
+    "userQuery": "Boutique hotels in Kyoto with gardens",
+    "destination": "Kyoto, JP",
+    "hotelCount": 71,
+    "totalTokensUsed": 91988,
+    "totalCost": 0.01540155,
+    "searchDurationMs": 9270,
+    "operations": {
+      "hotelMatching": {
+        "tokens": 47466,
+        "cost": 0.00729
+      },
+      "aiInsights": {
+        "tokens": 44522,
+        "cost": 0.008111549999999999
+      }
+    }
+  },
+  {
+    "timestamp": "2025-09-20T20:41:18.337Z",
+    "searchId": "bf72b0cc-9ba5-4a81-8270-91a0663039ca",
+    "userQuery": "Boutique hotels in Kyoto with gardens",
+    "destination": "Kyoto, JP",
+    "hotelCount": 71,
+    "totalTokensUsed": 90144,
+    "totalCost": 0.015094799999999998,
+    "searchDurationMs": 11890,
+    "operations": {
+      "hotelMatching": {
+        "tokens": 47444,
+        "cost": 0.0072768
+      },
+      "aiInsights": {
+        "tokens": 42700,
+        "cost": 0.007818
+      }
+    }
+  },
+  {
+    "timestamp": "2025-09-20T20:42:01.971Z",
+    "searchId": "d317e976-2309-4916-bf9a-f03e79ccbcae",
+    "userQuery": "Luxury safari lodges in Kenya with pools",
+    "destination": "Nairobi, KE",
+    "hotelCount": 226,
+    "totalTokensUsed": 75645,
+    "totalCost": 0.012888449999999996,
+    "searchDurationMs": 10303,
+    "operations": {
+      "hotelMatching": {
+        "tokens": 26846,
+        "cost": 0.004169999999999999
+      },
+      "aiInsights": {
+        "tokens": 48799,
+        "cost": 0.008718449999999999
+      }
+    }
+  },
+  {
+    "timestamp": "2025-09-20T20:42:57.940Z",
+    "searchId": "0da88a9d-3818-4d4f-94f4-38f122624564",
+    "userQuery": "hotels in paris",
+    "destination": "Paris, FR",
+    "hotelCount": 388,
+    "totalTokensUsed": 248019,
+    "totalCost": 0.0386838,
+    "searchDurationMs": 16681,
+    "operations": {
+      "hotelMatching": {
+        "tokens": 206828,
+        "cost": 0.031192499999999998
+      },
+      "aiInsights": {
+        "tokens": 41191,
+        "cost": 0.007491299999999998
+      }
+    }
+  },
+  {
+    "timestamp": "2025-09-20T21:12:09.324Z",
+    "searchId": "c6dceaf4-8b35-4993-9964-dd2df19d0015",
+    "userQuery": "hotels in la with gyms and pool near disneyland",
+    "destination": "Los Angeles, US",
+    "hotelCount": 163,
+    "totalTokensUsed": 173596,
+    "totalCost": 0.02754240000000001,
+    "searchDurationMs": 11815,
+    "operations": {
+      "hotelMatching": {
+        "tokens": 126400,
+        "cost": 0.0191058
+      },
+      "aiInsights": {
+        "tokens": 47196,
+        "cost": 0.0084366
+      }
+    }
+  },
+  {
+    "timestamp": "2025-09-20T21:18:47.994Z",
+    "searchId": "12ca8ece-0662-488d-b8f7-3b3361329121",
+    "userQuery": "hotels in paris",
+    "destination": "Paris, FR",
+    "hotelCount": 387,
+    "totalTokensUsed": 244599,
+    "totalCost": 0.03807315,
+    "searchDurationMs": 15408,
+    "operations": {
+      "hotelMatching": {
+        "tokens": 205700,
+        "cost": 0.0310188
+      },
+      "aiInsights": {
+        "tokens": 38899,
+        "cost": 0.007054349999999999
+      }
+    }
+  },
+  {
+    "timestamp": "2025-09-20T21:23:19.094Z",
+    "searchId": "83a6c9db-8383-4f3c-aa65-9df00f151942",
+    "userQuery": "Lake-view hotels in Banff National Park",
+    "destination": "Banff, CA",
+    "hotelCount": 32,
+    "totalTokensUsed": 67163,
+    "totalCost": 0.01163595,
+    "searchDurationMs": 20778,
+    "operations": {
+      "hotelMatching": {
+        "tokens": 24168,
+        "cost": 0.0037638
+      },
+      "aiInsights": {
+        "tokens": 42995,
+        "cost": 0.007872150000000001
+      }
+    }
+  },
+  {
+    "timestamp": "2025-09-20T21:25:00.011Z",
+    "searchId": "e7c796f3-0ea5-4c49-a9a7-085fb3b0ae2f",
+    "userQuery": "Boutique hotels in Kyoto with gardens",
+    "destination": "Kyoto, JP",
+    "hotelCount": 71,
+    "totalTokensUsed": 92410,
+    "totalCost": 0.015421200000000001,
+    "searchDurationMs": 11034,
+    "operations": {
+      "hotelMatching": {
+        "tokens": 47916,
+        "cost": 0.007344
+      },
+      "aiInsights": {
+        "tokens": 44494,
+        "cost": 0.0080772
+      }
+    }
+  },
+  {
+    "timestamp": "2025-09-20T21:26:42.765Z",
+    "searchId": "8a486a26-faf5-4a75-b6c1-33cd5bedc5b9",
+    "userQuery": "Lake-view hotels in Banff National Park",
+    "destination": "Banff, CA",
+    "hotelCount": 32,
+    "totalTokensUsed": 66339,
+    "totalCost": 0.01152045,
+    "searchDurationMs": 8462,
+    "operations": {
+      "hotelMatching": {
+        "tokens": 24164,
+        "cost": 0.0037614
+      },
+      "aiInsights": {
+        "tokens": 42175,
+        "cost": 0.00775905
+      }
+    }
+  }
+]

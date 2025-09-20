@@ -1,5 +1,5 @@
-// PhotoGallerySlide.tsx - Updated with grid-based gallery modal
-import React, { useState, useRef, useEffect } from 'react';
+// PhotoGallerySlide.tsx - Simplified approach with fixed 2x2 grid
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import {
   View,
   Text,
@@ -19,6 +19,7 @@ const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 interface PhotoGallerySlideProps {
   hotel: {
     images: string[];
+    photoGalleryImages?: string[];
     firstRoomImage?: string | null;
     secondRoomImage?: string | null;
     thirdImageHd?: string | null;
@@ -43,7 +44,42 @@ interface FullScreenImageProps {
   onClose: () => void;
 }
 
-// Grid-based gallery modal (like your reference image)
+// Simple optimized image component
+const OptimizedImage: React.FC<{
+  uri: string;
+  style: any;
+  onPress?: () => void;
+}> = ({ uri, style, onPress }) => {
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
+
+  if (error) {
+    return (
+      <View style={[style, tw`bg-gray-200 items-center justify-center`]}>
+        <Ionicons name="image-outline" size={20} color="#9CA3AF" />
+      </View>
+    );
+  }
+
+  return (
+    <TouchableOpacity onPress={onPress} activeOpacity={0.8} style={style}>
+      {loading && (
+        <View style={[style, tw`bg-gray-100 items-center justify-center absolute inset-0`]}>
+          <View style={tw`w-4 h-4 bg-gray-300 rounded animate-pulse`} />
+        </View>
+      )}
+      <Image
+        source={{ uri }}
+        style={style}
+        onLoad={() => setLoading(false)}
+        onError={() => setError(true)}
+        resizeMode="cover"
+      />
+    </TouchableOpacity>
+  );
+};
+
+// Simplified grid gallery modal with proper spacing
 const GridGalleryModal: React.FC<GridGalleryModalProps> = ({
   visible,
   images,
@@ -51,50 +87,21 @@ const GridGalleryModal: React.FC<GridGalleryModalProps> = ({
   onClose,
   onImagePress,
 }) => {
-  const fadeAnim = useRef(new Animated.Value(0)).current;
-
-  useEffect(() => {
-    if (visible) {
-      Animated.timing(fadeAnim, {
-        toValue: 1,
-        duration: 300,
-        useNativeDriver: true,
-      }).start();
-    } else {
-      Animated.timing(fadeAnim, {
-        toValue: 0,
-        duration: 200,
-        useNativeDriver: true,
-      }).start();
-    }
-  }, [visible]);
-
   if (!visible) return null;
 
   return (
     <Modal
       visible={visible}
       transparent={true}
-      animationType="none"
+      animationType="slide"
       onRequestClose={onClose}
       statusBarTranslucent={true}
     >
-      <StatusBar hidden />
-      <Animated.View
-        style={[
-          tw`flex-1 bg-white`,
-          {
-            opacity: fadeAnim,
-          },
-        ]}
-      >
+      <View style={tw`flex-1 bg-white`}>
         {/* Header */}
         <View style={tw`pt-12 pb-4 px-4 border-b border-gray-200`}>
           <View style={tw`flex-row items-center justify-between`}>
-            <TouchableOpacity
-              onPress={onClose}
-              style={tw`p-2`}
-            >
+            <TouchableOpacity onPress={onClose} style={tw`p-2`}>
               <Ionicons name="close" size={28} color="black" />
             </TouchableOpacity>
             
@@ -106,137 +113,111 @@ const GridGalleryModal: React.FC<GridGalleryModalProps> = ({
           </View>
         </View>
 
-        {/* Photo Grid */}
-        <ScrollView style={tw`flex-1 px-4`} showsVerticalScrollIndicator={false}>
-          <View style={tw`py-4`}>
-            {/* Main large image */}
-            {images.length > 0 && (
-              <TouchableOpacity
-                onPress={() => onImagePress(0)}
-                style={tw`mb-4 rounded-lg overflow-hidden`}
-                activeOpacity={0.8}
-              >
-                <Image
-                  source={{ uri: images[0] }}
-                  style={{
-                    width: '100%',
-                    height: 240,
-                  }}
-                  resizeMode="cover"
-                />
-              </TouchableOpacity>
-            )}
+        {/* Simple grid layout */}
+        <ScrollView style={tw`flex-1`} contentContainerStyle={tw`p-4`}>
+          {/* First image - large */}
+          {images.length > 0 && (
+            <TouchableOpacity
+              onPress={() => onImagePress(0)}
+              style={tw`mb-4 rounded-lg overflow-hidden`}
+            >
+              <OptimizedImage
+                uri={images[0]}
+                style={{ width: '100%', height: 240 }}
+              />
+            </TouchableOpacity>
+          )}
 
-            {/* Grid for remaining images */}
-            {images.length > 1 && (
-              <View style={tw`gap-2`}>
-                {/* Create rows of 2 images each */}
-                {Array.from({ length: Math.ceil((images.length - 1) / 2) }).map((_, rowIndex) => (
-                  <View key={rowIndex} style={tw`flex-row gap-2`}>
-                    {images.slice(1 + rowIndex * 2, 1 + (rowIndex + 1) * 2).map((imageUri, index) => {
-                      const imageIndex = 1 + rowIndex * 2 + index;
-                      return (
-                        <TouchableOpacity
-                          key={imageIndex}
-                          onPress={() => onImagePress(imageIndex)}
-                          style={tw`flex-1 rounded-lg overflow-hidden`}
-                          activeOpacity={0.8}
-                        >
-                          <Image
-                            source={{ uri: imageUri }}
-                            style={{
-                              width: '100%',
-                              height: 120,
-                            }}
-                            resizeMode="cover"
-                          />
-                        </TouchableOpacity>
-                      );
-                    })}
-                    {/* Fill empty space if odd number of images in last row */}
-                    {1 + rowIndex * 2 + 1 === images.length && (
-                      <View style={tw`flex-1`} />
-                    )}
-                  </View>
-                ))}
-              </View>
-            )}
-          </View>
+          {/* Remaining images in pairs */}
+          {images.slice(1).map((imageUri, index) => {
+            const actualIndex = index + 1;
+            const isEven = index % 2 === 0;
+            
+            if (isEven) {
+              const nextImage = images[actualIndex + 1];
+              return (
+                <View key={actualIndex} style={tw`flex-row gap-2 mb-2`}>
+                  <TouchableOpacity
+                    onPress={() => onImagePress(actualIndex)}
+                    style={tw`flex-1 rounded-lg overflow-hidden`}
+                  >
+                    <OptimizedImage
+                      uri={imageUri}
+                      style={{ width: '100%', height: 120 }}
+                    />
+                  </TouchableOpacity>
+                  
+                  {nextImage && (
+                    <TouchableOpacity
+                      onPress={() => onImagePress(actualIndex + 1)}
+                      style={tw`flex-1 rounded-lg overflow-hidden`}
+                    >
+                      <OptimizedImage
+                        uri={nextImage}
+                        style={{ width: '100%', height: 120 }}
+                      />
+                    </TouchableOpacity>
+                  )}
+                </View>
+              );
+            }
+            return null;
+          })}
         </ScrollView>
-      </Animated.View>
+      </View>
     </Modal>
   );
 };
 
-// Simple full screen single image viewer (no swiping)
+// Full screen image viewer with back to gallery option
 const FullScreenImage: React.FC<FullScreenImageProps> = ({
   visible,
   images,
   currentIndex,
-  hotelName,
   onClose,
 }) => {
-  const fadeAnim = useRef(new Animated.Value(0)).current;
-
-  useEffect(() => {
-    if (visible) {
-      Animated.timing(fadeAnim, {
-        toValue: 1,
-        duration: 300,
-        useNativeDriver: true,
-      }).start();
-    } else {
-      Animated.timing(fadeAnim, {
-        toValue: 0,
-        duration: 200,
-        useNativeDriver: true,
-      }).start();
-    }
-  }, [visible]);
-
   if (!visible) return null;
 
   return (
     <Modal
       visible={visible}
       transparent={true}
-      animationType="none"
+      animationType="fade"
       onRequestClose={onClose}
       statusBarTranslucent={true}
     >
       <StatusBar hidden />
-      <Animated.View
-        style={[
-          tw`flex-1 bg-black`,
-          {
-            opacity: fadeAnim,
-          },
-        ]}
-      >
-        {/* Header */}
+      <View style={tw`flex-1 bg-black`}>
+        {/* Header with close button */}
         <View style={tw`absolute top-12 left-0 right-0 z-20 flex-row items-center justify-between px-4`}>
           <TouchableOpacity
             onPress={onClose}
-            style={tw`bg-black/50 rounded-full p-2`}
+            style={tw`bg-black/50 rounded-full p-3`}
+            activeOpacity={0.8}
           >
             <Ionicons name="close" size={24} color="white" />
           </TouchableOpacity>
           
-          <View style={tw`w-10`} />
+          <Text style={tw`text-white text-sm font-medium`}>
+            {currentIndex + 1} of {images.length}
+          </Text>
         </View>
 
-        {/* Single image viewer */}
-        <View style={tw`flex-1 items-center justify-center`}>
-          <Image
-            source={{ uri: images[currentIndex] }}
+        {/* Full screen image */}
+        <TouchableOpacity 
+          style={tw`flex-1 items-center justify-center`}
+          onPress={onClose}
+          activeOpacity={1}
+        >
+          <OptimizedImage
+            uri={images[currentIndex]}
             style={{
               width: screenWidth,
               height: screenHeight * 0.8,
             }}
-            resizeMode="contain"
           />
-        </View>
-      </Animated.View>
+        </TouchableOpacity>
+      </View>
     </Modal>
   );
 };
@@ -249,61 +230,70 @@ const PhotoGallerySlide: React.FC<PhotoGallerySlideProps> = ({
   const [showFullScreenImage, setShowFullScreenImage] = useState(false);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
 
-  // Collect all available images
-  const getAllImages = () => {
-    const allImages: string[] = [];
+  // Get all available images (limit to 8 for performance)
+  const allImages = useMemo(() => {
+    const images: string[] = [];
+    const MAX_IMAGES = 8;
     
-    // Add main hotel images
-    if (hotel.images && hotel.images.length > 0) {
-      allImages.push(...hotel.images);
+    // Collect from photo gallery first
+    if (hotel.photoGalleryImages && hotel.photoGalleryImages.length > 0) {
+      images.push(...hotel.photoGalleryImages.slice(0, MAX_IMAGES));
     }
     
-    // Add room images if they're not already included
-    if (hotel.firstRoomImage && !allImages.includes(hotel.firstRoomImage)) {
-      allImages.push(hotel.firstRoomImage);
-    }
-    
-    if (hotel.secondRoomImage && !allImages.includes(hotel.secondRoomImage)) {
-      allImages.push(hotel.secondRoomImage);
-    }
-    
-    if (hotel.thirdImageHd && !allImages.includes(hotel.thirdImageHd)) {
-      allImages.push(hotel.thirdImageHd);
-    }
-    
-    // For demonstration: duplicate images to show 6+ photos layout
-    const baseImages = allImages.filter(img => img && img.trim() !== '');
-    if (baseImages.length > 0) {
-      // Add duplicates to demonstrate 6+ photo layout
-      const duplicatedImages = [...baseImages];
-      while (duplicatedImages.length < 6 && baseImages.length > 0) {
-        duplicatedImages.push(...baseImages.slice(0, Math.min(baseImages.length, 6 - duplicatedImages.length)));
+    // Add regular images if we need more
+    if (images.length < MAX_IMAGES && hotel.images && hotel.images.length > 0) {
+      for (const image of hotel.images) {
+        if (images.length >= MAX_IMAGES) break;
+        if (image && !images.includes(image)) {
+          images.push(image);
+        }
       }
-      return duplicatedImages;
     }
     
-    return baseImages;
-  };
-
-  const allImages = getAllImages();
+    // Add room images if we need more
+    if (images.length < MAX_IMAGES && hotel.firstRoomImage && !images.includes(hotel.firstRoomImage)) {
+      images.push(hotel.firstRoomImage);
+    }
+    if (images.length < MAX_IMAGES && hotel.secondRoomImage && !images.includes(hotel.secondRoomImage)) {
+      images.push(hotel.secondRoomImage);
+    }
+    
+    // Filter valid URLs
+    return images.filter(img => 
+      img && img.trim() !== '' && 
+      (img.startsWith('http://') || img.startsWith('https://') || img.startsWith('//'))
+    );
+  }, [hotel]);
 
   const openGridGallery = () => {
     setShowGridGallery(true);
   };
 
   const handleImagePress = (index: number) => {
+    console.log(`📸 Image ${index + 1} pressed - showing full screen`);
     setSelectedImageIndex(index);
-    setShowGridGallery(false);
-    setShowFullScreenImage(true);
+    setShowGridGallery(false); // Close gallery modal
+    
+    // Small delay to ensure smooth transition
+    setTimeout(() => {
+      setShowFullScreenImage(true);
+    }, 100);
+  };
+
+  const handleCloseFullScreen = () => {
+    console.log('📸 Closing full screen - returning to gallery');
+    setShowFullScreenImage(false);
+    
+    // Return to gallery modal
+    setTimeout(() => {
+      setShowGridGallery(true);
+    }, 200);
   };
 
   if (allImages.length === 0) {
     return (
       <View style={tw`flex-1 bg-black/20 items-center justify-center relative overflow-hidden`}>
-        {/* Background overlay similar to other slides */}
         <View style={tw`absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-black/50 to-transparent z-1`} />
-        
-        {/* Error state content */}
         <View style={tw`items-center`}>
           <Ionicons name="image-outline" size={48} color="rgba(255,255,255,0.7)" />
           <Text style={tw`text-white/70 text-sm mt-2`}>No photos available</Text>
@@ -314,110 +304,90 @@ const PhotoGallerySlide: React.FC<PhotoGallerySlideProps> = ({
 
   return (
     <View style={tw`flex-1 relative overflow-hidden`}>
-      {/* Hero image with overlay - matches other slides */}
+      {/* Background hero image */}
       <View style={tw`absolute inset-0`}>
-        <Image
-          source={{ uri: allImages[0] }}
-          style={{
-            width: '100%',
-            height: '100%',
-          }}
-          resizeMode="cover"
+        <OptimizedImage
+          uri={allImages[0]}
+          style={{ width: '100%', height: '100%' }}
         />
-        {/* Dark overlay for consistency */}
         <View style={tw`absolute inset-0 bg-black/40`} />
       </View>
 
-      {/* Gradient overlay - consistent with other slides */}
+      {/* Gradient overlay */}
       <View style={tw`absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-black/60 to-transparent z-1`} />
 
-      {/* Central Photo Gallery Content */}
+      {/* Centered gallery preview - Fixed 2x2 grid */}
       <View style={tw`absolute inset-0 items-center justify-center z-10 px-4`}>
-        {/* Main interactive photo gallery */}
         <TouchableOpacity
           onPress={openGridGallery}
-          style={tw`bg-black/45 border border-white/15 rounded-md p-3 max-w-xs w-full`}
+          style={tw`bg-black/45 border border-white/15 rounded-xl p-4 w-80 max-w-full`}
           activeOpacity={0.8}
         >
           {/* Header */}
-          <View style={tw`flex-row items-center mb-2`}>
-            <Ionicons 
-              name={insightsStatus === 'loading' ? "sync" : "camera"} 
-              size={10} 
-              color="#1df9ff" 
-            />
-            <Text style={tw`text-white text-[10px] font-semibold ml-1`}>
+          <View style={tw`flex-row items-center mb-3`}>
+            <Ionicons name="camera" size={14} color="#1df9ff" />
+            <Text style={tw`text-white text-sm font-semibold ml-2`}>
               Photo Gallery
             </Text>
             {insightsStatus === 'loading' && (
-              <Text style={tw`text-white/60 text-[10px] ml-2`}>Loading...</Text>
+              <Text style={tw`text-white/60 text-xs ml-2`}>Loading...</Text>
             )}
           </View>
           
-          {/* Photo grid - always shows exactly 4 photos in 2x2 grid */}
-          <View style={tw`gap-1 mb-2`}>
-            <View style={tw`flex-row gap-1`}>
-              {allImages.slice(0, 2).map((imageUri, index) => (
-                <View key={index} style={tw`flex-1 rounded-md overflow-hidden`}>
-                  <Image
-                    source={{ uri: imageUri }}
-                    style={{
-                      width: '100%',
-                      height: 45,
-                    }}
-                    resizeMode="cover"
-                  />
-                </View>
-              ))}
+          {/* Fixed 2x2 grid with exactly 4 preview images */}
+          <View style={tw`gap-2 mb-3`}>
+            {/* Top row */}
+            <View style={tw`flex-row gap-2`}>
+              <View style={tw`flex-1 rounded-lg overflow-hidden`}>
+                <OptimizedImage
+                  uri={allImages[0]}
+                  style={{ width: '100%', height: 60 }}
+                />
+              </View>
+              <View style={tw`flex-1 rounded-lg overflow-hidden`}>
+                <OptimizedImage
+                  uri={allImages[1] || allImages[0]}
+                  style={{ width: '100%', height: 60 }}
+                />
+              </View>
             </View>
             
-            <View style={tw`flex-row gap-1`}>
-              {allImages.slice(2, 4).map((imageUri, index) => (
-                <View key={index + 2} style={tw`flex-1 rounded-md overflow-hidden relative`}>
-                  <Image
-                    source={{ uri: imageUri }}
-                    style={{
-                      width: '100%',
-                      height: 45,
-                    }}
-                    resizeMode="cover"
-                  />
-                  {/* Bottom right overlay for additional photos */}
-                  {index === 1 && allImages.length > 4 && (
-                    <View style={tw`absolute inset-0 bg-black/60 items-center justify-center`}>
-                      <Text style={tw`text-white text-[9px] font-bold`}>
-                        +{allImages.length - 4}
-                      </Text>
-                    </View>
-                  )}
-                </View>
-              ))}
+            {/* Bottom row */}
+            <View style={tw`flex-row gap-2`}>
+              <View style={tw`flex-1 rounded-lg overflow-hidden`}>
+                <OptimizedImage
+                  uri={allImages[2] || allImages[0]}
+                  style={{ width: '100%', height: 60 }}
+                />
+              </View>
+              <View style={tw`flex-1 rounded-lg overflow-hidden relative`}>
+                <OptimizedImage
+                  uri={allImages[3] || allImages[0]}
+                  style={{ width: '100%', height: 60 }}
+                />
+                {/* Overlay for additional photos */}
+                {allImages.length > 4 && (
+                  <View style={tw`absolute inset-0 bg-black/60 items-center justify-center`}>
+                    <Text style={tw`text-white text-xs font-bold`}>
+                      +{allImages.length - 4}
+                    </Text>
+                  </View>
+                )}
+              </View>
             </View>
           </View>
 
           {/* Call to action */}
-          <View style={tw`flex-row items-center justify-center pt-1 border-t border-white/15`}>
-            <Ionicons name="expand" size={10} color="#1df9ff" />
-            <Text style={tw`text-white text-[10px] font-medium ml-1`}>
-              Tap to View All Photos
+          <View style={tw`flex-row items-center justify-center pt-2 border-t border-white/15`}>
+            <Ionicons name="expand" size={12} color="#1df9ff" />
+            <Text style={tw`text-white text-xs font-medium ml-2`}>
+              Tap to View All {allImages.length} Photos
             </Text>
           </View>
         </TouchableOpacity>
       </View>
 
-      {/* Loading state overlay */}
-      {insightsStatus === 'loading' && (
-        <View style={tw`absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 z-20`}>
-          <View style={tw`bg-black/70 border border-white/15 rounded-lg p-3 flex-row items-center`}>
-            <Ionicons name="sync" size={16} color="#1df9ff" />
-            <Text style={tw`text-white text-[10px] ml-2`}>
-              Loading photos...
-            </Text>
-          </View>
-        </View>
-      )}
-
-      {/* Grid Gallery Modal */}
+      {/* Gallery modal */}
       <GridGalleryModal
         visible={showGridGallery}
         images={allImages}
@@ -426,13 +396,13 @@ const PhotoGallerySlide: React.FC<PhotoGallerySlideProps> = ({
         onImagePress={handleImagePress}
       />
 
-      {/* Full Screen Image Modal (when clicking on individual images) */}
+      {/* Full screen image modal */}
       <FullScreenImage
         visible={showFullScreenImage}
         images={allImages}
         currentIndex={selectedImageIndex}
         hotelName={hotel.name}
-        onClose={() => setShowFullScreenImage(false)}
+        onClose={handleCloseFullScreen}
       />
     </View>
   );
