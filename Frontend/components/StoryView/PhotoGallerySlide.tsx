@@ -1,4 +1,4 @@
-// PhotoGallerySlide.tsx - Centered photo gallery layout
+// PhotoGallerySlide.tsx - Updated with grid-based gallery modal
 import React, { useState, useRef, useEffect } from 'react';
 import {
   View,
@@ -15,7 +15,6 @@ import { Ionicons } from '@expo/vector-icons';
 import tw from 'twrnc';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
-const CARD_WIDTH = screenWidth - 42;
 
 interface PhotoGallerySlideProps {
   hotel: {
@@ -28,28 +27,34 @@ interface PhotoGallerySlideProps {
   insightsStatus?: string;
 }
 
-interface FullScreenGalleryProps {
+interface GridGalleryModalProps {
   visible: boolean;
   images: string[];
-  initialIndex: number;
+  hotelName: string;
+  onClose: () => void;
+  onImagePress: (index: number) => void;
+}
+
+interface FullScreenImageProps {
+  visible: boolean;
+  images: string[];
+  currentIndex: number;
   hotelName: string;
   onClose: () => void;
 }
 
-const FullScreenGallery: React.FC<FullScreenGalleryProps> = ({
+// Grid-based gallery modal (like your reference image)
+const GridGalleryModal: React.FC<GridGalleryModalProps> = ({
   visible,
   images,
-  initialIndex,
   hotelName,
   onClose,
+  onImagePress,
 }) => {
-  const [currentIndex, setCurrentIndex] = useState(initialIndex);
-  const scrollViewRef = useRef<ScrollView>(null);
   const fadeAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
     if (visible) {
-      setCurrentIndex(initialIndex);
       Animated.timing(fadeAnim, {
         toValue: 1,
         duration: 300,
@@ -62,26 +67,132 @@ const FullScreenGallery: React.FC<FullScreenGalleryProps> = ({
         useNativeDriver: true,
       }).start();
     }
-  }, [visible, initialIndex]);
+  }, [visible]);
+
+  if (!visible) return null;
+
+  return (
+    <Modal
+      visible={visible}
+      transparent={true}
+      animationType="none"
+      onRequestClose={onClose}
+      statusBarTranslucent={true}
+    >
+      <StatusBar hidden />
+      <Animated.View
+        style={[
+          tw`flex-1 bg-white`,
+          {
+            opacity: fadeAnim,
+          },
+        ]}
+      >
+        {/* Header */}
+        <View style={tw`pt-12 pb-4 px-4 border-b border-gray-200`}>
+          <View style={tw`flex-row items-center justify-between`}>
+            <TouchableOpacity
+              onPress={onClose}
+              style={tw`p-2`}
+            >
+              <Ionicons name="close" size={28} color="black" />
+            </TouchableOpacity>
+            
+            <Text style={tw`text-black text-lg font-semibold flex-1 text-center`}>
+              {hotelName}
+            </Text>
+            
+            <View style={tw`w-12`} />
+          </View>
+        </View>
+
+        {/* Photo Grid */}
+        <ScrollView style={tw`flex-1 px-4`} showsVerticalScrollIndicator={false}>
+          <View style={tw`py-4`}>
+            {/* Main large image */}
+            {images.length > 0 && (
+              <TouchableOpacity
+                onPress={() => onImagePress(0)}
+                style={tw`mb-4 rounded-lg overflow-hidden`}
+                activeOpacity={0.8}
+              >
+                <Image
+                  source={{ uri: images[0] }}
+                  style={{
+                    width: '100%',
+                    height: 240,
+                  }}
+                  resizeMode="cover"
+                />
+              </TouchableOpacity>
+            )}
+
+            {/* Grid for remaining images */}
+            {images.length > 1 && (
+              <View style={tw`gap-2`}>
+                {/* Create rows of 2 images each */}
+                {Array.from({ length: Math.ceil((images.length - 1) / 2) }).map((_, rowIndex) => (
+                  <View key={rowIndex} style={tw`flex-row gap-2`}>
+                    {images.slice(1 + rowIndex * 2, 1 + (rowIndex + 1) * 2).map((imageUri, index) => {
+                      const imageIndex = 1 + rowIndex * 2 + index;
+                      return (
+                        <TouchableOpacity
+                          key={imageIndex}
+                          onPress={() => onImagePress(imageIndex)}
+                          style={tw`flex-1 rounded-lg overflow-hidden`}
+                          activeOpacity={0.8}
+                        >
+                          <Image
+                            source={{ uri: imageUri }}
+                            style={{
+                              width: '100%',
+                              height: 120,
+                            }}
+                            resizeMode="cover"
+                          />
+                        </TouchableOpacity>
+                      );
+                    })}
+                    {/* Fill empty space if odd number of images in last row */}
+                    {1 + rowIndex * 2 + 1 === images.length && (
+                      <View style={tw`flex-1`} />
+                    )}
+                  </View>
+                ))}
+              </View>
+            )}
+          </View>
+        </ScrollView>
+      </Animated.View>
+    </Modal>
+  );
+};
+
+// Simple full screen single image viewer (no swiping)
+const FullScreenImage: React.FC<FullScreenImageProps> = ({
+  visible,
+  images,
+  currentIndex,
+  hotelName,
+  onClose,
+}) => {
+  const fadeAnim = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    if (visible && scrollViewRef.current) {
-      setTimeout(() => {
-        scrollViewRef.current?.scrollTo({
-          x: currentIndex * screenWidth,
-          animated: false,
-        });
-      }, 100);
+    if (visible) {
+      Animated.timing(fadeAnim, {
+        toValue: 1,
+        duration: 300,
+        useNativeDriver: true,
+      }).start();
+    } else {
+      Animated.timing(fadeAnim, {
+        toValue: 0,
+        duration: 200,
+        useNativeDriver: true,
+      }).start();
     }
-  }, [visible, currentIndex]);
-
-  const handleScroll = (event: any) => {
-    const scrollX = event.nativeEvent.contentOffset.x;
-    const newIndex = Math.round(scrollX / screenWidth);
-    if (newIndex !== currentIndex && newIndex >= 0 && newIndex < images.length) {
-      setCurrentIndex(newIndex);
-    }
-  };
+  }, [visible]);
 
   if (!visible) return null;
 
@@ -111,78 +222,19 @@ const FullScreenGallery: React.FC<FullScreenGalleryProps> = ({
             <Ionicons name="close" size={24} color="white" />
           </TouchableOpacity>
           
-          <View style={tw`bg-black/50 rounded-full px-3 py-2`}>
-            <Text style={tw`text-white text-sm font-medium`}>
-              {currentIndex + 1} / {images.length}
-            </Text>
-          </View>
-          
           <View style={tw`w-10`} />
         </View>
 
-        {/* Gallery */}
-        <ScrollView
-          ref={scrollViewRef}
-          horizontal
-          pagingEnabled
-          showsHorizontalScrollIndicator={false}
-          onScroll={handleScroll}
-          scrollEventThrottle={16}
-          style={tw`flex-1`}
-          contentContainerStyle={tw`items-center justify-center`}
-        >
-          {images.map((imageUri, index) => (
-            <View
-              key={index}
-              style={[
-                tw`items-center justify-center`,
-                { width: screenWidth, height: screenHeight },
-              ]}
-            >
-              <Image
-                source={{ uri: imageUri }}
-                style={{
-                  width: screenWidth,
-                  height: screenHeight * 0.8,
-                }}
-                resizeMode="contain"
-              />
-            </View>
-          ))}
-        </ScrollView>
-
-        {/* Bottom info */}
-        <View style={tw`absolute bottom-12 left-0 right-0 px-4`}>
-          <View style={tw`bg-black/70 rounded-lg p-4`}>
-            <Text style={tw`text-white text-lg font-semibold mb-1`}>
-              {hotelName}
-            </Text>
-            <Text style={tw`text-white/80 text-sm`}>
-              Photo {currentIndex + 1} of {images.length}
-            </Text>
-          </View>
-        </View>
-
-        {/* Navigation dots */}
-        <View style={tw`absolute bottom-32 left-0 right-0 flex-row justify-center gap-2`}>
-          {images.map((_, index) => (
-            <TouchableOpacity
-              key={index}
-              onPress={() => {
-                setCurrentIndex(index);
-                scrollViewRef.current?.scrollTo({
-                  x: index * screenWidth,
-                  animated: true,
-                });
-              }}
-              style={[
-                tw`w-2 h-2 rounded-full`,
-                {
-                  backgroundColor: index === currentIndex ? '#1df9ff' : 'rgba(255,255,255,0.4)',
-                },
-              ]}
-            />
-          ))}
+        {/* Single image viewer */}
+        <View style={tw`flex-1 items-center justify-center`}>
+          <Image
+            source={{ uri: images[currentIndex] }}
+            style={{
+              width: screenWidth,
+              height: screenHeight * 0.8,
+            }}
+            resizeMode="contain"
+          />
         </View>
       </Animated.View>
     </Modal>
@@ -193,7 +245,8 @@ const PhotoGallerySlide: React.FC<PhotoGallerySlideProps> = ({
   hotel,
   insightsStatus = 'complete',
 }) => {
-  const [showFullScreen, setShowFullScreen] = useState(false);
+  const [showGridGallery, setShowGridGallery] = useState(false);
+  const [showFullScreenImage, setShowFullScreenImage] = useState(false);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
 
   // Collect all available images
@@ -234,9 +287,14 @@ const PhotoGallerySlide: React.FC<PhotoGallerySlideProps> = ({
 
   const allImages = getAllImages();
 
-  const openFullScreen = (index: number) => {
+  const openGridGallery = () => {
+    setShowGridGallery(true);
+  };
+
+  const handleImagePress = (index: number) => {
     setSelectedImageIndex(index);
-    setShowFullScreen(true);
+    setShowGridGallery(false);
+    setShowFullScreenImage(true);
   };
 
   if (allImages.length === 0) {
@@ -273,13 +331,11 @@ const PhotoGallerySlide: React.FC<PhotoGallerySlideProps> = ({
       {/* Gradient overlay - consistent with other slides */}
       <View style={tw`absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-black/60 to-transparent z-1`} />
 
-
-
       {/* Central Photo Gallery Content */}
       <View style={tw`absolute inset-0 items-center justify-center z-10 px-4`}>
         {/* Main interactive photo gallery */}
         <TouchableOpacity
-          onPress={() => openFullScreen(0)}
+          onPress={openGridGallery}
           style={tw`bg-black/45 border border-white/15 rounded-md p-3 max-w-xs w-full`}
           activeOpacity={0.8}
         >
@@ -361,13 +417,22 @@ const PhotoGallerySlide: React.FC<PhotoGallerySlideProps> = ({
         </View>
       )}
 
-      {/* Full Screen Gallery Modal */}
-      <FullScreenGallery
-        visible={showFullScreen}
+      {/* Grid Gallery Modal */}
+      <GridGalleryModal
+        visible={showGridGallery}
         images={allImages}
-        initialIndex={selectedImageIndex}
         hotelName={hotel.name}
-        onClose={() => setShowFullScreen(false)}
+        onClose={() => setShowGridGallery(false)}
+        onImagePress={handleImagePress}
+      />
+
+      {/* Full Screen Image Modal (when clicking on individual images) */}
+      <FullScreenImage
+        visible={showFullScreenImage}
+        images={allImages}
+        currentIndex={selectedImageIndex}
+        hotelName={hotel.name}
+        onClose={() => setShowFullScreenImage(false)}
       />
     </View>
   );

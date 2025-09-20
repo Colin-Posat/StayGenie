@@ -1,4 +1,4 @@
-// SwipeableHotelStoryCardLoadingPreview.tsx - Updated to match new card layout
+// SwipeableHotelStoryCardLoadingPreview.tsx - Updated to match current card design
 import React, { useEffect, useRef } from 'react';
 import {
   View,
@@ -14,7 +14,7 @@ import tw from 'twrnc';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 const CARD_WIDTH = screenWidth - 42;
-const CARD_HEIGHT = screenHeight * 0.52; // Updated to match new card height
+const CARD_HEIGHT = screenHeight * 0.52;
 const TURQUOISE = '#1df9ff';
 
 interface LoadingPreviewProps {
@@ -120,7 +120,7 @@ const LoadingProgressBar: React.FC = () => {
         borderRadius: 12,
       }
     ]}>
-      {[0, 1, 2].map((index) => (
+      {[0, 1, 2, 3].map((index) => (
         <TouchableOpacity
           key={index}
           style={[
@@ -168,7 +168,7 @@ const SwipeableHotelStoryCardLoadingPreview: React.FC<LoadingPreviewProps> = ({
           { width: CARD_WIDTH, height: CARD_HEIGHT },
         ]}
       >
-        {/* Loading Progress Bar */}
+        {/* Loading Progress Bar - now with 4 slides */}
         <LoadingProgressBar />
 
         {/* Background Loading Image */}
@@ -179,10 +179,10 @@ const SwipeableHotelStoryCardLoadingPreview: React.FC<LoadingPreviewProps> = ({
           borderRadius={0}
         />
 
-        {/* Reduced gradient for less obstruction - matches real card */}
+        {/* Reduced gradient for less obstruction */}
         <View style={tw`absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-black/50 to-transparent z-1`} />
 
-        {/* COMPACT TOP: Hotel info sized to content - matches real card */}
+        {/* COMPACT TOP: Hotel info sized to content */}
         <View style={tw`absolute top-12 left-2 right-2 z-10`}>
           <View style={[
             tw`bg-black/30 border border-white/15 px-2 py-1 rounded-lg self-start`,
@@ -197,7 +197,7 @@ const SwipeableHotelStoryCardLoadingPreview: React.FC<LoadingPreviewProps> = ({
           </View>
         </View>
 
-        {/* COMPACT BOTTOM: Essential info only with tighter spacing - matches real card */}
+        {/* COMPACT BOTTOM: Essential info only with tighter spacing */}
         <View style={tw`absolute bottom-4 left-2 right-2 z-10`}>
           {/* Compact price and rating row */}
           <View style={tw`flex-row items-center justify-between mb-2`}>
@@ -269,61 +269,100 @@ const SwipeableHotelStoryCardLoadingPreview: React.FC<LoadingPreviewProps> = ({
         </View>
       </View>
 
-      {/* Bottom Action Buttons - Updated to match new compact button layout */}
+      {/* Bottom Action Buttons - Updated to match new responsive design */}
       <View style={tw`bg-white rounded-b-2xl`}>
-        <View style={tw`flex-row items-center px-4 py-3 gap-2`}>
-          {/* Heart Button - Minimal */}
-          <View style={tw`w-8 h-8 items-center justify-center`}>
-            <Ionicons name="heart-outline" size={18} color="#9CA3AF" />
+        <View style={tw`flex-row items-center px-3 py-3 gap-2`}>
+          {/* Heart Button - Compact with rounded design */}
+          <View style={[
+            tw`w-10 h-10 items-center justify-center rounded-xl bg-white border border-gray-200`,
+            {
+              shadowColor: '#000',
+              shadowOffset: { width: 0, height: 2 },
+              shadowOpacity: 0.08,
+              shadowRadius: 3,
+              elevation: 2,
+            }
+          ]}>
+            <Ionicons name="heart-outline" size={20} color="#9CA3AF" />
           </View>
 
-          {/* Ask Button - Ghost button */}
-          <View
-            style={[
-              tw`py-3 px-3 rounded-lg flex-row items-center flex-1 justify-center`,
-              { backgroundColor: 'rgba(0,0,0,0.04)' }
-            ]}
-          >
-            <Ionicons name="chatbubble-outline" size={14} color="#9CA3AF" />
+          {/* Ask Button - Responsive pill with circular icon background */}
+          <View style={[
+            tw`py-2.5 px-3 rounded-xl flex-row items-center flex-1 justify-center bg-white border border-gray-200`,
+            {
+              shadowColor: '#000',
+              shadowOffset: { width: 0, height: 2 },
+              shadowOpacity: 0.08,
+              shadowRadius: 3,
+              elevation: 2,
+              minHeight: 40,
+              maxWidth: '30%',
+            }
+          ]}>
+            <View style={[
+              tw`w-5 h-5 rounded-full items-center justify-center mr-1.5`,
+              { backgroundColor: 'rgba(29, 249, 255, 0.15)' }
+            ]}>
+              <Ionicons name="chatbubble-outline" size={12} color="#9CA3AF" />
+            </View>
             <Text
-              style={[tw`ml-1 font-medium text-xs`, { color: '#9CA3AF' }]}
-              allowFontScaling={false}
+              style={tw`text-xs font-medium text-gray-400`}
             >
               Ask
             </Text>
           </View>
 
-          {/* Map Button - Ghost button */}
-          <View
-            style={[
-              tw`py-3 px-3 rounded-lg flex-row items-center flex-1 justify-center`,
-              { backgroundColor: 'rgba(0,0,0,0.04)' }
-            ]}
-          >
-            <Ionicons name="map-outline" size={14} color="#9CA3AF" />
+          {/* Map Button - Responsive pill with circular icon background */}
+          <View style={[
+            tw`py-2.5 px-3 rounded-xl flex-row items-center flex-1 justify-center bg-white border border-gray-200`,
+            {
+              shadowColor: '#000',
+              shadowOffset: { width: 0, height: 2 },
+              shadowOpacity: 0.08,
+              shadowRadius: 3,
+              elevation: 2,
+              minHeight: 40,
+              maxWidth: '30%',
+            }
+          ]}>
+            <View style={[
+              tw`w-5 h-5 rounded-full items-center justify-center mr-1.5`,
+              { backgroundColor: 'rgba(29, 249, 255, 0.15)' }
+            ]}>
+              <Ionicons name="map-outline" size={12} color="#9CA3AF" />
+            </View>
             <Text
-              style={[tw`ml-1 font-medium text-xs`, { color: '#9CA3AF' }]}
-              allowFontScaling={false}
+              style={tw`text-xs font-medium text-gray-400`}
             >
               Map
             </Text>
           </View>
 
-          {/* Book Button - Disabled turquoise */}
-          <View
-            style={[
-              tw`py-3 px-3 rounded-lg flex-row items-center flex-1 justify-center`,
-              { backgroundColor: 'rgba(0,0,0,0.04)' }
-            ]}
-          >
-            <Image
-                    source={require('../../assets/images/logo.png')}
-                    style={{ width: 14, height: 14, tintColor: '#9CA3AF' }}
-                    resizeMode="contain"
-                  />
+          {/* Book Button - Responsive pill with circular icon background */}
+          <View style={[
+            tw`py-2.5 px-3 rounded-xl flex-row items-center flex-1 justify-center bg-white border border-gray-200`,
+            {
+              shadowColor: '#000',
+              shadowOffset: { width: 0, height: 2 },
+              shadowOpacity: 0.08,
+              shadowRadius: 3,
+              elevation: 2,
+              minHeight: 40,
+              maxWidth: '30%',
+            }
+          ]}>
+            <View style={[
+              tw`w-5 h-5 rounded-full items-center justify-center mr-1.5`,
+              { backgroundColor: 'rgba(29, 249, 255, 0.15)' }
+            ]}>
+              <Image
+                source={require('../../assets/images/logo.png')}
+                style={{ width: 12, height: 12, tintColor: '#9CA3AF' }}
+                resizeMode="contain"
+              />
+            </View>
             <Text
-              style={[tw`ml-1 font-medium text-xs`, { color: '#9CA3AF' }]}
-              allowFontScaling={false}
+              style={tw`text-xs font-medium text-gray-400`}
             >
               Book
             </Text>

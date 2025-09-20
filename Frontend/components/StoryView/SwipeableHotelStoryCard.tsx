@@ -32,9 +32,9 @@ const CARD_HEIGHT = screenHeight * 0.52;
 const TURQUOISE_SUBTLE = '#f0feff';
 const TURQUOISE_BORDER = '#b3f7ff';
 
-const IMAGE_BLEED = 0.0;        // 0 = no extra crop (was ~0.05 via 110%/-5%)
+const IMAGE_BLEED = 0.01;        // 0 = no extra crop (was ~0.05 via 110%/-5%)
 const IMAGE_SCALE_MIN = 1.00;   // start scale (was 1.05 / 1.20)
-const IMAGE_SCALE_MAX = 1.03;   // subtle zoom (was 1.10 / 1.32)
+const IMAGE_SCALE_MAX = 1.15;   // subtle zoom (was 1.10 / 1.32)
 const IMAGE_PAN_X = 4;          // px left/right pan (was ~8–10)
 const IMAGE_PAN_Y = 4;          // px up/down pan (was ~4–12)
 const IMAGE_RESIZE_MODE = 'cover';
@@ -163,6 +163,7 @@ interface SwipeableHotelStoryCardProps {
   hasAISafetyRating?: boolean;
   showSafetyRating?: boolean;
   safetyRatingThreshold?: number;
+  onFavoriteSuccess?: (hotelName: string) => void;
 }
 
 const calculateTotalStayCost = (
@@ -648,19 +649,7 @@ const HotelOverviewSlide: React.FC<{
         {/* Compact price and rating row */}
         <View style={tw`flex-row items-center justify-between mb-2`}>
           <View style={tw`bg-black/45 border border-white/15 px-2 py-1 rounded-md`}>
-          {(() => {
-                const stayTotal = calculateTotalStayCost(checkInDate, checkOutDate, hotel.pricePerNight, hotel.price);
-                return stayTotal ? (
-                  <View style={tw`mb-0.5`}>
-                    <Text style={tw`text-white/80 text-[9px]`}>
-                      {stayTotal.nights} night{stayTotal.nights > 1 ? 's' : ''} total
-                    </Text>
-                    <Text style={tw`text-white text-sm font-bold`}>
-                      {stayTotal.totalCost}
-                    </Text>
-                  </View>
-                ) : null;
-              })()}
+
             <View style={tw`flex-row items-baseline`}>
               <Text style={tw`text-lg font-bold text-white`}>
                 {getDisplayPrice()}
@@ -964,10 +953,31 @@ const AmenitiesSlide: React.FC<{
   // Calculate overall guest score
   const overallScore = ((ratings.cleanliness + ratings.service + ratings.location + ratings.roomQuality) / 4);
 
+  // Handle tap outside the ratings box to close it
+  const handleBackgroundTap = () => {
+    if (showDetails) {
+      setShowDetails(false);
+    }
+  };
+
+  // Handle tap on the ratings box
+  const handleRatingsBoxTap = () => {
+    setShowDetails(!showDetails);
+  };
+
+  // Prevent event bubbling when tapping inside the expanded box
+  const handleExpandedContentTap = (e: any) => {
+    e.stopPropagation();
+    // Allow closing when tapping inside expanded content
+    setShowDetails(false);
+  };
+
   return (
-    
-    <View style={tw`flex-1 relative overflow-hidden`}>
-      
+    <TouchableOpacity 
+      style={tw`flex-1 relative overflow-hidden`}
+      activeOpacity={1}
+      onPress={handleBackgroundTap}
+    >
       {/* Background Images - same as before */}
       {hasRoomImages && stackedImages.length > 0 ? (
         <View style={tw`flex-1`}>
@@ -1005,21 +1015,24 @@ const AmenitiesSlide: React.FC<{
       )}
       
       <View style={tw`absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-black/50 to-transparent z-1`} />
-      
-      {/* Removed top guest score - now only expandable from bottom */}
 
-      {/* BOTTOM: Expandable ratings section with clear tap prompt */}
+      {/* BOTTOM: Expandable ratings section with improved tap interactions */}
       <View style={tw`absolute bottom-4 left-2 right-2 z-10`}>
         <TouchableOpacity
           style={[
             tw`bg-black/45 border border-white/15 rounded-md`,
-            { shadowColor: '#000000', shadowOffset: { width: 0, height: 2 }, shadowOpacity: 0.3, shadowRadius: 4 }
+            { 
+              shadowColor: '#000000', 
+              shadowOffset: { width: 0, height: 2 }, 
+              shadowOpacity: 0.3, 
+              shadowRadius: 4 
+            }
           ]}
-          onPress={() => setShowDetails(!showDetails)}
+          onPress={handleRatingsBoxTap}
           activeOpacity={0.8}
         >
           {!showDetails ? (
-            // Collapsed: Show icons with clear "Tap for more details" prompt
+            // Collapsed: Show icons with improved visual cues
             <View>
               <View style={tw`p-2 flex-row items-center justify-between`}>
                 {/* Rating icons */}
@@ -1096,18 +1109,32 @@ const AmenitiesSlide: React.FC<{
                 )}
               </View>
               
-              {/* Clear "Tap for more details" prompt */}
-              <View style={tw`border-t border-white/20 px-3 py-2`}>
+              {/* Enhanced tap prompt with animation hint */}
+              <View style={[
+                tw` bg-black/5 border-t border-white/20 px-3 py-2`,
+                
+              ]}>
                 <View style={tw`flex-row items-center justify-center`}>
-                  <Text style={tw`text-white/80 text-[10px] font-medium mr-1`}>Tap here for more details</Text>
-                  <Ionicons name="chevron-down" size={12} color="rgba(255,255,255,0.8)" />
+                  <View style={tw`flex-row items-center`}>
+                   
+                    <Text style={[
+                      tw`text-[10px] font-medium mr-1 text-white`,
+                 
+                    ]}>
+                      Tap here to view details
+                    </Text>
+                  </View>
                 </View>
               </View>
             </View>
           ) : (
-            // Expanded: Detailed view with close option
-            <View style={tw`p-3`}>
-              {/* Header with overall score and close */}
+            // Expanded: Detailed view with tap-to-close functionality
+            <TouchableOpacity
+              style={tw`p-3`}
+              onPress={handleExpandedContentTap}
+              activeOpacity={1}
+            >
+              {/* Header with overall score and close hint */}
               <View style={tw`flex-row items-center justify-between mb-3`}>
                 <View style={tw`flex-row items-center`}>
                   <View 
@@ -1131,7 +1158,14 @@ const AmenitiesSlide: React.FC<{
                   </View>
                   <Text style={tw`text-white text-sm font-semibold`}>Guest Ratings</Text>
                 </View>
-                <Ionicons name="chevron-up" size={16} color="rgba(255,255,255,0.8)" />
+                <View style={tw`flex-row items-center`}>
+
+                  <Ionicons 
+                    name="chevron-up" 
+                    size={16} 
+                    color="white" 
+                  />
+                </View>
               </View>
 
               {/* Category ratings with labels */}
@@ -1233,11 +1267,11 @@ const AmenitiesSlide: React.FC<{
                   </View>
                 )}
               </View>
-            </View>
+            </TouchableOpacity>
           )}
         </TouchableOpacity>
       </View>
-    </View>
+    </TouchableOpacity>
   );
 };
 const SwipeableHotelStoryCard: React.FC<SwipeableHotelStoryCardProps> = ({ 
@@ -1245,6 +1279,7 @@ const SwipeableHotelStoryCard: React.FC<SwipeableHotelStoryCardProps> = ({
   onSave,
   onViewDetails, 
   onHotelPress,
+   onFavoriteSuccess,
   index,
   totalCount,
   checkInDate,
@@ -1256,6 +1291,7 @@ const SwipeableHotelStoryCard: React.FC<SwipeableHotelStoryCardProps> = ({
   searchMode = 'two-stage',
   placeId,
   occupancies,
+  
 
   
   // ADD THESE DESTRUCTURED SAFETY PROPS:
@@ -1267,7 +1303,8 @@ const SwipeableHotelStoryCard: React.FC<SwipeableHotelStoryCardProps> = ({
   safetyRatingThreshold = 6.0,
 }) => {
 
-  const [showFavoritePopup, setShowFavoritePopup] = useState(false);
+const [showFavoritesPopup, setShowFavoritesPopup] = useState(false);
+const [favoritedHotelName, setFavoritedHotelName] = useState('');
 const popupAnimation = useRef(new Animated.Value(0)).current;
 const [showHotelChat, setShowHotelChat] = useState(false);
   const [currentSlide, setCurrentSlide] = useState(0);
@@ -1622,27 +1659,42 @@ scrollsToTop={false}
 
 <View style={tw`bg-white rounded-b-2xl`}>
   
-{/* Action Buttons - Original spacing, prevents text truncation */}
-<View style={tw`flex-row items-center px-4 py-3 gap-2`}>
-  {/* Heart - Minimal */}
-  <TouchableOpacity style={tw`w-8 h-8 items-center justify-center`}>
-    <AnimatedHeartButton
-      hotel={hotel}
-      size={18}
-      onShowSignUpModal={handleShowSignUpModal}
-    />
-  </TouchableOpacity>
-
-{/* Ask - Search guide pill style */}
-  <TouchableOpacity
+{/* Action Buttons - Responsive design that adapts to screen width */}
+<View style={tw`flex-row items-center px-3 py-3 gap-2`}>
+  {/* Heart - Compact but accessible touch target */}
+  <TouchableOpacity 
     style={[
-      tw`py-2 px-3 rounded-xl flex-row items-center flex-1 justify-center bg-white border border-gray-200`,
+      tw`w-10 h-10 items-center justify-center rounded-xl bg-white border border-gray-200`,
       {
         shadowColor: '#000',
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.1,
-        shadowRadius: 2,
-        elevation: 3,
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.08,
+        shadowRadius: 3,
+        elevation: 2,
+      }
+    ]}
+    activeOpacity={0.7}
+  >
+    <AnimatedHeartButton
+      hotel={hotel}
+  size={20}
+  onShowSignUpModal={handleShowSignUpModal}
+  onFavoriteSuccess={onFavoriteSuccess}
+/>
+  </TouchableOpacity>
+
+  {/* Ask - Responsive pill that shrinks gracefully */}
+  <TouchableOpacity
+    style={[
+      tw`py-2.5 px-3 rounded-xl flex-row items-center flex-1 justify-center bg-white border border-gray-200`,
+      {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.08,
+        shadowRadius: 3,
+        elevation: 2,
+        minHeight: 40,
+        maxWidth: '30%', // Prevents overflow on small screens
       }
     ]}
     onPress={() => setShowHotelChat(true)}
@@ -1654,19 +1706,28 @@ scrollsToTop={false}
     ]}>
       <Ionicons name="chatbubble-outline" size={12} color={TURQUOISE_DARK} />
     </View>
-    <Text style={tw`text-xs font-medium text-gray-800`}>Ask</Text>
+    <Text 
+      style={tw`text-xs font-medium text-gray-800`}
+      numberOfLines={1}
+      adjustsFontSizeToFit
+      minimumFontScale={0.8}
+    >
+      Ask
+    </Text>
   </TouchableOpacity>
 
-  {/* Map - Search guide pill style */}
+  {/* Map - Responsive pill that shrinks gracefully */}
   <TouchableOpacity
     style={[
-      tw`py-2 px-3 rounded-xl flex-row items-center flex-1 justify-center bg-white border border-gray-200`,
+      tw`py-2.5 px-3 rounded-xl flex-row items-center flex-1 justify-center bg-white border border-gray-200`,
       {
         shadowColor: '#000',
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.1,
-        shadowRadius: 2,
-        elevation: 3,
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.08,
+        shadowRadius: 3,
+        elevation: 2,
+        minHeight: 40,
+        maxWidth: '30%', // Prevents overflow on small screens
       }
     ]}
     onPress={handleViewDetails}
@@ -1678,19 +1739,28 @@ scrollsToTop={false}
     ]}>
       <Ionicons name="map-outline" size={12} color={TURQUOISE_DARK} />
     </View>
-    <Text style={tw`text-xs font-medium text-gray-800`}>Map</Text>
+    <Text 
+      style={tw`text-xs font-medium text-gray-800`}
+      numberOfLines={1}
+      adjustsFontSizeToFit
+      minimumFontScale={0.8}
+    >
+      Map
+    </Text>
   </TouchableOpacity>
 
-  {/* Book - Same pill style as others */}
+  {/* Book - Responsive pill that shrinks gracefully */}
   <TouchableOpacity
     style={[
-      tw`py-2 px-3 rounded-xl flex-row items-center flex-1 justify-center bg-white border border-gray-200`,
+      tw`py-2.5 px-3 rounded-xl flex-row items-center flex-1 justify-center bg-white border border-gray-200`,
       {
         shadowColor: '#000',
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.1,
-        shadowRadius: 2,
-        elevation: 3,
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.08,
+        shadowRadius: 3,
+        elevation: 2,
+        minHeight: 40,
+        maxWidth: '30%', // Prevents overflow on small screens
       }
     ]}
     onPress={handleDeepLink}
@@ -1706,10 +1776,15 @@ scrollsToTop={false}
         resizeMode="contain"
       />
     </View>
-    <Text style={tw`text-xs font-medium text-gray-800`}>Book</Text>
+    <Text 
+      style={tw`text-xs font-medium text-gray-800`}
+      numberOfLines={1}
+      adjustsFontSizeToFit
+      minimumFontScale={0.8}
+    >
+      Book
+    </Text>
   </TouchableOpacity>
-
-
 </View>
 </View>
 
@@ -1740,7 +1815,9 @@ scrollsToTop={false}
     onClose={() => setShowHotelChat(false)}
     hotel={hotel}
   />
+  
 </Modal>
+
     </View>
     
   );

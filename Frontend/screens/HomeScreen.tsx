@@ -19,13 +19,14 @@ import tw from 'twrnc';
 import SwipeableStoryView from '../components/StoryView/SwipeableStoryView';
 import AISearchOverlay from '../components/HomeScreenTop/AiSearchOverlay';
 import LoadingScreen from '../components/HomeScreenTop/LoadingScreen';
-import { useNavigation, useRoute } from '@react-navigation/native';
+import { useNavigation, useRoute, CompositeNavigationProp } from '@react-navigation/native';
 import type { StackNavigationProp } from '@react-navigation/stack';
 import EventSource from 'react-native-sse';
 import Constants from 'expo-constants';
 import SearchGuidePills from '../components/InitalSearch/SearchGuidePills';
 import { Easing, Keyboard, KeyboardAvoidingView, ScrollView } from 'react-native';
-
+import FavoritesPopup from '../components/StoryView/FavoritesPopup';
+import type { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 
 const OVERLAY_BACKDROP = 'rgba(0,0,0,0.7)';
 
@@ -50,8 +51,16 @@ type FindStackParamList = {
     searchQuery?: string;
   };
 };
+type TabParamList = {
+  Find: undefined;
+  Favorites: undefined;
+  Profile: undefined;
+};
 
-type HomeScreenNavigationProp = StackNavigationProp<FindStackParamList>;
+type HomeScreenNavigationProp = CompositeNavigationProp<
+  StackNavigationProp<FindStackParamList, 'Results'>,
+  BottomTabNavigationProp<TabParamList>
+>;
 
 // NEW: Two-stage API response interfaces
 interface Stage1SearchResponse {
@@ -378,8 +387,8 @@ const editContainerHeight = useRef(new Animated.Value(0)).current;
 const editContentOpacity = useRef(new Animated.Value(0)).current;
 const editBackgroundScale = useRef(new Animated.Value(1)).current;
 const normalModeOpacity = useRef(new Animated.Value(1)).current;
-
-
+const [showFavoritesPopup, setShowFavoritesPopup] = useState(false);
+const [favoritedHotelName, setFavoritedHotelName] = useState('');
   // Polling management
   const sentimentPollingRef = useRef<NodeJS.Timeout | null>(null);
   const pollingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -415,6 +424,17 @@ const editModeOpacity = useRef(new Animated.Value(0)).current;
 const editContentHeight = useRef(new Animated.Value(0)).current;
 const editOpacity = useRef(new Animated.Value(0)).current;
 
+const handleFavoriteSuccess = useCallback((hotelName: string) => {
+  console.log('Hotel favorited:', hotelName);
+  setFavoritedHotelName(hotelName);
+  setShowFavoritesPopup(true);
+}, []);
+
+const handleNavigateToFavorites = useCallback(() => {
+    setShowFavoritesPopup(false);
+    // Navigate to the Favorites tab
+    navigation.navigate('Favorites');
+  }, [navigation]);
 
 // One driver for the whole edit mode animation: 0 = closed, 1 = open
 const editAnim = useRef(new Animated.Value(0)).current;
@@ -2023,6 +2043,7 @@ const handleBackPress = useCallback(() => {
   stage2Complete={!!stage2Results}
   searchMode={TEST_MODE ? 'test' : stage1Results ? 'two-stage' : 'legacy'}
   searchParams={streamingSearchParams || searchResults?.searchParams}
+  onFavoriteSuccess={handleFavoriteSuccess}
 />
       </View>
 
@@ -2063,8 +2084,18 @@ const handleBackPress = useCallback(() => {
         resultCount: displayHotels.length || stage1Results?.matchedHotelsCount || searchResults?.aiRecommendationsCount || 0
       }}
     />
+     
   </View>
+
+ 
 </Modal>
+  <FavoritesPopup
+  visible={showFavoritesPopup}
+  hotelName={favoritedHotelName}
+  onPress={handleNavigateToFavorites}
+  onHide={() => setShowFavoritesPopup(false)}
+/>
+
 
       </Animated.View>
     </SafeAreaView>

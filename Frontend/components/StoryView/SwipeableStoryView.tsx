@@ -29,6 +29,7 @@ interface SwipeableStoryViewProps {
   stage2Complete?: boolean;
   searchMode?: 'test' | 'two-stage' | 'legacy';
   showPlaceholders?: boolean;
+  onFavoriteSuccess?: (hotelName: string) => void; 
   isStreaming?: boolean;
   streamingProgress?: {
     step: number;
@@ -38,6 +39,7 @@ interface SwipeableStoryViewProps {
   searchParams?: any;
   showSafetyRatings?: boolean;
   safetyRatingThreshold?: number;
+  
 }
 
 const SwipeableStoryView: React.FC<SwipeableStoryViewProps> = ({
@@ -59,6 +61,7 @@ const SwipeableStoryView: React.FC<SwipeableStoryViewProps> = ({
   searchParams,
   showSafetyRatings = true,
   safetyRatingThreshold = 6.0,
+  onFavoriteSuccess,
 }) => {
   // Streaming state
   const [streamingHotelsCount, setStreamingHotelsCount] = useState(0);
@@ -344,6 +347,7 @@ const SwipeableStoryView: React.FC<SwipeableStoryViewProps> = ({
             hasAISafetyRating={!!hotel.aiSafetyRating}
             showSafetyRating={showSafetyRatings}
             safetyRatingThreshold={safetyRatingThreshold}
+            onFavoriteSuccess={onFavoriteSuccess}
           />
         </View>
       </View>
