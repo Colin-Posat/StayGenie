@@ -59,27 +59,6 @@ const ensureFutureDates = (parsed: any) => {
   return parsed;
 };
 
-/**
- * Forces maxCost to $25 if the query contains "cheapest" keyword
- */
-const applyCheapestPricing = (parsed: any, userInput: string) => {
-  const lowerInput = userInput.toLowerCase();
-  
-  // Check if the input contains "cheapest" keyword
-  if (lowerInput.includes('cheapest')) {
-    console.log('🏷️ "Cheapest" keyword detected - setting maxCost to $25');
-    parsed.maxCost = 25;
-    
-    // If minCost was set higher than 25, adjust it
-    if (parsed.minCost !== null && parsed.minCost > 25) {
-      parsed.minCost = null;
-      console.log('🏷️ Removed minCost as it was higher than $25 limit');
-    }
-  }
-  
-  return parsed;
-};
-
 const validateAndCorrectCity = (parsed: any) => {
   const cityCorrections: { [key: string]: { city: string, country?: string } } = {
     // National Parks → Gateway Cities
@@ -174,7 +153,7 @@ const validateParsedData = (parsed: any) => {
     parsed.checkout = fallbackOut.toISOString().split('T')[0];
   }
 
-  // NEW: force dates into the future while preserving trip length
+  // Force dates into the future while preserving trip length
   parsed = ensureFutureDates(parsed);
 
   // Re-parse after adjustments
@@ -242,6 +221,7 @@ You are a travel assistant converting user hotel search requests into structured
   "children": number (default 0),
   "minCost": number or null (USD/night),
   "maxCost": number or null (USD/night),
+  "cheap": boolean (true if user wants budget/cheap options, false otherwise),
   "findCheapestOnes": boolean (true ONLY if query is purely about finding cheapest options with no other criteria),
   "aiSearch": "All other preferences, descriptors, trip purpose, vibe, hotel style, etc."
 }
@@ -340,74 +320,23 @@ You are a travel assistant converting user hotel search requests into structured
 - "Monaco" → Use "Monte Carlo" (main hotel district)
 - Always prefer the specific district/area with the best hotel infrastructure over the general region/country name
 
-{
-  "CityPricing": {
-    "UltraExpensive": {
-      "budget": { "maxCost": 200 },
-      "affordable": { "maxCost": 400 },
-      "midRange": { "minCost": 300, "maxCost": 600 },
-      "luxury": { "minCost": 600 },
-      "ultraLuxury": { "minCost": 1000 }
-    },
-    "VeryExpensive": {
-      "budget": { "maxCost": 150 },
-      "affordable": { "maxCost": 350 },
-      "midRange": { "minCost": 250, "maxCost": 500 },
-      "luxury": { "minCost": 500 },
-      "ultraLuxury": { "minCost": 800 }
-    },
-    "Expensive": {
-      "budget": { "maxCost": 120 },
-      "affordable": { "maxCost": 300 },
-      "midRange": { "minCost": 200, "maxCost": 400 },
-      "luxury": { "minCost": 400 },
-      "ultraLuxury": { "minCost": 600 }
-    },
-    "Moderate": {
-      "budget": { "maxCost": 80 },
-      "affordable": { "maxCost": 250 },
-      "midRange": { "minCost": 150, "maxCost": 300 },
-      "luxury": { "minCost": 300 },
-      "ultraLuxury": { "minCost": 500 }
-    },
-    "BudgetFriendly": {
-      "budget": { "maxCost": 60 },
-      "affordable": { "maxCost": 180 },
-      "midRange": { "minCost": 100, "maxCost": 220 },
-      "luxury": { "minCost": 220 },
-      "ultraLuxury": { "minCost": 400 }
-    }
-  },
-  "ExplicitPriceParsing": {
-    "range": "$X to $Y → { minCost: X, maxCost: Y }",
-    "under": "under $X → { maxCost: X }",
-    "over": "over/at least $X → { minCost: X }",
-    "around": "around $X → { minCost: X-20, maxCost: X+20 }"
-  },
-  "SpecialCases": {
-    "cheapestPossible": "use lowest maxCost for city tier",
-    "moneyNoObject": "minCost = top tier",
-    "splurge": "minCost = luxury tier",
-    "honeymoon": "minCost = luxury tier"
-  },
-  "FindCheapestOnes": {
-    "rule": "true if query has 'cheapest' + city only (no amenities/features/quality/location extras)"
-  },
-  "IfNoBudget": { "minCost": null, "maxCost": null },
-  "aiSearch": {
-    "include": ["purpose", "vibe", "style", "budgetContext"],
-    "infer": { "honeymoon": "romantic luxury", "business": "reliable mid-range", "family": "family-friendly" },
-    "default": "well-reviewed, good-value hotels"
-  },
-  "Examples": {
-    "Cheapest hotels in Tokyo": { "maxCost": 150 },
-    "Cheapest hotels in Bangkok": { "maxCost": 80 },
-    "Budget hotels in Monaco": { "maxCost": 200 },
-    "Luxury hotels in Prague": { "minCost": 300 },
-    "Luxury hotels in New York": { "minCost": 500 },
-    "Paris hotels under $200": { "maxCost": 200 }
-  }
-}
+**BUDGET/CHEAP DETECTION:**
+Set "cheap": true if the user mentions any of these budget-related terms:
+- "cheap", "cheapest", "budget", "affordable", "inexpensive", "low cost", "save money", "tight budget", "on a dime", "bargain", "economical", "frugal"
+
+**PRICING RULES:**
+- Only set explicit minCost/maxCost if user gives specific dollar amounts
+- Examples:
+  - "under $100" → maxCost: 100
+  - "$50 to $150" → minCost: 50, maxCost: 150  
+  - "around $200" → minCost: 180, maxCost: 220
+  - "cheap hotels" → cheap: true, but leave minCost/maxCost as null
+
+**FindCheapestOnes Rules:**
+Set to true ONLY if:
+- Query contains "cheapest" AND
+- No other specific requirements (amenities, style, location preferences beyond city)
+- Pure price-focused search
 
 Output ONLY the JSON object - no explanations or extra text.
 
@@ -436,12 +365,14 @@ User input: "${userInput}"
       parsed.maxCost = null;
     }
 
+    // Ensure cheap is boolean
+    if (typeof parsed.cheap !== 'boolean') {
+      parsed.cheap = false;
+    }
+
     // Apply city corrections and validation
     parsed = validateAndCorrectCity(parsed);
     parsed = validateParsedData(parsed);
-    
-    // NEW: Apply cheapest pricing override
-    parsed = applyCheapestPricing(parsed, userInput);
 
     const parseTime = Date.now() - parseStartTime;
     console.log(`✅ Query parsed and validated in ${parseTime}ms:`, parsed);
@@ -470,6 +401,8 @@ User input: "${userInput}"
         children: 0,
         minCost: null,
         maxCost: null,
+        cheap: false,
+        findCheapestOnes: false,
         aiSearch: "well-reviewed, good-value hotels",
         note: "Fallback response due to parsing error"
       });

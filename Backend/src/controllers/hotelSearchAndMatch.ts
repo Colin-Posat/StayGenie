@@ -560,6 +560,37 @@ const hasSpecificPreferences = parsedQuery.aiSearch &&
   // FIXED: Better budget handling in 
   let budgetGuidance = '';
   let budgetContext = '';
+  let cheapnessOverride = '';
+
+// Check if user wants cheap options but didn't specify budget
+if (parsedQuery.cheap && !parsedQuery.minCost && !parsedQuery.maxCost) {
+  cheapnessOverride = `
+🚨🚨🚨 CRITICAL CHEAPEST OVERRIDE 🚨🚨🚨
+USER WANTS THE CHEAPEST OPTIONS THAT MATCH: "${userInput}"
+- IGNORE ALL OTHER RANKING FACTORS 
+- FOCUS ONLY ON: Lowest prices + matches user request
+- Choose the cheapest hotels that match the user's specific requirements
+- Price is the PRIMARY factor, everything else is secondary
+🚨🚨🚨 END CHEAPEST OVERRIDE 🚨🚨🚨
+
+`;
+  budgetGuidance = 'MOST IMPORTANT: Select the cheapest hotels that match the user request. Price is the top priority. ';
+} else if (parsedQuery.minCost || parsedQuery.maxCost) {
+  // Existing budget logic
+  const minText = parsedQuery.minCost ? `$${parsedQuery.minCost}` : '';
+  const maxText = parsedQuery.maxCost ? `$${parsedQuery.maxCost}` : '';
+  
+  if (minText && maxText) {
+    budgetContext = `\n💰 PREFERRED BUDGET: ${minText} - ${maxText}/night`;
+    budgetGuidance = `The user prefers hotels between ${minText}-${maxText}/night, but you can select slightly outside this range if the hotels offer exceptional value or match preferences well. `;
+  } else if (minText) {
+    budgetContext = `\n💰 PREFERRED MINIMUM: ${minText}+ per night`;
+    budgetGuidance = `The user prefers hotels ${minText}+ per night, but you can select slightly below if they offer great value. `;
+  } else if (maxText) {
+    budgetContext = `\n💰 PREFERRED MAXIMUM: Under ${maxText} per night`;
+    budgetGuidance = `The user prefers hotels under ${maxText} per night, but you can select slightly above if they offer exceptional value. `;
+  }
+}
   
   if (parsedQuery.minCost || parsedQuery.maxCost) {
     const minText = parsedQuery.minCost ? `$${parsedQuery.minCost}` : '';
@@ -581,16 +612,19 @@ const hasSpecificPreferences = parsedQuery.aiSearch &&
   
   // FIXED: More flexible prompts that don't create impossible constraints
   const prompt = hasSpecificPreferences ? 
-    `USER REQUEST: "${parsedQuery.aiSearch}"
+    `USER REQUEST: "${userInput}"
 STAY: ${nights} nights${budgetContext}
 
 🎯 RANKING PRIORITY ORDER:
-1. USER PREFERENCES MATCH (Most Important)
-2. Location convenience
-3. Star rating and quality
-4. Value for money
+${parsedQuery.cheap && !parsedQuery.minCost && !parsedQuery.maxCost ? 
+  '1. LOWEST PRICES (Most Important - user wants cheapest)\n2. USER PREFERENCES MATCH\n3. Basic quality standards' : 
+  '1. USER PREFERENCES MATCH (Most Important)\n2. Location convenience\n3. Star rating and quality\n4. Value for money'
+}
 
-🎯 YOUR PRIMARY TASK: Analyze each hotel's description and amenities to find the BEST matches for: "${userInput}"
+🎯 YOUR PRIMARY TASK: ${parsedQuery.cheap && !parsedQuery.minCost && !parsedQuery.maxCost ? 
+  `Find the CHEAPEST hotels that match: "${userInput}" - ignore factors not specified in the user request` :
+  `Analyze each hotel's description and amenities to find the BEST matches for: "${userInput}"`
+}
 
 📋 STEP-BY-STEP MATCHING PROCESS:
 1. READ each hotel's description carefully for keywords matching user request
@@ -635,10 +669,10 @@ REMEMBER: Always select 15 hotels using exact names from the list above.` :
 STAY: ${nights} nights${budgetContext}
 
 🎯 RANKING PRIORITY ORDER:
-1. OVERALL QUALITY AND VALUE (Most Important)
-2. Location quality
-3. Star rating and amenities
-4. Price value proposition
+${parsedQuery.cheap && !parsedQuery.minCost && !parsedQuery.maxCost ? 
+  '1. LOWEST PRICES (Most Important - user wants cheapest)\n2. Basic quality and location\n3. Star rating' : 
+  '1. OVERALL QUALITY AND VALUE (Most Important)\n2. Location quality\n3. Star rating and amenities\n4. Price value proposition'
+}
 
 HOTELS AVAILABLE:
 ${hotelSummary}
@@ -1166,255 +1200,7 @@ const createOptimizedHotelSummaryForAI = (hotel: any, hotelMetadata: any, index:
   };
 };
 
-// GPT-4o Mini hotel matching and ranking (unchanged)
-const gptHotelMatching = async (
-  hotelSummaries: HotelSummaryForAI[], 
-  parsedQuery: ParsedSearchQuery, 
-  nights: number,
-  searchId: string 
-): Promise<Array<{ hotelName: string; aiMatchPercent: number; hotelData: HotelSummaryForAI }>> => {
-  
-  const hasSpecificPreferences = parsedQuery.aiSearch && 
-  typeof parsedQuery.aiSearch === 'string' && 
-  parsedQuery.aiSearch.trim() !== '';
-  
-  // Budget context - only apply if user specified a budget
-  let budgetContext = '';
-  let budgetGuidance = '';
-  
-  if (parsedQuery.minCost || parsedQuery.maxCost) {
-    const minText = parsedQuery.minCost ? `${parsedQuery.minCost}` : '';
-    const maxText = parsedQuery.maxCost ? `${parsedQuery.maxCost}` : '';
-    
-    if (minText && maxText) {
-      budgetContext = `\n💰 BUDGET CONSTRAINT: ${minText} - ${maxText}/night`;
-      budgetGuidance = `IMPORTANT: Stay within the specified budget of ${minText}-${maxText}/night. `;
-    } else if (minText) {
-      budgetContext = `\n💰 MINIMUM BUDGET: ${minText}+ per night`;
-      budgetGuidance = `IMPORTANT: Only select hotels ${minText}+ per night. `;
-    } else if (maxText) {
-      budgetContext = `\n💰 MAXIMUM BUDGET: Under ${maxText} per night`;
-      budgetGuidance = `IMPORTANT: Only select hotels under ${maxText} per night. `;
-    }
-  }
 
-  console.log(`🤖 GPT-4o Mini Matching - Processing ${hotelSummaries.length} hotels`);
-  
-  // Create enhanced hotel summary for all hotels
-  const hotelSummary = hotelSummaries.map((hotel, index) => {
-    const priceMatch = hotel.pricePerNight.match(/(\d+)/);
-    const numericPrice = priceMatch ? parseInt(priceMatch[1]) : 999999;
-    
-    const locationInfo = [
-      hotel.city !== 'Unknown City' ? hotel.city : '',
-      hotel.country !== 'Unknown Country' ? hotel.country : ''
-    ].filter(Boolean).join(', ') || 'Location unknown';
-    
-    const coordinates = hotel.latitude && hotel.longitude 
-      ? `(${hotel.latitude.toFixed(4)}, ${hotel.longitude.toFixed(4)})` 
-      : '';
-    
-    const shortAddress = hotel.location && hotel.location !== 'Location not available' 
-      ? hotel.location.length > 50 
-        ? hotel.location.substring(0, 47) + '...' 
-        : hotel.location
-      : '';
-
-      const cleanDescription = hotel.description
-    .replace(/<[^>]*>/g, '') // Remove HTML tags
-    .replace(/&nbsp;/g, ' ') // Replace &nbsp; with space
-    .replace(/&amp;/g, '&')  // Replace HTML entities
-    .replace(/&lt;/g, '<')
-    .replace(/&gt;/g, '>')
-    .replace(/&quot;/g, '"')
-    .trim();
-    
-    const locationDetails = [
-      locationInfo,
-      shortAddress,
-      coordinates
-    ].filter(Boolean).join(' | ');
-    
-     return `${index + 1}: ${hotel.name}|💰${numericPrice}/night|📍${locationDetails}|🏨${hotel.topAmenities.join(',')}|📝${hotel.reviewCount} reviews|📖${cleanDescription}`;
-  }).join('\n');
-  
-  
-  // Create prompts focused on preferences, not price
-const prompt = hasSpecificPreferences ? 
-  `USER REQUEST: "${parsedQuery.aiSearch}"
-STAY: ${nights} nights${budgetContext}
-
-🎯 RANKING PRIORITY ORDER:
-1. USER PREFERENCES MATCH (Most Important) - Find hotels that best match what the user is looking for
-2. Location convenience and accessibility
-3. Star rating and quality
-4. Value for money
-5. Overall hotel amenities
-
-HOTELS:
-${hotelSummary}
-
-CRITICAL REQUIREMENT: You MUST return EXACTLY ${TARGET_HOTEL_COUNT} hotels no matter what! Even if no hotels perfectly match the user's preferences, find the ${TARGET_HOTEL_COUNT} CLOSEST matches available from the list.
-
-TASK: Find hotels that BEST MATCH the user's specific preferences and requirements.
-${budgetGuidance}Pay attention to location, amenities, and overall quality that align with user needs.
-
-Return JSON array with EXACTLY ${TARGET_HOTEL_COUNT} hotels:
-[{"hotelName":"exact name","aiMatchPercent":30-95}]
-
-REMEMBER: ALWAYS return ${TARGET_HOTEL_COUNT} hotels! Use exact hotel names from list.` :
-
-  `DESTINATION: ${parsedQuery.cityName}, ${parsedQuery.countryCode}
-STAY: ${nights} nights${budgetContext}
-
-🎯 RANKING PRIORITY ORDER:
-1. OVERALL QUALITY AND VALUE (Most Important) - Best hotels for the destination
-2. Location quality and convenience
-3. Star rating and amenities
-4. Price value proposition
-5. Guest satisfaction potential
-
-HOTELS:
-${hotelSummary}
-
-CRITICAL REQUIREMENT: You MUST return EXACTLY ${TARGET_HOTEL_COUNT} hotels no matter what!
-
-TASK: Recommend the BEST QUALITY hotels for this destination.
-${budgetGuidance}Focus on hotels that consistently deliver great experiences and value.
-Return JSON array with EXACTLY ${TARGET_HOTEL_COUNT} hotels:
-[{"hotelName":"exact name","aiMatchPercent":60-95}]
-
-REMEMBER: ALWAYS return ${TARGET_HOTEL_COUNT} hotels! Use exact names from list.`;
-
-
-    `DESTINATION: ${parsedQuery.cityName}, ${parsedQuery.countryCode}
-STAY: ${nights} nights${budgetContext}
-
-🎯 RANKING PRIORITY ORDER:
-1. OVERALL QUALITY AND VALUE (Most Important) - Best hotels for the destination
-2. Location quality and convenience
-3. Star rating and amenities
-4. Price value proposition
-5. Guest satisfaction potential
-
-HOTELS:
-${hotelSummary}
-
-CRITICAL REQUIREMENT: You MUST return EXACTLY 5 hotels no matter what!
-
-TASK: Recommend the BEST QUALITY hotels for this destination.
-${budgetGuidance}Focus on hotels that consistently deliver great experiences and value.
-Return JSON array with EXACTLY 5 hotels:
-[{"hotelName":"exact name","aiMatchPercent":60-95}]
-
-REMEMBER: ALWAYS return 5 hotels! Use exact names from list.`;
-  
-  // Single GPT-4o Mini API call
-  const response = await openai.chat.completions.create({
-    model: 'gpt-4o-mini',
-    messages: [
-      {
-        role: 'system',
-        content: 'You are an expert hotel recommendation specialist. Reply ONLY with valid JSON array of 5 items with exact hotel names and match percentages.'
-      },
-      { role: 'user', content: prompt }
-    ],
-    temperature: 0.3,
-    max_tokens: 1200,
-  });
-  const tokens = extractTokens(response);
-  searchCostTracker.addGptUsage(searchId, 'hotelMatching', tokens.prompt, tokens.completion);
-  
-  // Parse response with fallback logic (same as before)
-  const parseMatchingResponse = (response: any): Array<{ hotelName: string; aiMatchPercent: number; hotelData: HotelSummaryForAI }> => {
-    try {
-      const aiResponse = response.choices[0]?.message?.content || '[]';
-      const cleanResponse = aiResponse.replace(/```json\n?|\n?```/g, '').trim();
-      
-      let matches: Array<{ hotelName: string; aiMatchPercent: number }> = [];
-      
-      try {
-        matches = JSON.parse(cleanResponse);
-      } catch (jsonError) {
-        console.warn('⚠️ JSON parsing failed, using fallback extraction');
-        const hotelNameMatches = aiResponse.match(/"([^"]+)"/g);
-        const percentMatches = aiResponse.match(/(\d+)/g);
-        
-        if (hotelNameMatches && percentMatches) {
-          matches = hotelNameMatches.slice(0, 5).map((name: string, index: number) => ({
-            hotelName: name.replace(/"/g, ''),
-            aiMatchPercent: parseInt(percentMatches[index] || '50')
-          }));
-        }
-      }
-      
-      // Map hotel names back to full hotel data
-      const validMatches = matches.slice(0, 5).map(match => {
-        const hotelData = hotelSummaries.find(hotel => hotel.name === match.hotelName);
-        if (!hotelData) {
-          console.warn(`⚠️ Hotel "${match.hotelName}" not found in hotel list`);
-          return null;
-        }
-        return {
-          hotelName: match.hotelName,
-          aiMatchPercent: match.aiMatchPercent,
-          hotelData
-        };
-      }).filter(Boolean) as Array<{ hotelName: string; aiMatchPercent: number; hotelData: HotelSummaryForAI }>;
-      
-      // FALLBACK: If we don't have 5 valid matches, fill with top hotels
-      if (validMatches.length < TARGET_HOTEL_COUNT) {
-      const usedHotelIds = new Set(validMatches.map(m => m.hotelData.hotelId));
-      const remainingHotels = hotelSummaries.filter(hotel => !usedHotelIds.has(hotel.hotelId));
-      
-      const topRemainingHotels = remainingHotels
-        .sort((a, b) => b.starRating - a.starRating)
-        .slice(0, TARGET_HOTEL_COUNT - validMatches.length);
-      
-      const fallbackMatches = topRemainingHotels.map((hotel, index) => ({
-        hotelName: hotel.name,
-        aiMatchPercent: hasSpecificPreferences ? 30 + (index * 5) : 60 + (index * 5),
-        hotelData: hotel
-      }));
-      
-      validMatches.push(...fallbackMatches);
-    }
-    
-    return validMatches.slice(0, TARGET_HOTEL_COUNT);
-    
-  } catch (parseError) {
-    // ULTIMATE FALLBACK: Just return top TARGET_HOTEL_COUNT hotels by star rating
-    const fallbackHotels = hotelSummaries
-      .sort((a, b) => b.starRating - a.starRating)
-      .slice(0, TARGET_HOTEL_COUNT)
-      .map((hotel, index) => ({
-        hotelName: hotel.name,
-        aiMatchPercent: hasSpecificPreferences ? 25 + (index * 5) : 55 + (index * 5),
-        hotelData: hotel
-      }));
-    
-    return fallbackHotels;
-  }
-};
-  
-  const matches = parseMatchingResponse(response);
-  
-  // Ensure exactly 5 matches
-  if (matches.length === 0) {
-    const emergencyMatches = hotelSummaries
-      .sort((a, b) => b.starRating - a.starRating)
-      .slice(0, 5)
-      .map((hotel, index) => ({
-        hotelName: hotel.name,
-        aiMatchPercent: hasSpecificPreferences ? 20 + (index * 5) : 50 + (index * 5),
-        hotelData: hotel
-      }));
-    
-    return emergencyMatches;
-  }
-  
-  return matches.slice(0, 5);
-};
 
 const STOP_WORDS = new Set([
   // Articles
@@ -1853,7 +1639,7 @@ const applyHardPriceFilter = (
 
   // Special case: if maxCost is $25 (cheapest filter), use 50 hotels minimum
   // Otherwise use 30 hotels minimum
-  const minHotelsForAI = parsedQuery.maxCost === 25 ? 50 : 30;
+  const minHotelsForAI = parsedQuery.maxCost === 25 ? 50 : 80;
   
   if (parsedQuery.maxCost === 25) {
     console.log('🏷️ Cheapest filter detected ($25 max) - using 50 hotels minimum for better selection');
@@ -2078,7 +1864,7 @@ export const hotelSearchAndMatchController = async (req: Request, res: Response)
           children: parsedQuery.children ? Array(parsedQuery.children).fill(10) : []
         }
       ],
-      timeout: 2,
+      timeout: 4,
       maxRatesPerHotel: 1,
       hotelIds: hotelIds,
       limit: 500
@@ -2235,8 +2021,8 @@ export const hotelSearchAndMatchController = async (req: Request, res: Response)
         searchId
       );
     } else {
-      // Use regular GPT matching for POST requests
-      gptMatches = await gptHotelMatching(cappedForLLM, parsedQuery, nights, searchId);
+      // Use non-streaming GPT matching for legacy requests
+      gptMatches = ""
     }
     
     logger.endStep('7-GPTMatching', { matches: gptMatches.length });
@@ -2257,10 +2043,28 @@ export const hotelSearchAndMatchController = async (req: Request, res: Response)
       step: 8, 
       totalSteps: 8
     });
+    if (!Array.isArray(gptMatches)) {
+  console.error('❌ GPT matches is not an array:', typeof gptMatches, gptMatches);
+  
+  if (isSSERequest) {
+    sendUpdate('error', { 
+      message: 'AI matching system returned invalid data',
+      details: `Expected array, got ${typeof gptMatches}`
+    });
+    res.end();
+    return;
+  } else {
+    return res.status(500).json({
+      error: 'AI matching failed',
+      message: 'Invalid response from AI matching system',
+      details: typeof gptMatches
+    });
+  }
+}
 
     logger.startStep('8-BuildEnrichedData', { selectedHotels: gptMatches.length });
 
-    const enrichedHotels = gptMatches.map(match => {
+   const enrichedHotels = gptMatches.map((match: { hotelName: string; aiMatchPercent: number; hotelData: HotelSummaryForAI }) => {
   const matchingHotel = hotelsWithRates.find((hotel: any) => {
     const hotelId = hotel.hotelId || hotel.id || hotel.hotel_id;
     return hotelId === match.hotelData.hotelId;

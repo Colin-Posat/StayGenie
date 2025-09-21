@@ -29,6 +29,7 @@ export interface ParsedSearchQuery {
   aiSearch: string;
   minCost?: number | null;  
   maxCost?: number | null; 
+  cheap?: boolean;
 }
 
 // UPDATED: Extended HotelInfo interface to match actual API response
