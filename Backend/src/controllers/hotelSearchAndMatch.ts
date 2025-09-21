@@ -134,6 +134,177 @@ const internalApiInstance = axios.create({
   timeout: 20000,
 });
 
+import fs from 'fs';
+
+// Function to log hotel matching prompts specifically
+const logHotelMatchingPrompt = (
+  searchId: string,
+  prompt: string,
+  hotelCount: number,
+  userQuery: string,
+  destination: string
+): void => {
+  try {
+    // Create logs directory if it doesn't exist
+    const logsDir = path.join(__dirname, '../../logs/hotel-matching');
+    if (!fs.existsSync(logsDir)) {
+      fs.mkdirSync(logsDir, { recursive: true });
+    }
+
+    // Create filename with timestamp
+    const timestamp = new Date().toISOString().slice(0, 19).replace(/:/g, '-');
+    const filename = `hotel_matching_${searchId.slice(0, 8)}_${timestamp}.txt`;
+    const filepath = path.join(logsDir, filename);
+
+    // Create log content with metadata
+    const logContent = `
+=== HOTEL MATCHING PROMPT LOG ===
+Search ID: ${searchId}
+Timestamp: ${new Date().toISOString()}
+User Query: ${userQuery}
+Destination: ${destination}
+Hotel Count: ${hotelCount}
+Character Count: ${prompt.length}
+Estimated Tokens: ~${Math.ceil(prompt.length / 4)}
+
+=== PROMPT CONTENT ===
+${prompt}
+
+=== END LOG ===
+`;
+
+    // Write to file
+    fs.writeFileSync(filepath, logContent, 'utf8');
+    
+    console.log(`📝 Hotel matching prompt logged: ${filepath}`);
+    console.log(`📊 Prompt stats: ${prompt.length} chars, ~${Math.ceil(prompt.length / 4)} tokens for ${hotelCount} hotels`);
+    
+  } catch (error) {
+    console.error(`❌ Failed to log hotel matching prompt:`, error);
+  }
+};
+
+const filterRelevantAmenities = (amenitiesText: string): string => {
+  if (!amenitiesText || typeof amenitiesText !== 'string') {
+    return '';
+  }
+
+  const universalBasics = [
+    'Non-smoking rooms',
+    'Air conditioning',
+    'Safety deposit box',
+    'Non-smoking throughout',
+    'Fire extinguishers',
+    'First aid kit available',
+    'Smoke alarms',
+    'Invoice provided',
+    'Television in common areas',
+    'Internet access',
+    'Housekeeping on request'
+  ];
+
+  const covidStandards = [
+    'Staff adhere to local safety protocols',
+    'Guest rooms disinfected between stays',
+    'Cleaning standards that are effective against Coronavirus',
+    'Physical distancing rules followed',
+    'Hand sanitizer in guest room and key areas',
+    'Sanitized tableware & silverware',
+    'Contactless check-in/check-out',
+    'Guests can opt-out any cleaning services during stay',
+    'Shared stationery like menus, pens are removed',
+    'Guest room sealed after cleaning',
+    'Property cleaned by professional cleaning companies',
+    'Physical distancing in dining areas',
+    'Process in place to check health of guests',
+    // NEW COVID AMENITIES TO FILTER
+    'Face masks for guests available',
+    'Screens / Barriers between staff and guests for safety',
+    'Delivered food - securely covered',
+    'Access to health care professionals',
+    'Thermometers for guests provided by property',
+    'Bulk dispenser for toiletries'
+  ];
+
+  const universalSecurity = [
+    '24-hour security',
+    'Security alarm',
+    'Key card access',
+    'CCTV outside property',
+    'Cashless payment available',
+    'Key access'
+  ];
+
+  const basicOperations = [
+    'Front desk (limited hours)',
+    'Express check-in',
+    'Express check-in/check-out',
+    'Express check-out',
+    'Luggage storage',
+    'Lift / Elevator',
+    'Elevator',
+    'Fax/photocopying',
+    'Free wired internet',
+    'Free WiFi',
+    '24-hour front desk',
+    'Multilingual staff',
+    'Porter/bellhop',
+    'Smoke-free property'
+  ];
+
+  const accessibilityFeatures = [
+    'Facilities for disabled guests',
+    'Wheelchair accessible',
+    'Lower bathroom sink',
+    'Emergency cord in bathroom',
+    'Visual aids: Braille',
+    'Braille or raised signage',
+    'Auditory guidance',
+    'Assistive listening devices available',
+    'Assistive listening devices in meeting rooms',
+    'Visual alarms in hallways',
+    'Stair-free path to entrance',
+    'Well-lit path to entrance',
+    'Wheelchair-accessible public washroom',
+    'Wheelchair-accessible fitness center'
+  ];
+
+  const environmentalStandards = [
+    'At least 80% of all lighting comes from LEDs',
+    'LED light bulbs',
+    'Water-efficient showers only',
+    'Thin carpet in public areas',
+    'Eco-friendly toiletries',
+    'Recycling',
+    'Water dispenser'
+  ];
+
+  // Combine all filter categories
+  const amenitiesToRemove = [
+    ...universalBasics,
+    ...covidStandards,
+    ...universalSecurity,
+    ...basicOperations,
+    ...accessibilityFeatures,
+    ...environmentalStandards
+  ];
+
+  const amenitiesList = amenitiesText
+    .split(/[•,\n]/)
+    .map(amenity => amenity.trim())
+    .filter(amenity => amenity.length > 0);
+
+  const filteredAmenities = amenitiesList.filter(amenity => {
+    return !amenitiesToRemove.some(unwanted => 
+      amenity.toLowerCase().includes(unwanted.toLowerCase()) ||
+      unwanted.toLowerCase().includes(amenity.toLowerCase())
+    );
+  });
+
+  const uniqueAmenities = [...new Set(filteredAmenities)];
+  return uniqueAmenities.join(', ');
+};
+
 const extractRefundablePolicy = (hotel: HotelWithRates): { isRefundable: boolean; refundableTag: string | null; refundableInfo: string } => {
   if (!hotel.roomTypes || hotel.roomTypes.length === 0) {
     return {
@@ -245,28 +416,29 @@ const processHotelWithImmediateInsights = async (
 
     // Now generate AI insights (this will include photoGalleryImages from AI insights endpoint)
     const singleHotelForInsights = {
-      hotelId: enrichedHotelSummary.hotelId,
-      name: enrichedHotelSummary.name,
-      aiMatchPercent: hotel.aiMatchPercent,
-      summarizedInfo: {
-        name: enrichedHotelSummary.name,
-        description: (hotelMetadata?.hotelDescription || hotelMetadata?.description || 'Quality accommodation').toString().substring(0, 1000),
-        amenities: enrichedHotelSummary.topAmenities,
-        amenitiesText: enrichedHotelSummary.topAmenities && enrichedHotelSummary.topAmenities.length > 0 
-          ? enrichedHotelSummary.topAmenities.join(', ') 
-          : 'Standard hotel amenities',
-        starRating: enrichedHotelSummary.starRating,
-        reviewCount: enrichedHotelSummary.reviewCount,
-        pricePerNight: enrichedHotelSummary.pricePerNight?.display || 'Price not available',
-        location: enrichedHotelSummary.address,
-        city: enrichedHotelSummary.city,
-        country: enrichedHotelSummary.country,
-        latitude: enrichedHotelSummary.latitude,
-        longitude: enrichedHotelSummary.longitude,
-        isRefundable: enrichedHotelSummary.isRefundable,
-        refundableInfo: enrichedHotelSummary.refundableInfo
-      }
-    };
+  hotelId: enrichedHotelSummary.hotelId,
+  name: enrichedHotelSummary.name,
+  aiMatchPercent: hotel.aiMatchPercent,
+  summarizedInfo: {
+    name: enrichedHotelSummary.name,
+    description: (hotelMetadata?.hotelDescription || hotelMetadata?.description || 'Quality accommodation').toString().substring(0, 1000),
+    amenities: enrichedHotelSummary.topAmenities, // NOW FILTERED
+    // CHANGED: Use filtered amenities text
+    amenitiesText: enrichedHotelSummary.topAmenities && enrichedHotelSummary.topAmenities.length > 0 
+      ? enrichedHotelSummary.topAmenities.join(', ') 
+      : 'Standard hotel amenities',
+    starRating: enrichedHotelSummary.starRating,
+    reviewCount: enrichedHotelSummary.reviewCount,
+    pricePerNight: enrichedHotelSummary.pricePerNight?.display || 'Price not available',
+    location: enrichedHotelSummary.address,
+    city: enrichedHotelSummary.city,
+    country: enrichedHotelSummary.country,
+    latitude: enrichedHotelSummary.latitude,
+    longitude: enrichedHotelSummary.longitude,
+    isRefundable: enrichedHotelSummary.isRefundable,
+    refundableInfo: enrichedHotelSummary.refundableInfo
+  }
+};
 
     try {
       const insightsResponse = await axios.post(`${process.env.BASE_URL || 'http://localhost:3003'}/api/hotels/ai-insights`, {
@@ -381,18 +553,11 @@ const hasSpecificPreferences = parsedQuery.aiSearch &&
       hotel.country !== 'Unknown Country' ? hotel.country : ''
     ].filter(Boolean).join(', ') || 'Location unknown';
     
-    const shortDescription = hotel.description
-      .replace(/<[^>]*>/g, '')
-      .replace(/&nbsp;/g, ' ')
-      .replace(/&amp;/g, '&')
-      .replace(/&lt;/g, '<')
-      .replace(/&gt;/g, '>')
-      .replace(/&quot;/g, '"')
-      .trim()
-    return `${index + 1}: ${hotel.name} | $${numericPrice}/night | ${hotel.starRating}⭐ | ${locationInfo} | ${shortDescription}| ${amenitiesText} `;
+    const shortDescription = optimizeHotelDescription(hotel.description, 1000);
+    return `${index + 1}: ${hotel.name} | $${numericPrice}/night | ${locationInfo} | ${shortDescription}| ${amenitiesText} `;
   }).join('\n');
   
-  // FIXED: Better budget handling in prompts
+  // FIXED: Better budget handling in 
   let budgetGuidance = '';
   let budgetContext = '';
   
@@ -425,15 +590,34 @@ STAY: ${nights} nights${budgetContext}
 3. Star rating and quality
 4. Value for money
 
-HOTELS AVAILABLE:
-${hotelSummary}
+🎯 YOUR PRIMARY TASK: Analyze each hotel's description and amenities to find the BEST matches for: "${userInput}"
 
-CRITICAL INSTRUCTIONS:
-- You MUST select exactly 15 hotels from the list above using their exact names
-- Number them 1-15 in order of best match to worst match
-- ${budgetGuidance}
-- Even if no hotels perfectly match, select the 15 BEST AVAILABLE options
-- Use the exact hotel names from the numbered list above
+📋 STEP-BY-STEP MATCHING PROCESS:
+1. READ each hotel's description carefully for keywords matching user request
+2. CHECK amenities list for relevant features 
+3. PRIORITIZE hotels that mention specific user requirements in their text
+4. RANK by relevance to user request, NOT by list position
+
+🔍 KEYWORD MATCHING EXAMPLES:
+- User wants "Central Park" → Look for "Central Park", "near park", "park views" in descriptions
+- User wants "free breakfast" → Look for "breakfast", "complimentary breakfast", "free breakfast" 
+- User wants "spa" → Look for "spa", "wellness", "massage", "treatments"
+- User wants "business hotel" → Look for "business", "conference", "meeting rooms"
+- User wants "budget" → Prioritize lower prices and "value" mentions
+- User wants "luxury" → Look for "luxury", "premium", "upscale", higher star ratings
+
+⚠️ CRITICAL RULES:
+- IGNORE the order hotels appear in the list - analyze content only
+- You MUST select exactly 15 hotels using their exact names from the list
+- Base rankings on how well each hotel matches "${userInput}", not on price or list position
+- If a hotel explicitly mentions user requirements, rank it higher
+- If no perfect matches exist, select the 15 closest matches available
+
+📝 REQUIRED OUTPUT FORMAT:
+1. [exact hotel name from list] | [match percentage 1-100]%
+2. [exact hotel name from list] | [match percentage 1-100]%
+3. [exact hotel name from list] | [match percentage 1-100]%
+...continue through 15
 
 Format (exact numbering required):
 1. [exact hotel name from list] | [match percentage]%
@@ -441,6 +625,9 @@ Format (exact numbering required):
 3. [exact hotel name from list] | [match percentage]%
 ...continue through...
 15. [exact hotel name from list] | [match percentage]%
+
+HOTELS AVAILABLE:
+${hotelSummary}
 
 REMEMBER: Always select 15 hotels using exact names from the list above.` :
 
@@ -457,9 +644,10 @@ HOTELS AVAILABLE:
 ${hotelSummary}
 
 CRITICAL INSTRUCTIONS:
+- MOST IMPORTANT -> USE DESCRIPTION AND AMENITIES FROM EACH HOTEL IN LIST FROM ABOVE TO ENSURE YOUR MATCHES FIT ${userInput}
+- EXAMPLE: IF USER SEARCEHS HOTELS NEAR CENTRAL PARK LOOK FOR NEAR CENTRAL PARK IN DESC AND RETURN THOSE. OR FOR FREE BREAKFAST RETURN ONES THAT SAY FREE BREAKFAST SOMEWHERE FIRST!!!
 - You MUST select exactly 15 hotels from the list above using their exact names
 - Number them 1-15 in order of best quality to lowest quality
-- ${budgetGuidance}
 - Select the 15 BEST QUALITY hotels available from the list
 - Use the exact hotel names from the numbered list above
 
@@ -471,6 +659,14 @@ Format (exact numbering required):
 15. [exact hotel name from list] | [match percentage]%
 
 REMEMBER: Always select 15 hotels using exact names from the list above.`;
+
+logHotelMatchingPrompt(
+    searchId,
+    prompt,
+    hotelSummaries.length,
+    userInput,
+    `${parsedQuery.cityName}, ${parsedQuery.countryCode}`
+  );
 
   const stream = await openai.chat.completions.create({
     model: 'gpt-4o-mini',
@@ -903,8 +1099,7 @@ const calculatePriceInfo = (hotel: HotelWithRates, nights: number) => {
 };
 
 // OPTIMIZED: Create hotel summary using data from initial API call
-const createOptimizedHotelSummaryForAI = (hotel: HotelWithRates, hotelMetadata: any, index: number, nights: number): HotelSummaryForAI => {
-  // Use the metadata from the initial /data/hotels call - it has all we need!
+const createOptimizedHotelSummaryForAI = (hotel: any, hotelMetadata: any, index: number, nights: number): any => {
   const hotelInfo = hotelMetadata || hotel.hotelInfo || {};
   
   if (!hotelInfo && !hotelMetadata) {
@@ -931,23 +1126,20 @@ const createOptimizedHotelSummaryForAI = (hotel: HotelWithRates, hotelMetadata: 
   const { pricePerNightInfo, suggestedPrice, priceProvider } = calculatePriceInfo(hotel, nights);
   const refundablePolicy = extractRefundablePolicy(hotel);
   
-  // Get data directly from initial API response
   const city = hotelInfo.city || 'Unknown City';
   const country = hotelInfo.country || 'Unknown Country';
   const latitude = hotelInfo.latitude || null;
   const longitude = hotelInfo.longitude || null;
   const address = hotelInfo.address || 'Location not available';
   const name = hotelInfo.name || 'Unknown Hotel';
-  const starRating = hotelInfo.stars || hotelInfo.starRating || hotelInfo.rating || 0;
+  const starRating = 7;
   
-  const topAmenities = getTop3Amenities(hotelInfo);
-  
-  // Generate fake review count since we're not fetching real reviews
+  // CHANGED: Now uses filtered amenities
+  const topAmenities = getCombinedAmenities(hotelInfo);
   const fakeReviewCount = Math.floor(Math.random() * (1100 - 700 + 1)) + 700;
 
-  // Use hotelDescription from initial API call and truncate for faster processing
-  const shortDescription = hotelInfo.hotelDescription || hotelInfo.description || 'No description available';
-
+  const rawDescription = hotelInfo.hotelDescription || hotelInfo.description || 'No description available';
+  const optimizedDescription = optimizeHotelDescription(rawDescription, 300);
 
   let displayPrice = pricePerNightInfo;
   if (suggestedPrice && priceProvider) {
@@ -959,13 +1151,13 @@ const createOptimizedHotelSummaryForAI = (hotel: HotelWithRates, hotelMetadata: 
     hotelId: hotel.hotelId,
     name: name,
     location: address,
-    description: shortDescription,
+    description: optimizedDescription,
     pricePerNight: displayPrice,
     city: city,
     country: country,
     latitude: latitude,
     longitude: longitude,
-    topAmenities: topAmenities,
+    topAmenities: topAmenities, // NOW FILTERED
     starRating: starRating,
     reviewCount: fakeReviewCount,
     isRefundable: refundablePolicy.isRefundable,
@@ -1043,7 +1235,7 @@ const gptHotelMatching = async (
       coordinates
     ].filter(Boolean).join(' | ');
     
-     return `${index + 1}: ${hotel.name}|💰${numericPrice}/night|${hotel.starRating}⭐|📍${locationDetails}|🏨${hotel.topAmenities.join(',')}|📝${hotel.reviewCount} reviews|📖${cleanDescription}`;
+     return `${index + 1}: ${hotel.name}|💰${numericPrice}/night|📍${locationDetails}|🏨${hotel.topAmenities.join(',')}|📝${hotel.reviewCount} reviews|📖${cleanDescription}`;
   }).join('\n');
   
   
@@ -1224,6 +1416,172 @@ REMEMBER: ALWAYS return 5 hotels! Use exact names from list.`;
   return matches.slice(0, 5);
 };
 
+const STOP_WORDS = new Set([
+  // Articles
+  'a', 'an', 'the',
+  // Prepositions
+  'in', 'on', 'at', 'by', 'for', 'with', 'within', 'without', 'through', 'throughout', 'during', 'before', 'after', 'above', 'below', 'up', 'down', 'out', 'off', 'over', 'under', 'again', 'further', 'then', 'once',
+  // Conjunctions
+  'and', 'or', 'but', 'so', 'yet', 'nor', 'as', 'while', 'since', 'because', 'although', 'though', 'unless', 'until', 'whether',
+  // Pronouns
+  'i', 'you', 'he', 'she', 'it', 'we', 'they', 'me', 'him', 'her', 'us', 'them', 'my', 'your', 'his', 'her', 'its', 'our', 'their', 'mine', 'yours', 'hers', 'ours', 'theirs',
+  // Relative pronouns
+  'that', 'which', 'who', 'whom', 'whose', 'when', 'where', 'why', 'how',
+  // Auxiliary verbs
+  'is', 'are', 'was', 'were', 'be', 'been', 'being', 'have', 'has', 'had', 'do', 'does', 'did', 'will', 'would', 'could', 'should', 'may', 'might', 'must', 'can',
+  // Common marketing words
+  'very', 'really', 'quite', 'just', 'also', 'too', 'only', 'even', 'still', 'well'
+]);
+
+// 2. HOTEL-SPECIFIC ABBREVIATIONS AND REPLACEMENTS
+const HOTEL_ABBREVIATIONS = new Map([
+  // Amenities
+  ['swimming pool', 'pool'],
+  ['fitness center', 'gym'],
+  ['fitness centre', 'gym'],
+  ['business center', 'business ctr'],
+  ['business centre', 'business ctr'],
+  ['air conditioning', 'AC'],
+  ['air conditioned', 'AC'],
+  ['private bathroom', 'ensuite'],
+  ['complimentary wifi', 'free wifi'],
+  ['complimentary breakfast', 'free breakfast'],
+  ['parking available', 'parking'],
+  ['free parking', 'parking'],
+  ['room service', 'room svc'],
+  ['concierge service', 'concierge'],
+  ['24-hour front desk', '24h desk'],
+  ['24 hour front desk', '24h desk'],
+  
+  // Location terms
+  ['located in the heart of', 'central'],
+  ['located in the center of', 'central'],
+  ['located in the centre of', 'central'],
+  ['situated in', 'in'],
+  ['positioned in', 'in'],
+  ['nestled in', 'in'],
+  ['conveniently located', 'located'],
+  ['ideally positioned', 'located'],
+  ['strategically placed', 'located'],
+  ['perfectly situated', 'located'],
+  
+  // Distance terms
+  ['within walking distance', 'walkable'],
+  ['a short walk from', 'near'],
+  ['close proximity to', 'near'],
+  ['in close proximity', 'nearby'],
+  ['just minutes from', 'near'],
+  ['minutes away from', 'near'],
+  
+  // Quality descriptors
+  ['world-class', 'premium'],
+  ['state-of-the-art', 'modern'],
+  ['cutting-edge', 'modern'],
+  ['contemporary design', 'modern'],
+  ['luxurious amenities', 'luxury'],
+  ['premium facilities', 'premium'],
+  ['exceptional service', 'quality service'],
+  ['outstanding hospitality', 'quality service'],
+  ['unparalleled comfort', 'comfortable'],
+  ['ultimate relaxation', 'relaxing'],
+  ['unforgettable experience', 'quality stay'],
+  
+  // Room types
+  ['accommodation', 'rooms'],
+  ['accommodations', 'rooms'],
+  ['guest rooms', 'rooms'],
+  ['spacious rooms', 'large rooms'],
+  ['elegantly appointed', 'furnished'],
+  ['thoughtfully designed', 'designed'],
+  ['beautifully decorated', 'decorated'],
+  
+  // General reductions
+  ['experience', ''],
+  ['features', 'has'],
+  ['offers', 'has'],
+  ['provides', 'has'],
+  ['boasts', 'has'],
+  ['showcases', 'has'],
+  ['presents', 'has'],
+]);
+
+// 3. MAIN OPTIMIZATION FUNCTION
+export const optimizeHotelDescription = (description: string, maxLength: number = 300): string => {
+  if (!description || typeof description !== 'string') {
+    return 'Quality accommodation';
+  }
+
+  let optimized = description;
+
+  // Step 1: Clean HTML and entities
+  optimized = optimized
+    .replace(/<[^>]*>/g, '') // Remove HTML tags
+    .replace(/&nbsp;/g, ' ') // Replace &nbsp; with space
+    .replace(/&amp;/g, '&')  // Replace HTML entities
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&#\d+;/g, '') // Remove numeric HTML entities
+    .trim();
+
+  // Step 2: Apply hotel-specific abbreviations
+  for (const [longForm, shortForm] of HOTEL_ABBREVIATIONS) {
+    const regex = new RegExp(longForm, 'gi');
+    optimized = optimized.replace(regex, shortForm);
+  }
+
+  // Step 3: Remove marketing fluff patterns
+  const marketingPatterns = [
+    /\b(experience|enjoy|discover|explore|indulge|immerse|embrace|savor|relish)\s+/gi,
+    /\b(luxury|luxurious|premium|exclusive|exceptional|outstanding|unparalleled)\s+/gi,
+    /\b(perfectly|ideally|conveniently|strategically|beautifully|elegantly|thoughtfully|carefully)\s+/gi,
+    /\bwhether\s+you.*?or\s+.*?,?\s*/gi,
+    /\b(our|the)\s+(hotel|property|establishment|resort)\s+(offers|provides|features|boasts)\s*/gi,
+  ];
+
+  for (const pattern of marketingPatterns) {
+    optimized = optimized.replace(pattern, ' ');
+  }
+
+  // Step 4: Remove stop words (but preserve sentence structure)
+  optimized = optimized
+    .split(/\s+/)
+    .filter((word, index, words) => {
+      const cleanWord = word.toLowerCase().replace(/[^\w]/g, '');
+      
+      // Keep first and last words of sentences to maintain structure
+      const isFirstWord = index === 0 || words[index - 1].endsWith('.');
+      const isLastWord = index === words.length - 1 || word.endsWith('.');
+      
+      // Keep important words even if they're stop words in certain contexts
+      const isImportant = /\d/.test(word) || // Keep numbers
+                         word.length > 8 || // Keep long words
+                         cleanWord.endsWith('ed') || // Keep past participles
+                         cleanWord.endsWith('ing'); // Keep gerunds
+      
+      return isFirstWord || isLastWord || isImportant || !STOP_WORDS.has(cleanWord);
+    })
+    .join(' ');
+
+  // Step 5: Additional cleanup
+  optimized = optimized
+    .replace(/\s{2,}/g, ' ') // Remove multiple spaces
+    .replace(/\.\s*\./g, '.') // Remove double periods
+    .replace(/,\s*,/g, ',') // Remove double commas
+    .replace(/\s+([.,!?])/g, '$1') // Remove spaces before punctuation
+    .trim();
+
+  // Step 6: Truncate to max length while preserving words
+  if (optimized.length > maxLength) {
+    const truncated = optimized.substring(0, maxLength);
+    const lastSpace = truncated.lastIndexOf(' ');
+    optimized = lastSpace > maxLength * 0.8 ? truncated.substring(0, lastSpace) : truncated;
+  }
+
+  return optimized || 'Quality accommodation';
+};
+
+
 // ✅ NEW: Parser that extracts ranking number
 const parseRankedHotelLine = (
   line: string, 
@@ -1271,7 +1629,6 @@ const parseRankedHotelLine = (
   }
 };
 
-// NEW: Function to get combined amenities (facilities + amenities)
 const getCombinedAmenities = (hotelInfo: any): string[] => {
   const allAmenities: string[] = [];
   
@@ -1279,7 +1636,7 @@ const getCombinedAmenities = (hotelInfo: any): string[] => {
   if (hotelInfo?.facilityIds && Array.isArray(hotelInfo.facilityIds)) {
     const facilities = hotelInfo.facilityIds
       .map((id: number) => FACILITIES_ID_TO_NAME[id])
-      .filter(Boolean); // Remove undefined entries
+      .filter(Boolean);
     allAmenities.push(...facilities);
   }
   
@@ -1295,23 +1652,30 @@ const getCombinedAmenities = (hotelInfo: any): string[] => {
     allAmenities.push(...amenities);
   }
   
-  // Add defaults only if nothing found
-  if (allAmenities.length === 0) {
-    allAmenities.push('Wi-Fi', 'Air Conditioning', 'Private Bathroom');
+  // Join all amenities and filter out standard ones
+  const allAmenitiesText = allAmenities.join(', ');
+  const filteredAmenitiesText = filterRelevantAmenities(allAmenitiesText);
+  
+  // Convert back to array and add defaults if empty
+  const filteredArray = filteredAmenitiesText ? 
+    filteredAmenitiesText.split(', ').filter(Boolean) : [];
+  
+  if (filteredArray.length === 0) {
+    filteredArray.push('Wi-Fi', 'Private Bathroom', 'Room Service');
   }
   
-  // Remove duplicates and return
-  return [...new Set(allAmenities)];
+  // Return top 3 most relevant amenities
+  return filteredArray;
 };
 
 // OPTIMIZED: Create hotel summary using existing data (no additional API calls)
 const createHotelSummaryForInsights = (hotel: HotelWithRates, hotelMetadata: any, nights: number) => {
   const { priceRange, suggestedPrice, priceProvider } = calculatePriceInfo(hotel, nights);
   const refundablePolicy = extractRefundablePolicy(hotel);
-  const topAmenities = getTop3Amenities(hotelMetadata);
-  const images = extractHotelImages(hotelMetadata);
   
-  // NEW: Extract photo gallery images from metadata (up to 10 images)
+  // CHANGED: Now uses filtered amenities
+  const topAmenities = getCombinedAmenities(hotelMetadata);
+  const images = extractHotelImages(hotelMetadata);
   const photoGalleryImages = extractPhotoGalleryFromMetadata(hotelMetadata);
   
   let pricePerNight = null;
@@ -1361,11 +1725,11 @@ const createHotelSummaryForInsights = (hotel: HotelWithRates, hotelMetadata: any
     country: hotelMetadata?.country || 'Unknown Country',
     latitude: hotelMetadata?.latitude || null,
     longitude: hotelMetadata?.longitude || null,
-    topAmenities: topAmenities,
+    topAmenities: topAmenities, // NOW FILTERED
     isRefundable: refundablePolicy.isRefundable,
     refundableTag: refundablePolicy.refundableTag,
     refundableInfo: refundablePolicy.refundableInfo,
-    photoGalleryImages: photoGalleryImages, // ADD: Include photo gallery in hotel summary
+    photoGalleryImages: photoGalleryImages,
     cancellationPolicies: hotel.roomTypes?.flatMap(room => 
       room.rates?.map(rate => ({
         refundableTag: rate.cancellationPolicies?.refundableTag,

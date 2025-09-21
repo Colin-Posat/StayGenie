@@ -318,5 +318,105 @@
         "cost": 0.00775905
       }
     }
+  },
+  {
+    "timestamp": "2025-09-21T17:29:49.980Z",
+    "searchId": "2af5e8f5-d52c-4066-92ea-b3106c4db958",
+    "userQuery": "hotels under 300 in new york",
+    "destination": "New York, US",
+    "hotelCount": 197,
+    "totalTokensUsed": 63166,
+    "totalCost": 0.010988699999999999,
+    "searchDurationMs": 11921,
+    "operations": {
+      "hotelMatching": {
+        "tokens": 22706,
+        "cost": 0.0035462999999999996
+      },
+      "aiInsights": {
+        "tokens": 40460,
+        "cost": 0.007442400000000001
+      }
+    }
+  },
+  {
+    "timestamp": "2025-09-21T17:34:50.450Z",
+    "searchId": "8b9d61c7-ee2c-411d-94e2-4ab671bc1cc1",
+    "userQuery": "Lake-view hotels in Banff National Park",
+    "destination": "Banff, CA",
+    "hotelCount": 31,
+    "totalTokensUsed": 66315,
+    "totalCost": 0.01150785,
+    "searchDurationMs": 9257,
+    "operations": {
+      "hotelMatching": {
+        "tokens": 23274,
+        "cost": 0.0036297
+      },
+      "aiInsights": {
+        "tokens": 43041,
+        "cost": 0.007878149999999999
+      }
+    }
+  },
+  {
+    "timestamp": "2025-09-21T17:34:57.792Z",
+    "searchId": "9b010eb2-9a87-4290-90d5-e9760f6812b4",
+    "userQuery": "Luxury safari lodges in Kenya with pools",
+    "destination": "Nairobi, KE",
+    "hotelCount": 224,
+    "totalTokensUsed": 78088,
+    "totalCost": 0.013258950000000002,
+    "searchDurationMs": 8027,
+    "operations": {
+      "hotelMatching": {
+        "tokens": 28044,
+        "cost": 0.004354199999999999
+      },
+      "aiInsights": {
+        "tokens": 50044,
+        "cost": 0.00890475
+      }
+    }
+  },
+  {
+    "timestamp": "2025-09-21T17:45:33.194Z",
+    "searchId": "adc912ff-5709-47a3-9ea4-93c7db68f225",
+    "userQuery": "Boutique hotels in Kyoto with gardens",
+    "destination": "Kyoto, JP",
+    "hotelCount": 63,
+    "totalTokensUsed": 86911,
+    "totalCost": 0.014639549999999998,
+    "searchDurationMs": 13045,
+    "operations": {
+      "hotelMatching": {
+        "tokens": 43488,
+        "cost": 0.0066968999999999996
+      },
+      "aiInsights": {
+        "tokens": 43423,
+        "cost": 0.007942649999999997
+      }
+    }
+  },
+  {
+    "timestamp": "2025-09-21T17:53:44.127Z",
+    "searchId": "2eab9b2d-1cd5-4bbc-a1b8-b6132d982667",
+    "userQuery": "hotels in new york under 300",
+    "destination": "New York, US",
+    "hotelCount": 202,
+    "totalTokensUsed": 65350,
+    "totalCost": 0.0113478,
+    "searchDurationMs": 11689,
+    "operations": {
+      "hotelMatching": {
+        "tokens": 23536,
+        "cost": 0.0036851999999999996
+      },
+      "aiInsights": {
+        "tokens": 41814,
+        "cost": 0.0076626
+      }
+    }
   }
 ]

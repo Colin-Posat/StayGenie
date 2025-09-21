@@ -1,0 +1,562 @@
+[
+  {
+    "timestamp": "2025-09-21T18:54:37.829Z",
+    "searchId": "a3b775f2-01cf-483b-86f3-2e2ca2e55720",
+    "userQuery": "hotels in new york under 300",
+    "destination": "New York, US",
+    "hotelCount": 207,
+    "totalTokensUsed": 57123,
+    "totalCost": 0.0101241,
+    "searchDurationMs": 10430,
+    "operations": {
+      "hotelMatching": {
+        "tokens": 17518,
+        "cost": 0.0027816
+      },
+      "aiInsights": {
+        "tokens": 39605,
+        "cost": 0.007342499999999999
+      }
+    }
+  },
+  {
+    "timestamp": "2025-09-21T19:19:23.797Z",
+    "searchId": "19345fa3-b887-44e6-bedc-5958278d1d4a",
+    "userQuery": "hotels in new york under 300",
+    "destination": "New York, US",
+    "hotelCount": 203,
+    "totalTokensUsed": 29458,
+    "totalCost": 0.005887049999999999,
+    "searchDurationMs": 8820,
+    "operations": {
+      "hotelMatching": {
+        "tokens": 17918,
+        "cost": 0.0028424999999999995
+      },
+      "aiInsights": {
+        "tokens": 11540,
+        "cost": 0.00304455
+      }
+    }
+  },
+  {
+    "timestamp": "2025-09-21T19:25:20.863Z",
+    "searchId": "211dc653-f54c-4308-9e9a-946c6b0f44fa",
+    "userQuery": "hotels in london",
+    "destination": "London, GB",
+    "hotelCount": 323,
+    "totalTokensUsed": 159457,
+    "totalCost": 0.025426050000000002,
+    "searchDurationMs": 16145,
+    "operations": {
+      "hotelMatching": {
+        "tokens": 147664,
+        "cost": 0.022317
+      },
+      "aiInsights": {
+        "tokens": 11793,
+        "cost": 0.0031090499999999995
+      }
+    }
+  },
+  {
+    "timestamp": "2025-09-21T19:34:02.976Z",
+    "searchId": "2093a790-2559-4ded-8cbe-9c4623cb9214",
+    "userQuery": "Boutique hotels in Kyoto with gardens",
+    "destination": "Kyoto, JP",
+    "hotelCount": 66,
+    "totalTokensUsed": 42900,
+    "totalCost": 0.008001,
+    "searchDurationMs": 11458,
+    "operations": {
+      "hotelMatching": {
+        "tokens": 31182,
+        "cost": 0.0048483
+      },
+      "aiInsights": {
+        "tokens": 11718,
+        "cost": 0.0031526999999999996
+      }
+    }
+  },
+  {
+    "timestamp": "2025-09-21T19:51:39.006Z",
+    "searchId": "0cf5ad1a-5c5b-4067-9fa8-83b242f0e5f7",
+    "userQuery": "hotels under 300 new york",
+    "destination": "New York, US",
+    "hotelCount": 200,
+    "totalTokensUsed": 29618,
+    "totalCost": 0.005896649999999999,
+    "searchDurationMs": 7842,
+    "operations": {
+      "hotelMatching": {
+        "tokens": 18206,
+        "cost": 0.0028892999999999996
+      },
+      "aiInsights": {
+        "tokens": 11412,
+        "cost": 0.0030073499999999993
+      }
+    }
+  },
+  {
+    "timestamp": "2025-09-21T20:08:54.898Z",
+    "searchId": "67d87c53-bdbd-4534-8d78-c74417f3c247",
+    "userQuery": "hotels in new york under 300",
+    "destination": "New York, US",
+    "hotelCount": 200,
+    "totalTokensUsed": 14749,
+    "totalCost": 0.0036303000000000004,
+    "searchDurationMs": 9940,
+    "operations": {
+      "hotelMatching": {
+        "tokens": 6202,
+        "cost": 0.0010869
+      },
+      "aiInsights": {
+        "tokens": 8547,
+        "cost": 0.0025434
+      }
+    }
+  },
+  {
+    "timestamp": "2025-09-21T20:11:14.796Z",
+    "searchId": "460b0598-f1b3-44d7-8476-205d8198054d",
+    "userQuery": "hotels in london",
+    "destination": "London, GB",
+    "hotelCount": 306,
+    "totalTokensUsed": 52848,
+    "totalCost": 0.0094185,
+    "searchDurationMs": 11912,
+    "operations": {
+      "hotelMatching": {
+        "tokens": 44176,
+        "cost": 0.006793799999999999
+      },
+      "aiInsights": {
+        "tokens": 8672,
+        "cost": 0.0026246999999999993
+      }
+    }
+  },
+  {
+    "timestamp": "2025-09-21T20:24:36.595Z",
+    "searchId": "8e2a416c-89e7-41b9-8844-a287e990aadc",
+    "userQuery": "hotels under 300 in new york",
+    "destination": "New York, US",
+    "hotelCount": 204,
+    "totalTokensUsed": 14656,
+    "totalCost": 0.0036114000000000003,
+    "searchDurationMs": 8591,
+    "operations": {
+      "hotelMatching": {
+        "tokens": 6170,
+        "cost": 0.0010758
+      },
+      "aiInsights": {
+        "tokens": 8486,
+        "cost": 0.0025356000000000003
+      }
+    }
+  },
+  {
+    "timestamp": "2025-09-21T20:28:25.223Z",
+    "searchId": "cceeffd0-28ca-4049-a80b-d1d955368a34",
+    "userQuery": "hotels under 300 new york",
+    "destination": "New York, US",
+    "hotelCount": 204,
+    "totalTokensUsed": 21797,
+    "totalCost": 0.0047271,
+    "searchDurationMs": 8302,
+    "operations": {
+      "hotelMatching": {
+        "tokens": 12028,
+        "cost": 0.0019509
+      },
+      "aiInsights": {
+        "tokens": 9769,
+        "cost": 0.0027762000000000004
+      }
+    }
+  },
+  {
+    "timestamp": "2025-09-21T20:33:48.919Z",
+    "searchId": "39e9e3b5-6ab5-43f3-b4c5-374a457b42aa",
+    "userQuery": "hotels in london",
+    "destination": "London, GB",
+    "hotelCount": 331,
+    "totalTokensUsed": 78812,
+    "totalCost": 0.01329915,
+    "searchDurationMs": 9899,
+    "operations": {
+      "hotelMatching": {
+        "tokens": 69024,
+        "cost": 0.010513799999999998
+      },
+      "aiInsights": {
+        "tokens": 9788,
+        "cost": 0.00278535
+      }
+    }
+  },
+  {
+    "timestamp": "2025-09-21T20:35:16.896Z",
+    "searchId": "2e477d8d-335e-4025-801b-8f663c208dda",
+    "userQuery": "hotels in london",
+    "destination": "London, GB",
+    "hotelCount": 331,
+    "totalTokensUsed": 78621,
+    "totalCost": 0.013310550000000004,
+    "searchDurationMs": 10066,
+    "operations": {
+      "hotelMatching": {
+        "tokens": 68680,
+        "cost": 0.0104658
+      },
+      "aiInsights": {
+        "tokens": 9941,
+        "cost": 0.00284475
+      }
+    }
+  },
+  {
+    "timestamp": "2025-09-21T20:43:55.497Z",
+    "searchId": "6ba441eb-d4ee-417e-b731-522a9604dcdf",
+    "userQuery": "hotels in london",
+    "destination": "London, GB",
+    "hotelCount": 331,
+    "totalTokensUsed": 72731,
+    "totalCost": 0.012330299999999997,
+    "searchDurationMs": 11839,
+    "operations": {
+      "hotelMatching": {
+        "tokens": 63824,
+        "cost": 0.0097311
+      },
+      "aiInsights": {
+        "tokens": 8907,
+        "cost": 0.0025992000000000003
+      }
+    }
+  },
+  {
+    "timestamp": "2025-09-21T20:44:58.544Z",
+    "searchId": "17ffa5a5-7f4a-4b25-8e1b-5c89790ad974",
+    "userQuery": "hotels in london free breakfast",
+    "destination": "London, GB",
+    "hotelCount": 331,
+    "totalTokensUsed": 72155,
+    "totalCost": 0.01227135,
+    "searchDurationMs": 10173,
+    "operations": {
+      "hotelMatching": {
+        "tokens": 63142,
+        "cost": 0.0096306
+      },
+      "aiInsights": {
+        "tokens": 9013,
+        "cost": 0.00264075
+      }
+    }
+  },
+  {
+    "timestamp": "2025-09-21T20:47:17.344Z",
+    "searchId": "3f088c3b-93b1-4e64-a56f-2f1ef93cf0b3",
+    "userQuery": "hotels in london free breakfast",
+    "destination": "London, GB",
+    "hotelCount": 331,
+    "totalTokensUsed": 73166,
+    "totalCost": 0.012436049999999999,
+    "searchDurationMs": 9227,
+    "operations": {
+      "hotelMatching": {
+        "tokens": 64362,
+        "cost": 0.009812699999999999
+      },
+      "aiInsights": {
+        "tokens": 8804,
+        "cost": 0.0026233499999999996
+      }
+    }
+  },
+  {
+    "timestamp": "2025-09-21T20:48:52.288Z",
+    "searchId": "b26aeb62-f176-4ca9-b63b-2542ab7e9b9f",
+    "userQuery": "hotels in london free breakfast",
+    "destination": "London, GB",
+    "hotelCount": 331,
+    "totalTokensUsed": 77987,
+    "totalCost": 0.013155149999999997,
+    "searchDurationMs": 11060,
+    "operations": {
+      "hotelMatching": {
+        "tokens": 68872,
+        "cost": 0.010490099999999999
+      },
+      "aiInsights": {
+        "tokens": 9115,
+        "cost": 0.00266505
+      }
+    }
+  },
+  {
+    "timestamp": "2025-09-21T20:51:13.739Z",
+    "searchId": "adb59077-2110-4fa2-85e2-fe31e2a9cc5e",
+    "userQuery": "hotels in london free breakfast",
+    "destination": "London, GB",
+    "hotelCount": 331,
+    "totalTokensUsed": 73562,
+    "totalCost": 0.01254495,
+    "searchDurationMs": 10471,
+    "operations": {
+      "hotelMatching": {
+        "tokens": 63968,
+        "cost": 0.0097635
+      },
+      "aiInsights": {
+        "tokens": 9594,
+        "cost": 0.00278145
+      }
+    }
+  },
+  {
+    "timestamp": "2025-09-21T20:53:42.435Z",
+    "searchId": "373cfaed-e080-4265-9e89-6611422bd4c9",
+    "userQuery": "new york hotels with rooftop bars",
+    "destination": "New York, US",
+    "hotelCount": 195,
+    "totalTokensUsed": 62646,
+    "totalCost": 0.010847699999999998,
+    "searchDurationMs": 8770,
+    "operations": {
+      "hotelMatching": {
+        "tokens": 53356,
+        "cost": 0.0081429
+      },
+      "aiInsights": {
+        "tokens": 9290,
+        "cost": 0.0027048
+      }
+    }
+  },
+  {
+    "timestamp": "2025-09-21T20:54:48.844Z",
+    "searchId": "01d96c51-9268-433f-b6fa-8afefe2ff867",
+    "userQuery": "new york hotels with rooftop bars under 500",
+    "destination": "New York, US",
+    "hotelCount": 195,
+    "totalTokensUsed": 25240,
+    "totalCost": 0.00524085,
+    "searchDurationMs": 8831,
+    "operations": {
+      "hotelMatching": {
+        "tokens": 16162,
+        "cost": 0.0025764
+      },
+      "aiInsights": {
+        "tokens": 9078,
+        "cost": 0.0026644499999999996
+      }
+    }
+  },
+  {
+    "timestamp": "2025-09-21T21:01:31.634Z",
+    "searchId": "7f926002-635d-439c-b02e-f50a98f6cc6f",
+    "userQuery": "hotels near central park",
+    "destination": "New York, US",
+    "hotelCount": 195,
+    "totalTokensUsed": 61207,
+    "totalCost": 0.0106638,
+    "searchDurationMs": 15788,
+    "operations": {
+      "hotelMatching": {
+        "tokens": 51856,
+        "cost": 0.007938599999999999
+      },
+      "aiInsights": {
+        "tokens": 9351,
+        "cost": 0.0027251999999999997
+      }
+    }
+  },
+  {
+    "timestamp": "2025-09-21T21:08:16.523Z",
+    "searchId": "d15125e0-ed8f-45e0-af12-9bc2a382f076",
+    "userQuery": "Luxury safari lodges in Kenya with pools",
+    "destination": "Nairobi, KE",
+    "hotelCount": 226,
+    "totalTokensUsed": 25806,
+    "totalCost": 0.005391900000000001,
+    "searchDurationMs": 9043,
+    "operations": {
+      "hotelMatching": {
+        "tokens": 14610,
+        "cost": 0.0023346
+      },
+      "aiInsights": {
+        "tokens": 11196,
+        "cost": 0.0030573
+      }
+    }
+  },
+  {
+    "timestamp": "2025-09-21T21:08:35.974Z",
+    "searchId": "8be62bb9-c439-4028-8748-e7bddafc8ad1",
+    "userQuery": "Luxury safari lodges in Kenya with pools",
+    "destination": "Nairobi, KE",
+    "hotelCount": 226,
+    "totalTokensUsed": 25950,
+    "totalCost": 0.0053775,
+    "searchDurationMs": 8164,
+    "operations": {
+      "hotelMatching": {
+        "tokens": 14596,
+        "cost": 0.0023271
+      },
+      "aiInsights": {
+        "tokens": 11354,
+        "cost": 0.0030504000000000004
+      }
+    }
+  },
+  {
+    "timestamp": "2025-09-21T21:08:49.936Z",
+    "searchId": "c65f4871-5229-4a88-8aeb-f79583531d5b",
+    "userQuery": "hotels in new york near central park",
+    "destination": "New York, US",
+    "hotelCount": 195,
+    "totalTokensUsed": 61618,
+    "totalCost": 0.010777199999999997,
+    "searchDurationMs": 9881,
+    "operations": {
+      "hotelMatching": {
+        "tokens": 51998,
+        "cost": 0.0079554
+      },
+      "aiInsights": {
+        "tokens": 9620,
+        "cost": 0.0028217999999999997
+      }
+    }
+  },
+  {
+    "timestamp": "2025-09-21T21:13:54.605Z",
+    "searchId": "6fe12498-f9a1-4e08-a67d-1365220116a1",
+    "userQuery": "hotels near central park",
+    "destination": "New York, US",
+    "hotelCount": 204,
+    "totalTokensUsed": 63946,
+    "totalCost": 0.011062499999999998,
+    "searchDurationMs": 11032,
+    "operations": {
+      "hotelMatching": {
+        "tokens": 54570,
+        "cost": 0.0083502
+      },
+      "aiInsights": {
+        "tokens": 9376,
+        "cost": 0.0027122999999999995
+      }
+    }
+  },
+  {
+    "timestamp": "2025-09-21T21:14:25.146Z",
+    "searchId": "9bf61a18-54ee-44a9-9ca1-2d718170ff27",
+    "userQuery": "hotels new york rooftop bar",
+    "destination": "New York, US",
+    "hotelCount": 204,
+    "totalTokensUsed": 64333,
+    "totalCost": 0.011150249999999999,
+    "searchDurationMs": 8884,
+    "operations": {
+      "hotelMatching": {
+        "tokens": 54530,
+        "cost": 0.0083226
+      },
+      "aiInsights": {
+        "tokens": 9803,
+        "cost": 0.0028276499999999997
+      }
+    }
+  },
+  {
+    "timestamp": "2025-09-21T21:16:09.115Z",
+    "searchId": "4e5bbc53-f6e7-4c28-acd6-cca8b9d31033",
+    "userQuery": "hotels near eiffel tower",
+    "destination": "Paris, FR",
+    "hotelCount": 460,
+    "totalTokensUsed": 76736,
+    "totalCost": 0.012879300000000002,
+    "searchDurationMs": 12765,
+    "operations": {
+      "hotelMatching": {
+        "tokens": 67974,
+        "cost": 0.0103509
+      },
+      "aiInsights": {
+        "tokens": 8762,
+        "cost": 0.0025284
+      }
+    }
+  },
+  {
+    "timestamp": "2025-09-21T21:18:35.056Z",
+    "searchId": "dda13d75-e258-42c6-ab4c-6f2ebc829c27",
+    "userQuery": "hotels near eiffel tower",
+    "destination": "Paris, FR",
+    "hotelCount": 460,
+    "totalTokensUsed": 77751,
+    "totalCost": 0.013063499999999997,
+    "searchDurationMs": 8367,
+    "operations": {
+      "hotelMatching": {
+        "tokens": 68830,
+        "cost": 0.0104793
+      },
+      "aiInsights": {
+        "tokens": 8921,
+        "cost": 0.0025841999999999996
+      }
+    }
+  },
+  {
+    "timestamp": "2025-09-21T21:18:44.544Z",
+    "searchId": "79410c62-2201-4892-a699-64fae09b3b2e",
+    "userQuery": "hotels with eiffel tower view",
+    "destination": "Paris, FR",
+    "hotelCount": 460,
+    "totalTokensUsed": 79560,
+    "totalCost": 0.013214700000000001,
+    "searchDurationMs": 10194,
+    "operations": {
+      "hotelMatching": {
+        "tokens": 71294,
+        "cost": 0.010866
+      },
+      "aiInsights": {
+        "tokens": 8266,
+        "cost": 0.0023487
+      }
+    }
+  },
+  {
+    "timestamp": "2025-09-21T21:19:18.066Z",
+    "searchId": "61550ff9-90f5-4c2d-b655-e536760749c0",
+    "userQuery": "hotels with canal views and private balconies venice",
+    "destination": "Venice, IT",
+    "hotelCount": 235,
+    "totalTokensUsed": 69690,
+    "totalCost": 0.01195065,
+    "searchDurationMs": 9168,
+    "operations": {
+      "hotelMatching": {
+        "tokens": 59818,
+        "cost": 0.009123899999999999
+      },
+      "aiInsights": {
+        "tokens": 9872,
+        "cost": 0.0028267499999999994
+      }
+    }
+  }
+]
