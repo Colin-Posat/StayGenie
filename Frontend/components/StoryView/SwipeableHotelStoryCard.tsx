@@ -818,7 +818,7 @@ const overallScore = ((ratings.cleanliness + ratings.service + ratings.location 
               </View>
             )}
           </View>
-          <Text style={tw`text-white text-[10px] leading-3`} numberOfLines={4}>
+          <Text style={tw`text-white text-[11px] leading-3`} numberOfLines={4}>
             {aiInsight}
           </Text>
         </View>
@@ -1585,7 +1585,7 @@ const handleSlideChange = (slideIndex: number) => {
 >
         <StoryProgressBar
           currentSlide={currentSlide}
-          totalSlides={5}
+          totalSlides={4}
           onSlideChange={handleSlideChange}
         />
         
@@ -1627,29 +1627,7 @@ scrollsToTop={false}
 
 />
           </View>
-          <View style={{ width: CARD_WIDTH, height: CARD_HEIGHT }}>
-            <AmenitiesSlide 
-    hotel={hotel} 
-    insightsStatus={insightsStatus}
-    // Pass the safety rating props
-    safetyRating={safetyRating}
-    safetyJustification={safetyJustification}
-    safetySource={safetySource}
-    hasAISafetyRating={hasAISafetyRating}
-    showSafetyRating={showSafetyRating}
-    safetyRatingThreshold={safetyRatingThreshold}
-  />
-  
-          </View>
-          <View style={{ width: CARD_WIDTH, height: CARD_HEIGHT }}>
-  <ReviewsSlide 
-    hotel={hotel}
-    
-    isVisible={currentSlide === 3}  // Reviews is slide index 3
-  />
-</View>
-          {/* Slide 4: Photo Gallery - NEW! */}
-  <View style={{ width: CARD_WIDTH, height: CARD_HEIGHT }}>
+           <View style={{ width: CARD_WIDTH, height: CARD_HEIGHT }}>
   <PhotoGallerySlide 
     hotel={{
       ...hotel,
@@ -1658,6 +1636,15 @@ scrollsToTop={false}
     insightsStatus={insightsStatus}
   />
 </View>
+          <View style={{ width: CARD_WIDTH, height: CARD_HEIGHT }}>
+  <ReviewsSlide 
+    hotel={hotel}
+    
+    isVisible={currentSlide === 3}  // Reviews is slide index 3
+  />
+</View>
+          {/* Slide 4: Photo Gallery - NEW! */}
+
   
         </ScrollView>
      </View>

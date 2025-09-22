@@ -1,4 +1,4 @@
-// src/controllers/hotelReviewsController.ts - Final version with English language filtering
+// src/controllers/hotelReviewsController.ts - Updated with more reviews and generic content filtering
 import { Request, Response } from 'express';
 import axios from 'axios';
 
@@ -35,7 +35,7 @@ interface HotelReviewsRequest {
 
 export const fetchHotelReviewsController = async (req: Request, res: Response) => {
   try {
-    const { hotelId, limit = 30, offset = 0, getSentiment = true }: HotelReviewsRequest = req.body;
+    const { hotelId, limit = 50, offset = 0, getSentiment = true }: HotelReviewsRequest = req.body;
 
     // Validate required parameters
     if (!hotelId) {
@@ -63,10 +63,10 @@ export const fetchHotelReviewsController = async (req: Request, res: Response) =
 
     const params = {
       hotelId,
-      limit: Math.min(limit * 3, 200), // Request 3x more reviews (up to 200 max) to account for filtering
+      limit: Math.min(limit * 4, 300), // Request 4x more reviews (up to 300 max) to account for filtering
       offset,
       getSentiment,
-      timeout: 10
+      timeout: 15
     };
 
     console.log(`📡 Making request to LiteAPI with params:`, params);
@@ -78,7 +78,7 @@ export const fetchHotelReviewsController = async (req: Request, res: Response) =
         'X-API-Key': apiKey,
         'Content-Type': 'application/json'
       },
-      timeout: 12000
+      timeout: 15000 // Increased timeout for larger requests
     });
 
     const reviewsData: ReviewsResponse = response.data;
@@ -116,7 +116,7 @@ export const fetchHotelReviewsController = async (req: Request, res: Response) =
     }
 
     // Process and format English reviews for frontend
-    const formattedReviews = englishReviews.slice(0, limit).map((review: ReviewData) => ({
+    const allFormattedReviews = englishReviews.map((review: ReviewData) => ({
       id: `${review.name}-${review.date}`, // Create unique ID
       author: review.name || 'Anonymous',
       rating: review.averageScore || 0,
@@ -129,15 +129,29 @@ export const fetchHotelReviewsController = async (req: Request, res: Response) =
       language: review.language || 'en',
       source: review.source || 'Hotel Partner',
       // Combine pros/cons into content for display
-      content: generateReviewContent(review)
+      content: generateReviewContent(review),
+      // Add flag to identify generic content
+      isGeneric: isGenericContent(review)
     }));
 
+    // Filter out generic reviews and get meaningful ones first
+    const meaningfulReviews = allFormattedReviews.filter(review => !review.isGeneric);
+    const genericReviews = allFormattedReviews.filter(review => review.isGeneric);
+
+    console.log(`🎯 Found ${meaningfulReviews.length} meaningful reviews and ${genericReviews.length} generic reviews`);
+
+    // Combine meaningful reviews first, then add generic ones if needed to reach the limit
+    const prioritizedReviews = [
+      ...meaningfulReviews,
+      ...genericReviews
+    ].slice(0, limit);
+
     // Calculate summary statistics
-    const averageRating = formattedReviews.length > 0 
-      ? formattedReviews.reduce((sum, review) => sum + review.rating, 0) / formattedReviews.length 
+    const averageRating = prioritizedReviews.length > 0 
+      ? prioritizedReviews.reduce((sum, review) => sum + review.rating, 0) / prioritizedReviews.length 
       : 0;
 
-    const ratingDistribution = calculateRatingDistribution(formattedReviews);
+    const ratingDistribution = calculateRatingDistribution(prioritizedReviews);
 
     // Extract sentiment keywords if available
     const sentimentData = reviewsData.sentiment ? {
@@ -147,13 +161,13 @@ export const fetchHotelReviewsController = async (req: Request, res: Response) =
       averageRating: reviewsData.sentiment.averageRating || averageRating
     } : null;
 
-    console.log(`✅ Successfully processed ${formattedReviews.length} English reviews for hotel ${hotelId}`);
+    console.log(`✅ Successfully processed ${prioritizedReviews.length} reviews for hotel ${hotelId} (${meaningfulReviews.length} meaningful, ${Math.min(genericReviews.length, limit - meaningfulReviews.length)} generic)`);
 
     return res.status(200).json({
       success: true,
       data: {
-        reviews: formattedReviews,
-        total: englishReviews.length,
+        reviews: prioritizedReviews,
+        total: allFormattedReviews.length,
         averageRating: parseFloat(averageRating.toFixed(1)),
         ratingDistribution,
         sentiment: sentimentData,
@@ -161,6 +175,8 @@ export const fetchHotelReviewsController = async (req: Request, res: Response) =
         filtered: {
           originalCount: reviewsData.data.length,
           englishCount: englishReviews.length,
+          meaningfulCount: meaningfulReviews.length,
+          genericCount: genericReviews.length,
           filteredOut: reviewsData.data.length - englishReviews.length
         }
       }
@@ -208,6 +224,79 @@ export const fetchHotelReviewsController = async (req: Request, res: Response) =
   }
 };
 
+// Helper function to check if review content is generic/fallback content
+const isGenericContent = (review: ReviewData): boolean => {
+  // Check if this review would generate generic fallback content
+  const hasNoMeaningfulContent = (
+    (!review.pros || review.pros.trim() === '') &&
+    (!review.cons || review.cons.trim() === '') &&
+    (!review.headline || 
+     review.headline === 'Very good' || 
+     review.headline === 'Good' ||
+     review.headline === 'Guest Review' ||
+     review.headline.trim() === '')
+  );
+
+  // Check for single word content in any field
+  const hasSingleWordContent = () => {
+    const prosWords = review.pros ? review.pros.trim().split(/\s+/).length : 0;
+    const consWords = review.cons ? review.cons.trim().split(/\s+/).length : 0;
+    const headlineWords = review.headline ? review.headline.trim().split(/\s+/).length : 0;
+    
+    // If any field exists but only has 1 word, and no other meaningful content
+    const prosIsSingleWord = prosWords === 1 && !review.cons?.trim() && (!review.headline?.trim() || headlineWords <= 2);
+    const consIsSingleWord = consWords === 1 && !review.pros?.trim() && (!review.headline?.trim() || headlineWords <= 2);
+    const headlineIsSingleWord = headlineWords === 1 && !review.pros?.trim() && !review.cons?.trim();
+    
+    return prosIsSingleWord || consIsSingleWord || headlineIsSingleWord;
+  };
+
+  // Also check for other generic headlines that don't add value
+  const genericHeadlines = [
+    'ok',
+    'fine',
+    'nice',
+    'great',
+    'excellent',
+    'good stay',
+    'nice stay',
+    'great stay',
+    'excellent stay',
+    'recommended',
+    'would recommend',
+    'perfect',
+    'amazing',
+    'awesome',
+    'fantastic',
+    'wonderful',
+    'terrible',
+    'bad',
+    'horrible',
+    'disappointing'
+  ];
+
+  const hasGenericHeadline = review.headline ? 
+    genericHeadlines.some(generic => 
+      review.headline.toLowerCase().trim() === generic
+    ) : false;
+
+  // Check for very short combined content (less than 3 meaningful words total)
+  const getTotalMeaningfulWords = () => {
+    const pros = review.pros?.trim() || '';
+    const cons = review.cons?.trim() || '';
+    const headline = review.headline?.trim() || '';
+    
+    // Combine all content and count words, excluding generic headlines
+    const combinedContent = `${pros} ${cons} ${headline}`.trim();
+    const words = combinedContent.split(/\s+/).filter(word => word.length > 2); // Filter out very short words
+    return words.length;
+  };
+
+  const hasInsufficientContent = getTotalMeaningfulWords() < 3;
+
+  return hasNoMeaningfulContent || hasGenericHeadline || hasSingleWordContent() || hasInsufficientContent;
+};
+
 // Helper function to format review date
 const formatReviewDate = (dateString: string): string => {
   try {
@@ -234,7 +323,11 @@ const formatReviewDate = (dateString: string): string => {
 const generateReviewContent = (review: ReviewData): string => {
   const parts: string[] = [];
   
-  if (review.headline && review.headline !== 'Very good' && review.headline !== 'Good') {
+  if (review.headline && 
+      review.headline !== 'Very good' && 
+      review.headline !== 'Good' &&
+      review.headline !== 'Guest Review' &&
+      review.headline.trim() !== '') {
     parts.push(review.headline);
   }
   
@@ -247,7 +340,7 @@ const generateReviewContent = (review: ReviewData): string => {
   }
   
   if (parts.length === 0) {
-    // Fallback based on rating
+    // Fallback based on rating - but these will be marked as generic
     if (review.averageScore >= 8) {
       return "Had an excellent stay at this hotel. Would recommend to others.";
     } else if (review.averageScore >= 6) {

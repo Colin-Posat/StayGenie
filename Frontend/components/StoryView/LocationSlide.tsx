@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
@@ -20,9 +19,16 @@ const MAPBOX_ACCESS_TOKEN = 'pk.eyJ1IjoiY29saW5wb3NhdCIsImEiOiJjbWN3bzN2azEwMnQx
 const mapCache = new Map<string, { 
   uri: string; 
   timestamp: number; 
-  loaded: boolean; // NEW: Track if map was successfully loaded
+  loaded: boolean; // Track if map was successfully loaded
 }>();
 const CACHE_DURATION = 24 * 60 * 60 * 1000; // 24 hours
+
+// Define zoom levels: close (14), medium (12), far (10)
+const ZOOM_LEVELS = {
+  CLOSE: 14,   // Street level detail
+  MEDIUM: 12,  // Neighborhood view  
+  FAR: 10      // City/area overview
+};
 
 interface Hotel {
   id: string;
@@ -39,7 +45,7 @@ interface Hotel {
   location: string;
   features: string[];
   images?: string[];
-  photoGalleryImages?: string[]; // ADD: Photo gallery images array
+  photoGalleryImages?: string[]; // Photo gallery images array
   allHotelInfo?: string;
   firstRoomImage?: string | null;
   secondRoomImage?: string | null;
@@ -101,14 +107,14 @@ interface Hotel {
   // Fields needed for deep linking
   placeId?: string; // Google Place ID for destination
   
-  // NEW: Placeholder support
+  // Placeholder support
   isPlaceholder?: boolean;
 }
 
 interface EnhancedHotel extends Hotel {
   images: string[];
   mapImage: string;
-  photoGalleryImages: string[]; // ADD: Ensure photo gallery is in enhanced hotel
+  photoGalleryImages: string[]; // Ensure photo gallery is in enhanced hotel
   firstRoomImage?: string | null;
   secondRoomImage?: string | null;
 }
@@ -134,7 +140,7 @@ interface SwipeableHotelStoryCardProps {
   searchParams?: any;
   topAmenities?: string[];
   
-  // ADD THESE SAFETY RATING PROPS:
+  // Safety rating props
   safetyRating?: number;
   safetyJustification?: string;
   safetySource?: string;
@@ -157,10 +163,10 @@ const LocationSlide: React.FC<LocationSlideProps> = ({
 }) => {
   const [staticMapGenerated, setStaticMapGenerated] = useState(false);
   const [staticMapUri, setStaticMapUri] = useState<string | null>(null);
-  const [mapSuccessfullyLoaded, setMapSuccessfullyLoaded] = useState(false); // NEW: Track successful load
+  const [mapSuccessfullyLoaded, setMapSuccessfullyLoaded] = useState(false);
   const [showInteractiveMap, setShowInteractiveMap] = useState(false);
   const [mapError, setMapError] = useState(false);
-  const [currentZoom, setCurrentZoom] = useState(12); // NEW: Track current zoom level
+  const [currentZoom, setCurrentZoom] = useState(ZOOM_LEVELS.MEDIUM); // Start with medium zoom
 
   // Create cache key from coordinates and zoom level
   const cacheKey = hotel.latitude && hotel.longitude 
@@ -202,7 +208,7 @@ const LocationSlide: React.FC<LocationSlideProps> = ({
       // Use cached version
       setStaticMapUri(cached.uri);
       setStaticMapGenerated(true);
-      setMapSuccessfullyLoaded(cached.loaded); // NEW: Restore loaded state from cache
+      setMapSuccessfullyLoaded(cached.loaded);
       setMapError(false);
       console.log('📍 Using cached map for', hotel.name, 'zoom:', currentZoom, 'loaded:', cached.loaded);
       return;
@@ -218,7 +224,6 @@ const LocationSlide: React.FC<LocationSlideProps> = ({
       setStaticMapUri(mapUrl);
       setStaticMapGenerated(true);
       setMapError(false);
-      // Don't set mapSuccessfullyLoaded yet - wait for onLoad
       
       console.log('📍 Generated new map for', hotel.name, 'zoom:', currentZoom);
     }
@@ -248,7 +253,7 @@ const LocationSlide: React.FC<LocationSlideProps> = ({
     return hotel.images?.[0] || hotel.image;
   };
 
-  // NEW: Map loading animation component
+  // Map loading animation component
   const MapLoadingAnimation = () => {
     const pulseAnim1 = useRef(new Animated.Value(0.8)).current;
     const pulseAnim2 = useRef(new Animated.Value(0.8)).current;
@@ -436,7 +441,7 @@ const LocationSlide: React.FC<LocationSlideProps> = ({
               transform: [{
                 translateY: scanAnim.interpolate({
                   inputRange: [0, 1],
-                  outputRange: [0, 400], // Adjust based on screen height
+                  outputRange: [0, 400],
                 })
               }],
               opacity: scanAnim.interpolate({
@@ -452,30 +457,63 @@ const LocationSlide: React.FC<LocationSlideProps> = ({
         <View style={tw`absolute top-4 right-4 w-6 h-6 border-r-2 border-t-2 border-gray-200/70`} />
         <View style={tw`absolute bottom-4 left-4 w-6 h-6 border-l-2 border-b-2 border-gray-200/70`} />
         <View style={tw`absolute bottom-4 right-4 w-6 h-6 border-r-2 border-b-2 border-gray-200/70`} />
-
-
       </View>
     );
   };
 
-  // NEW: Handle zoom toggle functionality (12 ↔ 10)
-  const handleZoomOut = () => {
-    if (currentZoom === 12) {
-      setCurrentZoom(10);
-      console.log('📍 Zooming out to level 10');
+  // Enhanced zoom functionality with 3 levels
+  const cycleZoom = () => {
+    let nextZoom: number;
+    
+    switch (currentZoom) {
+      case ZOOM_LEVELS.CLOSE:  // 14 -> 12 (zoom out to medium)
+        nextZoom = ZOOM_LEVELS.MEDIUM;
+        break;
+      case ZOOM_LEVELS.MEDIUM: // 12 -> 10 (zoom out to far)
+        nextZoom = ZOOM_LEVELS.FAR;
+        break;
+      case ZOOM_LEVELS.FAR:    // 10 -> 14 (zoom in to close)
+        nextZoom = ZOOM_LEVELS.CLOSE;
+        break;
+      default:
+        nextZoom = ZOOM_LEVELS.MEDIUM;
+    }
+    
+    setCurrentZoom(nextZoom);
+    console.log('📍 Cycling zoom from', currentZoom, 'to', nextZoom);
+  };
+
+  // Get appropriate icon and label for current zoom level
+  const getZoomIconAndLabel = () => {
+    switch (currentZoom) {
+      case ZOOM_LEVELS.CLOSE:
+        return { 
+          icon: 'search' as const, 
+          label: 'Street View', 
+          nextLabel: 'Neighborhood' 
+        };
+      case ZOOM_LEVELS.MEDIUM:
+        return { 
+          icon: 'business' as const, 
+          label: 'Neighborhood', 
+          nextLabel: 'Area View' 
+        };
+      case ZOOM_LEVELS.FAR:
+        return { 
+          icon: 'earth' as const, 
+          label: 'Area View', 
+          nextLabel: 'Street View' 
+        };
+      default:
+        return { 
+          icon: 'business' as const, 
+          label: 'Neighborhood', 
+          nextLabel: 'Area View' 
+        };
     }
   };
 
-  const handleZoomIn = () => {
-    if (currentZoom === 10) {
-      setCurrentZoom(12);
-      console.log('📍 Zooming in to level 12');
-    }
-  };
-
-  // NEW: Check zoom states
-  const canZoomOut = currentZoom === 12;
-  const canZoomIn = currentZoom === 10;
+  const { icon, label, nextLabel } = getZoomIconAndLabel();
 
   const handleMapError = () => {
     setMapError(true);
@@ -488,7 +526,6 @@ const LocationSlide: React.FC<LocationSlideProps> = ({
   };
 
   const handleMapLoad = () => {
-    // NEW: Map loaded successfully - mark as permanently loaded and cache it
     setMapSuccessfullyLoaded(true);
     setMapError(false);
     
@@ -497,13 +534,12 @@ const LocationSlide: React.FC<LocationSlideProps> = ({
       mapCache.set(cacheKey, { 
         uri: staticMapUri, 
         timestamp: Date.now(),
-        loaded: true // NEW: Mark as successfully loaded
+        loaded: true
       });
       console.log('📍 Map successfully loaded and cached for', hotel.name);
     }
   };
 
-  // NEW: Modified logic - show loading animation before map loads, then permanent map
   const getDisplayImage = (): string => {
     // If we have coordinates and the map was successfully loaded, always use the map
     if (hotel.latitude && hotel.longitude && mapSuccessfullyLoaded && staticMapUri && !mapError) {
@@ -519,7 +555,6 @@ const LocationSlide: React.FC<LocationSlideProps> = ({
     return getFallbackImage();
   };
 
-  // NEW: Check if we should show the animated loading placeholder
   const shouldShowLoadingAnimation = () => {
     return hotel.latitude && 
            hotel.longitude && 
@@ -528,7 +563,6 @@ const LocationSlide: React.FC<LocationSlideProps> = ({
            !mapError;
   };
 
-  // NEW: Check if we should show map loading indicator
   const shouldShowLoadingIndicator = () => {
     return isVisible && 
            !mapSuccessfullyLoaded && 
@@ -586,32 +620,26 @@ const LocationSlide: React.FC<LocationSlideProps> = ({
         </View>
       )}
 
-      {/* Zoom controls - show appropriate button based on current zoom */}
+      {/* Enhanced zoom control with 3 levels */}
       {mapSuccessfullyLoaded && (
         <View style={tw`absolute top-10 right-4 z-20`}>
-          {canZoomOut && (
-            <TouchableOpacity
-              style={[
-                tw`w-8 h-8 bg-black/60 border border-white/30 rounded-full items-center justify-center`,
-              ]}
-              onPress={handleZoomOut}
-              activeOpacity={0.7}
-            >
-              <Ionicons name="remove" size={16} color="white" />
-            </TouchableOpacity>
-          )}
-          
-          {canZoomIn && (
-            <TouchableOpacity
-              style={[
-                tw`w-8 h-8 bg-black/60 border border-white/30 rounded-full items-center justify-center`,
-              ]}
-              onPress={handleZoomIn}
-              activeOpacity={0.7}
-            >
-              <Ionicons name="add" size={16} color="white" />
-            </TouchableOpacity>
-          )}
+          <TouchableOpacity
+            style={[
+              tw`bg-black/50 border border-white/30 rounded-xl px-3 py-2 flex-row items-center`,
+            ]}
+            onPress={cycleZoom}
+            activeOpacity={0.8}
+          >
+            <Ionicons name={icon} size={14} color="#1df9ff" />
+            <View style={tw`ml-2`}>
+              <Text style={tw`text-white text-[10px] font-semibold leading-3`}>
+                {label}
+              </Text>
+              <Text style={tw`text-white/60 text-[8px] leading-2`}>
+                Tap → {nextLabel}
+              </Text>
+            </View>
+          </TouchableOpacity>
         </View>
       )}
 
