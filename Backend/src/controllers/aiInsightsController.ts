@@ -765,7 +765,7 @@ JSON:
   "nearbyAttractions": ["name - desc", "name - desc"],
   "locationHighlight": "key location advantage",
   "topAmenities": ["amenity1", "amenity2", "amenity3"],
-  "safetyRating": 7,
+  "safetyRating": number 1-10 based off safety of area,
   "safetyJustification": "15-25 words about location safety"
 }
   

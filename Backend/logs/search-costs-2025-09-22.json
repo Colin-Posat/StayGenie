@@ -338,5 +338,25 @@
         "cost": 0.0028816499999999995
       }
     }
+  },
+  {
+    "timestamp": "2025-09-22T08:45:49.764Z",
+    "searchId": "334057a2-9724-4521-a2ee-5023b177f651",
+    "userQuery": "hotel in la",
+    "destination": "Los Angeles, US",
+    "hotelCount": 232,
+    "totalTokensUsed": 82165,
+    "totalCost": 0.01376025,
+    "searchDurationMs": 12002,
+    "operations": {
+      "hotelMatching": {
+        "tokens": 70670,
+        "cost": 0.010767899999999999
+      },
+      "aiInsights": {
+        "tokens": 11495,
+        "cost": 0.00299235
+      }
+    }
   }
 ]
