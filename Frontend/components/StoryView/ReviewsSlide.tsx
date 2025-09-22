@@ -1,4 +1,4 @@
-// ReviewsSlide.tsx - Scrollable reviews directly in the card, NOT like PhotoGallerySlide
+// ReviewsSlide.tsx - Updated with cleaner layout and different preview approach
 import React, { useState, useEffect } from 'react';
 import {
   View,
@@ -7,6 +7,8 @@ import {
   ActivityIndicator,
   TouchableOpacity,
   Image,
+  Modal,
+  StatusBar,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import tw from 'twrnc';
@@ -31,6 +33,255 @@ interface ReviewsSlideProps {
   isVisible?: boolean;
 }
 
+interface ReviewsModalProps {
+  visible: boolean;
+  reviews: Review[];
+  hotelName: string;
+  loading: boolean;
+  error: string | null;
+  onClose: () => void;
+  onRetry: () => void;
+}
+
+// Reviews modal component
+const ReviewsModal: React.FC<ReviewsModalProps> = ({
+  visible,
+  reviews,
+  hotelName,
+  loading,
+  error,
+  onClose,
+  onRetry,
+}) => {
+  const [hasScrolled, setHasScrolled] = useState(false);
+
+  const handleScroll = (event: any) => {
+    const { contentOffset } = event.nativeEvent;
+    if (contentOffset.y > 10 && !hasScrolled) {
+      setHasScrolled(true);
+    }
+  };
+
+  const getRatingColor = (rating: number): string => {
+    if (rating >= 4.5) return "#1df9ff";
+    if (rating >= 4.0) return "#1df9ffE6";
+    if (rating >= 3.5) return "#1df9ffCC";
+    if (rating >= 3.0) return "#1df9ffB3";
+    return "#1df9ff99";
+  };
+
+  const getReviewStats = () => {
+    if (reviews.length === 0) return null;
+    
+    const avgRating = reviews.reduce((sum, review) => sum + review.rating, 0) / reviews.length;
+    const positiveReviews = reviews.filter(r => r.rating >= 4).length;
+    
+    return {
+      average: avgRating,
+      positive: positiveReviews,
+      total: reviews.length
+    };
+  };
+
+  const stats = getReviewStats();
+
+  if (!visible) return null;
+
+  return (
+    <Modal
+      visible={visible}
+      transparent={true}
+      animationType="slide"
+      onRequestClose={onClose}
+      statusBarTranslucent={true}
+    >
+      <View style={tw`flex-1 bg-white`}>
+        {/* Header */}
+        <View style={tw`pt-12 pb-4 px-4 border-b border-gray-200`}>
+          <View style={tw`flex-row items-center justify-between`}>
+            <TouchableOpacity onPress={onClose} style={tw`p-2`}>
+              <Ionicons name="close" size={28} color="black" />
+            </TouchableOpacity>
+            
+            <Text style={tw`text-black text-lg font-semibold flex-1 text-center`}>
+              {hotelName}
+            </Text>
+     
+          </View>
+        </View>
+
+        {/* Content */}
+        {loading && (
+          <View style={tw`flex-1 items-center justify-center`}>
+            <ActivityIndicator size="large" color="#1df9ff" />
+            <Text style={tw`mt-2 text-gray-600 text-sm`}>Loading reviews...</Text>
+          </View>
+        )}
+
+        {error && (
+          <View style={tw`flex-1 items-center justify-center px-4`}>
+            <View style={tw`bg-gray-50 border border-gray-200 rounded-xl p-6 items-center`}>
+              <View style={[
+                tw`w-12 h-12 rounded-full items-center justify-center mb-3`,
+                { backgroundColor: 'rgba(239, 68, 68, 0.1)' }
+              ]}>
+                <Ionicons name="alert-circle" size={24} color="#EF4444" />
+              </View>
+              <Text style={tw`text-gray-900 font-medium text-center mb-2`}>
+                Unable to load reviews
+              </Text>
+              <Text style={tw`text-gray-600 text-sm text-center mb-4`}>
+                {error}
+              </Text>
+              <TouchableOpacity
+                onPress={onRetry}
+                style={tw`bg-blue-500 rounded-lg py-2 px-4`}
+                activeOpacity={0.8}
+              >
+                <Text style={tw`text-white font-medium text-sm`}>Try Again</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        )}
+
+        {!loading && !error && reviews.length === 0 && (
+          <View style={tw`flex-1 items-center justify-center px-4`}>
+            <View style={tw`bg-gray-50 border border-gray-200 rounded-xl p-6 items-center`}>
+              <View style={[
+                tw`w-12 h-12 rounded-full items-center justify-center mb-3`,
+                { backgroundColor: 'rgba(156, 163, 175, 0.1)' }
+              ]}>
+                <Ionicons name="chatbubbles-outline" size={24} color="#9CA3AF" />
+              </View>
+              <Text style={tw`text-gray-900 font-medium text-center mb-2`}>
+                No reviews yet
+              </Text>
+              <Text style={tw`text-gray-600 text-sm text-center`}>
+                Be the first to share your experience
+              </Text>
+            </View>
+          </View>
+        )}
+
+        {reviews.length > 0 && (
+          <View style={tw`flex-1 relative`}>
+            {/* Scroll hint */}
+            {!hasScrolled && (
+              <View style={tw`absolute bottom-4 left-0 right-0 z-10 pointer-events-none`}>
+                <View style={tw`flex-row justify-center items-center`}>
+                  <View style={[
+                    tw`bg-gray-800/80 rounded-full px-3 py-2 flex-row items-center`,
+                    {
+                      shadowColor: '#000000',
+                      shadowOffset: { width: 0, height: 2 },
+                      shadowOpacity: 0.3,
+                      shadowRadius: 4,
+                    }
+                  ]}>
+                    <Text style={tw`text-white text-xs mr-1`}>scroll for more</Text>
+                    <Ionicons name="chevron-down" size={14} color="white" />
+                  </View>
+                </View>
+              </View>
+            )}
+
+            <ScrollView 
+              style={tw`flex-1`}
+              contentContainerStyle={tw`p-4 pb-8`}
+              showsVerticalScrollIndicator={true}
+              onScroll={handleScroll}
+              scrollEventThrottle={16}
+            >
+              {reviews.map((review) => (
+                <View 
+                  key={review.id} 
+                  style={[
+                    tw`bg-white border border-gray-200 rounded-xl p-4 mb-3`,
+                    {
+                      shadowColor: '#000000',
+                      shadowOffset: { width: 0, height: 1 },
+                      shadowOpacity: 0.1,
+                      shadowRadius: 3,
+                    }
+                  ]}
+                >
+                  {/* Review header */}
+                  <View style={tw`flex-row items-center mb-3`}>
+                    <View style={[
+                      tw`rounded-full w-8 h-8 items-center justify-center mr-3`,
+                      { backgroundColor: getRatingColor(review.rating) }
+                    ]}>
+                      <Text style={tw`text-white font-bold text-xs`}>
+                        {review.rating}
+                      </Text>
+                    </View>
+                    <View style={tw`flex-1`}>
+                      <Text style={tw`font-medium text-gray-900 text-sm`}>
+                        {review.author}
+                      </Text>
+                      <Text style={tw`text-gray-500 text-xs`}>
+                        {review.date}
+                      </Text>
+                    </View>
+                  </View>
+
+                  {/* Review title */}
+                  {review.headline && review.headline.trim() && (
+                    <Text style={tw`font-medium text-gray-900 mb-2 text-sm leading-5`}>
+                      {review.headline}
+                    </Text>
+                  )}
+
+                  {/* Pros */}
+                  {review.pros && review.pros.trim() && (
+                    <View style={tw`mb-2`}>
+                      <View style={tw`flex-row items-start`}>
+                        <View style={[
+                          tw`rounded-full p-1 mr-2 mt-0.5`,
+                          { backgroundColor: 'rgba(16, 185, 129, 0.1)' }
+                        ]}>
+                          <Ionicons name="thumbs-up" size={12} color="#10B981" />
+                        </View>
+                        <Text style={tw`text-green-700 flex-1 text-xs leading-4`}>
+                          {review.pros}
+                        </Text>
+                      </View>
+                    </View>
+                  )}
+
+                  {/* Cons */}
+                  {review.cons && review.cons.trim() && (
+                    <View style={tw`mb-2`}>
+                      <View style={tw`flex-row items-start`}>
+                        <View style={[
+                          tw`rounded-full p-1 mr-2 mt-0.5`,
+                          { backgroundColor: 'rgba(239, 68, 68, 0.1)' }
+                        ]}>
+                          <Ionicons name="thumbs-down" size={12} color="#EF4444" />
+                        </View>
+                        <Text style={tw`text-red-700 flex-1 text-xs leading-4`}>
+                          {review.cons}
+                        </Text>
+                      </View>
+                    </View>
+                  )}
+
+                  {/* Full content if no pros/cons */}
+                  {review.content && !review.pros && !review.cons && (
+                    <Text style={tw`text-gray-700 text-xs leading-4`}>
+                      {review.content}
+                    </Text>
+                  )}
+                </View>
+              ))}
+            </ScrollView>
+          </View>
+        )}
+      </View>
+    </Modal>
+  );
+};
+
 const ReviewsSlide: React.FC<ReviewsSlideProps> = ({
   hotel,
   isVisible = false,
@@ -38,14 +289,7 @@ const ReviewsSlide: React.FC<ReviewsSlideProps> = ({
   const [reviews, setReviews] = useState<Review[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [hasScrolled, setHasScrolled] = useState(false);
-
-  // Fetch reviews when slide becomes visible
-  useEffect(() => {
-    if (isVisible && reviews.length === 0 && !loading) {
-      fetchReviews();
-    }
-  }, [isVisible]);
+  const [showReviewsModal, setShowReviewsModal] = useState(false);
 
   const fetchReviews = async () => {
     setLoading(true);
@@ -87,24 +331,15 @@ const ReviewsSlide: React.FC<ReviewsSlideProps> = ({
     }
   };
 
-  const handleScroll = (event: any) => {
-    const { contentOffset } = event.nativeEvent;
-    // Hide the scroll hint once user starts scrolling
-    if (contentOffset.y > 10 && !hasScrolled) {
-      setHasScrolled(true);
+  // Auto-fetch when slide becomes visible
+  useEffect(() => {
+    if (isVisible && reviews.length === 0 && !loading && !error) {
+      fetchReviews();
     }
-  };
+  }, [isVisible]);
 
   const getBackgroundImage = () => {
     return hotel.images?.[2] || hotel.images?.[1] || hotel.images?.[0];
-  };
-
-  const getRatingColor = (rating: number): string => {
-    if (rating >= 4.5) return "#1df9ff";
-    if (rating >= 4.0) return "#1df9ffE6";
-    if (rating >= 3.5) return "#1df9ffCC";
-    if (rating >= 3.0) return "#1df9ffB3";
-    return "#1df9ff99";
   };
 
   const getReviewStats = () => {
@@ -122,6 +357,11 @@ const ReviewsSlide: React.FC<ReviewsSlideProps> = ({
 
   const stats = getReviewStats();
 
+  const openReviewsModal = () => {
+    console.log('📱 Opening reviews modal');
+    setShowReviewsModal(true);
+  };
+
   return (
     <View style={tw`flex-1 relative overflow-hidden`}>
       {/* Background image */}
@@ -135,14 +375,17 @@ const ReviewsSlide: React.FC<ReviewsSlideProps> = ({
       </View>
 
       {/* Gradient overlay */}
-      <View style={tw`absolute bottom-0 left-0 right-0 h-20 bg-gradient-to-t from-black/80 to-transparent z-1`} />
+      <View style={tw`absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-black/60 to-transparent z-1`} />
 
-      {/* Header - positioned at top */}
-      <View style={tw`absolute top-12 left-2 right-2 z-10`}>
-        <View style={[
-          tw`bg-black/30 border border-white/15 px-3 py-2 rounded-lg`,
-        ]}>
-          <View style={tw`flex-row items-center justify-between`}>
+      {/* Centered reviews preview */}
+      <View style={tw`absolute inset-0 items-center justify-center z-10 px-4`}>
+        <TouchableOpacity
+          onPress={openReviewsModal}
+          style={tw`bg-black/45 border border-white/15 rounded-xl p-4 w-80 max-w-full`}
+          activeOpacity={0.8}
+        >
+          {/* Header */}
+          <View style={tw`flex-row items-center justify-between mb-3`}>
             <View style={tw`flex-row items-center`}>
               <View style={[
                 tw`w-6 h-6 rounded-full items-center justify-center mr-2`,
@@ -164,195 +407,109 @@ const ReviewsSlide: React.FC<ReviewsSlideProps> = ({
             </View>
             
             {stats && (
-              <View style={tw`flex-row items-center`}>
-                <Text style={tw`text-white/80 text-xs`}>
-                  {stats.total} reviews
+              <Text style={tw`text-white/80 text-xs`}>
+                {stats.total} reviews
+              </Text>
+            )}
+          </View>
+          
+          {/* Preview content */}
+          {loading && (
+            <View style={tw`py-4`}>
+              <Text style={tw`text-white/80 text-xs text-center`}>
+                Loading reviews...
+              </Text>
+            </View>
+          )}
+
+          {error && (
+            <View style={tw`py-4`}>
+              <View style={tw`items-center mb-3`}>
+                <Ionicons name="alert-circle" size={24} color="#EF4444" />
+                <Text style={tw`text-white text-xs text-center mt-2`}>
+                  Unable to load reviews
                 </Text>
               </View>
-            )}
-          </View>
-        </View>
-      </View>
-
-      {/* Scrollable Reviews Content */}
-      <View style={tw`flex-1 pt-20 pb-4 mt-5 relative`}>
-        {loading && (
-          <View style={tw`flex-1 items-center justify-center`}>
-            <ActivityIndicator size="large" color="#1df9ff" />
-            <Text style={tw`mt-2 text-white/80 text-sm`}>Loading reviews...</Text>
-          </View>
-        )}
-
-        {error && (
-          <View style={tw`flex-1 items-center justify-center px-4`}>
-            <View style={tw`bg-black/40 border border-white/15 rounded-xl p-6 items-center`}>
-              <View style={[
-                tw`w-12 h-12 rounded-full items-center justify-center mb-3`,
-                { backgroundColor: 'rgba(239, 68, 68, 0.2)' }
-              ]}>
-                <Ionicons name="alert-circle" size={24} color="#EF4444" />
-              </View>
-              <Text style={tw`text-white font-medium text-center mb-2`}>
-                Unable to load reviews
-              </Text>
-              <Text style={tw`text-white/70 text-sm text-center mb-4`}>
-                {error}
-              </Text>
-              <TouchableOpacity
-                onPress={fetchReviews}
-                style={tw`bg-white/20 border border-white/30 rounded-lg py-2 px-4`}
-                activeOpacity={0.8}
-              >
-                <Text style={tw`text-white font-medium text-sm`}>Try Again</Text>
-              </TouchableOpacity>
             </View>
-          </View>
-        )}
+          )}
 
-        {!loading && !error && reviews.length === 0 && (
-          <View style={tw`flex-1 items-center justify-center px-4`}>
-            <View style={tw`bg-black/40 border border-white/15 rounded-xl p-6 items-center`}>
-              <View style={[
-                tw`w-12 h-12 rounded-full items-center justify-center mb-3`,
-                { backgroundColor: 'rgba(156, 163, 175, 0.2)' }
-              ]}>
-                <Ionicons name="chatbubbles-outline" size={24} color="#9CA3AF" />
-              </View>
-              <Text style={tw`text-white font-medium text-center mb-2`}>
-                No reviews yet
-              </Text>
-              <Text style={tw`text-white/70 text-sm text-center`}>
-                Be the first to share your experience
+          {!loading && !error && reviews.length === 0 && (
+            <View style={tw`py-4 items-center`}>
+              <Ionicons name="chatbubbles-outline" size={24} color="rgba(255,255,255,0.7)" />
+              <Text style={tw`text-white/70 text-xs text-center mt-2`}>
+                No reviews available
               </Text>
             </View>
-          </View>
-        )}
+          )}
 
-        {reviews.length > 0 && (
-          <View style={tw`flex-1 relative`}>
-            {/* Scroll hint - disappears after scrolling */}
-            {!hasScrolled && (
-              <View style={tw`absolute bottom-4 left-0 right-0 z-10 pointer-events-none`}>
-                <View style={tw`flex-row justify-center items-center`}>
-                  <View style={[
-                    tw`bg-black/60 border border-white/20 rounded-full px-3 py-2 flex-row items-center`,
-                    {
-                      shadowColor: '#000000',
-                      shadowOffset: { width: 0, height: 2 },
-                      shadowOpacity: 0.3,
-                      shadowRadius: 4,
-                    }
-                  ]}>
-                    <Text style={tw`text-white/80 text-xs mr-1`}>scroll for more</Text>
-                    <Ionicons name="chevron-down" size={14} color="rgba(255,255,255,0.8)" />
-                  </View>
-                </View>
-              </View>
-            )}
+          {reviews.length > 0 && (
+            <View>
 
-            <ScrollView 
-              style={tw`flex-1 px-2`}
-              showsVerticalScrollIndicator={true}
-              contentContainerStyle={tw`pb-4`}
-              nestedScrollEnabled={true}
-              onScroll={handleScroll}
-              scrollEventThrottle={16}
-            >
-              {reviews.map((review) => (
-                <View 
-                  key={review.id} 
-                  style={[
-                    tw`bg-black/45 border border-white/15 rounded-xl p-4 mb-3 mx-1`,
-                    {
-                      shadowColor: '#000000',
-                      shadowOffset: { width: 0, height: 2 },
-                      shadowOpacity: 0.3,
-                      shadowRadius: 4,
-                    }
-                  ]}
-                >
-                  {/* Review header */}
-                  <View style={tw`flex-row items-center mb-3`}>
-                    <View style={[
-                      tw`rounded-full w-8 h-8 items-center justify-center mr-3`,
-                      { backgroundColor: getRatingColor(review.rating) }
-                    ]}>
-                      <Text style={[
-                        tw`text-white font-bold text-xs`,
-                        {
-                          textShadowColor: '#000000',
-                          textShadowOffset: { width: 0.5, height: 0.5 },
-                          textShadowRadius: 1
-                        }
+              {/* Preview of first 2 reviews */}
+              <View style={tw`gap-2 mb-3`}>
+                {reviews.slice(0, 2).map((review, index) => (
+                  <View 
+                    key={review.id}
+                    style={tw`bg-white/10 border border-white/20 rounded-lg p-3`}
+                  >
+                    <View style={tw`flex-row items-center mb-2`}>
+                      <View style={[
+                        tw`w-6 h-6 rounded-full items-center justify-center mr-2`,
+                        { backgroundColor: '#1df9ff' }
                       ]}>
-                        {review.rating}
-                      </Text>
-                    </View>
-                    <View style={tw`flex-1`}>
-                      <Text style={tw`font-medium text-white text-sm`}>
+                        <Text style={tw`text-white font-bold text-xs`}>
+                          {review.rating}
+                        </Text>
+                      </View>
+                      <Text style={tw`text-white text-xs font-medium`}>
                         {review.author}
                       </Text>
-                      <Text style={tw`text-white/70 text-xs`}>
-                        {review.date}
+                    </View>
+                    {review.headline && (
+                      <Text 
+                        style={tw`text-white/90 text-xs leading-4`}
+                        numberOfLines={2}
+                      >
+                        {review.headline}
                       </Text>
-                    </View>
+                    )}
                   </View>
+                ))}
+              </View>
+            </View>
+          )}
 
-                  {/* Review title */}
-                  {review.headline && review.headline.trim() && (
-                    <Text style={tw`font-medium text-white mb-2 text-sm leading-5`}>
-                      {review.headline}
-                    </Text>
-                  )}
-
-                  {/* Pros */}
-                  {review.pros && review.pros.trim() && (
-                    <View style={tw`mb-2`}>
-                      <View style={tw`flex-row items-start`}>
-                        <View style={[
-                          tw`rounded-full p-1 mr-2 mt-0.5`,
-                          { backgroundColor: 'rgba(16, 185, 129, 0.3)' }
-                        ]}>
-                          <Ionicons name="thumbs-up" size={12} color="#10B981" />
-                        </View>
-                        <Text style={tw`text-green-200 flex-1 text-xs leading-4`}>
-                          {review.pros}
-                        </Text>
-                      </View>
-                    </View>
-                  )}
-
-                  {/* Cons */}
-                  {review.cons && review.cons.trim() && (
-                    <View style={tw`mb-2`}>
-                      <View style={tw`flex-row items-start`}>
-                        <View style={[
-                          tw`rounded-full p-1 mr-2 mt-0.5`,
-                          { backgroundColor: 'rgba(239, 68, 68, 0.3)' }
-                        ]}>
-                          <Ionicons name="thumbs-down" size={12} color="#EF4444" />
-                        </View>
-                        <Text style={tw`text-red-200 flex-1 text-xs leading-4`}>
-                          {review.cons}
-                        </Text>
-                      </View>
-                    </View>
-                  )}
-
-                  {/* Full content if no pros/cons */}
-                  {review.content && !review.pros && !review.cons && (
-                    <Text style={tw`text-white/90 text-xs leading-4`}>
-                      {review.content}
-                    </Text>
-                  )}
-                </View>
-              ))}
-            </ScrollView>
+          {/* Call to action */}
+          <View style={tw`flex-row items-center justify-center pt-2 border-t border-white/15`}>
+            <Ionicons name="expand" size={12} color="#1df9ff" />
+            <Text style={tw`text-white text-xs font-medium ml-2`}>
+              {reviews.length > 0 
+                ? `Tap to View All ${reviews.length} Reviews`
+                : loading 
+                  ? "Loading Reviews..."
+                  : error
+                    ? "Tap to Retry"
+                    : "No Reviews Available"
+              }
+            </Text>
           </View>
-        )}
+        </TouchableOpacity>
       </View>
+
+      {/* Reviews modal */}
+      <ReviewsModal
+        visible={showReviewsModal}
+        reviews={reviews}
+        hotelName={hotel.name}
+        loading={loading}
+        error={error}
+        onClose={() => {
+          console.log('📱 Closing reviews modal');
+          setShowReviewsModal(false);
+        }}
+        onRetry={fetchReviews}
+      />
     </View>
   );
 };
-
 export default ReviewsSlide;

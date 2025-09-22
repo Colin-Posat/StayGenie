@@ -1,9 +1,0 @@
-BASIC INFORMATION:
-Name: Waldorf Astoria New York
-Address: undefined
-City: New York
-Country: US
-Star Rating: 4.5 stars
-Guest Rating: 0/10 (0 reviews)
-Check-in: 3 PM
-Check-out: noon
