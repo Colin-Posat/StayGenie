@@ -295,6 +295,8 @@ const isStage1Data = (hotel: Hotel): boolean => {
   );
 };
 
+
+
 const generateAIInsight = (hotel: Hotel, insightsStatus?: string): string => {
   if (insightsStatus === 'loading' || isStage1Data(hotel)) {
     return "Loading AI insights...";
@@ -560,6 +562,48 @@ const HotelOverviewSlide: React.FC<{
     };
   }, [panAnimation, scaleAnimation]);
 
+  const parseRatings = (guestInsights?: string) => {
+  const defaultRatings = {
+    cleanliness: 0,
+    service: 0,
+    location: 0,
+    roomQuality: 0
+  };
+
+  if (!guestInsights || insightsStatus === 'loading') {
+    return defaultRatings;
+  }
+
+  try {
+    const lines = guestInsights.split('\n');
+    const ratings = { ...defaultRatings };
+
+    lines.forEach(line => {
+      if (line.includes('Cleanliness:')) {
+        const match = line.match(/(\d+\.?\d*)/);
+        if (match) ratings.cleanliness = parseFloat(match[1]);
+      } else if (line.includes('Service:')) {
+        const match = line.match(/(\d+\.?\d*)/);
+        if (match) ratings.service = parseFloat(match[1]);
+      } else if (line.includes('Location:')) {
+        const match = line.match(/(\d+\.?\d*)/);
+        if (match) ratings.location = parseFloat(match[1]);
+      } else if (line.includes('Room Quality:')) {
+        const match = line.match(/(\d+\.?\d*)/);
+        if (match) ratings.roomQuality = parseFloat(match[1]);
+      }
+    });
+
+    return ratings;
+  } catch (error) {
+    return defaultRatings;
+  }
+};
+
+const ratings = parseRatings(hotel.guestInsights);
+const overallScore = ((ratings.cleanliness + ratings.service + ratings.location + ratings.roomQuality) / 4);
+
+
   const translateX = panAnimation.interpolate({ inputRange: [0, 1], outputRange: [-IMAGE_PAN_X, IMAGE_PAN_X] });
   const translateY = panAnimation.interpolate({ inputRange: [0, 1], outputRange: [-IMAGE_PAN_Y, IMAGE_PAN_Y] });
 
@@ -579,6 +623,30 @@ const HotelOverviewSlide: React.FC<{
     }
     return hotel.location;
   };
+
+  const getCompactAvailabilityText = () => {
+  if (!checkInDate || !checkOutDate) return null;
+  
+  const formatDate = (date: Date) => {
+    return date.toLocaleDateString('en-US', { 
+      month: 'short', 
+      day: 'numeric' 
+    });
+  };
+  
+  const start = formatDate(checkInDate);
+  const end = formatDate(checkOutDate);
+  
+  // Smart formatting: if same month, show "Dec 15-18"
+  if (checkInDate.getMonth() === checkOutDate.getMonth()) {
+    const month = checkInDate.toLocaleDateString('en-US', { month: 'short' });
+    const startDay = checkInDate.getDate();
+    const endDay = checkOutDate.getDate();
+    return `${month} ${startDay}-${endDay}`;
+  }
+  
+  return `${start} - ${end}`;
+};
 
   // Format dates for availability display
   const formatAvailabilityText = () => {
@@ -649,44 +717,63 @@ const HotelOverviewSlide: React.FC<{
 
       {/* COMPACT BOTTOM: Essential info only with tighter spacing */}
       <View style={tw`absolute bottom-4 left-2 right-2 z-10`}>
-        {/* Compact price and rating row */}
-        <View style={tw`flex-row items-center justify-between mb-2`}>
-          <View style={tw`bg-black/45 border border-white/15 px-2 py-1 rounded-md`}>
+{getCompactAvailabilityText() && (
+  <View style={tw`mb-2 self-start`}>
+    <View style={[
+      tw`bg-black/45 border border-white/15 px-2 py-1 rounded-md flex-row items-center`,
+      {
+        shadowColor: '#000000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.3,
+        shadowRadius: 2,
+      }
+    ]}>
+      <Ionicons name="checkmark-circle" size={10} color="#1df9ff" />
+      <Text style={tw`text-white text-[9px] font-semibold ml-1`}>
+        Available {getCompactAvailabilityText()}
+      </Text>
+    </View>
+  </View>
+)}
 
-            <View style={tw`flex-row items-baseline`}>
-              <Text style={tw`text-lg font-bold text-white`}>
-                {getDisplayPrice()}
-              </Text>
-              <Text style={tw`text-white/80 text-[10px] ml-1`}>/night</Text>
-            </View>
-          </View>
-          
-          <View style={tw`bg-black/45 border border-white/15 px-2 py-1 rounded-md flex-row items-center`}>
-            <View 
-              style={[
-                tw`w-4 h-4 rounded-full items-center justify-center mr-1`,
-                { backgroundColor: getRatingColor(hotel.rating) }
-              ]}
-            >
-              <Ionicons 
-                name="thumbs-up" 
-                size={8} 
-                color="#FFFFFF"
-                style={{
-                  textShadowColor: '#000000',
-                  textShadowOffset: { width: 0.5, height: 0.5 },
-                  textShadowRadius: 1
-                }}
-              />
-            </View>
-            <Text style={tw`text-white text-xs font-semibold`}>
-              {hotel.rating.toFixed(1)}
-            </Text>
-            <Text style={tw`text-white/70 text-[10px] ml-1`}>
-              ({hotel.reviews || 0})
-            </Text>
-          </View>
-        </View>
+        {/* Compact price and rating row */}
+<View style={tw`flex-row items-center justify-between mb-2`}>
+  <View style={tw`bg-black/45 border border-white/15 px-2 py-1 rounded-md`}>
+    
+    <View style={tw`flex-row items-baseline`}>
+      <Text style={tw`text-lg font-bold text-white`}>
+        {getDisplayPrice()}
+      </Text>
+      <Text style={tw`text-white/80 text-[10px] ml-1`}>/night</Text>
+    </View>
+  </View>
+  
+  <View style={tw`bg-black/45 border border-white/15 px-2 py-1 rounded-md flex-row items-center`}>
+    <View 
+  style={[
+    tw`w-4 h-4 rounded-full items-center justify-center mr-1`,
+    { backgroundColor: getRatingColor(overallScore) } // Use overallScore instead of hotel.rating
+  ]}
+>
+  <Ionicons 
+    name="thumbs-up" 
+    size={8} 
+    color="#FFFFFF"
+    style={{
+      textShadowColor: '#000000',
+      textShadowOffset: { width: 0.5, height: 0.5 },
+      textShadowRadius: 1
+    }}
+  />
+</View>
+<Text style={tw`text-white text-xs font-semibold`}>
+  {overallScore.toFixed(1)} {/* Use overallScore instead of hotel.rating */}
+</Text>
+<Text style={tw`text-white/70 text-[10px] ml-1`}>
+  ({hotel.reviews || 0})
+</Text>
+  </View>
+</View>
 
         {/* Flexible amenities row - adapts to text length */}
         {Array.isArray(hotel.topAmenities) && hotel.topAmenities.length > 0 && (
@@ -1627,6 +1714,8 @@ scrollsToTop={false}
               hotel={hotel} 
               insightsStatus={insightsStatus}
               searchMode={searchMode}
+              checkInDate={checkInDate} 
+  checkOutDate={checkOutDate}
               showAvailability={true}
             />
           </View>

@@ -1,0 +1,102 @@
+[
+  {
+    "timestamp": "2025-09-22T00:41:22.280Z",
+    "searchId": "aefd788d-d356-40c2-861c-af1d4896c4ae",
+    "userQuery": "Boutique hotels in Kyoto with gardens",
+    "destination": "Kyoto, JP",
+    "hotelCount": 75,
+    "totalTokensUsed": 29002,
+    "totalCost": 0.0058371000000000004,
+    "searchDurationMs": 9368,
+    "operations": {
+      "hotelMatching": {
+        "tokens": 18202,
+        "cost": 0.0028913999999999997
+      },
+      "aiInsights": {
+        "tokens": 10800,
+        "cost": 0.0029457
+      }
+    }
+  },
+  {
+    "timestamp": "2025-09-22T00:41:53.971Z",
+    "searchId": "e2323a31-8974-4ba5-9aa5-68baed12e0f3",
+    "userQuery": "hotels in turkey istanbul withhamma",
+    "destination": "Istanbul, TR",
+    "hotelCount": 408,
+    "totalTokensUsed": 104719,
+    "totalCost": 0.017107349999999997,
+    "searchDurationMs": 10534,
+    "operations": {
+      "hotelMatching": {
+        "tokens": 93452,
+        "cost": 0.014159099999999999
+      },
+      "aiInsights": {
+        "tokens": 11267,
+        "cost": 0.00294825
+      }
+    }
+  },
+  {
+    "timestamp": "2025-09-22T00:42:24.192Z",
+    "searchId": "2a87c8ad-b797-42a3-aa14-ea2e4517181c",
+    "userQuery": "hotels in turkey istanbul withhamma near bosphorus",
+    "destination": "Istanbul, TR",
+    "hotelCount": 408,
+    "totalTokensUsed": 103223,
+    "totalCost": 0.016961700000000007,
+    "searchDurationMs": 11696,
+    "operations": {
+      "hotelMatching": {
+        "tokens": 91226,
+        "cost": 0.013849499999999999
+      },
+      "aiInsights": {
+        "tokens": 11997,
+        "cost": 0.0031122
+      }
+    }
+  },
+  {
+    "timestamp": "2025-09-22T00:42:56.118Z",
+    "searchId": "20248447-adfa-46ac-aa55-92b070d4e3c8",
+    "userQuery": "hotels in turkey istanbul with hammam near bosphorus",
+    "destination": "Istanbul, TR",
+    "hotelCount": 408,
+    "totalTokensUsed": 105060,
+    "totalCost": 0.017224200000000002,
+    "searchDurationMs": 16603,
+    "operations": {
+      "hotelMatching": {
+        "tokens": 92990,
+        "cost": 0.014104199999999999
+      },
+      "aiInsights": {
+        "tokens": 12070,
+        "cost": 0.00312
+      }
+    }
+  },
+  {
+    "timestamp": "2025-09-22T00:44:01.625Z",
+    "searchId": "79029a8d-1922-40de-b626-1147469b2ccf",
+    "userQuery": "A hotel in Rome under $200 a night with a rooftop pool and free breakfast.",
+    "destination": "Rome, IT",
+    "hotelCount": 267,
+    "totalTokensUsed": 34846,
+    "totalCost": 0.00663855,
+    "searchDurationMs": 17249,
+    "operations": {
+      "hotelMatching": {
+        "tokens": 24152,
+        "cost": 0.0037523999999999995
+      },
+      "aiInsights": {
+        "tokens": 10694,
+        "cost": 0.0028861499999999997
+      }
+    }
+  }
+]

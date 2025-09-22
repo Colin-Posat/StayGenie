@@ -173,6 +173,14 @@ const validateParsedData = (parsed: any) => {
     [parsed.minCost, parsed.maxCost] = [parsed.maxCost, parsed.minCost];
   }
 
+  // Validate new rating fields
+  if (typeof parsed.highlyRated !== 'boolean') {
+    parsed.highlyRated = false;
+  }
+  if (parsed.starRating !== null && (typeof parsed.starRating !== 'number' || parsed.starRating < 1 || parsed.starRating > 5)) {
+    parsed.starRating = null;
+  }
+
   return parsed;
 };
 
@@ -223,6 +231,8 @@ You are a travel assistant converting user hotel search requests into structured
   "maxCost": number or null (USD/night),
   "cheap": boolean (true if user wants budget/cheap options, false otherwise),
   "findCheapestOnes": boolean (true ONLY if query is purely about finding cheapest options with no other criteria),
+  "highlyRated": boolean (true if user wants highly rated/top rated/best reviewed hotels),
+  "starRating": number or null (specific star rating 1-5 if mentioned),
   "aiSearch": "All other preferences, descriptors, trip purpose, vibe, hotel style, etc."
 }
 
@@ -324,6 +334,27 @@ You are a travel assistant converting user hotel search requests into structured
 Set "cheap": true if the user mentions any of these budget-related terms:
 - "cheap", "cheapest", "budget", "affordable", "inexpensive", "low cost", "save money", "tight budget", "on a dime", "bargain", "economical", "frugal"
 
+**RATING DETECTION RULES:**
+
+**Highly Rated Detection:**
+Set "highlyRated": true if user mentions:
+- "highly rated", "top rated", "best rated", "highest rated"
+- "well reviewed", "good reviews", "excellent reviews", "great reviews"
+- "best hotels", "top hotels", "premium hotels"
+- "highly recommended", "award winning"
+- "5-star reviews", "top quality", "well regarded"
+- "reputable", "acclaimed", "renowned"
+
+**Star Rating Detection:**
+Set "starRating" to the specific number (1-5) if user mentions:
+- "5 star hotel", "five star", "5-star"
+- "4 star", "four star", "4-star"  
+- "3 star", "three star", "3-star"
+- "2 star", "two star", "2-star"
+- "1 star", "one star", "1-star"
+- Written numbers: "five-star luxury" → 5
+- If user says "at least 4 star" → set starRating: 4 and add "minimum 4 stars" to aiSearch
+
 **PRICING RULES:**
 - Only set explicit minCost/maxCost if user gives specific dollar amounts
 - Examples:
@@ -403,6 +434,8 @@ User input: "${userInput}"
         maxCost: null,
         cheap: false,
         findCheapestOnes: false,
+        highlyRated: false,
+        starRating: null,
         aiSearch: "well-reviewed, good-value hotels",
         note: "Fallback response due to parsing error"
       });

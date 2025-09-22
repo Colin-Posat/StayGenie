@@ -918,5 +918,365 @@
         "cost": 0.0030571500000000002
       }
     }
+  },
+  {
+    "timestamp": "2025-09-21T23:05:12.770Z",
+    "searchId": "5f4b72c4-7f49-4ba7-a46d-b8d8a8b75fb3",
+    "userQuery": "Luxury safari lodges in Kenya with pools",
+    "destination": "Nairobi, KE",
+    "hotelCount": 232,
+    "totalTokensUsed": 90429,
+    "totalCost": 0.014988150000000002,
+    "searchDurationMs": 12121,
+    "operations": {
+      "hotelMatching": {
+        "tokens": 77848,
+        "cost": 0.0118266
+      },
+      "aiInsights": {
+        "tokens": 12581,
+        "cost": 0.00316155
+      }
+    }
+  },
+  {
+    "timestamp": "2025-09-21T23:21:03.306Z",
+    "searchId": "40eebc43-0c1d-45ec-ba4b-3802ade10a9b",
+    "userQuery": "Luxury safari lodges in Kenya with pools",
+    "destination": "Nairobi, KE",
+    "hotelCount": 232,
+    "totalTokensUsed": 90317,
+    "totalCost": 0.014928599999999998,
+    "searchDurationMs": 14015,
+    "operations": {
+      "hotelMatching": {
+        "tokens": 77848,
+        "cost": 0.0118266
+      },
+      "aiInsights": {
+        "tokens": 12469,
+        "cost": 0.0031019999999999997
+      }
+    }
+  },
+  {
+    "timestamp": "2025-09-21T23:21:40.964Z",
+    "searchId": "dd023ec2-af63-459d-a0ec-2501a466342c",
+    "userQuery": "hotels in london with spa",
+    "destination": "London, GB",
+    "hotelCount": 399,
+    "totalTokensUsed": 74017,
+    "totalCost": 0.01251825,
+    "searchDurationMs": 21286,
+    "operations": {
+      "hotelMatching": {
+        "tokens": 62522,
+        "cost": 0.009533100000000001
+      },
+      "aiInsights": {
+        "tokens": 11495,
+        "cost": 0.00298515
+      }
+    }
+  },
+  {
+    "timestamp": "2025-09-21T23:25:53.663Z",
+    "searchId": "a3e0dbe0-5c7d-407f-be09-00f520d69edf",
+    "userQuery": "hotels in turkey bodrum",
+    "destination": "Bodrum, TR",
+    "hotelCount": 96,
+    "totalTokensUsed": 51676,
+    "totalCost": 0.009279150000000002,
+    "searchDurationMs": 9440,
+    "operations": {
+      "hotelMatching": {
+        "tokens": 38048,
+        "cost": 0.005896199999999999
+      },
+      "aiInsights": {
+        "tokens": 13628,
+        "cost": 0.0033829500000000005
+      }
+    }
+  },
+  {
+    "timestamp": "2025-09-21T23:32:29.686Z",
+    "searchId": "bb7e8b4c-e80b-467a-bd23-9a170456301a",
+    "userQuery": "hotels in turkey with a free full turkish breakfast included",
+    "destination": "Istanbul, TR",
+    "hotelCount": 417,
+    "totalTokensUsed": 103576,
+    "totalCost": 0.016968749999999998,
+    "searchDurationMs": 12355,
+    "operations": {
+      "hotelMatching": {
+        "tokens": 91354,
+        "cost": 0.013860599999999999
+      },
+      "aiInsights": {
+        "tokens": 12222,
+        "cost": 0.0031081499999999996
+      }
+    }
+  },
+  {
+    "timestamp": "2025-09-21T23:33:17.428Z",
+    "searchId": "1bb7a9e3-219c-4d6b-b529-da43e00eb277",
+    "userQuery": "cheapest hotels near eiffel tower",
+    "destination": "Paris, FR",
+    "hotelCount": 489,
+    "totalTokensUsed": 82381,
+    "totalCost": 0.013782299999999999,
+    "searchDurationMs": 9436,
+    "operations": {
+      "hotelMatching": {
+        "tokens": 71672,
+        "cost": 0.0109065
+      },
+      "aiInsights": {
+        "tokens": 10709,
+        "cost": 0.0028758000000000004
+      }
+    }
+  },
+  {
+    "timestamp": "2025-09-21T23:37:09.474Z",
+    "searchId": "0879d222-c026-484b-b226-0e55f7ae2c2f",
+    "userQuery": "Luxury safari lodges in Kenya with pools",
+    "destination": "Nairobi, KE",
+    "hotelCount": 234,
+    "totalTokensUsed": 91196,
+    "totalCost": 0.01507575,
+    "searchDurationMs": 8772,
+    "operations": {
+      "hotelMatching": {
+        "tokens": 78714,
+        "cost": 0.0119538
+      },
+      "aiInsights": {
+        "tokens": 12482,
+        "cost": 0.00312195
+      }
+    }
+  },
+  {
+    "timestamp": "2025-09-21T23:37:38.583Z",
+    "searchId": "c21e67b3-c058-4186-a15e-0b8c6ff98f19",
+    "userQuery": "Luxury safari lodges in Kenya with pools",
+    "destination": "Nairobi, KE",
+    "hotelCount": 234,
+    "totalTokensUsed": 91348,
+    "totalCost": 0.0150981,
+    "searchDurationMs": 10175,
+    "operations": {
+      "hotelMatching": {
+        "tokens": 78732,
+        "cost": 0.0119646
+      },
+      "aiInsights": {
+        "tokens": 12616,
+        "cost": 0.0031334999999999996
+      }
+    }
+  },
+  {
+    "timestamp": "2025-09-21T23:44:45.376Z",
+    "searchId": "22e99177-f26e-46ac-84a0-4297dffc8a3b",
+    "userQuery": "Boutique hotels in Kyoto with gardens",
+    "destination": "Kyoto, JP",
+    "hotelCount": 78,
+    "totalTokensUsed": 29735,
+    "totalCost": 0.0058867500000000005,
+    "searchDurationMs": 7492,
+    "operations": {
+      "hotelMatching": {
+        "tokens": 18626,
+        "cost": 0.0029595
+      },
+      "aiInsights": {
+        "tokens": 11109,
+        "cost": 0.0029272499999999997
+      }
+    }
+  },
+  {
+    "timestamp": "2025-09-22T00:02:39.711Z",
+    "searchId": "82a4889b-683d-4446-bb0c-f097749fe5f5",
+    "userQuery": "Boutique hotels in Kyoto with gardens",
+    "destination": "Kyoto, JP",
+    "hotelCount": 72,
+    "totalTokensUsed": 28197,
+    "totalCost": 0.00564345,
+    "searchDurationMs": 16132,
+    "operations": {
+      "hotelMatching": {
+        "tokens": 17320,
+        "cost": 0.0027662999999999997
+      },
+      "aiInsights": {
+        "tokens": 10877,
+        "cost": 0.00287715
+      }
+    }
+  },
+  {
+    "timestamp": "2025-09-22T00:03:26.655Z",
+    "searchId": "a9447ff9-58d2-4c1e-b34c-7e4a1eb5f961",
+    "userQuery": "Luxury safari lodges in Kenya with pools",
+    "destination": "Nairobi, KE",
+    "hotelCount": 231,
+    "totalTokensUsed": 90126,
+    "totalCost": 0.014917050000000003,
+    "searchDurationMs": 11300,
+    "operations": {
+      "hotelMatching": {
+        "tokens": 77568,
+        "cost": 0.0117918
+      },
+      "aiInsights": {
+        "tokens": 12558,
+        "cost": 0.0031252499999999996
+      }
+    }
+  },
+  {
+    "timestamp": "2025-09-22T00:05:37.723Z",
+    "searchId": "44832f1a-edcc-4ea8-ac13-b523568bda8d",
+    "userQuery": "Lake-view hotels in Banff National Park",
+    "destination": "Banff, CA",
+    "hotelCount": 30,
+    "totalTokensUsed": 22737,
+    "totalCost": 0.0048159,
+    "searchDurationMs": 20072,
+    "operations": {
+      "hotelMatching": {
+        "tokens": 11150,
+        "cost": 0.0018074999999999999
+      },
+      "aiInsights": {
+        "tokens": 11587,
+        "cost": 0.0030083999999999996
+      }
+    }
+  },
+  {
+    "timestamp": "2025-09-22T00:06:36.504Z",
+    "searchId": "b1295026-d160-47d3-a41e-77167e3add1e",
+    "userQuery": "Lake-view hotels in Banff National Park",
+    "destination": "Banff, CA",
+    "hotelCount": 30,
+    "totalTokensUsed": 22700,
+    "totalCost": 0.0048405,
+    "searchDurationMs": 9228,
+    "operations": {
+      "hotelMatching": {
+        "tokens": 11162,
+        "cost": 0.0018146999999999998
+      },
+      "aiInsights": {
+        "tokens": 11538,
+        "cost": 0.0030257999999999995
+      }
+    }
+  },
+  {
+    "timestamp": "2025-09-22T00:14:07.934Z",
+    "searchId": "8b373af1-1489-459f-a06c-e3cc3eab78a4",
+    "userQuery": "Luxury safari lodges in Kenya with pools",
+    "destination": "Nairobi, KE",
+    "hotelCount": 231,
+    "totalTokensUsed": 89829,
+    "totalCost": 0.014819850000000002,
+    "searchDurationMs": 10245,
+    "operations": {
+      "hotelMatching": {
+        "tokens": 77546,
+        "cost": 0.0117786
+      },
+      "aiInsights": {
+        "tokens": 12283,
+        "cost": 0.0030412500000000006
+      }
+    }
+  },
+  {
+    "timestamp": "2025-09-22T00:33:02.519Z",
+    "searchId": "9c438dd4-f534-4f62-88c8-e52a26375a3b",
+    "userQuery": "Lake-view hotels in Banff National Park",
+    "destination": "Banff, CA",
+    "hotelCount": 28,
+    "totalTokensUsed": 22306,
+    "totalCost": 0.00476565,
+    "searchDurationMs": 15787,
+    "operations": {
+      "hotelMatching": {
+        "tokens": 10804,
+        "cost": 0.0017637
+      },
+      "aiInsights": {
+        "tokens": 11502,
+        "cost": 0.0030019499999999998
+      }
+    }
+  },
+  {
+    "timestamp": "2025-09-22T00:36:24.568Z",
+    "searchId": "b2298df8-afdb-4d1a-b04c-60ebbd66f1be",
+    "userQuery": "Lake-view hotels in Banff National Park",
+    "destination": "Banff, CA",
+    "hotelCount": 28,
+    "totalTokensUsed": 22330,
+    "totalCost": 0.004753049999999999,
+    "searchDurationMs": 14552,
+    "operations": {
+      "hotelMatching": {
+        "tokens": 10784,
+        "cost": 0.0017517
+      },
+      "aiInsights": {
+        "tokens": 11546,
+        "cost": 0.00300135
+      }
+    }
+  },
+  {
+    "timestamp": "2025-09-22T00:36:45.888Z",
+    "searchId": "968041ea-5b61-477e-ab0c-3900f1032742",
+    "userQuery": "Luxury safari lodges in Kenya with pools",
+    "destination": "Nairobi, KE",
+    "hotelCount": 233,
+    "totalTokensUsed": 90588,
+    "totalCost": 0.01497465,
+    "searchDurationMs": 12850,
+    "operations": {
+      "hotelMatching": {
+        "tokens": 78424,
+        "cost": 0.011913
+      },
+      "aiInsights": {
+        "tokens": 12164,
+        "cost": 0.00306165
+      }
+    }
+  },
+  {
+    "timestamp": "2025-09-22T00:37:46.714Z",
+    "searchId": "2638fb31-97cd-42bd-baab-a4a155465f13",
+    "userQuery": "Boutique hotels in Kyoto with gardens",
+    "destination": "Kyoto, JP",
+    "hotelCount": 75,
+    "totalTokensUsed": 29282,
+    "totalCost": 0.005821500000000001,
+    "searchDurationMs": 8413,
+    "operations": {
+      "hotelMatching": {
+        "tokens": 18210,
+        "cost": 0.0028962
+      },
+      "aiInsights": {
+        "tokens": 11072,
+        "cost": 0.0029252999999999996
+      }
+    }
   }
 ]

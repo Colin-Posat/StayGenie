@@ -752,6 +752,12 @@ ${hasSpecificPreferences ? `USER SEARCH: "${userQuery}"` : ''}
 
 Generate content + safety rating (1-10 for tourist safety in this location).
 
+/* GUIDELINES FOR topAmenities:
+- Pick EXACTLY 3.
+- First, include any amenities out of AMENITIES that the USER SEARCH explicitly asked for (e.g., "free breakfast", "pool", "parking") IF they appear in AMENITIES.
+- Then fill the rest with interesting amenities from what it has (dont choose amenities that says blah blah nearby THOSE AERNT GOOD)
+- First word should always be capitilized
+
 JSON:
 {
   "whyItMatches": "${hasSpecificPreferences ? '25 words - why fits search, mention relevant amenities' : '20 words - why great choice'}",
@@ -763,12 +769,7 @@ JSON:
   "safetyJustification": "15-25 words about location safety"
 }
   
-/* GUIDELINES FOR topAmenities:
-- Pick EXACTLY 3.
-- First, include any amenities that the USER SEARCH explicitly asked for (e.g., "free breakfast", "pool", "parking") IF they appear in AMENITIES.
-- Dont say it exactly how it is on teh amenities list change fitness facilities to gym and health or beauty spa nearby to just spa (And follow rules for anything like that!!!!!)
-- Then fill the rest with interesting amenities from what it has (dont choose amenities that says blah blah nearby THOSE AERNT GOOD)
-- First word should always be capitilized
+
 `;
 
   try {
