@@ -762,7 +762,7 @@ JSON:
 {
   "whyItMatches": "${hasSpecificPreferences ? '25 words - why fits search, mention relevant amenities' : '20 words - why great choice'}",
   "funFacts": ["fact1", "fact2"],
-  "nearbyAttractions": ["name - desc", "name - desc"],
+  "nearbyAttractions": ["name - desc - time it takes to walk or drive in minutes (only if you are sure its correct)", "name - desc - time it takes to walk or drive in minutes (only if you are sure its correct)"],
   "locationHighlight": "key location advantage",
   "topAmenities": ["amenity1", "amenity2", "amenity3"],
   "safetyRating": number 1-10 based off safety of area,

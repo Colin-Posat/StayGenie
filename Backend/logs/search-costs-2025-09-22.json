@@ -358,5 +358,45 @@
         "cost": 0.00299235
       }
     }
+  },
+  {
+    "timestamp": "2025-09-22T08:50:29.884Z",
+    "searchId": "c8dc0301-7fd1-404e-a319-8988ded9b89b",
+    "userQuery": "hotels in paris",
+    "destination": "Paris, FR",
+    "hotelCount": 487,
+    "totalTokensUsed": 77116,
+    "totalCost": 0.012821100000000002,
+    "searchDurationMs": 12884,
+    "operations": {
+      "hotelMatching": {
+        "tokens": 67526,
+        "cost": 0.0102846
+      },
+      "aiInsights": {
+        "tokens": 9590,
+        "cost": 0.0025365
+      }
+    }
+  },
+  {
+    "timestamp": "2025-09-22T08:51:32.909Z",
+    "searchId": "4ee5ba71-ab76-4b01-a5ae-7e48212bbea2",
+    "userQuery": "hotels near disneyland fmaily friendly",
+    "destination": "Anaheim, US",
+    "hotelCount": 116,
+    "totalTokensUsed": 47513,
+    "totalCost": 0.0085368,
+    "searchDurationMs": 10749,
+    "operations": {
+      "hotelMatching": {
+        "tokens": 35400,
+        "cost": 0.0054927
+      },
+      "aiInsights": {
+        "tokens": 12113,
+        "cost": 0.0030441
+      }
+    }
   }
 ]
