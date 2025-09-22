@@ -278,5 +278,65 @@
         "cost": 0.0031754999999999995
       }
     }
+  },
+  {
+    "timestamp": "2025-09-22T08:24:01.493Z",
+    "searchId": "c4c3d033-919e-4129-9044-ddd1a20ff7c1",
+    "userQuery": "hotels under 200 in barcelona near nightlife",
+    "destination": "Barcelona, ES",
+    "hotelCount": 329,
+    "totalTokensUsed": 31880,
+    "totalCost": 0.006166649999999999,
+    "searchDurationMs": 9526,
+    "operations": {
+      "hotelMatching": {
+        "tokens": 21510,
+        "cost": 0.0033596999999999998
+      },
+      "aiInsights": {
+        "tokens": 10370,
+        "cost": 0.00280695
+      }
+    }
+  },
+  {
+    "timestamp": "2025-09-22T08:26:15.014Z",
+    "searchId": "9feaad6e-0d63-4546-a253-227e3cc59a5e",
+    "userQuery": "hotels in barcelona near nightlife",
+    "destination": "Barcelona, ES",
+    "hotelCount": 329,
+    "totalTokensUsed": 84239,
+    "totalCost": 0.014056949999999999,
+    "searchDurationMs": 12099,
+    "operations": {
+      "hotelMatching": {
+        "tokens": 73344,
+        "cost": 0.011137499999999998
+      },
+      "aiInsights": {
+        "tokens": 10895,
+        "cost": 0.00291945
+      }
+    }
+  },
+  {
+    "timestamp": "2025-09-22T08:27:33.840Z",
+    "searchId": "4741b341-c976-4b8c-ab92-3a95efda946a",
+    "userQuery": "hotels near nightlife barcelona",
+    "destination": "Barcelona, ES",
+    "hotelCount": 329,
+    "totalTokensUsed": 82880,
+    "totalCost": 0.013869750000000002,
+    "searchDurationMs": 14861,
+    "operations": {
+      "hotelMatching": {
+        "tokens": 72276,
+        "cost": 0.0109881
+      },
+      "aiInsights": {
+        "tokens": 10604,
+        "cost": 0.0028816499999999995
+      }
+    }
   }
 ]
