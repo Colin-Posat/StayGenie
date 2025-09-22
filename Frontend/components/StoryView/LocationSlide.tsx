@@ -1,5 +1,5 @@
-// LocationSlide.tsx - Updated with permanent map caching
-import React, { useState, useEffect } from 'react';
+
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text,
@@ -8,6 +8,7 @@ import {
   Modal,
   Alert,
   Platform,
+  Animated,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import tw from 'twrnc';
@@ -159,19 +160,19 @@ const LocationSlide: React.FC<LocationSlideProps> = ({
   const [mapSuccessfullyLoaded, setMapSuccessfullyLoaded] = useState(false); // NEW: Track successful load
   const [showInteractiveMap, setShowInteractiveMap] = useState(false);
   const [mapError, setMapError] = useState(false);
+  const [currentZoom, setCurrentZoom] = useState(12); // NEW: Track current zoom level
 
-  // Create cache key from coordinates
+  // Create cache key from coordinates and zoom level
   const cacheKey = hotel.latitude && hotel.longitude 
-    ? `${hotel.latitude.toFixed(6)}-${hotel.longitude.toFixed(6)}` 
+    ? `${hotel.latitude.toFixed(6)}-${hotel.longitude.toFixed(6)}-z${currentZoom}` 
     : null;
 
-  // Generate static map URL
-  const generateStaticMapUrl = () => {
+  // Generate static map URL with zoom parameter
+  const generateStaticMapUrl = (zoom: number = currentZoom) => {
     if (!hotel.latitude || !hotel.longitude) {
       return null;
     }
 
-    const zoom = 12;
     const width = 600;
     const height = 400;
     const retina = '@2x';
@@ -187,7 +188,7 @@ const LocationSlide: React.FC<LocationSlideProps> = ({
     return `${baseUrl}/${marker}/${center}/${size}?access_token=${MAPBOX_ACCESS_TOKEN}`;
   };
 
-  // Check cache and generate map when slide becomes visible
+  // Check cache and generate map when slide becomes visible or zoom changes
   useEffect(() => {
     if (!isVisible || !cacheKey || !hotel.latitude || !hotel.longitude) {
       return;
@@ -203,24 +204,25 @@ const LocationSlide: React.FC<LocationSlideProps> = ({
       setStaticMapGenerated(true);
       setMapSuccessfullyLoaded(cached.loaded); // NEW: Restore loaded state from cache
       setMapError(false);
-      console.log('📍 Using cached map for', hotel.name, 'loaded:', cached.loaded);
+      console.log('📍 Using cached map for', hotel.name, 'zoom:', currentZoom, 'loaded:', cached.loaded);
       return;
     }
 
     // Generate new map if not cached or expired
-    if (!staticMapGenerated) {
-      const mapUrl = generateStaticMapUrl();
+    setStaticMapGenerated(false);
+    setMapSuccessfullyLoaded(false);
+    
+    const mapUrl = generateStaticMapUrl(currentZoom);
+    
+    if (mapUrl) {
+      setStaticMapUri(mapUrl);
+      setStaticMapGenerated(true);
+      setMapError(false);
+      // Don't set mapSuccessfullyLoaded yet - wait for onLoad
       
-      if (mapUrl) {
-        setStaticMapUri(mapUrl);
-        setStaticMapGenerated(true);
-        setMapError(false);
-        // Don't set mapSuccessfullyLoaded yet - wait for onLoad
-        
-        console.log('📍 Generated new map for', hotel.name);
-      }
+      console.log('📍 Generated new map for', hotel.name, 'zoom:', currentZoom);
     }
-  }, [isVisible, cacheKey, hotel.latitude, hotel.longitude, staticMapGenerated]);
+  }, [isVisible, cacheKey, hotel.latitude, hotel.longitude, currentZoom]);
 
   // Clean up old cache entries periodically
   useEffect(() => {
@@ -246,15 +248,234 @@ const LocationSlide: React.FC<LocationSlideProps> = ({
     return hotel.images?.[0] || hotel.image;
   };
 
-  const getLocationDisplayText = () => {
-    if (hotel.city && hotel.country) {
-      return `${hotel.city}, ${getCountryName(hotel.country)}`;
-    }
-    if (hotel.fullAddress) {
-      return hotel.fullAddress;
-    }
-    return hotel.location;
+  // NEW: Map loading animation component
+  const MapLoadingAnimation = () => {
+    const pulseAnim1 = useRef(new Animated.Value(0.8)).current;
+    const pulseAnim2 = useRef(new Animated.Value(0.8)).current;
+    const pulseAnim3 = useRef(new Animated.Value(0.8)).current;
+    const scanAnim = useRef(new Animated.Value(0)).current;
+    const bounceAnim1 = useRef(new Animated.Value(0)).current;
+    const bounceAnim2 = useRef(new Animated.Value(0)).current;
+    const bounceAnim3 = useRef(new Animated.Value(0)).current;
+    const pinPulseAnim = useRef(new Animated.Value(1)).current;
+
+    useEffect(() => {
+      // Pulse animations for radar circles
+      const createPulseAnimation = (animValue: Animated.Value, delay: number) => {
+        return Animated.loop(
+          Animated.sequence([
+            Animated.delay(delay),
+            Animated.timing(animValue, {
+              toValue: 1.5,
+              duration: 2000,
+              useNativeDriver: true,
+            }),
+            Animated.timing(animValue, {
+              toValue: 0.8,
+              duration: 0,
+              useNativeDriver: true,
+            }),
+          ])
+        );
+      };
+
+      // Scanning line animation
+      const scanAnimation = Animated.loop(
+        Animated.sequence([
+          Animated.timing(scanAnim, {
+            toValue: 1,
+            duration: 3000,
+            useNativeDriver: true,
+          }),
+          Animated.timing(scanAnim, {
+            toValue: 0,
+            duration: 0,
+            useNativeDriver: true,
+          }),
+        ])
+      );
+
+      // Bouncing dots animation
+      const createBounceAnimation = (animValue: Animated.Value, delay: number) => {
+        return Animated.loop(
+          Animated.sequence([
+            Animated.delay(delay),
+            Animated.timing(animValue, {
+              toValue: -4,
+              duration: 500,
+              useNativeDriver: true,
+            }),
+            Animated.timing(animValue, {
+              toValue: 0,
+              duration: 500,
+              useNativeDriver: true,
+            }),
+          ])
+        );
+      };
+
+      // Pin pulse animation
+      const pinPulseAnimation = Animated.loop(
+        Animated.sequence([
+          Animated.timing(pinPulseAnim, {
+            toValue: 1.3,
+            duration: 1000,
+            useNativeDriver: true,
+          }),
+          Animated.timing(pinPulseAnim, {
+            toValue: 1,
+            duration: 1000,
+            useNativeDriver: true,
+          }),
+        ])
+      );
+
+      // Start all animations
+      Animated.parallel([
+        createPulseAnimation(pulseAnim1, 0),
+        createPulseAnimation(pulseAnim2, 500),
+        createPulseAnimation(pulseAnim3, 1000),
+        scanAnimation,
+        createBounceAnimation(bounceAnim1, 0),
+        createBounceAnimation(bounceAnim2, 200),
+        createBounceAnimation(bounceAnim3, 400),
+        pinPulseAnimation,
+      ]).start();
+    }, []);
+
+    return (
+      <View style={tw`flex-1 relative overflow-hidden`}>
+        {/* Background gradient */}
+        <View style={tw`absolute inset-0 bg-gray-600`}>
+          <View style={tw`absolute inset-0 bg-gradient-to-br from-gray-500 to-gray-700`} />
+        </View>
+
+        {/* Grid background */}
+        <View style={tw`absolute inset-0`}>
+          {/* Horizontal grid lines */}
+          {Array.from({ length: 8 }).map((_, i) => (
+            <View 
+              key={`h-${i}`} 
+              style={[
+                tw`absolute left-0 right-0 border-t border-gray-300/30`,
+                { top: `${(i + 1) * 12.5}%` }
+              ]} 
+            />
+          ))}
+          {/* Vertical grid lines */}
+          {Array.from({ length: 6 }).map((_, i) => (
+            <View 
+              key={`v-${i}`} 
+              style={[
+                tw`absolute top-0 bottom-0 border-l border-gray-300/30`,
+                { left: `${(i + 1) * 16.67}%` }
+              ]} 
+            />
+          ))}
+        </View>
+
+        {/* Pulsing radar circles */}
+        <View style={tw`absolute inset-0 items-center justify-center`}>
+          <Animated.View
+            style={[
+              tw`absolute border-2 border-gray-200/50 rounded-full`,
+              {
+                width: 120,
+                height: 120,
+                transform: [{ scale: pulseAnim1 }],
+                opacity: pulseAnim1.interpolate({
+                  inputRange: [0.8, 1.5],
+                  outputRange: [1, 0],
+                }),
+              }
+            ]}
+          />
+          <Animated.View
+            style={[
+              tw`absolute border-2 border-gray-200/50 rounded-full`,
+              {
+                width: 160,
+                height: 160,
+                transform: [{ scale: pulseAnim2 }],
+                opacity: pulseAnim2.interpolate({
+                  inputRange: [0.8, 1.5],
+                  outputRange: [1, 0],
+                }),
+              }
+            ]}
+          />
+          <Animated.View
+            style={[
+              tw`absolute border-2 border-gray-200/50 rounded-full`,
+              {
+                width: 200,
+                height: 200,
+                transform: [{ scale: pulseAnim3 }],
+                opacity: pulseAnim3.interpolate({
+                  inputRange: [0.8, 1.5],
+                  outputRange: [1, 0],
+                }),
+              }
+            ]}
+          />
+          
+          {/* Center pin */}
+          <Animated.View 
+            style={[
+              tw`bg-gray-800 w-4 h-4 rounded-full border-2 border-gray-200 shadow-lg`,
+              { transform: [{ scale: pinPulseAnim }] }
+            ]}
+          />
+        </View>
+
+        {/* Scanning line */}
+        <Animated.View 
+          style={[
+            tw`absolute left-0 right-0 h-0.5 bg-gray-200/70`,
+            {
+              transform: [{
+                translateY: scanAnim.interpolate({
+                  inputRange: [0, 1],
+                  outputRange: [0, 400], // Adjust based on screen height
+                })
+              }],
+              opacity: scanAnim.interpolate({
+                inputRange: [0, 0.5, 1],
+                outputRange: [0, 1, 0],
+              }),
+            }
+          ]} 
+        />
+
+        {/* Corner elements */}
+        <View style={tw`absolute top-4 left-4 w-6 h-6 border-l-2 border-t-2 border-gray-200/70`} />
+        <View style={tw`absolute top-4 right-4 w-6 h-6 border-r-2 border-t-2 border-gray-200/70`} />
+        <View style={tw`absolute bottom-4 left-4 w-6 h-6 border-l-2 border-b-2 border-gray-200/70`} />
+        <View style={tw`absolute bottom-4 right-4 w-6 h-6 border-r-2 border-b-2 border-gray-200/70`} />
+
+
+      </View>
+    );
   };
+
+  // NEW: Handle zoom toggle functionality (12 ↔ 10)
+  const handleZoomOut = () => {
+    if (currentZoom === 12) {
+      setCurrentZoom(10);
+      console.log('📍 Zooming out to level 10');
+    }
+  };
+
+  const handleZoomIn = () => {
+    if (currentZoom === 10) {
+      setCurrentZoom(12);
+      console.log('📍 Zooming in to level 12');
+    }
+  };
+
+  // NEW: Check zoom states
+  const canZoomOut = currentZoom === 12;
+  const canZoomIn = currentZoom === 10;
 
   const handleMapError = () => {
     setMapError(true);
@@ -282,8 +503,8 @@ const LocationSlide: React.FC<LocationSlideProps> = ({
     }
   };
 
-  // NEW: Modified logic - once map is loaded, always use it
-  const getDisplayImage = () => {
+  // NEW: Modified logic - show loading animation before map loads, then permanent map
+  const getDisplayImage = (): string => {
     // If we have coordinates and the map was successfully loaded, always use the map
     if (hotel.latitude && hotel.longitude && mapSuccessfullyLoaded && staticMapUri && !mapError) {
       return staticMapUri;
@@ -294,8 +515,17 @@ const LocationSlide: React.FC<LocationSlideProps> = ({
       return staticMapUri;
     }
     
-    // Otherwise use fallback
+    // Use hotel fallback for any other case
     return getFallbackImage();
+  };
+
+  // NEW: Check if we should show the animated loading placeholder
+  const shouldShowLoadingAnimation = () => {
+    return hotel.latitude && 
+           hotel.longitude && 
+           !mapSuccessfullyLoaded && 
+           !staticMapGenerated &&
+           !mapError;
   };
 
   // NEW: Check if we should show map loading indicator
@@ -310,20 +540,24 @@ const LocationSlide: React.FC<LocationSlideProps> = ({
 
   return (
     <View style={tw`flex-1 relative overflow-hidden`}>
-      {/* Background Image */}
-      <Image 
-        source={{ uri: getDisplayImage() }} 
-        style={{
-          position: 'absolute',
-          width: '100%',
-          height: '100%',
-          top: 0,
-          left: 0,
-        }}
-        resizeMode="cover"
-        onError={handleMapError}
-        onLoad={handleMapLoad}
-      />
+      {/* Background - either map image or animated loading */}
+      {shouldShowLoadingAnimation() ? (
+        <MapLoadingAnimation />
+      ) : (
+        <Image 
+          source={{ uri: getDisplayImage() }} 
+          style={{
+            position: 'absolute',
+            width: '100%',
+            height: '100%',
+            top: 0,
+            left: 0,
+          }}
+          resizeMode="cover"
+          onError={handleMapError}
+          onLoad={handleMapLoad}
+        />
+      )}
       
       {/* Simple gradient for readability */}
       <View style={tw`absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-black/60 to-transparent z-1`} />
@@ -352,15 +586,32 @@ const LocationSlide: React.FC<LocationSlideProps> = ({
         </View>
       )}
 
-      {/* Map loaded successfully indicator */}
-      {mapSuccessfullyLoaded && staticMapUri && (
-        <View style={[
-          tw`absolute top-4 right-4 bg-black/50 border border-green-400/20 rounded-lg p-1 flex-row items-center z-10`,
-        ]}>
-          <Ionicons name="map" size={10} color="#10B981" />
-          <Text style={tw`text-white text-[8px] font-semibold ml-1`}>
-            Map View
-          </Text>
+      {/* Zoom controls - show appropriate button based on current zoom */}
+      {mapSuccessfullyLoaded && (
+        <View style={tw`absolute top-10 right-4 z-20`}>
+          {canZoomOut && (
+            <TouchableOpacity
+              style={[
+                tw`w-8 h-8 bg-black/60 border border-white/30 rounded-full items-center justify-center`,
+              ]}
+              onPress={handleZoomOut}
+              activeOpacity={0.7}
+            >
+              <Ionicons name="remove" size={16} color="white" />
+            </TouchableOpacity>
+          )}
+          
+          {canZoomIn && (
+            <TouchableOpacity
+              style={[
+                tw`w-8 h-8 bg-black/60 border border-white/30 rounded-full items-center justify-center`,
+              ]}
+              onPress={handleZoomIn}
+              activeOpacity={0.7}
+            >
+              <Ionicons name="add" size={16} color="white" />
+            </TouchableOpacity>
+          )}
         </View>
       )}
 
