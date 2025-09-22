@@ -1,4 +1,4 @@
-// PhotoGallerySlide.tsx - Simplified approach with fixed 2x2 grid
+// PhotoGallerySlide.tsx - Enhanced with improved full screen modal
 import React, { useState, useRef, useEffect, useMemo } from 'react';
 import {
   View,
@@ -10,6 +10,7 @@ import {
   Modal,
   Animated,
   StatusBar,
+
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import tw from 'twrnc';
@@ -42,40 +43,63 @@ interface FullScreenImageProps {
   currentIndex: number;
   hotelName: string;
   onClose: () => void;
+  onSwipeLeft?: () => void;
+  onSwipeRight?: () => void;
 }
 
-// Simple optimized image component
+// Simple optimized image component - FIXED TOUCH HANDLING
 const OptimizedImage: React.FC<{
   uri: string;
   style: any;
   onPress?: () => void;
-}> = ({ uri, style, onPress }) => {
+  interactive?: boolean;   // NEW
+}> = ({ uri, style, onPress, interactive = true }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
 
+  const handlePress = () => {
+    if (onPress) onPress();
+  };
+
   if (error) {
-    return (
+    const Content = (
       <View style={[style, tw`bg-gray-200 items-center justify-center`]}>
         <Ionicons name="image-outline" size={20} color="#9CA3AF" />
       </View>
     );
+    return interactive ? (
+      <TouchableOpacity onPress={handlePress} activeOpacity={0.7} style={[style]}>
+        {Content}
+      </TouchableOpacity>
+    ) : (
+      <View style={[style]} pointerEvents="none">{Content}</View>
+    );
   }
 
-  return (
-    <TouchableOpacity onPress={onPress} activeOpacity={0.8} style={style}>
+  const Img = (
+    <>
       {loading && (
-        <View style={[style, tw`bg-gray-100 items-center justify-center absolute inset-0`]}>
+        <View style={[style, tw`bg-gray-100 items-center justify-center absolute inset-0 z-10`]}>
           <View style={tw`w-4 h-4 bg-gray-300 rounded animate-pulse`} />
         </View>
       )}
       <Image
         source={{ uri }}
-        style={style}
+        style={[style, { position: 'absolute', top: 0, left: 0 }]}
         onLoad={() => setLoading(false)}
         onError={() => setError(true)}
         resizeMode="cover"
       />
-    </TouchableOpacity>
+    </>
+  );
+
+  // If not interactive, render a plain View so touches pass to parent
+  return interactive ? (
+    <TouchableOpacity onPress={handlePress} activeOpacity={0.7} style={[style, { position: 'relative' }]}>{Img}</TouchableOpacity>
+  ) : (
+    <View style={[style, { position: 'relative' }]} pointerEvents="none">
+      {Img}
+    </View>
   );
 };
 
@@ -113,22 +137,29 @@ const GridGalleryModal: React.FC<GridGalleryModalProps> = ({
           </View>
         </View>
 
-        {/* Simple grid layout */}
+        {/* Simple grid layout - FIXED TOUCH EVENTS */}
         <ScrollView style={tw`flex-1`} contentContainerStyle={tw`p-4`}>
           {/* First image - large */}
           {images.length > 0 && (
-            <TouchableOpacity
-              onPress={() => onImagePress(0)}
-              style={tw`mb-4 rounded-lg overflow-hidden`}
-            >
-              <OptimizedImage
-                uri={images[0]}
+            <View style={tw`mb-4 rounded-lg overflow-hidden`}>
+              <TouchableOpacity
+                onPress={() => {
+                  console.log('🚀 LARGE IMAGE PRESSED - Index 0');
+                  onImagePress(0);
+                }}
+                activeOpacity={0.8}
                 style={{ width: '100%', height: 240 }}
-              />
-            </TouchableOpacity>
+              >
+                <Image
+                  source={{ uri: images[0] }}
+                  style={{ width: '100%', height: 240 }}
+                  resizeMode="cover"
+                />
+              </TouchableOpacity>
+            </View>
           )}
 
-          {/* Remaining images in pairs */}
+          {/* Remaining images in pairs - SIMPLIFIED */}
           {images.slice(1).map((imageUri, index) => {
             const actualIndex = index + 1;
             const isEven = index % 2 === 0;
@@ -137,26 +168,42 @@ const GridGalleryModal: React.FC<GridGalleryModalProps> = ({
               const nextImage = images[actualIndex + 1];
               return (
                 <View key={actualIndex} style={tw`flex-row gap-2 mb-2`}>
-                  <TouchableOpacity
-                    onPress={() => onImagePress(actualIndex)}
-                    style={tw`flex-1 rounded-lg overflow-hidden`}
-                  >
-                    <OptimizedImage
-                      uri={imageUri}
-                      style={{ width: '100%', height: 120 }}
-                    />
-                  </TouchableOpacity>
-                  
-                  {nextImage && (
+                  {/* Left image */}
+                  <View style={tw`flex-1 rounded-lg overflow-hidden`}>
                     <TouchableOpacity
-                      onPress={() => onImagePress(actualIndex + 1)}
-                      style={tw`flex-1 rounded-lg overflow-hidden`}
+                      onPress={() => {
+                        console.log(`🚀 LEFT IMAGE PRESSED - Index ${actualIndex}`);
+                        onImagePress(actualIndex);
+                      }}
+                      activeOpacity={0.8}
+                      style={{ width: '100%', height: 120 }}
                     >
-                      <OptimizedImage
-                        uri={nextImage}
+                      <Image
+                        source={{ uri: imageUri }}
                         style={{ width: '100%', height: 120 }}
+                        resizeMode="cover"
                       />
                     </TouchableOpacity>
+                  </View>
+                  
+                  {/* Right image */}
+                  {nextImage && (
+                    <View style={tw`flex-1 rounded-lg overflow-hidden`}>
+                      <TouchableOpacity
+                        onPress={() => {
+                          console.log(`🚀 RIGHT IMAGE PRESSED - Index ${actualIndex + 1}`);
+                          onImagePress(actualIndex + 1);
+                        }}
+                        activeOpacity={0.8}
+                        style={{ width: '100%', height: 120 }}
+                      >
+                        <Image
+                          source={{ uri: nextImage }}
+                          style={{ width: '100%', height: 120 }}
+                          resizeMode="cover"
+                        />
+                      </TouchableOpacity>
+                    </View>
                   )}
                 </View>
               );
@@ -169,14 +216,14 @@ const GridGalleryModal: React.FC<GridGalleryModalProps> = ({
   );
 };
 
-// Full screen image viewer with back to gallery option
+// Simple fullscreen modal - just one photo with close button
 const FullScreenImage: React.FC<FullScreenImageProps> = ({
   visible,
   images,
   currentIndex,
   onClose,
 }) => {
-  if (!visible) return null;
+  if (!visible || !images[currentIndex]) return null;
 
   return (
     <Modal
@@ -188,33 +235,28 @@ const FullScreenImage: React.FC<FullScreenImageProps> = ({
     >
       <StatusBar hidden />
       <View style={tw`flex-1 bg-black`}>
-        {/* Header with close button */}
-        <View style={tw`absolute top-12 left-0 right-0 z-20 flex-row items-center justify-between px-4`}>
-          <TouchableOpacity
-            onPress={onClose}
-            style={tw`bg-black/50 rounded-full p-3`}
-            activeOpacity={0.8}
-          >
-            <Ionicons name="close" size={24} color="white" />
-          </TouchableOpacity>
-          
-          <Text style={tw`text-white text-sm font-medium`}>
-            {currentIndex + 1} of {images.length}
-          </Text>
-        </View>
+        {/* Close button */}
+        <TouchableOpacity
+          onPress={onClose}
+          style={tw`absolute top-12 right-4 z-20 bg-black/50 rounded-full p-3`}
+          activeOpacity={0.8}
+        >
+          <Ionicons name="close" size={24} color="white" />
+        </TouchableOpacity>
 
-        {/* Full screen image */}
+        {/* Single fullscreen image */}
         <TouchableOpacity 
           style={tw`flex-1 items-center justify-center`}
           onPress={onClose}
           activeOpacity={1}
         >
-          <OptimizedImage
-            uri={images[currentIndex]}
+          <Image
+            source={{ uri: images[currentIndex] }}
             style={{
               width: screenWidth,
-              height: screenHeight * 0.8,
+              height: screenHeight,
             }}
+            resizeMode="contain"
           />
         </TouchableOpacity>
       </View>
@@ -230,10 +272,10 @@ const PhotoGallerySlide: React.FC<PhotoGallerySlideProps> = ({
   const [showFullScreenImage, setShowFullScreenImage] = useState(false);
   const [selectedImageIndex, setSelectedImageIndex] = useState(0);
 
-  // Get all available images (limit to 8 for performance)
+  // Get all available images (limit to 12 for performance)
   const allImages = useMemo(() => {
     const images: string[] = [];
-    const MAX_IMAGES = 8;
+    const MAX_IMAGES = 12;
     
     // Collect from photo gallery first
     if (hotel.photoGalleryImages && hotel.photoGalleryImages.length > 0) {
@@ -258,36 +300,39 @@ const PhotoGallerySlide: React.FC<PhotoGallerySlideProps> = ({
       images.push(hotel.secondRoomImage);
     }
     
-    // Filter valid URLs
-    return images.filter(img => 
+    // Filter valid URLs and log the final array
+    const validImages = images.filter(img => 
       img && img.trim() !== '' && 
       (img.startsWith('http://') || img.startsWith('https://') || img.startsWith('//'))
     );
+    
+    console.log(`📸 Total images available: ${validImages.length}`, validImages);
+    return validImages;
   }, [hotel]);
 
   const openGridGallery = () => {
+    console.log('📱 Opening grid gallery modal');
     setShowGridGallery(true);
   };
 
   const handleImagePress = (index: number) => {
-    console.log(`📸 Image ${index + 1} pressed - showing full screen`);
+    console.log(`🎯 Image ${index} tapped - opening fullscreen`);
     setSelectedImageIndex(index);
-    setShowGridGallery(false); // Close gallery modal
-    
-    // Small delay to ensure smooth transition
-    setTimeout(() => {
-      setShowFullScreenImage(true);
-    }, 100);
+    setShowFullScreenImage(true);
+    // Don't close the grid gallery - keep it open in background
   };
 
   const handleCloseFullScreen = () => {
-    console.log('📸 Closing full screen - returning to gallery');
+    console.log('❌ Closing fullscreen - back to gallery');
     setShowFullScreenImage(false);
-    
-    // Return to gallery modal
-    setTimeout(() => {
-      setShowGridGallery(true);
-    }, 200);
+    // Grid gallery stays open, no timeout needed
+  };
+
+  // Direct full screen from preview (optional enhancement)
+  const handlePreviewImagePress = (index: number) => {
+    console.log(`🖼️ Preview image ${index + 1} pressed - going directly to full screen`);
+    setSelectedImageIndex(index);
+    setShowFullScreenImage(true);
   };
 
   if (allImages.length === 0) {
@@ -342,12 +387,14 @@ const PhotoGallerySlide: React.FC<PhotoGallerySlideProps> = ({
                 <OptimizedImage
                   uri={allImages[0]}
                   style={{ width: '100%', height: 60 }}
+                  interactive={false}
                 />
               </View>
               <View style={tw`flex-1 rounded-lg overflow-hidden`}>
                 <OptimizedImage
                   uri={allImages[1] || allImages[0]}
                   style={{ width: '100%', height: 60 }}
+                  interactive={false}
                 />
               </View>
             </View>
@@ -358,12 +405,14 @@ const PhotoGallerySlide: React.FC<PhotoGallerySlideProps> = ({
                 <OptimizedImage
                   uri={allImages[2] || allImages[0]}
                   style={{ width: '100%', height: 60 }}
+                  interactive={false}
                 />
               </View>
               <View style={tw`flex-1 rounded-lg overflow-hidden relative`}>
                 <OptimizedImage
                   uri={allImages[3] || allImages[0]}
                   style={{ width: '100%', height: 60 }}
+                  interactive={false}
                 />
                 {/* Overlay for additional photos */}
                 {allImages.length > 4 && (
@@ -392,7 +441,10 @@ const PhotoGallerySlide: React.FC<PhotoGallerySlideProps> = ({
         visible={showGridGallery}
         images={allImages}
         hotelName={hotel.name}
-        onClose={() => setShowGridGallery(false)}
+        onClose={() => {
+          console.log('📱 Closing grid gallery modal');
+          setShowGridGallery(false);
+        }}
         onImagePress={handleImagePress}
       />
 

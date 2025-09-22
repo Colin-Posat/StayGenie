@@ -1,4 +1,4 @@
-// src/routes/api.ts - Updated with hotel details fetching endpoint
+// src/routes/api.ts - Updated with hotel reviews endpoint
 import express from 'express';
 import { hotelSearchAndMatchController } from '../controllers/hotelSearchAndMatch';
 import { aiInsightsController } from '../controllers/aiInsightsController';
@@ -6,7 +6,8 @@ import { parseSearchQuery } from '../controllers/parseController';
 import { generateSuggestions } from '../controllers/aiSuggestionsController';
 import { hotelBudgetRelevanceController } from '../controllers/hotelBudgetRelevanceController';
 import { conversationalRefineController } from '../controllers/conversationalRefineController';
-import { hotelChatController, fetchHotelDetailsForChatController } from '../controllers/hotelChatController'; // UPDATED IMPORT
+import { hotelChatController, fetchHotelDetailsForChatController } from '../controllers/hotelChatController';
+import { fetchHotelReviewsController } from '../controllers/hotelReviewsController'; // NEW IMPORT
 
 const router = express.Router();
 
@@ -20,9 +21,12 @@ router.post('/hotels/budget-relevance', hotelBudgetRelevanceController); // Budg
 router.post('/hotels/ai-suggestions', generateSuggestions); // AI search suggestions
 router.post('/hotels/conversational-refine', conversationalRefineController); // Conversational search refinement
 
-// NEW: Hotel chat routes - fetch details first, then chat
-router.post('/hotels/fetch-details-for-chat', fetchHotelDetailsForChatController); // NEW: Fetch hotel details for chat context
+// Hotel chat routes - fetch details first, then chat
+router.post('/hotels/fetch-details-for-chat', fetchHotelDetailsForChatController); // Fetch hotel details for chat context
 router.post('/hotels/chat', hotelChatController); // Hotel-specific AI chat
+
+// NEW: Hotel reviews route
+router.post('/hotels/reviews', fetchHotelReviewsController); // Fetch hotel reviews with sentiment analysis
 
 // Query parsing route  
 router.post('/query/parse', parseSearchQuery);
@@ -46,8 +50,9 @@ router.get('/test', (req, res) => {
       'POST /api/hotels/budget-relevance - Budget-aware relevance search with GPT scoring',
       'POST /api/hotels/ai-suggestions - Generate AI search suggestions',
       'POST /api/hotels/conversational-refine - Conversational search refinement',
-      'POST /api/hotels/fetch-details-for-chat - NEW: Fetch comprehensive hotel details for chat context',
+      'POST /api/hotels/fetch-details-for-chat - Fetch comprehensive hotel details for chat context',
       'POST /api/hotels/chat - Hotel-specific AI chat assistant',
+      'POST /api/hotels/reviews - NEW: Fetch hotel reviews with sentiment analysis',
       'POST /api/query/parse - Parse natural language hotel search queries',
       'GET /api/health - Health check',
       'GET /api/test - Test endpoint'
@@ -82,7 +87,7 @@ router.get('/test', (req, res) => {
         benefits: 'Natural language search refinement, improved user experience, intelligent query building'
       },
       hotelChatWorkflow: {
-        newFeature: 'NEW Enhanced Hotel Chat Pipeline',
+        newFeature: 'Enhanced Hotel Chat Pipeline',
         pipeline: [
           'Step 1: Call /api/hotels/fetch-details-for-chat with hotelId to get comprehensive hotel data',
           'Step 2: Call /api/hotels/chat with enriched hotelData (including allHotelInfo) for context-aware chat'
@@ -97,6 +102,33 @@ router.get('/test', (req, res) => {
           'Rate limiting and retry logic for API reliability'
         ],
         benefits: 'Rich hotel context, personalized assistance, comprehensive Q&A, enhanced user experience'
+      },
+      hotelReviewsWorkflow: {
+        newFeature: 'NEW Hotel Reviews with Sentiment Analysis',
+        endpoint: 'POST /api/hotels/reviews',
+        features: [
+          'Real guest reviews from LiteAPI reviews endpoint',
+          'AI sentiment analysis of last 1000 reviews',
+          'Rating distribution and averages',
+          'Pros and cons extraction from review content',
+          'Configurable pagination (limit/offset)',
+          'Error handling with graceful fallbacks',
+          'Formatted dates and traveler type information'
+        ],
+        requestFormat: {
+          hotelId: 'string (required)',
+          limit: 'number (optional, default: 8, max: 50)',
+          offset: 'number (optional, default: 0)',
+          getSentiment: 'boolean (optional, default: true)'
+        },
+        responseFormat: {
+          reviews: 'Array of formatted review objects',
+          total: 'Total number of reviews available',
+          averageRating: 'Calculated average rating',
+          ratingDistribution: 'Breakdown by star rating',
+          sentiment: 'AI-generated sentiment analysis'
+        },
+        benefits: 'Authentic guest feedback, AI insights, enhanced booking confidence'
       }
     }
   });

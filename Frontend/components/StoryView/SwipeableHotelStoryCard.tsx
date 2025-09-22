@@ -26,6 +26,7 @@ import * as WebBrowser from 'expo-web-browser';
 import { Easing } from 'react-native';
 import PhotoGallerySlide from './PhotoGallerySlide';
 import LocationSlide from './LocationSlide';
+import ReviewsSlide from './ReviewsSlide';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 const CARD_WIDTH = screenWidth - 42;
@@ -1584,7 +1585,7 @@ const handleSlideChange = (slideIndex: number) => {
 >
         <StoryProgressBar
           currentSlide={currentSlide}
-          totalSlides={4}
+          totalSlides={5}
           onSlideChange={handleSlideChange}
         />
         
@@ -1638,7 +1639,15 @@ scrollsToTop={false}
     showSafetyRating={showSafetyRating}
     safetyRatingThreshold={safetyRatingThreshold}
   />
+  
           </View>
+          <View style={{ width: CARD_WIDTH, height: CARD_HEIGHT }}>
+  <ReviewsSlide 
+    hotel={hotel}
+    
+    isVisible={currentSlide === 3}  // Reviews is slide index 3
+  />
+</View>
           {/* Slide 4: Photo Gallery - NEW! */}
   <View style={{ width: CARD_WIDTH, height: CARD_HEIGHT }}>
   <PhotoGallerySlide 
