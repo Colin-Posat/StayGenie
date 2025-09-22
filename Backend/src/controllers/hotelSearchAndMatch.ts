@@ -554,7 +554,7 @@ const hasSpecificPreferences = parsedQuery.aiSearch &&
     ].filter(Boolean).join(', ') || 'Location unknown';
     
     const shortDescription = optimizeHotelDescription(hotel.description, 1000);
-    return `${index + 1}: ${hotel.name} | $${numericPrice}/night | ${locationInfo} | ${shortDescription}| ${amenitiesText} `;
+    return `${index + 1}: ${hotel.name} | $${numericPrice}/night | | ${shortDescription}| ${amenitiesText} `;
   }).join('\n');
   
   // FIXED: Better budget handling in 

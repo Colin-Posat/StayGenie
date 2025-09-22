@@ -25,6 +25,7 @@ import HotelChatOverlay from '../../components/HomeScreenTop/HotelChatOverlay';
 import * as WebBrowser from 'expo-web-browser';
 import { Easing } from 'react-native';
 import PhotoGallerySlide from './PhotoGallerySlide';
+import LocationSlide from './LocationSlide';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 const CARD_WIDTH = screenWidth - 42;
@@ -825,110 +826,8 @@ const overallScore = ((ratings.cleanliness + ratings.service + ratings.location 
   );
 };
 
-const LocationSlide: React.FC<{ hotel: EnhancedHotel; insightsStatus?: string }> = ({ 
-  hotel, 
-  insightsStatus = 'complete' 
-}) => {
-  const getLocationImage = () => {
-    if (hotel.latitude && hotel.longitude) {
-      const zoom = 12;
-      const width = 600;
-      const height = 400;
-      return `https://maps.locationiq.com/v3/staticmap?key=pk.79c544ae745ee83f91a7523c99939210&center=${hotel.latitude},${hotel.longitude}&zoom=${zoom}&size=${width}x${height}&markers=icon:large-red-cutout|${hotel.latitude},${hotel.longitude}`;
-    }
 
-    if (hotel.images && hotel.images.length > 1) {
-      return hotel.images[1];
-    }
-    return hotel.images?.[0] || hotel.image;
-  };
 
-  const getLocationDisplayText = () => {
-    if (hotel.city && hotel.country) {
-      return `${hotel.city}, ${getCountryName(hotel.country)}`;
-    }
-    if (hotel.fullAddress) {
-      return hotel.fullAddress;
-    }
-    return hotel.location;
-  };
-
-  return (
-    <View style={tw`flex-1 relative overflow-hidden`}>
-      {/* Background Image */}
-      <Image 
-        source={{ uri: getLocationImage() }} 
-        style={{
-          position: 'absolute',
-          width: '100%',
-          height: '100%',
-          top: 0,
-          left: 0,
-        }}
-        resizeMode="cover"
-      />
-      
-      {/* Simple gradient for readability */}
-      <View style={tw`absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-black/60 to-transparent z-1`} />
-
-      {/* Removed top hotel location badge */}
-
-      {/* Compact bottom content */}
-      <View style={tw`absolute bottom-4 left-2 right-2 z-10`}>
-        {hotel.nearbyAttractions && hotel.nearbyAttractions.length > 0 ? (
-          <View style={tw`bg-black/50 border border-white/20 rounded-lg p-2`}>
-            <View style={tw`flex-row items-center mb-1`}>
-              <Ionicons 
-                name={insightsStatus === 'loading' && hotel.nearbyAttractions.some(attr => attr.includes('Loading')) ? "sync" : "compass"} 
-                size={10} 
-                color="#1df9ff" 
-              />
-              <Text style={tw`text-white text-[10px] font-semibold ml-1`}>
-                Nearby
-              </Text>
-              {insightsStatus === 'loading' && hotel.nearbyAttractions.some(attr => attr.includes('Loading')) && (
-                <Text style={tw`text-white/60 text-[10px] ml-2`}>Loading...</Text>
-              )}
-            </View>
-            
-            <View style={tw`gap-0.5`}>
-              {hotel.nearbyAttractions.slice(0, 3).map((attraction, index) => (
-                <Text key={index} style={tw`text-white/90 text-[10px] leading-3`} numberOfLines={3}>
-                  • {attraction}
-                </Text>
-              ))}
-              {hotel.nearbyAttractions.length > 3 && (
-                <Text style={tw`text-white/70 text-[10px] mt-0.5`}>
-                  +{hotel.nearbyAttractions.length - 3} more
-                </Text>
-              )}
-            </View>
-          </View>
-        ) : (
-          <View style={tw`bg-black/50 border border-white/20 rounded-lg p-2`}>
-            <View style={tw`flex-row items-center`}>
-              <Ionicons name="compass" size={10} color="#1df9ff" />
-              <Text style={tw`text-white/80 text-[10px] ml-1`}>
-                {insightsStatus === 'loading' ? 'Finding nearby places...' : 'Exploring the area'}
-              </Text>
-            </View>
-          </View>
-        )}
-
-        {/* Compact location highlight if available */}
-        {hotel.locationHighlight && 
-         !hotel.locationHighlight.includes('Analyzing') && 
-         !hotel.nearbyAttractions?.some(attr => attr.includes(hotel.locationHighlight?.substring(0, 200) || '')) && (
-          <View style={tw`bg-black/50 border border-white/20 rounded-lg p-2 mt-1`}>
-            <Text style={tw`text-white/90 text-[10px] leading-3`} numberOfLines={2}>
-              💡 {hotel.locationHighlight}
-            </Text>
-          </View>
-        )}
-      </View>
-    </View>
-  );
-};
 
 const AmenitiesSlide: React.FC<{ 
   hotel: EnhancedHotel; 
@@ -1721,9 +1620,11 @@ scrollsToTop={false}
           </View>
           <View style={{ width: CARD_WIDTH, height: CARD_HEIGHT }}>
             <LocationSlide 
-              hotel={hotel} 
-              insightsStatus={insightsStatus}
-            />
+  hotel={hotel} 
+  insightsStatus={insightsStatus}
+  isVisible={currentSlide === 1}
+
+/>
           </View>
           <View style={{ width: CARD_WIDTH, height: CARD_HEIGHT }}>
             <AmenitiesSlide 
