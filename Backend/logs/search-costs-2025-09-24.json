@@ -1,0 +1,42 @@
+[
+  {
+    "timestamp": "2025-09-24T15:21:35.225Z",
+    "searchId": "5df96244-b525-487e-8fb9-7ca5235fe080",
+    "userQuery": "hotels in sf near fishmans whartf under 330",
+    "destination": "San Francisco, US",
+    "hotelCount": 184,
+    "totalTokensUsed": 43110,
+    "totalCost": 0.007897949999999999,
+    "searchDurationMs": 11509,
+    "operations": {
+      "hotelMatching": {
+        "tokens": 31736,
+        "cost": 0.004923299999999999
+      },
+      "aiInsights": {
+        "tokens": 11374,
+        "cost": 0.0029746499999999993
+      }
+    }
+  },
+  {
+    "timestamp": "2025-09-24T15:22:43.875Z",
+    "searchId": "a99ff638-efbb-4389-a762-19378116188b",
+    "userQuery": "hotels in sf near fishmans whartf under 330 with balcony view of ocean",
+    "destination": "San Francisco, US",
+    "hotelCount": 184,
+    "totalTokensUsed": 43071,
+    "totalCost": 0.007868700000000001,
+    "searchDurationMs": 19050,
+    "operations": {
+      "hotelMatching": {
+        "tokens": 31740,
+        "cost": 0.004912199999999999
+      },
+      "aiInsights": {
+        "tokens": 11331,
+        "cost": 0.0029564999999999995
+      }
+    }
+  }
+]

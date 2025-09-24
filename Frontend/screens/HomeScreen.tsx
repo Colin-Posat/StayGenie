@@ -27,6 +27,7 @@ import SearchGuidePills from '../components/InitalSearch/SearchGuidePills';
 import { Easing, Keyboard, KeyboardAvoidingView, ScrollView } from 'react-native';
 import FavoritesPopup from '../components/StoryView/FavoritesPopup';
 import type { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
+import SearchErrorScreen from '../components/HomeScreenTop/NoHotelsFoundScreen';
 
 const OVERLAY_BACKDROP = 'rgba(0,0,0,0.7)';
 
@@ -356,6 +357,14 @@ const [shouldShowChevron, setShouldShowChevron] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearching, setIsSearching] = useState(false);
   const [isInsightsLoading, setIsInsightsLoading] = useState(false);
+
+  // Add error handling state
+const [searchError, setSearchError] = useState<{
+  type: 'no_hotels_found' | 'processing_error' | 'timeout';
+  message: string;
+  originalQuery: string;
+} | null>(null);
+const [showErrorScreen, setShowErrorScreen] = useState(false);
   
   // NEW: Two-stage search state
   const [stage1Results, setStage1Results] = useState<Stage1SearchResponse | null>(null);
@@ -719,7 +728,8 @@ const handleStreamingUpdate = async (data: any, userInput?: string) => {
       console.error('❌ Streaming error:', data.message);
       setShowPlaceholders(false);
       setIsSearching(false);
-      Alert.alert('Search Error', data.message, [{ text: 'OK' }]);
+      setIsStreamingSearch(false);
+      setShowErrorScreen(true);
       break;
 
     default:
@@ -1013,58 +1023,52 @@ const executeStreamingSearch = async (userInput: string) => {
 
     // Connection error
     eventSource.addEventListener('error', (error: any) => {
-      console.error('❌ SSE Connection error:', error);
-      
-      if (eventSource) {
-        eventSource.close();
-        eventSource = null;
-      }
-      
-      setIsSearching(false);
-      setIsStreamingSearch(false);
-      
-      Alert.alert(
-        'Connection Error',
-        'Lost connection to search service. Please try again.',
-        [{ text: 'OK' }]
-      );
-    });
+  console.error('❌ SSE Connection error:', error);
+  
+  if (eventSource) {
+    eventSource.close();
+    eventSource = null;
+  }
+  
+  setIsSearching(false);
+  setIsStreamingSearch(false);
+  setShowErrorScreen(true);
+});
 
     // Set timeout for safety (30 seconds)
     timeoutId = setTimeout(() => {
-      console.warn('⏰ SSE search timeout after 30 seconds');
-      
-      if (eventSource) {
-        eventSource.close();
-        eventSource = null;
-      }
-      
-      setIsSearching(false);
-      setIsStreamingSearch(false);
-      
-      Alert.alert('Search Timeout', 'Search took too long. Please try again.', [{ text: 'OK' }]);
-    }, 40000);
+  console.warn('⏰ SSE search timeout after 30 seconds');
+  
+  if (eventSource) {
+    eventSource.close();
+    eventSource = null;
+  }
+  
+  setIsSearching(false);
+  setIsStreamingSearch(false);
+  setShowErrorScreen(true);
+}, 40000);
 
   } catch (error: any) {
-    console.error('💥 SSE streaming search failed:', error);
+  console.error('💥 SSE streaming search failed:', error);
 
-    setShowPlaceholders(false);
-    setDisplayHotels([]);
-    
-    if (eventSource) {
-      eventSource.close();
-      eventSource = null;
-    }
-    
-    if (timeoutId) {
-      clearTimeout(timeoutId);
-    }
-    
-    setIsSearching(false);
-    setIsStreamingSearch(false);
-    
-    Alert.alert('Search Failed', error.message, [{ text: 'OK' }]);
+  setShowPlaceholders(false);
+  setDisplayHotels([]);
+  
+  if (eventSource) {
+    eventSource.close();
+    eventSource = null;
   }
+  
+  if (timeoutId) {
+    clearTimeout(timeoutId);
+  }
+  
+  setIsSearching(false);
+  setIsStreamingSearch(false);
+  
+  setShowErrorScreen(true);
+}
 
   // Store cleanup function
   (global as any).cleanupSSESearch = () => {
@@ -1929,24 +1933,41 @@ const handleBackPress = useCallback(() => {
 
 
       {/* CONTENT VIEW - Story View */}
-      <View style={tw`flex-1 bg-gray-50`}>
-        <SwipeableStoryView
-  hotels={displayHotels}
-  onHotelPress={handleHotelPress}
-  onViewDetails={handleViewDetails}
-  checkInDate={confirmedCheckInDate}
-  checkOutDate={confirmedCheckOutDate}
-  adults={adults}
-  children={children}
-  showPlaceholders={showPlaceholders && displayHotels.length > 0 && displayHotels.every(h => h.isPlaceholder)}
-  isInsightsLoading={isInsightsLoading}
-  stage1Complete={!!stage1Results}
-  stage2Complete={!!stage2Results}
-  searchMode={TEST_MODE ? 'test' : stage1Results ? 'two-stage' : 'legacy'}
-  searchParams={streamingSearchParams || searchResults?.searchParams}
-  onFavoriteSuccess={handleFavoriteSuccess}
-/>
-      </View>
+<View style={tw`flex-1 bg-gray-50`}>
+  {showErrorScreen ? (
+    <SearchErrorScreen
+      onTryAgain={() => {
+        setShowErrorScreen(false);
+        if (searchQuery.trim()) {
+          executeSearch(searchQuery);
+        }
+      }}
+      onBackToSearch={() => {
+        setShowErrorScreen(false);
+        handleBackPress(); // This takes them back to InitialSearchScreen
+      }}
+    />
+  ) : (
+    <SwipeableStoryView
+      hotels={displayHotels}
+      onHotelPress={handleHotelPress}
+      onViewDetails={handleViewDetails}
+      checkInDate={confirmedCheckInDate}
+      checkOutDate={confirmedCheckOutDate}
+      adults={adults}
+      children={children}
+      showPlaceholders={showPlaceholders && displayHotels.length > 0 && displayHotels.every(h => h.isPlaceholder)}
+      isInsightsLoading={isInsightsLoading}
+      stage1Complete={!!stage1Results}
+      stage2Complete={!!stage2Results}
+      searchMode={TEST_MODE ? 'test' : stage1Results ? 'two-stage' : 'legacy'}
+      searchParams={streamingSearchParams || searchResults?.searchParams}
+      onFavoriteSuccess={handleFavoriteSuccess}
+    />
+  )}
+</View>
+
+
 
       <Modal
   visible={showAiOverlay}

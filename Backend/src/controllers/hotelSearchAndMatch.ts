@@ -1791,7 +1791,6 @@ export const hotelSearchAndMatchController = async (req: Request, res: Response)
         cityName: parsedQuery.cityName,
         language: 'en',
         limit: SMART_HOTEL_LIMIT,
-        aiSearch: `the hotels shoud be under ${parsedQuery.maxCost}`
 
       },
       timeout: 30000
