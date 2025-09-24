@@ -38,5 +38,105 @@
         "cost": 0.0029564999999999995
       }
     }
+  },
+  {
+    "timestamp": "2025-09-24T20:11:41.558Z",
+    "searchId": "7bcde29e-c096-48e6-9d5f-9f12c7797fce",
+    "userQuery": "Beachfront hotels in Maldives with infinity pools over $500",
+    "destination": "Male, MV",
+    "hotelCount": 7,
+    "totalTokensUsed": 8327,
+    "totalCost": 0.0019839,
+    "searchDurationMs": 9061,
+    "operations": {
+      "hotelMatching": {
+        "tokens": 3030,
+        "cost": 0.0005778
+      },
+      "aiInsights": {
+        "tokens": 5297,
+        "cost": 0.0014061
+      }
+    }
+  },
+  {
+    "timestamp": "2025-09-24T20:29:46.521Z",
+    "searchId": "4389afe9-6672-4082-aa61-59ddcd98fa80",
+    "userQuery": "cabo stays",
+    "destination": "Cabo San Lucas, MX",
+    "hotelCount": 78,
+    "totalTokensUsed": 52960,
+    "totalCost": 0.00941775,
+    "searchDurationMs": 11504,
+    "operations": {
+      "hotelMatching": {
+        "tokens": 39704,
+        "cost": 0.0061536
+      },
+      "aiInsights": {
+        "tokens": 13256,
+        "cost": 0.0032641499999999995
+      }
+    }
+  },
+  {
+    "timestamp": "2025-09-24T20:49:03.327Z",
+    "searchId": "e5f830ca-36a2-477a-aed7-06e4245921cf",
+    "userQuery": "Beachfront hotels in Maldives with infinity pools over $500",
+    "destination": "Maafushi, MV",
+    "hotelCount": 22,
+    "totalTokensUsed": 21542,
+    "totalCost": 0.00463665,
+    "searchDurationMs": 9036,
+    "operations": {
+      "hotelMatching": {
+        "tokens": 9490,
+        "cost": 0.0015594
+      },
+      "aiInsights": {
+        "tokens": 12052,
+        "cost": 0.00307725
+      }
+    }
+  },
+  {
+    "timestamp": "2025-09-24T21:12:41.663Z",
+    "searchId": "42f06e70-20d9-4e11-a9d9-d78972012382",
+    "userQuery": "Mountain view hotels in Swiss Alps with glass facades over $400",
+    "destination": "Zermatt, CH",
+    "hotelCount": 50,
+    "totalTokensUsed": 28991,
+    "totalCost": 0.005785949999999999,
+    "searchDurationMs": 11346,
+    "operations": {
+      "hotelMatching": {
+        "tokens": 16788,
+        "cost": 0.0026729999999999996
+      },
+      "aiInsights": {
+        "tokens": 12203,
+        "cost": 0.00311295
+      }
+    }
+  },
+  {
+    "timestamp": "2025-09-24T21:19:09.474Z",
+    "searchId": "7d624545-5afd-469e-a80f-d0527326c248",
+    "userQuery": "Beachfront hotels in Maldives with infinity pools",
+    "destination": "Maafushi, MV",
+    "hotelCount": 22,
+    "totalTokensUsed": 21249,
+    "totalCost": 0.004610699999999999,
+    "searchDurationMs": 12990,
+    "operations": {
+      "hotelMatching": {
+        "tokens": 9450,
+        "cost": 0.0015551999999999999
+      },
+      "aiInsights": {
+        "tokens": 11799,
+        "cost": 0.0030554999999999996
+      }
+    }
   }
 ]

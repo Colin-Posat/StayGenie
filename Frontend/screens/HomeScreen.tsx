@@ -329,8 +329,8 @@ interface Hotel {
   safetyJustification?: string; 
 }
 
-//const BASE_URL='http://localhost:3003';
-const BASE_URL="https://staygenie-wwpa.onrender.com"
+const BASE_URL='http://localhost:3003';
+//const BASE_URL="https://staygenie-wwpa.onrender.com"
 
 
 
@@ -1747,10 +1747,10 @@ const handleBackPress = useCallback(() => {
                     <View style={tw`w-1 h-1 rounded-full bg-gray-300 mx-2`} />
                     <View style={tw`flex-row items-center`}>
                       <Ionicons 
-                        name={isBusy ? "sync" : "checkmark-circle"} 
-                        size={11} 
-                        color={isBusy ? "#00d4e6" : "#00d4e6"} 
-                      />
+  name={isBusy ? "home-outline" : "home"} 
+  size={11} 
+  color={isBusy ? "#00d4e6" : "#00d4e6"} 
+/>
                       <Text style={[
                         tw`text-xs font-semibold ml-1`,
                         { color: isBusy ? "#00d4e6" : "#00d4e6" }

@@ -1,4 +1,4 @@
-// NewSearchQueryCarousel.tsx - Fixed mobile sizing with original lazy loading
+// SearchQueryCarousel.tsx - Updated sleek component matching app style
 import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
@@ -14,6 +14,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import tw from 'twrnc';
+import { getCompleteCarousels } from '../../utils/carouselData';
 
 const { width } = Dimensions.get('window');
 const TURQUOISE = '#1df9ff';
@@ -22,10 +23,9 @@ const TURQUOISE_DARK = '#00d4e6';
 const TURQUOISE_SUBTLE = '#f0feff';
 const TURQUOISE_BORDER = '#b3f7ff';
 
-// Use same dimensions as your original - this was working properly
-const cardWidth = 140; // Same as your original SearchQueryCarousel
-const cardHeight = 140; // Same as your original SearchQueryCarousel  
-const cardMargin = 8; // Same as your original
+const cardWidth = 170;
+const cardHeight = 170;
+const cardMargin = 12;
 
 interface Hotel {
   id: string;
@@ -39,7 +39,7 @@ interface Hotel {
   fullAddress?: string;
 }
 
-// Custom hook for intersection observer style lazy loading - EXACT COPY from your original
+// Custom hook for intersection observer style lazy loading
 const useLazyLoading = (threshold: number = 150) => {
   const [isVisible, setIsVisible] = useState(false);
   const [hasLoaded, setHasLoaded] = useState(false);
@@ -62,7 +62,6 @@ const useLazyLoading = (threshold: number = 150) => {
       }
     };
 
-    // Check visibility on mount and periodically
     const checkLoop = () => {
       checkVisibility();
       if (!hasLoaded) {
@@ -70,7 +69,6 @@ const useLazyLoading = (threshold: number = 150) => {
       }
     };
 
-    // Start checking after component mounts
     timeoutId = setTimeout(checkLoop, 50);
 
     return () => {
@@ -83,7 +81,7 @@ const useLazyLoading = (threshold: number = 150) => {
   return { isVisible, elementRef, hasLoaded };
 };
 
-// Image cache for React Native Image component - EXACT COPY from your original
+// Image cache for React Native Image component
 class ImageCache {
   private static cache = new Map<string, boolean>();
   
@@ -106,7 +104,7 @@ class ImageCache {
   }
 }
 
-// Lazy Loading Image Component - EXACT COPY from your original
+// Lazy Loading Image Component
 interface LazyImageProps {
   source: { uri: string };
   style: any;
@@ -132,10 +130,9 @@ const LazyImage: React.FC<LazyImageProps> = ({
 
   useEffect(() => {
     if (isVisible) {
-      // Add a small delay to prevent loading all images at once
       const timer = setTimeout(() => {
         setShouldLoad(true);
-      }, Math.random() * 100); // Random delay 0-100ms
+      }, Math.random() * 100);
 
       return () => clearTimeout(timer);
     }
@@ -151,14 +148,13 @@ const LazyImage: React.FC<LazyImageProps> = ({
       source={source}
       style={style}
       resizeMode={resizeMode}
-      // Don't trigger loading UI for known-cached images
       onLoadStart={() => { if (!isCached) onLoadStart?.(); }}
       onLoad={() => {
         ImageCache.markImageCached(source.uri);
         onLoad?.();
       }}
       onError={(e) => { onError?.(); }}
-      onLoadEnd={() => { onLoadEnd?.(); }}    // ALWAYS fires (success or error)
+      onLoadEnd={() => { onLoadEnd?.(); }}
       fadeDuration={300}
     />
   );
@@ -172,16 +168,14 @@ interface HotelCardProps {
 
 const HotelCard: React.FC<HotelCardProps> = ({ hotel, onPress, index }) => {
   const panAnimation = useRef(new Animated.Value(0)).current;
-  const scaleAnimation = useRef(new Animated.Value(1.05)).current;
+  const scaleAnimation = useRef(new Animated.Value(1.02)).current;
   const [imageLoading, setImageLoading] = useState(true);
   const [imageError, setImageError] = useState(false);
   
-  // Lazy loading hook with staggered threshold based on index - SAME AS YOUR ORIGINAL
-  const threshold = 150 + (index * 50); // Stagger loading based on position
+  const threshold = 150 + (index * 50);
   const { isVisible, elementRef, hasLoaded } = useLazyLoading(threshold);
 
   useEffect(() => {
-    // Only start animations if image is visible and loaded - SAME AS YOUR ORIGINAL
     if (isVisible && !imageLoading && !imageError) {
       const panningAnimation = Animated.loop(
         Animated.sequence([
@@ -201,12 +195,12 @@ const HotelCard: React.FC<HotelCardProps> = ({ hotel, onPress, index }) => {
       const scalingAnimation = Animated.loop(
         Animated.sequence([
           Animated.timing(scaleAnimation, {
-            toValue: 1.1,
+            toValue: 1.08,
             duration: 10000,
             useNativeDriver: true,
           }),
           Animated.timing(scaleAnimation, {
-            toValue: 1.05,
+            toValue: 1.02,
             duration: 10000,
             useNativeDriver: true,
           }),
@@ -225,7 +219,7 @@ const HotelCard: React.FC<HotelCardProps> = ({ hotel, onPress, index }) => {
 
   const translateX = panAnimation.interpolate({
     inputRange: [0, 1],
-    outputRange: [-4, 4],
+    outputRange: [-3, 3],
   });
 
   const translateY = panAnimation.interpolate({
@@ -240,16 +234,7 @@ const HotelCard: React.FC<HotelCardProps> = ({ hotel, onPress, index }) => {
     return price.toString();
   };
 
-  const getRatingColor = (rating: number): string => {
-    if (rating >= 9.0) return "#00E676";
-    if (rating >= 8.0) return "#4CAF50";
-    if (rating >= 7.0) return "#FF9800";
-    if (rating >= 6.0) return "#FF5722";
-    return "#F44336";
-  };
-
   const handlePress = () => {
-    // Generate Google Maps link
     let query = '';
     if (hotel.city && hotel.country) {
       query = encodeURIComponent(`${hotel.name} ${hotel.city} ${hotel.country}`);
@@ -279,41 +264,42 @@ const HotelCard: React.FC<HotelCardProps> = ({ hotel, onPress, index }) => {
   return (
     <View
       ref={elementRef}
-      style={{
-        width: cardWidth,
-        height: cardHeight,
-        // iOS shadow
-        shadowColor: '#000',
-        shadowOffset: {
-          width: 0,
-          height: 4,
-        },
-        shadowOpacity: 0.25,
-        shadowRadius: 3.5,
-        // Android shadow
-        elevation: 5,
-      }}
+      style={[
+        tw`rounded-2xl overflow-hidden`,
+        {
+          width: cardWidth,
+          height: cardHeight,
+          backgroundColor: '#f8f9fa', // Light gray background instead of white
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 3 },
+          shadowOpacity: 0.15,
+          shadowRadius: 8,
+          elevation: 6,
+        }
+      ]}
     >
       <TouchableOpacity
         onPress={handlePress}
         activeOpacity={0.95}
         style={[
-          tw`bg-white rounded-2xl overflow-hidden`,
-          { width: '100%', height: '100%' }
+          tw`rounded-2xl overflow-hidden`,
+          { width: '100%', height: '100%', backgroundColor: 'transparent' } // Remove white bg
         ]}
       >
-        {/* Image with Ken Burns effect and lazy loading - SAME AS YOUR ORIGINAL */}
-        <View style={tw`flex-1 relative overflow-hidden bg-gray-200`}>
+        <View style={[
+          tw`flex-1 relative overflow-hidden`,
+          { backgroundColor: imageError ? '#f3f4f6' : 'transparent' } // Only show bg on error
+        ]}>
           {isVisible ? (
             !imageError ? (
               <Animated.View
                 style={[
                   {
                     position: 'absolute',
-                    width: '110%',
-                    height: '110%',
-                    left: '-5%',
-                    top: '-5%',
+                    width: '108%',
+                    height: '108%',
+                    left: '-4%',
+                    top: '-4%',
                   },
                   {
                     transform: [
@@ -339,22 +325,20 @@ const HotelCard: React.FC<HotelCardProps> = ({ hotel, onPress, index }) => {
                 />
               </Animated.View>
             ) : (
-              // Error placeholder
-              <View style={tw`flex-1 items-center justify-center bg-gray-300`}>
-                <Ionicons name="image-outline" size={32} color="#9CA3AF" />
+              <View style={tw`flex-1 items-center justify-center bg-gray-200`}>
+                <Ionicons name="image-outline" size={28} color="#9CA3AF" />
                 <Text style={tw`text-gray-500 text-xs mt-2`}>Image unavailable</Text>
               </View>
             )
           ) : (
-            // Lazy loading placeholder with subtle animation
             <View style={tw`flex-1 bg-gray-100 items-center justify-center`}>
               <Animated.View 
                 style={[
-                  tw`w-8 h-8 bg-gray-300 rounded`,
+                  tw`w-8 h-8 bg-gray-200 rounded-lg`,
                   {
                     opacity: panAnimation.interpolate({
                       inputRange: [0, 1],
-                      outputRange: [0.3, 0.6]
+                      outputRange: [0.4, 0.7]
                     })
                   }
                 ]} 
@@ -363,19 +347,28 @@ const HotelCard: React.FC<HotelCardProps> = ({ hotel, onPress, index }) => {
           )}
 
           {imageLoading && !imageError && isVisible && (
-            <View style={tw`absolute inset-0 items-center justify-center bg-gray-100/60`}>
-              <ActivityIndicator size="small" color="#666" />
+            <View style={tw`absolute inset-0 items-center justify-center bg-black/20`}>
+              <ActivityIndicator size="small" color={TURQUOISE} />
             </View>
           )}
           
-          {/* Gradient overlay - only show when image is loaded */}
           {!imageLoading && !imageError && isVisible && (
-            <View style={tw`absolute bottom-0 left-0 right-0 h-20 bg-gradient-to-t from-black/70 to-transparent`} />
+            <View style={tw`absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-black/70 to-transparent`} />
           )}
 
-          {/* Price Badge - Top Right */}
-          <View style={tw`absolute top-2 right-2`}>
-            <View style={tw`bg-black/50 border border-white/20 px-2.5 py-1 rounded-lg`}>
+          {/* Price Badge - Top Right - Updated styling */}
+          <View style={tw`absolute top-3 right-3`}>
+            <View style={[
+              tw`px-2.5 py-1.5 rounded-xl border`,
+              {
+                backgroundColor: 'rgba(0, 0, 0, 0.45)', // Dark background like story cards
+                borderColor: 'rgba(255, 255, 255, 0.15)', // Subtle border
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 1 },
+                shadowOpacity: 0.3,
+                shadowRadius: 2,
+              }
+            ]}>
               <View style={tw`flex-row items-baseline`}>
                 <Text style={tw`text-white text-xs font-bold`}>
                   ${formatPrice(hotel.price)}
@@ -387,12 +380,26 @@ const HotelCard: React.FC<HotelCardProps> = ({ hotel, onPress, index }) => {
             </View>
           </View>
 
-
-          {/* Hotel info at bottom left */}
-          <View style={tw`absolute bottom-2 left-2 right-12`}>
-            <View style={tw`bg-black/30 border border-white/20 px-1.5 py-0.5 rounded-md`}>
+          {/* Hotel name at bottom - Updated styling to match story cards */}
+          <View style={tw`absolute bottom-3 left-3 right-3`}>
+            <View style={[
+              tw`px-2.5 py-2 rounded-xl border`,
+              {
+                backgroundColor: 'rgba(0, 0, 0, 0.45)', // Match story cards
+                borderColor: 'rgba(255, 255, 255, 0.15)',
+                backdropFilter: 'blur(3px)',
+              }
+            ]}>
               <Text 
-                style={tw`text-white text-[10px] font-semibold leading-tight`}
+                style={[
+                  tw`text-white text-xs font-semibold leading-tight text-center`,
+                  {
+                    textShadowColor: 'rgba(0, 0, 0, 0.8)',
+                    textShadowOffset: { width: 0, height: 1 },
+                    textShadowRadius: 2
+                  }
+                ]}
+                numberOfLines={3}
               >
                 {hotel.name}
               </Text>
@@ -404,24 +411,35 @@ const HotelCard: React.FC<HotelCardProps> = ({ hotel, onPress, index }) => {
   );
 };
 
+// Single carousel row component
 interface SearchQueryCarouselProps {
-  searchQuery: string;
-  hotels: Hotel[];
   onSearchPress: (query: string) => void;
   onHotelPress?: (hotel: Hotel) => void;
   index?: number;
 }
 
-const NewSearchQueryCarousel: React.FC<SearchQueryCarouselProps> = ({
-  searchQuery,
-  hotels,
+const SearchQueryCarousel: React.FC<SearchQueryCarouselProps> = ({
   onSearchPress,
   onHotelPress,
   index = 0,
 }) => {
+  const [carouselData, setCarouselData] = useState<{searchQuery: string; hotels: Hotel[]}>({
+    searchQuery: '',
+    hotels: []
+  });
   const fadeAnimation = useRef(new Animated.Value(0)).current;
   const slideAnimation = useRef(new Animated.Value(30)).current;
   const [isChevronPressed, setIsChevronPressed] = useState(false);
+
+  // Load carousel data from your utils
+  useEffect(() => {
+    const completeCarousels = getCompleteCarousels(10); // Get up to 10 carousels
+    if (completeCarousels.length > 0) {
+      // Randomly select one carousel
+      const randomCarousel = completeCarousels[Math.floor(Math.random() * completeCarousels.length)];
+      setCarouselData(randomCarousel);
+    }
+  }, []);
 
   useEffect(() => {
     const delay = index * 200;
@@ -444,79 +462,82 @@ const NewSearchQueryCarousel: React.FC<SearchQueryCarouselProps> = ({
   const handleSearchPress = () => {
     setIsChevronPressed(true);
     setTimeout(() => setIsChevronPressed(false), 150);
-    onSearchPress(searchQuery);
+    onSearchPress(carouselData.searchQuery);
   };
 
   const handleHotelPress = (hotel: Hotel) => {
     onHotelPress?.(hotel);
   };
 
-  const getTextSize = (text: string) => {
-    if (text.length > 60) return 'text-xs';
-    if (text.length > 40) return 'text-sm';
-    return 'text-base';
-  };
+  // Don't render if no data
+  if (!carouselData.searchQuery || carouselData.hotels.length === 0) {
+    return null;
+  }
 
   return (
     <Animated.View
       style={[
-        tw`w-full mb-4`,
+        tw`w-full mb-6`,
         {
           opacity: fadeAnimation,
           transform: [{ translateY: slideAnimation }],
         },
       ]}
     >
-      {/* Search Query Header with Pill-Style Chevron */}
+     {/* Search Query Header with consistent styling matching SearchGuidePills */}
       <TouchableOpacity
         onPress={handleSearchPress}
-        activeOpacity={0.7}
-        style={tw`flex-row items-center mb-3 px-1`}
-      >
-        {/* Search query text with dynamic sizing */}
-        <Text 
-          style={tw`${getTextSize(searchQuery)} font-semibold text-gray-900`}
-          numberOfLines={1}
-          adjustsFontSizeToFit={true}
-          minimumFontScale={0.7}
-          ellipsizeMode="tail"
-        >
-          {searchQuery}
-        </Text>
-        
-        {/* Pill-Style Chevron Button - right next to text */}
-        <View style={[
-          tw`w-5 h-5 rounded-full items-center justify-center border ml-2`,
+        activeOpacity={0.8}
+        style={[
+          tw`mx-2 mb-4 px-2.4 py-2.5 rounded-xl border bg-white border-gray-200`,
           {
-            backgroundColor: isChevronPressed ? TURQUOISE_LIGHT : TURQUOISE_SUBTLE,
-            borderColor: isChevronPressed ? TURQUOISE : TURQUOISE_BORDER,
-            borderWidth: isChevronPressed ? 1.5 : 1,
-            shadowColor: isChevronPressed ? TURQUOISE : '#000',
-            shadowOffset: {
-              width: 0,
-              height: isChevronPressed ? 2 : 1,
-            },
-            shadowOpacity: isChevronPressed ? 0.2 : 0.08,
-            shadowRadius: isChevronPressed ? 4 : 2,
-            elevation: isChevronPressed ? 4 : 2,
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 1 },
+            shadowOpacity: isChevronPressed ? 0.15 : 0.1,
+            shadowRadius: isChevronPressed ? 3 : 2,
+            elevation: isChevronPressed ? 4 : 3,
+            borderColor: isChevronPressed ? TURQUOISE : '#E5E7EB',
+            borderWidth: isChevronPressed ? 2 : 1,
           }
-        ]}>
-          <Ionicons 
-            name="chevron-forward" 
-            size={12} 
-            color={isChevronPressed ? TURQUOISE_DARK : '#4B5563'} 
-          />
+        ]}
+      >
+        <View style={tw`flex-row items-center justify-between`}>
+          <View style={tw`flex-1 mr-3`}>
+            <Text 
+              style={[
+                tw`text-sm font-medium text-gray-800 leading-snug`,
+                { lineHeight: 18 }
+              ]}
+              numberOfLines={2}
+            >
+              {carouselData.searchQuery}
+            </Text>
+          </View>
+          
+          <View style={[
+            tw`w-6 h-6 rounded-full items-center justify-center`,
+            {
+              backgroundColor: isChevronPressed ? TURQUOISE : 'rgba(29, 249, 255, 0.15)',
+              transform: [{ scale: isChevronPressed ? 1.1 : 1 }],
+            }
+          ]}>
+            <Ionicons 
+              name="arrow-forward" 
+              size={14} 
+              color={isChevronPressed ? 'white' : TURQUOISE_DARK} 
+            />
+          </View>
         </View>
       </TouchableOpacity>
 
-      {/* Hotel Cards Horizontal Scroll */}
+      {/* Hotels Scroll */}
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
-        contentContainerStyle={tw`px-1`}
+        contentContainerStyle={tw`px-2`}
         decelerationRate="fast"
       >
-        {hotels.map((hotel, hotelIndex) => (
+        {carouselData.hotels.map((hotel, hotelIndex) => (
           <View
             key={`${hotel.id}-${hotelIndex}`}
             style={[
@@ -531,11 +552,10 @@ const NewSearchQueryCarousel: React.FC<SearchQueryCarouselProps> = ({
           </View>
         ))}
         
-        {/* Add proper padding at the end */}
         <View style={tw`w-6`} />
       </ScrollView>
     </Animated.View>
   );
 };
 
-export default NewSearchQueryCarousel;
+export default SearchQueryCarousel;

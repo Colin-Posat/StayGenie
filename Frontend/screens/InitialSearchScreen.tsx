@@ -834,10 +834,9 @@ const focusInput = () => {
                       style={[tw`${isLast ? '' : 'mb-4'}`]}
                     >
                       <SearchQueryCarousel
-                        searchQuery={carousel.searchQuery}
-                        hotels={carousel.hotels}
+       
                         onSearchPress={handleSearchQueryPress}
-                        index={index}
+          
                       />
                     </View>
                   );

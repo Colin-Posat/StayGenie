@@ -1,0 +1,31 @@
+query,hotelCount,status
+Beachfront hotels in Maldives with infinity pools over $500,5,success
+Ocean view hotels in Santorini with sunset terraces over $350,3,success
+Beach resort hotels in Bora Bora with overwater dining over $600,0,no_results
+Luxury beach hotels in Seychelles with private pools over $450,4,success
+Modern beach hotels in Tulum with rooftop pools around $280,5,success
+Mountain view hotels in Swiss Alps with glass facades over $400,5,success
+Ski hotels in Aspen with panoramic windows over $500,5,success
+Boutique mountain hotels in Banff with lake views around $320,5,success
+Alpine hotels in Chamonix with glacier views around $350,0,no_results
+Cliffside hotels in Big Sur with ocean panoramas over $450,5,success
+Rooftop pool hotels in Singapore with city skylines over $300,5,success
+High-rise hotels in Dubai with Burj Khalifa views over $400,5,success
+Penthouse hotels in Manhattan with Central Park views over $600,5,success
+Sky bar hotels in Bangkok with river views around $180,5,success
+Tower hotels in Tokyo with Mount Fuji views around $250,5,success
+Resort hotels in Cabo with infinity pools facing ocean over $350,0,no_results
+Luxury hotels in Mykonos with white architecture around $400,3,success
+Pool villa hotels in Phuket with private decks around $300,5,success
+Garden resort hotels in Ubud with rice terrace views around $220,5,success
+Lagoon hotels in Tahiti with turquoise water views over $550,5,success
+Design hotels in Miami South Beach with art deco style around $250,5,success
+Boutique hotels in Copenhagen with modern Scandinavian design around $200,5,success
+Architectural hotels in Barcelona with Gaudi-inspired features around $180,5,success
+Contemporary hotels in Amsterdam with canal views around $160,5,success
+Minimalist hotels in Kyoto with zen gardens around $280,5,success
+Vineyard hotels in Napa Valley with tasting rooms over $400,5,success
+Wine resort hotels in Tuscany with rolling hill views around $350,5,success
+Boutique hotels in Mendoza with Andes mountain backdrops around $200,5,success
+Luxury hotels in Bordeaux with château architecture around $300,5,success
+Modern hotels in Douro Valley with river terraces around $250,5,success

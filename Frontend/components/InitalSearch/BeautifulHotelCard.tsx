@@ -17,6 +17,13 @@ import { formatLocationDisplay, getCountryName } from '../../utils/countryMappin
 
 const { width } = Dimensions.get('window');
 
+// Turquoise color constants matching the app theme
+const TURQUOISE = '#1df9ff';
+const TURQUOISE_LIGHT = '#5dfbff';
+const TURQUOISE_DARK = '#00d4e6';
+const TURQUOISE_SUBTLE = '#f0feff';
+const TURQUOISE_BORDER = '#b3f7ff';
+
 // Hotel interface matching the beautiful hotels data
 export interface BeautifulHotel {
   id: string;
@@ -56,11 +63,11 @@ export interface BeautifulHotel {
   theme: string;
   architecturalStyle?: string;
   uniqueFeatures?: string[];
-  description?: string; // still included for backward compatibility
+  description?: string;
   coordinates?: {
     lat: number;
     lng: number;
-  }; // derived from latitude/longitude if needed
+  };
 }
 
 // Custom hook for intersection observer style lazy loading
@@ -69,13 +76,13 @@ const useLazyLoading = (threshold: number = 150) => {
   const [hasLoaded, setHasLoaded] = useState(false);
   const elementRef = useRef<View>(null);
   const [imageLoading, setImageLoading] = useState(false);
-const [imageError, setImageError] = useState(false);
+  const [imageError, setImageError] = useState(false);
 
-useEffect(() => {
-  if (!isVisible || !imageLoading) return;
-  const t = setTimeout(() => setImageLoading(false), 8000); // 8s fallback
-  return () => clearTimeout(t);
-}, [isVisible, imageLoading]);
+  useEffect(() => {
+    if (!isVisible || !imageLoading) return;
+    const t = setTimeout(() => setImageLoading(false), 8000);
+    return () => clearTimeout(t);
+  }, [isVisible, imageLoading]);
 
   useEffect(() => {
     let timeoutId: NodeJS.Timeout;
@@ -94,7 +101,6 @@ useEffect(() => {
       }
     };
 
-    // Check visibility on mount and periodically
     const checkLoop = () => {
       checkVisibility();
       if (!hasLoaded) {
@@ -102,7 +108,6 @@ useEffect(() => {
       }
     };
 
-    // Start checking after component mounts
     timeoutId = setTimeout(checkLoop, 50);
 
     return () => {
@@ -144,14 +149,14 @@ interface GridHeartButtonProps {
   size?: number;
 }
 
-const GridHeartButton: React.FC<GridHeartButtonProps> = ({ hotel, size = 20 }) => {
+const GridHeartButton: React.FC<GridHeartButtonProps> = ({ hotel, size = 16 }) => {
   const [isLiked, setIsLiked] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const scaleAnim = useRef(new Animated.Value(1)).current;
   const bounceAnim = useRef(new Animated.Value(1)).current;
+  const glowAnim = useRef(new Animated.Value(0)).current;
   const favoritesCache = FavoritesCache.getInstance();
 
-  // Check if hotel is already favorited on mount
   useEffect(() => {
     const checkFavoriteStatus = async () => {
       try {
@@ -166,35 +171,46 @@ const GridHeartButton: React.FC<GridHeartButtonProps> = ({ hotel, size = 20 }) =
   }, [hotel.id, favoritesCache]);
 
   const animateHeart = () => {
-    Animated.sequence([
-      Animated.timing(scaleAnim, {
-        toValue: 1.3,
-        duration: 150,
-        useNativeDriver: true,
-      }),
-      Animated.timing(scaleAnim, {
+    Animated.parallel([
+      Animated.sequence([
+        Animated.timing(scaleAnim, {
+          toValue: 1.4,
+          duration: 200,
+          useNativeDriver: true,
+        }),
+        Animated.timing(scaleAnim, {
+          toValue: 1,
+          duration: 200,
+          useNativeDriver: true,
+        }),
+      ]),
+      Animated.sequence([
+        Animated.timing(bounceAnim, {
+          toValue: 0.85,
+          duration: 150,
+          useNativeDriver: true,
+        }),
+        Animated.timing(bounceAnim, {
+          toValue: 1,
+          duration: 150,
+          useNativeDriver: true,
+        }),
+      ]),
+      Animated.timing(glowAnim, {
         toValue: 1,
-        duration: 150,
-        useNativeDriver: true,
+        duration: 300,
+        useNativeDriver: false,
       }),
-    ]).start();
-
-    Animated.sequence([
-      Animated.timing(bounceAnim, {
-        toValue: 0.9,
-        duration: 100,
-        useNativeDriver: true,
-      }),
-      Animated.timing(bounceAnim, {
-        toValue: 1,
-        duration: 100,
-        useNativeDriver: true,
-      }),
-    ]).start();
+    ]).start(() => {
+      Animated.timing(glowAnim, {
+        toValue: 0,
+        duration: 500,
+        useNativeDriver: false,
+      }).start();
+    });
   };
 
   const handlePress = async (event: any) => {
-    // Stop event propagation to prevent card tap
     event.stopPropagation();
     
     if (isLoading) return;
@@ -203,7 +219,6 @@ const GridHeartButton: React.FC<GridHeartButtonProps> = ({ hotel, size = 20 }) =
     animateHeart();
     
     try {
-      // Convert BeautifulHotel to Hotel-like object for cache compatibility
       const hotelForCache = {
         ...hotel,
         originalPrice: hotel.price,
@@ -215,11 +230,9 @@ const GridHeartButton: React.FC<GridHeartButtonProps> = ({ hotel, size = 20 }) =
         features: [],
       };
 
-      // Toggle favorite status in cache
       const newStatus = await favoritesCache.toggleFavorite(hotelForCache);
       setIsLiked(newStatus);
       
-      // Show feedback to user
       if (newStatus) {
         console.log(`❤️ Added "${hotel.name}" to favorites`);
       } else {
@@ -235,31 +248,53 @@ const GridHeartButton: React.FC<GridHeartButtonProps> = ({ hotel, size = 20 }) =
 
   return (
     <Animated.View style={{ transform: [{ scale: bounceAnim }] }}>
-      <TouchableOpacity
-        onPress={handlePress}
-        activeOpacity={0.6}
-        disabled={isLoading}
+      <Animated.View
         style={[
-          tw`w-7 h-7 rounded-full bg-black/50 items-center justify-center shadow-sm`,
+          tw`w-7 h-7 rounded-full items-center justify-center`,
+          {
+            backgroundColor: glowAnim.interpolate({
+              inputRange: [0, 1],
+              outputRange: ['rgba(255, 255, 255, 0.9)', 'rgba(255, 48, 64, 0.2)'],
+            }),
+            borderColor: glowAnim.interpolate({
+              inputRange: [0, 1],
+              outputRange: ['rgba(255, 255, 255, 0.3)', '#FF3040'],
+            }),
+            borderWidth: 1,
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 1 },
+            shadowOpacity: 0.2,
+            shadowRadius: 2,
+            elevation: 3,
+          },
           isLoading && tw`opacity-60`
         ]}
       >
-        <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
-          {isLoading ? (
-            <Ionicons
-              name="sync"
-              size={size}
-              color="#666666"
-            />
-          ) : (
-            <Ionicons
-              name={isLiked ? "heart" : "heart-outline"}
-              size={size}
-              color={isLiked ? "#FF3040" : "#FFFFFF"}
-            />
-          )}
-        </Animated.View>
-      </TouchableOpacity>
+        <TouchableOpacity
+          onPress={handlePress}
+          activeOpacity={0.6}
+          disabled={isLoading}
+          style={tw`w-full h-full items-center justify-center`}
+          ></TouchableOpacity>
+              <TouchableOpacity
+          onPress={handlePress}
+          activeOpacity={0.6}
+          disabled={isLoading}
+          style={tw`w-full h-full items-center justify-center`}
+        >
+          <Animated.View style={{ transform: [{ scale: scaleAnim }] }}>
+            {isLoading ? (
+              <ActivityIndicator size="small" color="#666" />
+            ) : (
+              <Ionicons
+                name={isLiked ? "heart" : "heart-outline"}
+                size={size}
+                color={isLiked ? "#FF3040" : "#666666"}
+              />
+            )}
+          </Animated.View>
+        </TouchableOpacity>
+      </Animated.View>
     </Animated.View>
   );
 };
@@ -290,10 +325,9 @@ const LazyImage: React.FC<LazyImageProps> = ({
 
   useEffect(() => {
     if (isVisible) {
-      // Add a small delay to prevent loading all images at once
       const timer = setTimeout(() => {
         setShouldLoad(true);
-      }, Math.random() * 100); // Random delay 0-100ms
+      }, Math.random() * 100);
 
       return () => clearTimeout(timer);
     }
@@ -309,14 +343,13 @@ const LazyImage: React.FC<LazyImageProps> = ({
       source={source}
       style={style}
       resizeMode={resizeMode}
-      // Don't trigger loading UI for known-cached images
       onLoadStart={() => { if (!isCached) onLoadStart?.(); }}
       onLoad={() => {
         ImageCache.markImageCached(source.uri);
         onLoad?.();
       }}
       onError={(e) => { onError?.(); }}
-      onLoadEnd={() => { onLoadEnd?.(); }}    // ALWAYS fires (success or error)
+      onLoadEnd={() => { onLoadEnd?.(); }}
       fadeDuration={300}
     />
   );
@@ -330,7 +363,7 @@ interface BeautifulHotelCardProps {
   checkOutDate?: Date;
   adults?: number;
   children?: number;
-  index?: number; // For staggered loading
+  index?: number;
 }
 
 const BeautifulHotelCard: React.FC<BeautifulHotelCardProps> = ({ 
@@ -343,16 +376,14 @@ const BeautifulHotelCard: React.FC<BeautifulHotelCardProps> = ({
   index = 0
 }) => {
   const panAnimation = useRef(new Animated.Value(0)).current;
-  const scaleAnimation = useRef(new Animated.Value(1.05)).current;
+  const scaleAnimation = useRef(new Animated.Value(1.02)).current;
   const [imageLoading, setImageLoading] = useState(true);
   const [imageError, setImageError] = useState(false);
   
-  // Lazy loading hook with staggered threshold based on index
-  const threshold = 150 + (index * 50); // Stagger loading based on position
+  const threshold = 150 + (index * 50);
   const { isVisible, elementRef, hasLoaded } = useLazyLoading(threshold);
 
   useEffect(() => {
-    // Only start animations if image is visible and loaded
     if (isVisible && !imageLoading && !imageError) {
       const panningAnimation = Animated.loop(
         Animated.sequence([
@@ -372,12 +403,12 @@ const BeautifulHotelCard: React.FC<BeautifulHotelCardProps> = ({
       const scalingAnimation = Animated.loop(
         Animated.sequence([
           Animated.timing(scaleAnimation, {
-            toValue: 1.1,
+            toValue: 1.08,
             duration: 10000,
             useNativeDriver: true,
           }),
           Animated.timing(scaleAnimation, {
-            toValue: 1.05,
+            toValue: 1.02,
             duration: 10000,
             useNativeDriver: true,
           }),
@@ -396,7 +427,7 @@ const BeautifulHotelCard: React.FC<BeautifulHotelCardProps> = ({
 
   const translateX = panAnimation.interpolate({
     inputRange: [0, 1],
-    outputRange: [-4, 4],
+    outputRange: [-3, 3],
   });
 
   const translateY = panAnimation.interpolate({
@@ -404,11 +435,9 @@ const BeautifulHotelCard: React.FC<BeautifulHotelCardProps> = ({
     outputRange: [-2, 2],
   });
 
-  // Google Maps link generation - prioritize hotel name
   const generateGoogleMapsLink = (hotel: BeautifulHotel, checkin?: Date, checkout?: Date, adults: number = 2, children: number = 0): string => {
     let query = '';
 
-    // Always use hotel name with location text
     const locationText = hotel.city && hotel.country 
       ? `${hotel.name} ${hotel.city} ${hotel.country}`
       : hotel.fullAddress 
@@ -434,7 +463,6 @@ const BeautifulHotelCard: React.FC<BeautifulHotelCardProps> = ({
     return url;
   };
 
-  // Handle card press - open Google Maps
   const handleCardPress = async () => {
     try {
       const mapsLink = generateGoogleMapsLink(
@@ -453,7 +481,6 @@ const BeautifulHotelCard: React.FC<BeautifulHotelCardProps> = ({
       if (canOpen) {
         await Linking.openURL(mapsLink);
       } else {
-        // Fallback with hotel name and location
         let fallbackQuery = '';
         if (hotel.city && hotel.country) {
           fallbackQuery = encodeURIComponent(`${hotel.name} ${hotel.city} ${hotel.country}`);
@@ -464,7 +491,6 @@ const BeautifulHotelCard: React.FC<BeautifulHotelCardProps> = ({
         await Linking.openURL(fallbackUrl);
       }
 
-      // Call optional onPress callback if provided
       onPress?.();
 
     } catch (error) {
@@ -484,11 +510,11 @@ const BeautifulHotelCard: React.FC<BeautifulHotelCardProps> = ({
   };
 
   const getRatingColor = (rating: number): string => {
-    if (rating >= 9.0) return "#00E676"; // Bright green for exceptional
-    if (rating >= 8.0) return "#4CAF50"; // Green for very good
-    if (rating >= 7.0) return "#FF9800"; // Orange for good
-    if (rating >= 6.0) return "#FF5722"; // Orange-red for fair
-    return "#F44336"; // Red for poor
+    if (rating >= 9.0) return TURQUOISE;
+    if (rating >= 8.0) return TURQUOISE + 'E6';
+    if (rating >= 7.0) return TURQUOISE + 'CC';
+    if (rating >= 6.0) return TURQUOISE + 'B3';
+    return TURQUOISE + '99';
   };
 
   const formatPrice = (price: number): string => {
@@ -498,142 +524,136 @@ const BeautifulHotelCard: React.FC<BeautifulHotelCardProps> = ({
     return price.toString();
   };
 
-  const cardWidth = (width - 75) / 2; // Account for padding and gap
-  const cardHeight = cardWidth; // Slightly taller than square
+  const cardWidth = (width - 48) / 2; // Updated for better spacing
+  const cardHeight = cardWidth * 1.15; // Slightly taller ratio
 
-return (
-  <View
-    ref={elementRef}
-    style={{
-      width: cardWidth,
-      height: cardHeight,
-      // iOS shadow
-      shadowColor: '#000',
-      shadowOffset: {
-        width: 0,
-        height: 4,
-      },
-      shadowOpacity: 0.25,
-      shadowRadius: 3.5,
-      // Android shadow
-      elevation: 5,
-    }}
-  >
-    <TouchableOpacity
-      onPress={handleCardPress}
-      activeOpacity={0.95}
-      style={[
-        tw`bg-white rounded-2xl overflow-hidden`,
-        { width: '100%', height: '100%' }
-      ]}
+  return (
+    <View
+      ref={elementRef}
+      style={{
+        width: cardWidth,
+        height: cardHeight,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.15,
+        shadowRadius: 8,
+        elevation: 6,
+      }}
     >
-      {/* Image with Ken Burns effect and lazy loading */}
-      <View style={tw`flex-1 relative overflow-hidden bg-gray-200`}>
-        {isVisible ? (
-          !imageError ? (
-            <Animated.View
-              style={[
-                {
-                  position: 'absolute',
-                  width: '110%',
-                  height: '110%',
-                  left: '-5%',
-                  top: '-5%',
-                },
-                {
-                  transform: [
-                    { translateX },
-                    { translateY },
-                    { scale: scaleAnimation }
-                  ],
-                }
-              ]}
-            >
-              <LazyImage
-            source={{ uri: hotel.image }}
-            style={{ width: '100%', height: '100%' }}
-            resizeMode="cover"
-            onLoadStart={() => setImageLoading(true)}
-            onLoad={() => setImageLoading(false)}
-            onError={() => {
-              setImageError(true);
-              setImageLoading(false);
-            }}
-            onLoadEnd={() => setImageLoading(false)}   // <- key line
-            isVisible={isVisible}
-          />
-            </Animated.View>
-          ) : (
-            // Error placeholder
-            <View style={tw`flex-1 items-center justify-center bg-gray-300`}>
-              <Ionicons name="image-outline" size={32} color="#9CA3AF" />
-              <Text style={tw`text-gray-500 text-xs mt-2`}>Image unavailable</Text>
-            </View>
-          )
-        ) : (
-          // Lazy loading placeholder with subtle animation
-          <View style={tw`flex-1 bg-gray-100 items-center justify-center`}>
-            <Animated.View 
-              style={[
-                tw`w-8 h-8 bg-gray-300 rounded`,
-                {
-                  opacity: panAnimation.interpolate({
-                    inputRange: [0, 1],
-                    outputRange: [0.3, 0.6]
-                  })
-                }
-              ]} 
-            />
-          </View>
-        )}
-
-        {imageLoading && !imageError && isVisible && (
-              <View style={tw`absolute inset-0 items-center justify-center bg-gray-100/60`}>
-                <ActivityIndicator size="small" color="#666" />
+      <TouchableOpacity
+        onPress={handleCardPress}
+        activeOpacity={0.95}
+        style={[
+          tw`bg-white rounded-2xl overflow-hidden`,
+          { width: '100%', height: '100%' }
+        ]}
+      >
+        {/* Image with Ken Burns effect */}
+        <View style={tw`flex-1 relative overflow-hidden bg-gray-100`}>
+          {isVisible ? (
+            !imageError ? (
+              <Animated.View
+                style={[
+                  {
+                    position: 'absolute',
+                    width: '106%',
+                    height: '106%',
+                    left: '-3%',
+                    top: '-3%',
+                  },
+                  {
+                    transform: [
+                      { translateX },
+                      { translateY },
+                      { scale: scaleAnimation }
+                    ],
+                  }
+                ]}
+              >
+                <LazyImage
+                  source={{ uri: hotel.image }}
+                  style={{ width: '100%', height: '100%' }}
+                  resizeMode="cover"
+                  onLoadStart={() => setImageLoading(true)}
+                  onLoad={() => setImageLoading(false)}
+                  onError={() => {
+                    setImageError(true);
+                    setImageLoading(false);
+                  }}
+                  onLoadEnd={() => setImageLoading(false)}
+                  isVisible={isVisible}
+                />
+              </Animated.View>
+            ) : (
+              <View style={tw`flex-1 items-center justify-center bg-gray-200`}>
+                <Ionicons name="image-outline" size={28} color="#9CA3AF" />
+                <Text style={tw`text-gray-500 text-xs mt-2`}>Image unavailable</Text>
               </View>
-            )}
-        
-        {/* Gradient overlay - only show when image is loaded */}
-        {!imageLoading && !imageError && isVisible && (
-          <View style={tw`absolute bottom-0 left-0 right-0 h-20 bg-gradient-to-t from-black/70 to-transparent`} />
-        )}
+            )
+          ) : (
+            <View style={tw`flex-1 bg-gray-100 items-center justify-center`}>
+              <Animated.View 
+                style={[
+                  tw`w-8 h-8 bg-gray-200 rounded-lg`,
+                  {
+                    opacity: panAnimation.interpolate({
+                      inputRange: [0, 1],
+                      outputRange: [0.4, 0.7]
+                    })
+                  }
+                ]} 
+              />
+            </View>
+          )}
 
-        {/* Price Badge - Top Right */}
-        <View style={tw`absolute top-2 right-2`}>
-          <View style={tw`bg-black/50 border border-white/20 px-2.5 py-1 rounded-lg`}>
-            <View style={tw`flex-row items-baseline`}>
-              <Text style={tw`text-white text-xs font-bold`}>
-                ${formatPrice(hotel.price)}
-              </Text>
-              <Text style={tw`text-white/80 text-[9px] ml-0.5`}>
-                /night
-              </Text>
+          {imageLoading && !imageError && isVisible && (
+            <View style={tw`absolute inset-0 items-center justify-center bg-white/70`}>
+              <ActivityIndicator size="small" color={TURQUOISE} />
+            </View>
+          )}
+          
+          {!imageLoading && !imageError && isVisible && (
+            <View style={tw`absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-black/50 to-transparent`} />
+          )}
+
+          {/* Price Badge - Top Right */}
+          <View style={tw`absolute top-3 right-3`}>
+            <View style={[
+              tw`px-2.5 py-1.5 rounded-xl border`,
+              {
+                backgroundColor: 'rgba(255, 255, 255, 0.95)',
+                borderColor: 'rgba(255, 255, 255, 0.3)',
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 1 },
+                shadowOpacity: 0.1,
+                shadowRadius: 2,
+              }
+            ]}>
+              <View style={tw`flex-row items-baseline`}>
+                <Text style={tw`text-gray-900 text-xs font-bold`}>
+                  ${formatPrice(hotel.price)}
+                </Text>
+                <Text style={tw`text-gray-600 text-[9px] ml-0.5`}>
+                  /night
+                </Text>
+              </View>
             </View>
           </View>
-        </View>
 
-        {/* Favorite Button - Bottom Right */}
-        <View style={tw`absolute bottom-2 right-2`}>
-          <GridHeartButton hotel={hotel} size={15} />
-        </View>
-
-        {/* Hotel info at bottom left */}
-        <View style={tw`absolute bottom-2 left-2 right-12`}>
-          <View style={tw`bg-black/30 border border-white/20 px-1.5 py-0.5 rounded-md`}>
-            <Text 
-              style={tw`text-white text-[10px] font-semibold leading-tight`}
-            >
-              {hotel.name}
-            </Text>
+          {/* Favorite Button - Top Left */}
+          <View style={tw`absolute top-3 left-3`}>
+            <GridHeartButton hotel={hotel} size={15} />
           </View>
+
+          {/* Hotel Info - Bottom overlay */}
+
         </View>
-      </View>
-     </TouchableOpacity>
-  </View>
-);
+      </TouchableOpacity>
+    </View>
+  );
 };
 
-// Preload function for critical images (use in parent component)
+// Preload function for critical images
 export const preloadHotelImages = (hotels: BeautifulHotel[], count: number = 4) => {
   const criticalImages = hotels.slice(0, count).map(hotel => hotel.image);
   ImageCache.preloadImages(criticalImages);
