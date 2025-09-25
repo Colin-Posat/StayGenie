@@ -580,11 +580,10 @@ export const carouselData: CarouselHotel[] = [
   }
 ];
 
-// Helper function to get search queries that have exactly 5 hotels
-export const getCompleteCarousels = (maxCarousels: number = 10) => {
+// Group hotels by search query for easy access
+export const getHotelsByQuery = () => {
   const grouped: { [key: string]: CarouselHotel[] } = {};
   
-  // Group hotels by search query
   carouselData.forEach(hotel => {
     if (!grouped[hotel.searchQuery]) {
       grouped[hotel.searchQuery] = [];
@@ -592,24 +591,43 @@ export const getCompleteCarousels = (maxCarousels: number = 10) => {
     grouped[hotel.searchQuery].push(hotel);
   });
 
-  // Filter to only include queries with exactly 5 hotels
-  return Object.entries(grouped)
-    .filter(([_, hotels]) => hotels.length === 5)
-    .slice(0, maxCarousels)
-    .map(([searchQuery, hotels]) => ({
-      searchQuery,
-      hotels: hotels.map(h => ({
-        id: h.hotelId,
-        name: h.name,
-        image: h.image,
-        price: h.price,
-        rating: h.rating,
-        location: h.location,
-        city: h.city,
-        country: h.country,
-        fullAddress: h.fullAddress
-      }))
-    }));
+  return grouped;
+};
+
+// Get all unique search queries
+export const getAllSearchQueries = () => {
+  const queries = [...new Set(carouselData.map(hotel => hotel.searchQuery))];
+  return queries;
+};
+
+// Get 3 random unique search queries with their hotels
+export const getRandomCarousels = (count: number = 3) => {
+  const grouped = getHotelsByQuery();
+  const allQueries = getAllSearchQueries();
+  
+  // Shuffle the queries array to get random selection
+  const shuffledQueries = [...allQueries].sort(() => Math.random() - 0.5);
+  
+  // Take the first 'count' queries and return with their hotels
+  return shuffledQueries.slice(0, count).map(query => ({
+    searchQuery: query,
+    hotels: grouped[query].map(h => ({
+      id: h.hotelId,
+      name: h.name,
+      image: h.image,
+      price: h.price,
+      rating: h.rating,
+      location: h.location,
+      city: h.city,
+      country: h.country,
+      fullAddress: h.fullAddress
+    }))
+  }));
+};
+
+// Legacy function for backward compatibility - now returns random 3 carousels
+export const getCompleteCarousels = (maxCarousels: number = 3) => {
+  return getRandomCarousels(Math.min(maxCarousels, 3));
 };
 
 export default carouselData;

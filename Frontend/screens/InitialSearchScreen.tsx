@@ -1,4 +1,4 @@
-// InitialSearchScreen.tsx - Fixed for mobile compatibility
+// InitialSearchScreen.tsx - Updated with faster, more interesting auto-typing
 import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
@@ -19,7 +19,7 @@ import tw from 'twrnc';
 import SearchGuidePills from '../components/InitalSearch/SearchGuidePills';
 import RecentSearches from '../components/InitalSearch/RecentSearches';
 import SearchQueryCarousel from '../components/InitalSearch/SearchQueryCarousel';
-import { getRandomSearchQueries, SearchQueryWithHotels } from '../utils/SearchQueryData';
+import { getRandomCarousels } from '../utils/carouselData';
 import { useFocusEffect } from '@react-navigation/native';
 import { useAuth } from '../contexts/AuthContext';
 
@@ -30,12 +30,28 @@ const TURQUOISE = '#1df9ff';
 const TURQUOISE_LIGHT = '#5dfbff';
 const TURQUOISE_DARK = '#00d4e6';
 
+// Interface for carousel data
+interface SearchQueryWithHotels {
+  searchQuery: string;
+  hotels: Array<{
+    id: string;
+    name: string;
+    image: string;
+    price: number;
+    rating: number;
+    location: string;
+    city: string;
+    country: string;
+    fullAddress: string;
+  }>;
+}
+
 // Custom hook for auto-typing placeholder text
 const useTypingPlaceholder = (
   words: string[],
-  typingSpeed = 100,
-  deletingSpeed = 50,
-  delayAfterWord = 2000
+  typingSpeed = 60,
+  deletingSpeed = 30,
+  delayAfterWord = 1500
 ) => {
   const [displayText, setDisplayText] = useState('');
   const [isDeleting, setIsDeleting] = useState(false);
@@ -48,7 +64,7 @@ const useTypingPlaceholder = (
   useEffect(() => {
     const cursorInterval = setInterval(() => {
       setCursorVisible(prev => !prev);
-    }, 500);
+    }, 400);
     return () => clearInterval(cursorInterval);
   }, []);
 
@@ -93,7 +109,7 @@ const InitialSearchScreen: React.FC<InitialSearchScreenProps> = ({
   const [showScrollHint, setShowScrollHint] = useState(false);
   const [searchQueryCarousels, setSearchQueryCarousels] = useState<SearchQueryWithHotels[]>([]);
   const [isTransitioning, setIsTransitioning] = useState(false);
-  const [usedQueries, setUsedQueries] = useState<Set<string>>(new Set());
+  
   // Refs
   const textInputRef = useRef<TextInput>(null);
   
@@ -123,64 +139,56 @@ const InitialSearchScreen: React.FC<InitialSearchScreenProps> = ({
   const contentFadeOut = useRef(new Animated.Value(1)).current;
   const scaleTransition = useRef(new Animated.Value(1)).current;
 
+  // Constants for input handling
+  const INPUT_FONT_SIZE = 16;
+  const INPUT_LINE_HEIGHT = 22;
+  const INPUT_VISIBLE_LINES = 3;
+  const INPUT_HEIGHT = INPUT_LINE_HEIGHT * INPUT_VISIBLE_LINES + 12;
+  const MIN_INPUT_HEIGHT = 85;
+  const MAX_INPUT_HEIGHT = 85;
+  const INPUT_BOTTOM_PAD = 10;
+  const ANDROID_EXTRA_PAD = 6;
 
-  // constants near top of file or above the component
-const INPUT_FONT_SIZE = 16;         // keep in sync with style
-const INPUT_LINE_HEIGHT = 22;       // comfortable line height
-const INPUT_VISIBLE_LINES = 3;      // default visible lines
-const INPUT_HEIGHT = INPUT_LINE_HEIGHT * INPUT_VISIBLE_LINES + 12;
-
-  // Mobile-optimized search suggestions
+  // Realistic and appealing search suggestions for travelers
   const hotelSearchSuggestions = [
-    "Tokyo capsule hotels",
-    "Bali beachfront villas",
-    "Paris boutique stays",
-    "NYC rooftop hotels",
-    "Dubai luxury resorts",
-    "Rome historic hotels",
-    "London business hotels",
-    "Santorini sunset views",
-    "Aspen ski lodges",
-    "Morocco desert camps"
+    "Beachfront resorts in Maldives with private pools",
+    "Boutique hotels in Paris with Eiffel Tower views",
+    "Mountain lodges in Swiss Alps with spa amenities",
+    "Luxury villas in Tuscany with wine tastings",
+    "Safari camps in Kenya with guided game drives",
+    "Rooftop hotels in Tokyo with city skyline views",
+    "Historic castles in Scotland with afternoon tea",
+    "Eco-lodges in Costa Rica with zip line adventures",
+    "Desert resorts in Morocco with camel trekking",
+    "Overwater bungalows in Bora Bora with sunset dinners",
+    "Ski chalets in Aspen with fireplace lounges",
+    "Cliffside hotels in Santorini with infinity pools",
+    "Tree lodges in Kenya overlooking wildlife",
+    "Beach cabanas in Tulum with cenote access",
+    "Ice hotels in Finland with northern lights viewing",
+    "Jungle resorts in Bali with yoga classes",
+    "Lighthouse hotels on coastal Maine with lobster dinners",
+    "Floating hotels in Amsterdam with canal views",
+    "Cave hotels in Cappadocia with balloon rides",
+    "Ranch stays in Montana with horseback riding",
+    "Vineyard hotels in Napa with wine tours",
+    "Island resorts in Seychelles with snorkeling",
+    "Historic ryokans in Japan with hot spring baths",
+    "Desert glamping in Utah with stargazing tours"
   ];
 
-  const MIN_INPUT_HEIGHT = 85;   // ~1 line
-const MAX_INPUT_HEIGHT = 85;  // ~6 lines (tweak as you like)
-const INPUT_BOTTOM_PAD = 10; // extra breathing room inside the TextInput
-const ANDROID_EXTRA_PAD = 6;
-
-const handleContentSizeChange = (e: any) => {
-  const h = e?.nativeEvent?.contentSize?.height ?? MIN_INPUT_HEIGHT;
-  // clamp to avoid infinite growth
-  const clamped = Math.max(MIN_INPUT_HEIGHT, Math.min(h, MAX_INPUT_HEIGHT));
-  setInputHeight(clamped);
-};
   const { displayText, cursorVisible } = useTypingPlaceholder(
     hotelSearchSuggestions,
-    80,
-    40,
-    2000
+    25,  // Faster typing speed (was 80)
+    10,  // Faster deleting speed (was 40)
+    1500 // Shorter delay (was 2000)
   );
 
-  // Load random search query carousels on mount
+  // Load 3 random carousel collections on mount
   useEffect(() => {
-  setUsedQueries(new Set());
-  
-  const randomCarousels = getRandomSearchQueries(10); // Get more than needed
-  const uniqueCarousels: SearchQueryWithHotels[] = [];
-  const localUsedQueries = new Set<string>();
-  
-  // Filter out duplicates
-  for (const carousel of randomCarousels) {
-    if (!localUsedQueries.has(carousel.searchQuery) && uniqueCarousels.length < 4) {
-      uniqueCarousels.push(carousel);
-      localUsedQueries.add(carousel.searchQuery);
-    }
-  }
-  
-  setSearchQueryCarousels(uniqueCarousels);
-  setUsedQueries(localUsedQueries);
-}, []);
+    const randomCarousels = getRandomCarousels(3);
+    setSearchQueryCarousels(randomCarousels);
+  }, []);
 
   // Auto-focus to end when screen becomes active
   useEffect(() => {
@@ -193,7 +201,12 @@ const handleContentSizeChange = (e: any) => {
     }
   }, [isFocused, searchQuery]);
 
-
+  // Handle content size change for multiline input
+  const handleContentSizeChange = (e: any) => {
+    const h = e?.nativeEvent?.contentSize?.height ?? MIN_INPUT_HEIGHT;
+    const clamped = Math.max(MIN_INPUT_HEIGHT, Math.min(h, MAX_INPUT_HEIGHT));
+    setInputHeight(clamped);
+  };
 
   // Handle focus with cursor positioning
   const handleFocus = () => {
@@ -218,25 +231,23 @@ const handleContentSizeChange = (e: any) => {
     }
   };
 
-useFocusEffect(
-  React.useCallback(() => {
-    setUsedQueries(new Set());
-    // freeze hero at end-state so nothing re-animates
-    screenSlideOut.setValue(0);
-    contentFadeOut.setValue(1);
-    scaleTransition.setValue(1);
+  // Focus management on screen activation
+  useFocusEffect(
+    React.useCallback(() => {
+      // Reset animations to visible state
+      screenSlideOut.setValue(0);
+      contentFadeOut.setValue(1);
+      scaleTransition.setValue(1);
+      fadeAnimation.setValue(1);
+      slideAnimation.setValue(0);
+      logoFade.setValue(1);
+      searchBarScale.setValue(1);
+      turquoiseGlow.setValue(0);
 
-    fadeAnimation.setValue(1);   // header visible
-    slideAnimation.setValue(0);  // no slide
-    logoFade.setValue(1);        // logo visible
-    searchBarScale.setValue(1);  // no pop
-    turquoiseGlow.setValue(0);   // neutral until user focuses
-
-    setIsTransitioning(false);
-    setIsFocused(false);
-  }, [])
-);
-
+      setIsTransitioning(false);
+      setIsFocused(false);
+    }, [])
+  );
 
   // Continuous floating animation for background elements
   useEffect(() => {
@@ -344,14 +355,12 @@ useFocusEffect(
     });
   };
 
-  // add near other constants
-const SHOW_HINT_WHEN_EMPTY = true;
+  // Focus input helper
+  const focusInput = () => {
+    textInputRef.current?.focus();
+  };
 
-// add inside component, above return()
-const focusInput = () => {
-  textInputRef.current?.focus();
-};
-
+  // Search Guide Pills handlers
   const handleStyleSelect = (styleText: string) => {
     console.log('Hotel style selected from pills:', styleText);
     
@@ -565,7 +574,7 @@ const focusInput = () => {
           {/* Main Content - ScrollView to handle overflow */}
           <ScrollView
             style={tw`flex-1`}
-            contentContainerStyle={[tw`px-4 pb-6`, { minHeight: height - 100 }]} // Ensure minimum height
+            contentContainerStyle={[tw`px-4 pb-6`, { minHeight: height - 100 }]}
             showsVerticalScrollIndicator={false}
             scrollEnabled={!isTransitioning}
             keyboardShouldPersistTaps="handled"
@@ -659,132 +668,131 @@ const focusInput = () => {
               </View>
 
               {/* Mobile-optimized Search Bar */}
-             <View style={tw`w-full items-center px-2`}>
-  <Animated.View 
-    style={[
-      tw`relative mb-4 w-full`,
-      { transform: [{ scale: searchBarScale }] }
-    ]}
-  >
-    {/* Make the entire container tappable */}
-    <TouchableOpacity activeOpacity={0.9} onPress={focusInput} accessibilityRole="search">
-      <Animated.View 
-        style={[
-          tw`bg-white rounded-2xl shadow-lg border`,
-          {
-            shadowColor: '#000', // consistent shadow
-            shadowOffset: { width: 0, height: 4 },
-            shadowOpacity: pulsingShadow.interpolate({ inputRange: [0, 1], outputRange: [0.1, 0.15] }),
-            shadowRadius: pulsingShadow.interpolate({ inputRange: [0, 1], outputRange: [4, 6] }),
-            elevation: 8,
-            borderColor: Animated.add(
-              turquoiseGlow.interpolate({ inputRange: [0, 1], outputRange: [0, 1] }),
-              pulsingShadow.interpolate({ inputRange: [0, 1], outputRange: [0, 0.3] })
-            ).interpolate({
-              inputRange: [0, 0.3, 1, 1.3],
-              outputRange: ['#E5E7EB', 'rgba(29, 249, 255, 0.5)', TURQUOISE, TURQUOISE],
-            }),
-            borderWidth: turquoiseGlow.interpolate({ inputRange: [0, 1], outputRange: [1, 2] }),
-          },
-        ]}
-      >
-        {/* Leading search icon (affordance) */}
-        <View style={tw`absolute left-4 top-4`}>
-          <Ionicons
-            name="sparkles"
-            size={18}
-            color={isFocused || searchQuery ? TURQUOISE : '#9CA3AF'}
-          />
-        </View>
+              <View style={tw`w-full items-center px-2`}>
+                <Animated.View 
+                  style={[
+                    tw`relative mb-4 w-full`,
+                    { transform: [{ scale: searchBarScale }] }
+                  ]}
+                >
+                  {/* Make the entire container tappable */}
+                  <TouchableOpacity activeOpacity={0.9} onPress={focusInput} accessibilityRole="search">
+                    <Animated.View 
+                      style={[
+                        tw`bg-white rounded-2xl shadow-lg border`,
+                        {
+                          shadowColor: '#000',
+                          shadowOffset: { width: 0, height: 4 },
+                          shadowOpacity: pulsingShadow.interpolate({ inputRange: [0, 1], outputRange: [0.1, 0.15] }),
+                          shadowRadius: pulsingShadow.interpolate({ inputRange: [0, 1], outputRange: [4, 6] }),
+                          elevation: 8,
+                          borderColor: Animated.add(
+                            turquoiseGlow.interpolate({ inputRange: [0, 1], outputRange: [0, 1] }),
+                            pulsingShadow.interpolate({ inputRange: [0, 1], outputRange: [0, 0.3] })
+                          ).interpolate({
+                            inputRange: [0, 0.3, 1, 1.3],
+                            outputRange: ['#E5E7EB', 'rgba(29, 249, 255, 0.5)', TURQUOISE, TURQUOISE],
+                          }),
+                          borderWidth: turquoiseGlow.interpolate({ inputRange: [0, 1], outputRange: [1, 2] }),
+                        },
+                      ]}
+                    >
+                      {/* Leading search icon */}
+                      <View style={tw`absolute left-4 top-4`}>
+                        <Ionicons
+                          name="sparkles"
+                          size={18}
+                          color={isFocused || searchQuery ? TURQUOISE : '#9CA3AF'}
+                        />
+                      </View>
 
-        {/* Main input area — fixed to 2 lines, scrolls after that */}
-        <View style={tw`px-4 pt-3.5`}>
-          <View style={tw`flex-row items-start`}>
-            <View style={tw`flex-1`}>
-              <TextInput
-                ref={textInputRef}
-                multiline
-                numberOfLines={INPUT_VISIBLE_LINES}
-                style={[
-                  tw`text-base text-gray-900 font-normal`,
-                  Platform.OS === 'android' && { fontFamily: 'sans-serif' },
-                  {
-                    fontSize: INPUT_FONT_SIZE,
-                    lineHeight: INPUT_LINE_HEIGHT,
-                    height: INPUT_HEIGHT,
-                    textAlignVertical: 'top',
-                    paddingVertical: -10,
-                    paddingHorizontal: 0,
-                    margin: 0,
-                    paddingLeft: 28, // make room for the icon
-                    paddingBottom: INPUT_BOTTOM_PAD + (Platform.OS === 'android' ? ANDROID_EXTRA_PAD : 0),
-                  },
-                ]}
-                placeholder={getPlaceholderText()}
-                placeholderTextColor="#9CA3AF"
-                value={searchQuery}
-                onChangeText={setSearchQuery}
-                onFocus={handleFocus}
-                onBlur={() => setIsFocused(false)}
-                onSubmitEditing={handleSearch}
-                maxLength={400}
-                autoCorrect={false}
-                autoCapitalize="none"
-                returnKeyType="search"
-                selectionColor={TURQUOISE}
-                editable={!isTransitioning}
-                blurOnSubmit
-                scrollEnabled
-                accessibilityLabel="Search hotels and stays"
-              />
-            </View>
-          </View>
-        </View>
+                      {/* Main input area */}
+                      <View style={tw`px-4 pt-3.5`}>
+                        <View style={tw`flex-row items-start`}>
+                          <View style={tw`flex-1`}>
+                            <TextInput
+                              ref={textInputRef}
+                              multiline
+                              numberOfLines={INPUT_VISIBLE_LINES}
+                              style={[
+                                tw`text-base text-gray-900 font-normal`,
+                                Platform.OS === 'android' && { fontFamily: 'sans-serif' },
+                                {
+                                  fontSize: INPUT_FONT_SIZE,
+                                  lineHeight: INPUT_LINE_HEIGHT,
+                                  height: INPUT_HEIGHT,
+                                  textAlignVertical: 'top',
+                                  paddingVertical: -10,
+                                  paddingHorizontal: 0,
+                                  margin: 0,
+                                  paddingLeft: 28,
+                                  paddingBottom: INPUT_BOTTOM_PAD + (Platform.OS === 'android' ? ANDROID_EXTRA_PAD : 0),
+                                },
+                              ]}
+                              placeholder={getPlaceholderText()}
+                              placeholderTextColor="#9CA3AF"
+                              value={searchQuery}
+                              onChangeText={setSearchQuery}
+                              onFocus={handleFocus}
+                              onBlur={() => setIsFocused(false)}
+                              onSubmitEditing={handleSearch}
+                              maxLength={400}
+                              autoCorrect={false}
+                              autoCapitalize="none"
+                              returnKeyType="search"
+                              selectionColor={TURQUOISE}
+                              editable={!isTransitioning}
+                              blurOnSubmit
+                              scrollEnabled
+                              accessibilityLabel="Search hotels and stays"
+                            />
+                          </View>
+                        </View>
+                      </View>
 
+                      {/* Bottom action bar */}
+                      <View style={tw`flex-row items-center justify-end px-4 py-3 border-t border-gray-100`}>
+                        <View style={tw`flex-row items-center`}>
+                          {searchQuery.length > 0 && (
+                            <TouchableOpacity
+                              onPress={handleClear}
+                              activeOpacity={0.7}
+                              style={tw`w-8 h-8 items-center justify-center`}
+                              hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                            >
+                              <Ionicons name="close" size={18} color="#6B7280" />
+                            </TouchableOpacity>
+                          )}
 
-        {/* Bottom action bar */}
-        <View style={tw`flex-row items-center justify-end px-4 py-3 border-t border-gray-100`}>
-          <View style={tw`flex-row items-center`}>
-            {searchQuery.length > 0 && (
-              <TouchableOpacity
-                onPress={handleClear}
-                activeOpacity={0.7}
-                style={tw`w-8 h-8 items-center justify-center`}
-                hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-              >
-                <Ionicons name="close" size={18} color="#6B7280" />
-              </TouchableOpacity>
-            )}
+                          <TouchableOpacity
+                            onPress={focusInput}
+                            style={tw`w-8 h-8 items-center justify-center`}
+                            activeOpacity={0.7}
+                          >
+                            <Ionicons name="mic" size={18} color="#6B7280" />
+                          </TouchableOpacity>
 
-            <TouchableOpacity
-              onPress={focusInput}
-              style={tw`w-8 h-8 items-center justify-center`}
-              activeOpacity={0.7}
-            >
-              <Ionicons name="mic" size={18} color="#6B7280" />
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[
-                tw`w-8 h-8 items-center justify-center rounded-full`,
-                { backgroundColor: searchQuery.trim().length > 0 && !isTransitioning ? TURQUOISE : '#E5E7EB' }
-              ]}
-              onPress={handleSearch}
-              activeOpacity={0.8}
-              disabled={!searchQuery.trim() || isTransitioning}
-            >
-              <Ionicons 
-                name={isTransitioning ? 'hourglass' : 'arrow-forward'} 
-                size={16} 
-                color={searchQuery.trim().length > 0 && !isTransitioning ? 'white' : '#9CA3AF'} 
-              />
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Animated.View>
-    </TouchableOpacity>
-  </Animated.View>
-</View>
+                          <TouchableOpacity
+                            style={[
+                              tw`w-8 h-8 items-center justify-center rounded-full`,
+                              { backgroundColor: searchQuery.trim().length > 0 && !isTransitioning ? TURQUOISE : '#E5E7EB' }
+                            ]}
+                            onPress={handleSearch}
+                            activeOpacity={0.8}
+                            disabled={!searchQuery.trim() || isTransitioning}
+                          >
+                            <Ionicons 
+                              name={isTransitioning ? 'hourglass' : 'arrow-forward'} 
+                              size={16} 
+                              color={searchQuery.trim().length > 0 && !isTransitioning ? 'white' : '#9CA3AF'} 
+                            />
+                          </TouchableOpacity>
+                        </View>
+                      </View>
+                    </Animated.View>
+                  </TouchableOpacity>
+                </Animated.View>
+              </View>
 
               {/* Mobile-optimized Suggestions section */}
               <View style={tw`w-full px-2 mb-5`}>
@@ -841,6 +849,7 @@ const focusInput = () => {
                 >
                 </Animated.View>
 
+                {/* Render each carousel with its specific data */}
                 {searchQueryCarousels.map((carousel, index) => {
                   const isLast = index === searchQueryCarousels.length - 1;
                   return (
@@ -849,11 +858,11 @@ const focusInput = () => {
                       style={[tw`${isLast ? '' : 'mb-4'}`]}
                     >
                       <SearchQueryCarousel
-  onSearchPress={handleSearchQueryPress}
-  index={index}
-  searchQuery={carousel.searchQuery}
-  hotels={carousel.hotels}
-/>
+                        searchQuery={carousel.searchQuery}
+                        hotels={carousel.hotels}
+                        onSearchPress={handleSearchQueryPress}
+                        index={index}
+                      />
                     </View>
                   );
                 })}

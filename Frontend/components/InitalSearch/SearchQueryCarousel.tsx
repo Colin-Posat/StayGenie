@@ -1,4 +1,4 @@
-// SearchQueryCarousel.tsx - Updated sleek component matching app style
+// SearchQueryCarousel.tsx - Fixed loading indicator issue
 import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
@@ -14,7 +14,6 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import tw from 'twrnc';
-import { getCompleteCarousels } from '../../utils/carouselData';
 
 const { width } = Dimensions.get('window');
 const TURQUOISE = '#1df9ff';
@@ -124,9 +123,10 @@ const LazyImage: React.FC<LazyImageProps> = ({
   onLoad,
   onError,
   onLoadEnd,   
-  isVisible
+  isVisible,
 }) => {
   const [shouldLoad, setShouldLoad] = useState(false);
+  const [imageLoaded, setImageLoaded] = useState(false);
 
   useEffect(() => {
     if (isVisible) {
@@ -143,18 +143,26 @@ const LazyImage: React.FC<LazyImageProps> = ({
   }
 
   const isCached = ImageCache.isImageCached(source.uri);
+  
   return (
     <Image
       source={source}
       style={style}
       resizeMode={resizeMode}
-      onLoadStart={() => { if (!isCached) onLoadStart?.(); }}
+      onLoadStart={() => { 
+        if (!isCached) onLoadStart?.(); 
+      }}
       onLoad={() => {
         ImageCache.markImageCached(source.uri);
+        setImageLoaded(true);
         onLoad?.();
       }}
-      onError={(e) => { onError?.(); }}
-      onLoadEnd={() => { onLoadEnd?.(); }}
+      onError={(e) => { 
+        onError?.(); 
+      }}
+      onLoadEnd={() => { 
+        onLoadEnd?.(); 
+      }}
       fadeDuration={300}
     />
   );
@@ -171,12 +179,22 @@ const HotelCard: React.FC<HotelCardProps> = ({ hotel, onPress, index }) => {
   const scaleAnimation = useRef(new Animated.Value(1.02)).current;
   const [imageLoading, setImageLoading] = useState(true);
   const [imageError, setImageError] = useState(false);
+  const [imageLoaded, setImageLoaded] = useState(false);
   
   const threshold = 150 + (index * 50);
   const { isVisible, elementRef, hasLoaded } = useLazyLoading(threshold);
 
+  // Reset loading states when visibility changes
   useEffect(() => {
-    if (isVisible && !imageLoading && !imageError) {
+    if (isVisible && !hasLoaded) {
+      setImageLoading(true);
+      setImageError(false);
+      setImageLoaded(false);
+    }
+  }, [isVisible, hasLoaded]);
+
+  useEffect(() => {
+    if (isVisible && imageLoaded && !imageError) {
       const panningAnimation = Animated.loop(
         Animated.sequence([
           Animated.timing(panAnimation, {
@@ -215,7 +233,7 @@ const HotelCard: React.FC<HotelCardProps> = ({ hotel, onPress, index }) => {
         scalingAnimation.stop();
       };
     }
-  }, [panAnimation, scaleAnimation, isVisible, imageLoading, imageError]);
+  }, [panAnimation, scaleAnimation, isVisible, imageLoaded, imageError]);
 
   const translateX = panAnimation.interpolate({
     inputRange: [0, 1],
@@ -261,6 +279,27 @@ const HotelCard: React.FC<HotelCardProps> = ({ hotel, onPress, index }) => {
     onPress();
   };
 
+  const handleImageLoadStart = () => {
+    setImageLoading(true);
+    setImageError(false);
+  };
+
+  const handleImageLoad = () => {
+    setImageLoading(false);
+    setImageError(false);
+    setImageLoaded(true);
+  };
+
+  const handleImageError = () => {
+    setImageLoading(false);
+    setImageError(true);
+    setImageLoaded(false);
+  };
+
+  const handleImageLoadEnd = () => {
+    setImageLoading(false);
+  };
+
   return (
     <View
       ref={elementRef}
@@ -269,7 +308,7 @@ const HotelCard: React.FC<HotelCardProps> = ({ hotel, onPress, index }) => {
         {
           width: cardWidth,
           height: cardHeight,
-          backgroundColor: '#f8f9fa', // Light gray background instead of white
+          backgroundColor: '#f8f9fa',
           shadowColor: '#000',
           shadowOffset: { width: 0, height: 3 },
           shadowOpacity: 0.15,
@@ -283,12 +322,12 @@ const HotelCard: React.FC<HotelCardProps> = ({ hotel, onPress, index }) => {
         activeOpacity={0.95}
         style={[
           tw`rounded-2xl overflow-hidden`,
-          { width: '100%', height: '100%', backgroundColor: 'transparent' } // Remove white bg
+          { width: '100%', height: '100%', backgroundColor: 'transparent' }
         ]}
       >
         <View style={[
           tw`flex-1 relative overflow-hidden`,
-          { backgroundColor: imageError ? '#f3f4f6' : 'transparent' } // Only show bg on error
+          { backgroundColor: imageError ? '#f3f4f6' : 'transparent' }
         ]}>
           {isVisible ? (
             !imageError ? (
@@ -314,13 +353,10 @@ const HotelCard: React.FC<HotelCardProps> = ({ hotel, onPress, index }) => {
                   source={{ uri: hotel.image }}
                   style={{ width: '100%', height: '100%' }}
                   resizeMode="cover"
-                  onLoadStart={() => setImageLoading(true)}
-                  onLoad={() => setImageLoading(false)}
-                  onError={() => {
-                    setImageError(true);
-                    setImageLoading(false);
-                  }}
-                  onLoadEnd={() => setImageLoading(false)}
+                  onLoadStart={handleImageLoadStart}
+                  onLoad={handleImageLoad}
+                  onError={handleImageError}
+                  onLoadEnd={handleImageLoadEnd}
                   isVisible={isVisible}
                 />
               </Animated.View>
@@ -346,23 +382,25 @@ const HotelCard: React.FC<HotelCardProps> = ({ hotel, onPress, index }) => {
             </View>
           )}
 
-          {imageLoading && !imageError && isVisible && (
+          {/* Loading indicator - only show when actually loading */}
+          {imageLoading && !imageError && !imageLoaded && isVisible && (
             <View style={tw`absolute inset-0 items-center justify-center bg-black/20`}>
               <ActivityIndicator size="small" color={TURQUOISE} />
             </View>
           )}
           
-          {!imageLoading && !imageError && isVisible && (
+          {/* Gradient overlay - only show when image is loaded */}
+          {imageLoaded && !imageError && isVisible && (
             <View style={tw`absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-black/70 to-transparent`} />
           )}
 
-          {/* Price Badge - Top Right - Updated styling */}
+          {/* Price Badge - Top Right */}
           <View style={tw`absolute top-3 right-3`}>
             <View style={[
               tw`px-2.5 py-1.5 rounded-xl border`,
               {
-                backgroundColor: 'rgba(0, 0, 0, 0.45)', // Dark background like story cards
-                borderColor: 'rgba(255, 255, 255, 0.15)', // Subtle border
+                backgroundColor: 'rgba(0, 0, 0, 0.45)',
+                borderColor: 'rgba(255, 255, 255, 0.15)',
                 shadowColor: '#000',
                 shadowOffset: { width: 0, height: 1 },
                 shadowOpacity: 0.3,
@@ -380,12 +418,12 @@ const HotelCard: React.FC<HotelCardProps> = ({ hotel, onPress, index }) => {
             </View>
           </View>
 
-          {/* Hotel name at bottom - Updated styling to match story cards */}
+          {/* Hotel name at bottom */}
           <View style={tw`absolute bottom-3 left-3 right-3`}>
             <View style={[
               tw`px-2.5 py-2 rounded-xl border`,
               {
-                backgroundColor: 'rgba(0, 0, 0, 0.45)', // Match story cards
+                backgroundColor: 'rgba(0, 0, 0, 0.45)',
                 borderColor: 'rgba(255, 255, 255, 0.15)',
                 backdropFilter: 'blur(3px)',
               }
@@ -416,31 +454,22 @@ interface SearchQueryCarouselProps {
   onSearchPress: (query: string) => void;
   onHotelPress?: (hotel: Hotel) => void;
   index?: number;
+  searchQuery: string; // Now required - passed from parent
+  hotels: Hotel[]; // Now required - passed from parent
 }
 
 const SearchQueryCarousel: React.FC<SearchQueryCarouselProps> = ({
   onSearchPress,
   onHotelPress,
   index = 0,
+  searchQuery,
+  hotels
 }) => {
-  const [carouselData, setCarouselData] = useState<{searchQuery: string; hotels: Hotel[]}>({
-    searchQuery: '',
-    hotels: []
-  });
   const fadeAnimation = useRef(new Animated.Value(0)).current;
   const slideAnimation = useRef(new Animated.Value(30)).current;
   const [isChevronPressed, setIsChevronPressed] = useState(false);
 
-  // Load carousel data from your utils
-  useEffect(() => {
-    const completeCarousels = getCompleteCarousels(10); // Get up to 10 carousels
-    if (completeCarousels.length > 0) {
-      // Randomly select one carousel
-      const randomCarousel = completeCarousels[Math.floor(Math.random() * completeCarousels.length)];
-      setCarouselData(randomCarousel);
-    }
-  }, []);
-
+  // Animation when component mounts
   useEffect(() => {
     const delay = index * 200;
     setTimeout(() => {
@@ -459,10 +488,18 @@ const SearchQueryCarousel: React.FC<SearchQueryCarouselProps> = ({
     }, delay);
   }, [index]);
 
+  // Preload images for better performance
+  useEffect(() => {
+    if (hotels && hotels.length > 0) {
+      const imageUris = hotels.map(hotel => hotel.image).filter(Boolean);
+      ImageCache.preloadImages(imageUris);
+    }
+  }, [hotels]);
+
   const handleSearchPress = () => {
     setIsChevronPressed(true);
     setTimeout(() => setIsChevronPressed(false), 150);
-    onSearchPress(carouselData.searchQuery);
+    onSearchPress(searchQuery);
   };
 
   const handleHotelPress = (hotel: Hotel) => {
@@ -470,7 +507,7 @@ const SearchQueryCarousel: React.FC<SearchQueryCarouselProps> = ({
   };
 
   // Don't render if no data
-  if (!carouselData.searchQuery || carouselData.hotels.length === 0) {
+  if (!searchQuery || !hotels || hotels.length === 0) {
     return null;
   }
 
@@ -484,12 +521,12 @@ const SearchQueryCarousel: React.FC<SearchQueryCarouselProps> = ({
         },
       ]}
     >
-     {/* Search Query Header with consistent styling matching SearchGuidePills */}
+      {/* Search Query Header with consistent styling */}
       <TouchableOpacity
         onPress={handleSearchPress}
         activeOpacity={0.8}
         style={[
-          tw`mx-2 mb-4 px-2.4 py-2.5 rounded-xl border bg-white border-gray-200`,
+          tw`ml-1 mr-2 mb-4 px-2.4 py-2.5 rounded-xl border bg-white border-gray-200`,
           {
             shadowColor: '#000',
             shadowOffset: { width: 0, height: 1 },
@@ -510,7 +547,7 @@ const SearchQueryCarousel: React.FC<SearchQueryCarouselProps> = ({
               ]}
               numberOfLines={2}
             >
-              {carouselData.searchQuery}
+              {searchQuery}
             </Text>
           </View>
           
@@ -530,14 +567,14 @@ const SearchQueryCarousel: React.FC<SearchQueryCarouselProps> = ({
         </View>
       </TouchableOpacity>
 
-      {/* Hotels Scroll */}
+      {/* Hotels Horizontal Scroll */}
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
-        contentContainerStyle={tw`px-2`}
+        contentContainerStyle={tw`pl-1 pr-2`}
         decelerationRate="fast"
       >
-        {carouselData.hotels.map((hotel, hotelIndex) => (
+        {hotels.map((hotel, hotelIndex) => (
           <View
             key={`${hotel.id}-${hotelIndex}`}
             style={[
