@@ -329,8 +329,8 @@ interface Hotel {
   safetyJustification?: string; 
 }
 
-const BASE_URL='http://localhost:3003';
-//const BASE_URL="https://staygenie-wwpa.onrender.com"
+//const BASE_URL='http://localhost:3003';
+const BASE_URL="https://staygenie-wwpa.onrender.com"
 
 
 
