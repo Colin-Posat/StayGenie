@@ -93,7 +93,7 @@ const InitialSearchScreen: React.FC<InitialSearchScreenProps> = ({
   const [showScrollHint, setShowScrollHint] = useState(false);
   const [searchQueryCarousels, setSearchQueryCarousels] = useState<SearchQueryWithHotels[]>([]);
   const [isTransitioning, setIsTransitioning] = useState(false);
-  
+  const [usedQueries, setUsedQueries] = useState<Set<string>>(new Set());
   // Refs
   const textInputRef = useRef<TextInput>(null);
   
@@ -164,9 +164,23 @@ const handleContentSizeChange = (e: any) => {
 
   // Load random search query carousels on mount
   useEffect(() => {
-    const randomCarousels = getRandomSearchQueries(4);
-    setSearchQueryCarousels(randomCarousels);
-  }, []);
+  setUsedQueries(new Set());
+  
+  const randomCarousels = getRandomSearchQueries(10); // Get more than needed
+  const uniqueCarousels: SearchQueryWithHotels[] = [];
+  const localUsedQueries = new Set<string>();
+  
+  // Filter out duplicates
+  for (const carousel of randomCarousels) {
+    if (!localUsedQueries.has(carousel.searchQuery) && uniqueCarousels.length < 4) {
+      uniqueCarousels.push(carousel);
+      localUsedQueries.add(carousel.searchQuery);
+    }
+  }
+  
+  setSearchQueryCarousels(uniqueCarousels);
+  setUsedQueries(localUsedQueries);
+}, []);
 
   // Auto-focus to end when screen becomes active
   useEffect(() => {
@@ -206,6 +220,7 @@ const handleContentSizeChange = (e: any) => {
 
 useFocusEffect(
   React.useCallback(() => {
+    setUsedQueries(new Set());
     // freeze hero at end-state so nothing re-animates
     screenSlideOut.setValue(0);
     contentFadeOut.setValue(1);
@@ -834,10 +849,11 @@ const focusInput = () => {
                       style={[tw`${isLast ? '' : 'mb-4'}`]}
                     >
                       <SearchQueryCarousel
-       
-                        onSearchPress={handleSearchQueryPress}
-          
-                      />
+  onSearchPress={handleSearchQueryPress}
+  index={index}
+  searchQuery={carousel.searchQuery}
+  hotels={carousel.hotels}
+/>
                     </View>
                   );
                 })}

@@ -138,5 +138,25 @@
         "cost": 0.0030554999999999996
       }
     }
+  },
+  {
+    "timestamp": "2025-09-25T05:13:38.406Z",
+    "searchId": "3325f41c-0859-4438-8c3e-371e47838cd0",
+    "userQuery": "Mountain view hotels in Swiss Alps with glass facades",
+    "destination": "Zermatt, CH",
+    "hotelCount": 50,
+    "totalTokensUsed": 27895,
+    "totalCost": 0.0055990499999999995,
+    "searchDurationMs": 10528,
+    "operations": {
+      "hotelMatching": {
+        "tokens": 16182,
+        "cost": 0.0025757999999999996
+      },
+      "aiInsights": {
+        "tokens": 11713,
+        "cost": 0.0030232499999999995
+      }
+    }
   }
 ]
