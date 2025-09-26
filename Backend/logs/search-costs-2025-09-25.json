@@ -1,0 +1,122 @@
+[
+  {
+    "timestamp": "2025-09-25T18:56:54.571Z",
+    "searchId": "73ed1a3d-0b17-4141-9f67-d42e8ebff691",
+    "userQuery": "eco-friendly lodge in Costa Rica",
+    "destination": "La Fortuna, CR",
+    "hotelCount": 61,
+    "totalTokensUsed": 25818,
+    "totalCost": 0.0045108,
+    "searchDurationMs": 6955,
+    "operations": {
+      "hotelMatching": {
+        "tokens": 21148,
+        "cost": 0.0033242999999999997
+      },
+      "aiInsights": {
+        "tokens": 4670,
+        "cost": 0.0011865
+      }
+    }
+  },
+  {
+    "timestamp": "2025-09-25T18:56:55.368Z",
+    "searchId": "f1523c1b-b155-4f87-ba98-bd0075012d94",
+    "userQuery": "eco-friendly lodge in Costa Rica",
+    "destination": "La Fortuna, CR",
+    "hotelCount": 61,
+    "totalTokensUsed": 27407,
+    "totalCost": 0.00491655,
+    "searchDurationMs": 7581,
+    "operations": {
+      "hotelMatching": {
+        "tokens": 21154,
+        "cost": 0.0033278999999999995
+      },
+      "aiInsights": {
+        "tokens": 6253,
+        "cost": 0.00158865
+      }
+    }
+  },
+  {
+    "timestamp": "2025-09-25T18:56:55.597Z",
+    "searchId": "fc4c2be6-8423-4619-9ab1-cb30b1cecec1",
+    "userQuery": "business hotel in London near financial district",
+    "destination": "London, GB",
+    "hotelCount": 356,
+    "totalTokensUsed": 62968,
+    "totalCost": 0.0096108,
+    "searchDurationMs": 5568,
+    "operations": {
+      "hotelMatching": {
+        "tokens": 62968,
+        "cost": 0.0096108
+      },
+      "aiInsights": {
+        "tokens": 0,
+        "cost": 0
+      }
+    }
+  },
+  {
+    "timestamp": "2025-09-25T18:56:55.603Z",
+    "searchId": "7707e113-7255-47dc-bce5-de66f8408874",
+    "userQuery": "mountain resort in Switzerland with skiing",
+    "destination": "Zermatt, CH",
+    "hotelCount": 50,
+    "totalTokensUsed": 21703,
+    "totalCost": 0.004037549999999999,
+    "searchDurationMs": 8040,
+    "operations": {
+      "hotelMatching": {
+        "tokens": 16090,
+        "cost": 0.0025682999999999995
+      },
+      "aiInsights": {
+        "tokens": 5613,
+        "cost": 0.00146925
+      }
+    }
+  },
+  {
+    "timestamp": "2025-09-25T18:56:56.528Z",
+    "searchId": "0de1e645-58bd-4cab-956a-7ca51b5869aa",
+    "userQuery": "mountain resort in Switzerland with skiing",
+    "destination": "Zermatt, CH",
+    "hotelCount": 50,
+    "totalTokensUsed": 24183,
+    "totalCost": 0.00469395,
+    "searchDurationMs": 8477,
+    "operations": {
+      "hotelMatching": {
+        "tokens": 16064,
+        "cost": 0.0025526999999999998
+      },
+      "aiInsights": {
+        "tokens": 8119,
+        "cost": 0.00214125
+      }
+    }
+  },
+  {
+    "timestamp": "2025-09-25T18:56:58.177Z",
+    "searchId": "03b236e1-a464-4093-a678-024f8d2f7f16",
+    "userQuery": "desert resort in Dubai with private beach",
+    "destination": "Dubai, AE",
+    "hotelCount": 301,
+    "totalTokensUsed": 114440,
+    "totalCost": 0.0173451,
+    "searchDurationMs": 8039,
+    "operations": {
+      "hotelMatching": {
+        "tokens": 114440,
+        "cost": 0.0173451
+      },
+      "aiInsights": {
+        "tokens": 0,
+        "cost": 0
+      }
+    }
+  }
+]

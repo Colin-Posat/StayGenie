@@ -179,7 +179,7 @@ const InitialSearchScreen: React.FC<InitialSearchScreenProps> = ({
 
   const { displayText, cursorVisible } = useTypingPlaceholder(
     hotelSearchSuggestions,
-    25,  // Faster typing speed (was 80)
+    15,  // Faster typing speed (was 80)
     10,  // Faster deleting speed (was 40)
     1500 // Shorter delay (was 2000)
   );

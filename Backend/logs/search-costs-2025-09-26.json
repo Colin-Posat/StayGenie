@@ -1,0 +1,302 @@
+[
+  {
+    "timestamp": "2025-09-26T02:36:34.191Z",
+    "searchId": "ff85bb17-e1c1-4f37-b8ef-b4512d871873",
+    "userQuery": "backpacker hostel in Amsterdam with breakfast",
+    "destination": "Amsterdam, NL",
+    "hotelCount": 280,
+    "totalTokensUsed": 62208,
+    "totalCost": 0.009467999999999999,
+    "searchDurationMs": 6513,
+    "operations": {
+      "hotelMatching": {
+        "tokens": 62208,
+        "cost": 0.009467999999999999
+      },
+      "aiInsights": {
+        "tokens": 0,
+        "cost": 0
+      }
+    }
+  },
+  {
+    "timestamp": "2025-09-26T02:36:34.685Z",
+    "searchId": "195f3c2e-0e8c-4202-8287-e39a5fa629df",
+    "userQuery": "backpacker hostel in Amsterdam with breakfast",
+    "destination": "Amsterdam, NL",
+    "hotelCount": 280,
+    "totalTokensUsed": 62052,
+    "totalCost": 0.0094473,
+    "searchDurationMs": 6863,
+    "operations": {
+      "hotelMatching": {
+        "tokens": 62052,
+        "cost": 0.0094473
+      },
+      "aiInsights": {
+        "tokens": 0,
+        "cost": 0
+      }
+    }
+  },
+  {
+    "timestamp": "2025-09-26T02:36:34.787Z",
+    "searchId": "4876f35e-0712-4704-8cc9-e3710e64f92b",
+    "userQuery": "boutique hotel in Rome near historic center",
+    "destination": "Rome, IT",
+    "hotelCount": 297,
+    "totalTokensUsed": 77088,
+    "totalCost": 0.011691899999999998,
+    "searchDurationMs": 6867,
+    "operations": {
+      "hotelMatching": {
+        "tokens": 77088,
+        "cost": 0.011691899999999998
+      },
+      "aiInsights": {
+        "tokens": 0,
+        "cost": 0
+      }
+    }
+  },
+  {
+    "timestamp": "2025-09-26T02:36:34.858Z",
+    "searchId": "4bbcfad7-cd89-4f0f-8e59-2d7d6a7ee2f8",
+    "userQuery": "mountain resort in Switzerland with skiing",
+    "destination": "Zermatt, CH",
+    "hotelCount": 52,
+    "totalTokensUsed": 24040,
+    "totalCost": 0.0046086,
+    "searchDurationMs": 9080,
+    "operations": {
+      "hotelMatching": {
+        "tokens": 16960,
+        "cost": 0.0026898
+      },
+      "aiInsights": {
+        "tokens": 7080,
+        "cost": 0.0019187999999999998
+      }
+    }
+  },
+  {
+    "timestamp": "2025-09-26T02:36:34.938Z",
+    "searchId": "47f5931a-32ac-4865-9a92-23c3c24095d6",
+    "userQuery": "mountain resort in Switzerland with skiing",
+    "destination": "Zermatt, CH",
+    "hotelCount": 52,
+    "totalTokensUsed": 26633,
+    "totalCost": 0.005335050000000001,
+    "searchDurationMs": 8589,
+    "operations": {
+      "hotelMatching": {
+        "tokens": 16942,
+        "cost": 0.002679
+      },
+      "aiInsights": {
+        "tokens": 9691,
+        "cost": 0.0026560499999999996
+      }
+    }
+  },
+  {
+    "timestamp": "2025-09-26T02:36:35.062Z",
+    "searchId": "fd8d707a-4f8c-426d-a909-2ff37399970e",
+    "userQuery": "boutique hotel in Rome near historic center",
+    "destination": "Rome, IT",
+    "hotelCount": 301,
+    "totalTokensUsed": 75160,
+    "totalCost": 0.011402699999999998,
+    "searchDurationMs": 6163,
+    "operations": {
+      "hotelMatching": {
+        "tokens": 75160,
+        "cost": 0.011402699999999998
+      },
+      "aiInsights": {
+        "tokens": 0,
+        "cost": 0
+      }
+    }
+  },
+  {
+    "timestamp": "2025-09-26T02:36:35.067Z",
+    "searchId": "5d99df84-ab17-4228-bc57-f2f1a1e12db5",
+    "userQuery": "eco-friendly lodge in Costa Rica",
+    "destination": "La Fortuna, CR",
+    "hotelCount": 63,
+    "totalTokensUsed": 26517,
+    "totalCost": 0.00461115,
+    "searchDurationMs": 9452,
+    "operations": {
+      "hotelMatching": {
+        "tokens": 22164,
+        "cost": 0.0034847999999999997
+      },
+      "aiInsights": {
+        "tokens": 4353,
+        "cost": 0.00112635
+      }
+    }
+  },
+  {
+    "timestamp": "2025-09-26T02:36:36.434Z",
+    "searchId": "2968a87e-1551-4a22-b9c3-1774e7b5f953",
+    "userQuery": "beachfront resort in Bali for honeymoon",
+    "destination": "Ubud, ID",
+    "hotelCount": 248,
+    "totalTokensUsed": 101900,
+    "totalCost": 0.0154479,
+    "searchDurationMs": 8446,
+    "operations": {
+      "hotelMatching": {
+        "tokens": 101900,
+        "cost": 0.0154479
+      },
+      "aiInsights": {
+        "tokens": 0,
+        "cost": 0
+      }
+    }
+  },
+  {
+    "timestamp": "2025-09-26T02:36:36.679Z",
+    "searchId": "cbc116e1-19bd-434a-a1e1-397787aeb906",
+    "userQuery": "beachfront resort in Bali for honeymoon",
+    "destination": "Ubud, ID",
+    "hotelCount": 249,
+    "totalTokensUsed": 102550,
+    "totalCost": 0.015551699999999998,
+    "searchDurationMs": 8184,
+    "operations": {
+      "hotelMatching": {
+        "tokens": 102550,
+        "cost": 0.015551699999999998
+      },
+      "aiInsights": {
+        "tokens": 0,
+        "cost": 0
+      }
+    }
+  },
+  {
+    "timestamp": "2025-09-26T02:36:36.935Z",
+    "searchId": "8a94465d-9361-4472-b915-0ac625bb1e56",
+    "userQuery": "eco-friendly lodge in Costa Rica",
+    "destination": "La Fortuna, CR",
+    "hotelCount": 63,
+    "totalTokensUsed": 29943,
+    "totalCost": 0.005576849999999999,
+    "searchDurationMs": 11262,
+    "operations": {
+      "hotelMatching": {
+        "tokens": 22170,
+        "cost": 0.0034883999999999996
+      },
+      "aiInsights": {
+        "tokens": 7773,
+        "cost": 0.0020884499999999995
+      }
+    }
+  },
+  {
+    "timestamp": "2025-09-26T02:36:38.107Z",
+    "searchId": "46e69214-f6e8-40e2-8e59-d5d0a4f65498",
+    "userQuery": "desert resort in Dubai with private beach",
+    "destination": "Dubai, AE",
+    "hotelCount": 317,
+    "totalTokensUsed": 112336,
+    "totalCost": 0.0170277,
+    "searchDurationMs": 9910,
+    "operations": {
+      "hotelMatching": {
+        "tokens": 112336,
+        "cost": 0.0170277
+      },
+      "aiInsights": {
+        "tokens": 0,
+        "cost": 0
+      }
+    }
+  },
+  {
+    "timestamp": "2025-09-26T17:31:00.030Z",
+    "searchId": "808ff731-7a60-45b7-9bba-6b437e1b86a4",
+    "userQuery": "Mountain view hotels in Swiss Alps with glass facades",
+    "destination": "Zermatt, CH",
+    "hotelCount": 52,
+    "totalTokensUsed": 28368,
+    "totalCost": 0.005757749999999999,
+    "searchDurationMs": 13790,
+    "operations": {
+      "hotelMatching": {
+        "tokens": 16990,
+        "cost": 0.0026997
+      },
+      "aiInsights": {
+        "tokens": 11378,
+        "cost": 0.0030580499999999992
+      }
+    }
+  },
+  {
+    "timestamp": "2025-09-26T17:32:55.409Z",
+    "searchId": "820899c2-4fc8-4b05-ae31-ceb4cfde5ff2",
+    "userQuery": "Boutique mountain hotels in Banff with lake views",
+    "destination": "Banff, CA",
+    "hotelCount": 33,
+    "totalTokensUsed": 23073,
+    "totalCost": 0.00487935,
+    "searchDurationMs": 12532,
+    "operations": {
+      "hotelMatching": {
+        "tokens": 11892,
+        "cost": 0.0019251
+      },
+      "aiInsights": {
+        "tokens": 11181,
+        "cost": 0.00295425
+      }
+    }
+  },
+  {
+    "timestamp": "2025-09-26T17:51:35.538Z",
+    "searchId": "48a05e96-2642-427f-a3ee-40dd2d032638",
+    "userQuery": "Boutique mountain hotels in Banff with lake views",
+    "destination": "Banff, CA",
+    "hotelCount": 33,
+    "totalTokensUsed": 22924,
+    "totalCost": 0.0048889499999999995,
+    "searchDurationMs": 10408,
+    "operations": {
+      "hotelMatching": {
+        "tokens": 11886,
+        "cost": 0.0019214999999999998
+      },
+      "aiInsights": {
+        "tokens": 11038,
+        "cost": 0.00296745
+      }
+    }
+  },
+  {
+    "timestamp": "2025-09-26T18:08:36.387Z",
+    "searchId": "9839dffe-f7dd-4bf6-98a4-14be21c4001d",
+    "userQuery": "Beachfront hotels in Maldives with infinity pools",
+    "destination": "Maafushi, MV",
+    "hotelCount": 20,
+    "totalTokensUsed": 19504,
+    "totalCost": 0.004357050000000001,
+    "searchDurationMs": 22388,
+    "operations": {
+      "hotelMatching": {
+        "tokens": 8560,
+        "cost": 0.0014217
+      },
+      "aiInsights": {
+        "tokens": 10944,
+        "cost": 0.0029353499999999998
+      }
+    }
+  }
+]

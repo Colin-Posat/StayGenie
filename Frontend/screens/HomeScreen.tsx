@@ -28,8 +28,8 @@ import { Easing, Keyboard, KeyboardAvoidingView, ScrollView } from 'react-native
 import FavoritesPopup from '../components/StoryView/FavoritesPopup';
 import type { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import SearchErrorScreen from '../components/HomeScreenTop/NoHotelsFoundScreen';
-
 const OVERLAY_BACKDROP = 'rgba(0,0,0,0.7)';
+import dotenv from 'dotenv';
 
 import { useAuth } from '../contexts/AuthContext';
 
@@ -328,13 +328,12 @@ interface Hotel {
   aiSafetyRating?: number;
   safetyJustification?: string; 
 }
-
-//const BASE_URL='http://localhost:3003';
-const BASE_URL="https://staygenie-wwpa.onrender.com"
+const BASE_URL = __DEV__ ? 'http://localhost:3003' : "https://staygenie-wwpa.onrender.com";
 
 
 
 import { Dimensions } from 'react-native';
+
 
 
 

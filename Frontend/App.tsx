@@ -157,7 +157,7 @@ const TabNavigator = () => {
           paddingBottom: Platform.OS === 'ios' ? 28 : 15,
           paddingTop: 15,
           paddingHorizontal: 20,
-          position: 'absolute',
+  position: Platform.OS === 'web' ? 'relative' : 'absolute',
           borderTopLeftRadius: 24,
           borderTopRightRadius: 24,
           elevation: 0,

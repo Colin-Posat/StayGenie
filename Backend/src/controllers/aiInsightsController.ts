@@ -716,71 +716,69 @@ const getDefaultAmenities = (amenitiesText: string): string[] => {
   return selectedAmenities.slice(0, 3);
 };
 
-const generateCombinedAIContent = async (
-  hotel: HotelSummaryForInsights,
+const generateBatchAIContent = async (
+  hotels: HotelSummaryForInsights[],
   userQuery?: string,
   nights?: number,
   searchId?: string
-): Promise<{
-  whyItMatches: string;
-  funFacts: string[];
-  nearbyAttractions: string[];
-  locationHighlight: string;
-  safetyRating: number;
-  safetyJustification: string;
-  topAmenities: string[]; 
-}> => {
+): Promise<Record<string, any>> => {
   
-  console.log(`🧠 Generating ALL content for ${hotel.name} in single call`);
+  console.log(`🧠 Generating BATCH content for ${hotels.length} hotels in single call`);
   
-  const summary = hotel.summarizedInfo;
-  const amenitiesForAI = summary.amenitiesText || 
+  const hotelSummaries = hotels.map((hotel, index) => {
+    const summary = hotel.summarizedInfo;
+    const amenitiesForAI = summary.amenitiesText || 
                          (summary.amenities && summary.amenities.length > 0 
                            ? summary.amenities.join(', ') 
                            : 'Standard hotel amenities');
-  
-  const hasSpecificPreferences = userQuery && userQuery.trim() !== '';
-  
-  const prompt = `HOTEL: ${summary.name}
+    
+    return `HOTEL ${index + 1}: ${summary.name}
 LOCATION: ${summary.city}, ${summary.country}
 ADDRESS: ${summary.location}
 DESC: ${summary.description}
 AMENITIES: ${amenitiesForAI}
 PRICE: ${summary.pricePerNight}
-RATING: ${summary.starRating} stars
-${hasSpecificPreferences ? `USER SEARCH: "${userQuery}"` : ''}
+RATING: ${summary.starRating} stars`;
+  }).join('\n\n');
 
-Generate content + safety rating (1-10 for tourist safety in this location).
-
-/* GUIDELINES FOR topAmenities:
-- Pick EXACTLY 3.
-- First, include any amenities out of AMENITIES that the USER SEARCH explicitly asked for (e.g., "free breakfast", "pool", "parking") IF they appear in AMENITIES.
-- Then fill the rest with interesting amenities from what it has (dont choose amenities that says blah blah nearby THOSE AERNT GOOD)
-- First word should always be capitilized
-
-JSON:
-{
-  "whyItMatches": "${hasSpecificPreferences ? '25 words - why fits search, mention relevant amenities' : '20 words - why great choice'}",
-  "funFacts": ["fact1", "fact2"],
-  "nearbyAttractions": ["name - desc - time it takes to walk or drive in minutes (only if you are sure its correct)", "name - desc - time it takes to walk or drive in minutes (only if you are sure its correct)"],
-  "locationHighlight": "key location advantage",
-  "topAmenities": ["amenity1", "amenity2", "amenity3"],
-  "safetyRating": number 1-10 based off safety of area,
-  "safetyJustification": "15-25 words about location safety"
-}
+  const hasSpecificPreferences = userQuery && userQuery.trim() !== '';
   
+  const prompt = `Process these ${hotels.length} hotels${hasSpecificPreferences ? ` for search: "${userQuery}"` : ''}:
 
-`;
+${hotelSummaries}
+
+Generate content + safety rating (1-10 for tourist safety) for EACH hotel.
+
+GUIDELINES for topAmenities:
+- Pick EXACTLY 3 per hotel
+- First include amenities that match user search if any
+- Then fill with most interesting amenities from hotel's list
+- Capitalize first word
+
+Return JSON array with exactly ${hotels.length} objects:
+[
+  {
+    "hotelIndex": 1,
+    "whyItMatches": "${hasSpecificPreferences ? '25 words - why fits search' : '20 words - why great choice'}",
+    "funFacts": ["fact1", "fact2"],
+    "nearbyAttractions": ["name - desc - time", "name - desc - time"],
+    "locationHighlight": "key location advantage",
+    "topAmenities": ["amenity1", "amenity2", "amenity3"],
+    "safetyRating": number 1-10,
+    "safetyJustification": "15-25 words about safety"
+  },
+  // ... continue for all ${hotels.length} hotels
+]`;
 
   try {
     const completion = await openai.chat.completions.create({
       model: 'gpt-4o-mini',
       messages: [
-        { role: 'system', content: 'Generate hotel content + safety rating. Reply only JSON.' },
+        { role: 'system', content: 'Generate hotel content for multiple hotels. Reply only with valid JSON array.' },
         { role: 'user', content: prompt }
       ],
       temperature: 0.7,
-      max_tokens: 400,
+      max_tokens: Math.min(4000, 300 * hotels.length), // Scale tokens with hotel count
     });
 
     if (searchId) {
@@ -788,36 +786,52 @@ JSON:
       searchCostTracker.addGptUsage(searchId, 'aiInsights', tokens.prompt, tokens.completion);
     }
 
-    const content = completion.choices[0]?.message?.content?.trim() || '{}';
+    const content = completion.choices[0]?.message?.content?.trim() || '[]';
     const cleanContent = content.replace(/```json\n?|\n?```/g, '').trim();
-    const parsedContent = JSON.parse(cleanContent);
+    const results = JSON.parse(cleanContent);
     
-    const safetyRating = Math.max(1, Math.min(10, Math.round(parsedContent.safetyRating || 7)));
+    // Create map of results by hotel ID
+    const resultMap: Record<string, any> = {};
     
-    console.log(`✅ Combined content generated for ${hotel.name}`);
+    results.forEach((result: any, index: number) => {
+      if (hotels[index]) {
+        const safetyRating = Math.max(1, Math.min(10, Math.round(result.safetyRating || 7)));
+        
+        resultMap[hotels[index].hotelId] = {
+          whyItMatches: result.whyItMatches || "Great choice for your stay",
+          funFacts: result.funFacts || ["Modern amenities", "Excellent service"],
+          nearbyAttractions: result.nearbyAttractions || getDefaultAttractionsBySearch(userQuery, hotels[index].summarizedInfo.city),
+          locationHighlight: result.locationHighlight || "Convenient location",
+          topAmenities: result.topAmenities || getDefaultAmenities(hotels[index].summarizedInfo.amenitiesText || ''),
+          safetyRating,
+          safetyJustification: result.safetyJustification || "Generally safe area"
+        };
+      }
+    });
     
-    return {
-      whyItMatches: parsedContent.whyItMatches || "Great choice for your stay",
-      funFacts: parsedContent.funFacts || ["Modern amenities", "Excellent service"],
-      nearbyAttractions: parsedContent.nearbyAttractions || getDefaultAttractionsBySearch(userQuery, summary.city),
-      locationHighlight: parsedContent.locationHighlight || "Convenient location",
-      topAmenities: parsedContent.topAmenities || getDefaultAmenities(amenitiesForAI),
-      safetyRating,
-      safetyJustification: parsedContent.safetyJustification || "Generally safe area"
-    };
+    console.log(`✅ Batch content generated for ${Object.keys(resultMap).length} hotels`);
+    return resultMap;
     
   } catch (error) {
-    console.warn(`⚠️ Combined AI failed for ${hotel.name}:`, error);
+    console.warn(`⚠️ Batch AI failed, using fallbacks:`, error);
     
-    return {
-      whyItMatches: "Great choice with excellent amenities and location",
-      funFacts: ["Modern facilities", "Excellent reviews"],
-      nearbyAttractions: getDefaultAttractionsBySearch(userQuery, summary.city),
-      locationHighlight: "Prime location",
-      topAmenities: getDefaultAmenities(amenitiesForAI),
-      safetyRating: getFallbackSafetyRating(summary.city, summary.country),
-      safetyJustification: "Generally safe area with standard precautions"
-    };
+    // Fallback: generate template content for all hotels
+    const fallbackMap: Record<string, any> = {};
+    
+    hotels.forEach(hotel => {
+      const summary = hotel.summarizedInfo;
+      fallbackMap[hotel.hotelId] = {
+        whyItMatches: "Great choice with excellent amenities and location",
+        funFacts: ["Modern facilities", "Excellent reviews"],
+        nearbyAttractions: getDefaultAttractionsBySearch(userQuery, summary.city),
+        locationHighlight: "Prime location",
+        topAmenities: getDefaultAmenities(summary.amenitiesText || ''),
+        safetyRating: getFallbackSafetyRating(summary.city, summary.country),
+        safetyJustification: "Generally safe area with standard precautions"
+      };
+    });
+    
+    return fallbackMap;
   }
 };
 
@@ -1025,39 +1039,39 @@ export const aiInsightsController = async (req: Request, res: Response) => {
     // PARALLEL PROCESSING: Start both AI content generation AND sentiment+insights processing simultaneously
     logger.startStep('ParallelProcessing', { hotelCount: validHotels.length });
 
-    // Promise 1: Generate detailed AI content for all hotels
-    const aiContentPromises = validHotels.map(async (hotel, index) => {
-      try {
-        // Stagger requests to avoid rate limiting
-        await new Promise(resolve => setTimeout(resolve, index * 300));
-        
-        const aiContent = await generateCombinedAIContent(hotel, userQuery, nights, searchId);
-        
-        return {
-          hotelId: hotel.hotelId,
-          name: hotel.name,
-          aiMatchPercent: hotel.aiMatchPercent,
-          ...aiContent
-        };
-        
-      } catch (error) {
-        console.warn(`⚠️ AI content generation failed for ${hotel.name}:`, error);
-        
-        // Return fallback content
-        return {
-  hotelId: hotel.hotelId,
-  name: hotel.name,
-  aiMatchPercent: hotel.aiMatchPercent,
-  whyItMatches: "Great choice with excellent amenities and location",
-  funFacts: ["Modern facilities", "Excellent guest reviews"],
-  nearbyAttractions: [`${hotel.summarizedInfo.city} center`, "Local landmarks"],
-  locationHighlight: "Prime location",
-  safetyRating: 7, // Add missing property with default value
-  safetyJustification: "Generally safe area with standard city precautions recommended" ,
-  topAmenities: getDefaultAmenities(hotel.summarizedInfo.amenitiesText || hotel.summarizedInfo.amenities?.join(', ') || "") // Add missing property
-};
-      }
-    });
+// BATCH: Generate detailed AI content for all hotels in single call
+logger.startStep('BatchAIContent', { hotelCount: validHotels.length });
+
+const batchAIResults = await generateBatchAIContent(validHotels, userQuery, nights, searchId);
+
+const batchProcessedResults = validHotels.map(hotel => {
+  const batchResult = batchAIResults[hotel.hotelId];
+  
+  if (!batchResult) {
+    console.warn(`⚠️ No batch result for hotel ${hotel.name}, using fallback`);
+    return {
+      hotelId: hotel.hotelId,
+      name: hotel.name,
+      aiMatchPercent: hotel.aiMatchPercent,
+      whyItMatches: "Great choice with excellent amenities and location",
+      funFacts: ["Modern facilities", "Excellent guest reviews"],
+      nearbyAttractions: [`${hotel.summarizedInfo.city} center`, "Local landmarks"],
+      locationHighlight: "Prime location",
+      safetyRating: 7,
+      safetyJustification: "Generally safe area with standard city precautions recommended",
+      topAmenities: getDefaultAmenities(hotel.summarizedInfo.amenitiesText || "")
+    };
+  }
+  
+  return {
+    hotelId: hotel.hotelId,
+    name: hotel.name,
+    aiMatchPercent: hotel.aiMatchPercent,
+    ...batchResult
+  };
+});
+
+logger.endStep('BatchAIContent', { resultsGenerated: batchProcessedResults.length });
 
     // Promise 2: Fetch hotel details and generate insights for all hotels
 // Promise 2: Fetch hotel details and generate insights for all hotels
@@ -1081,9 +1095,9 @@ const hotelDetailsInsightsPromises = validHotels.map(async (hotel, index) => {
 
     // Execute both sets of operations in parallel
     const [aiContentResults, hotelDetailsInsightsResults] = await Promise.all([
-      Promise.all(aiContentPromises),
-      Promise.all(hotelDetailsInsightsPromises)
-    ]);
+  Promise.resolve(batchProcessedResults), // Already processed
+  Promise.all(hotelDetailsInsightsPromises)
+]);
 
     logger.endStep('ParallelProcessing', { 
       aiContentGenerated: aiContentResults.length,
