@@ -1,9 +1,0 @@
-BASIC INFORMATION:
-Name: Hôtel Tamaris
-Address: undefined
-City: Paris
-Country: FR
-Star Rating: 3 stars
-Guest Rating: 0/10 (0 reviews)
-Check-in: 9:00 PM
-Check-out: 11:30 AM

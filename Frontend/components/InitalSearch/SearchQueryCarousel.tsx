@@ -14,6 +14,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import tw from 'twrnc';
+import * as WebBrowser from 'expo-web-browser';
 
 const { width } = Dimensions.get('window');
 const TURQUOISE = '#1df9ff';
@@ -37,6 +38,42 @@ interface Hotel {
   country?: string;
   fullAddress?: string;
 }
+
+// Add the in-app browser function from SwipeableHotelStoryCard
+const openInAppBrowser = async (url: string) => {
+  try {
+    await WebBrowser.openBrowserAsync(url, {
+      presentationStyle: WebBrowser.WebBrowserPresentationStyle.PAGE_SHEET,
+      dismissButtonStyle: 'done',
+      showTitle: true,
+      toolbarColor: '#ffffff',
+      controlsColor: '#000000ff',
+      enableBarCollapsing: true,
+      secondaryToolbarColor: '#f6f6f6',
+      showInRecents: false,
+    });
+  } catch (e) {
+    try { 
+      const { Linking } = require('react-native');
+      await Linking.openURL(url); 
+    } catch {}
+  }
+};
+
+// Add the Google Maps link generator from SwipeableHotelStoryCard
+const generateGoogleMapsLink = (hotel: Hotel): string => {
+  let query = '';
+
+  const locationText = hotel.city && hotel.country 
+    ? `${hotel.name} ${hotel.city} ${hotel.country}`
+    : hotel.fullAddress 
+    ? `${hotel.name} ${hotel.fullAddress}`
+    : `${hotel.name} ${hotel.location}`;
+  query = encodeURIComponent(locationText);
+  console.log(`📍 Using location text: ${locationText}`);
+  
+  return `https://www.google.com/maps/search/?api=1&query=${query}`;
+};
 
 // Custom hook for intersection observer style lazy loading
 const useLazyLoading = (threshold: number = 150) => {
@@ -252,32 +289,20 @@ const HotelCard: React.FC<HotelCardProps> = ({ hotel, onPress, index }) => {
     return price.toString();
   };
 
-  const handlePress = () => {
-    let query = '';
-    if (hotel.city && hotel.country) {
-      query = encodeURIComponent(`${hotel.name} ${hotel.city} ${hotel.country}`);
-    } else if (hotel.fullAddress) {
-      query = encodeURIComponent(`${hotel.name} ${hotel.fullAddress}`);
-    } else {
-      query = encodeURIComponent(`${hotel.name} ${hotel.location}`);
-    }
-    
-    const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${query}`;
-    
-    Linking.canOpenURL(mapsUrl)
-      .then((supported) => {
-        if (supported) {
-          Linking.openURL(mapsUrl);
-        } else {
-          Alert.alert('Error', 'Cannot open Google Maps');
-        }
-      })
-      .catch(() => {
-        Alert.alert('Error', 'Failed to open Google Maps');
-      });
-    
-    onPress();
-  };
+  // Updated handlePress to use in-app browser
+const handlePress = async () => {
+  try {
+    const mapsLink = generateGoogleMapsLink(hotel);
+    console.log(`🗺️ Opening Google Maps (web) in-app: ${mapsLink}`);
+    await openInAppBrowser(mapsLink);
+    onPress(); // Still call the original onPress for any additional functionality
+  } catch (error) {
+    console.error('Error opening Google Maps:', error);
+    Alert.alert('Unable to Open Maps', 'Please check your internet connection and try again.', [
+      { text: 'OK', onPress: () => onPress() },
+    ]);
+  }
+};
 
   const handleImageLoadStart = () => {
     setImageLoading(true);

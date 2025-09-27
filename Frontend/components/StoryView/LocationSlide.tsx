@@ -620,28 +620,52 @@ const LocationSlide: React.FC<LocationSlideProps> = ({
         </View>
       )}
 
-      {/* Enhanced zoom control with 3 levels */}
-      {mapSuccessfullyLoaded && (
-        <View style={tw`absolute top-10 right-4 z-20`}>
-          <TouchableOpacity
-            style={[
-              tw`bg-black/50 border border-white/30 rounded-xl px-3 py-2 flex-row items-center`,
-            ]}
-            onPress={cycleZoom}
-            activeOpacity={0.8}
-          >
-            <Ionicons name={icon} size={14} color="#1df9ff" />
-            <View style={tw`ml-2`}>
-              <Text style={tw`text-white text-[10px] font-semibold leading-3`}>
-                {label}
-              </Text>
-              <Text style={tw`text-white/60 text-[8px] leading-2`}>
-                Tap → {nextLabel}
-              </Text>
-            </View>
-          </TouchableOpacity>
-        </View>
-      )}
+      {/* Zoom in/out buttons */}
+<View style={tw`absolute top-10 right-4 gap-1`}>
+  <TouchableOpacity 
+    style={[
+      tw`bg-black/70 border border-white/40 rounded-lg w-10 h-10 items-center justify-center`,
+      currentZoom === ZOOM_LEVELS.CLOSE ? tw`opacity-50` : tw`opacity-100`
+    ]}
+    onPress={() => {
+      if (currentZoom !== ZOOM_LEVELS.CLOSE) {
+        setCurrentZoom(currentZoom === ZOOM_LEVELS.FAR ? ZOOM_LEVELS.MEDIUM : ZOOM_LEVELS.CLOSE);
+      }
+    }}
+    disabled={currentZoom === ZOOM_LEVELS.CLOSE}
+    activeOpacity={0.8}
+  >
+    <Ionicons name="search" size={16} color="#1df9ff" />
+    <Ionicons 
+      name="add" 
+      size={8} 
+      color="#1df9ff" 
+      style={tw`absolute top-1 right-1`} 
+    />
+  </TouchableOpacity>
+
+  <TouchableOpacity 
+    style={[
+      tw`bg-black/70 border border-white/40 rounded-lg w-10 h-10 items-center justify-center`,
+      currentZoom === ZOOM_LEVELS.FAR ? tw`opacity-50` : tw`opacity-100`
+    ]}
+    onPress={() => {
+      if (currentZoom !== ZOOM_LEVELS.FAR) {
+        setCurrentZoom(currentZoom === ZOOM_LEVELS.CLOSE ? ZOOM_LEVELS.MEDIUM : ZOOM_LEVELS.FAR);
+      }
+    }}
+    disabled={currentZoom === ZOOM_LEVELS.FAR}
+    activeOpacity={0.8}
+  >
+    <Ionicons name="search" size={16} color="#1df9ff" />
+    <Ionicons 
+      name="remove" 
+      size={8} 
+      color="#1df9ff" 
+      style={tw`absolute top-1 right-1`} 
+    />
+  </TouchableOpacity>
+</View>
 
       {/* Compact bottom content */}
       <View style={tw`absolute bottom-4 left-2 right-2 z-10`}>

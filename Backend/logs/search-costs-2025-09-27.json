@@ -98,5 +98,185 @@
         "cost": 0.0027966000000000006
       }
     }
+  },
+  {
+    "timestamp": "2025-09-27T00:31:50.176Z",
+    "searchId": "637c6292-6f52-47e1-92b8-905aa309537d",
+    "userQuery": "hotels in new york with free breakfast",
+    "destination": "New York, US",
+    "hotelCount": 309,
+    "totalTokensUsed": 50080,
+    "totalCost": 0.00890115,
+    "searchDurationMs": 12440,
+    "operations": {
+      "hotelMatching": {
+        "tokens": 40396,
+        "cost": 0.0062312999999999995
+      },
+      "aiInsights": {
+        "tokens": 9684,
+        "cost": 0.00266985
+      }
+    }
+  },
+  {
+    "timestamp": "2025-09-27T00:34:32.300Z",
+    "searchId": "b0ecfd25-8ba9-4ed0-8a84-f907add3c272",
+    "userQuery": "hotels in new york with free breakfast • $200 - $400",
+    "destination": "New York, US",
+    "hotelCount": 309,
+    "totalTokensUsed": 23414,
+    "totalCost": 0.00491115,
+    "searchDurationMs": 9055,
+    "operations": {
+      "hotelMatching": {
+        "tokens": 13538,
+        "cost": 0.0022098
+      },
+      "aiInsights": {
+        "tokens": 9876,
+        "cost": 0.00270135
+      }
+    }
+  },
+  {
+    "timestamp": "2025-09-27T00:35:37.131Z",
+    "searchId": "b1745414-6505-4387-9d14-d91fe2baca86",
+    "userQuery": "hotels in new york with free breakfast • $200 - $400 • $800+",
+    "destination": "New York, US",
+    "hotelCount": 309,
+    "totalTokensUsed": 23585,
+    "totalCost": 0.0049440000000000005,
+    "searchDurationMs": 12155,
+    "operations": {
+      "hotelMatching": {
+        "tokens": 13576,
+        "cost": 0.0022227
+      },
+      "aiInsights": {
+        "tokens": 10009,
+        "cost": 0.0027212999999999994
+      }
+    }
+  },
+  {
+    "timestamp": "2025-09-27T00:36:16.210Z",
+    "searchId": "ea8163dc-fff6-4e1c-9f66-489e2517dcc6",
+    "userQuery": "hotel in new york over 800 dollars",
+    "destination": "New York, US",
+    "hotelCount": 309,
+    "totalTokensUsed": 23697,
+    "totalCost": 0.005031000000000001,
+    "searchDurationMs": 11870,
+    "operations": {
+      "hotelMatching": {
+        "tokens": 13044,
+        "cost": 0.0021384
+      },
+      "aiInsights": {
+        "tokens": 10653,
+        "cost": 0.0028926
+      }
+    }
+  },
+  {
+    "timestamp": "2025-09-27T00:37:12.580Z",
+    "searchId": "7b6d1d7f-567c-4c01-b886-eb812e9a4d62",
+    "userQuery": "hotel in new york over 800 dollars • Nov 12, 2025 - Nov 15, 2025",
+    "destination": "New York, US",
+    "hotelCount": 315,
+    "totalTokensUsed": 24078,
+    "totalCost": 0.0051039,
+    "searchDurationMs": 10965,
+    "operations": {
+      "hotelMatching": {
+        "tokens": 13082,
+        "cost": 0.0021297
+      },
+      "aiInsights": {
+        "tokens": 10996,
+        "cost": 0.0029741999999999998
+      }
+    }
+  },
+  {
+    "timestamp": "2025-09-27T00:37:45.327Z",
+    "searchId": "07e8e4d9-a0d6-4df4-9324-9df64186a4f0",
+    "userQuery": "family friendly hotels in mexico city with rooftop views",
+    "destination": "Mexico City, MX",
+    "hotelCount": 263,
+    "totalTokensUsed": 46546,
+    "totalCost": 0.008380050000000002,
+    "searchDurationMs": 11034,
+    "operations": {
+      "hotelMatching": {
+        "tokens": 36052,
+        "cost": 0.0055527
+      },
+      "aiInsights": {
+        "tokens": 10494,
+        "cost": 0.0028273500000000006
+      }
+    }
+  },
+  {
+    "timestamp": "2025-09-27T00:38:16.748Z",
+    "searchId": "0ce98a46-76df-4e13-ad6d-f62efe96a49b",
+    "userQuery": "family friendly hotels in mexico city with rooftop views",
+    "destination": "Mexico City, MX",
+    "hotelCount": 263,
+    "totalTokensUsed": 46712,
+    "totalCost": 0.008396399999999997,
+    "searchDurationMs": 12606,
+    "operations": {
+      "hotelMatching": {
+        "tokens": 36522,
+        "cost": 0.005616899999999999
+      },
+      "aiInsights": {
+        "tokens": 10190,
+        "cost": 0.0027795
+      }
+    }
+  },
+  {
+    "timestamp": "2025-09-27T00:42:45.866Z",
+    "searchId": "59f0f310-b380-4187-b7c3-5ab56a83c8a5",
+    "userQuery": "family frinely hotels in mexico city with rooftop views",
+    "destination": "Mexico City, MX",
+    "hotelCount": 263,
+    "totalTokensUsed": 49342,
+    "totalCost": 0.0088206,
+    "searchDurationMs": 10260,
+    "operations": {
+      "hotelMatching": {
+        "tokens": 38928,
+        "cost": 0.005982299999999999
+      },
+      "aiInsights": {
+        "tokens": 10414,
+        "cost": 0.0028382999999999993
+      }
+    }
+  },
+  {
+    "timestamp": "2025-09-27T01:33:24.621Z",
+    "searchId": "933dfc74-92e1-48be-a833-a92453d01196",
+    "userQuery": "Beachfront hotels in Maldives with infinity pools",
+    "destination": "Maafushi, MV",
+    "hotelCount": 20,
+    "totalTokensUsed": 15072,
+    "totalCost": 0.0036855,
+    "searchDurationMs": 9483,
+    "operations": {
+      "hotelMatching": {
+        "tokens": 4492,
+        "cost": 0.0008096999999999999
+      },
+      "aiInsights": {
+        "tokens": 10580,
+        "cost": 0.0028758
+      }
+    }
   }
 ]

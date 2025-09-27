@@ -415,7 +415,7 @@ Set to true ONLY if:
 "detectionExamples": {
 "hotel with pool and gym": ["POOL_WATER_AREAS", "GYM_HEALTH_CLUB"],
 "spa resort with great restaurants": ["WELLNESS_SPA", "FOOD_DRINK"],
-"family hotel with kids activities": ["FAMILY_KIDS"],
+"family hotel with kids activities and rooftop views": ["FAMILY_KIDS", "INROOM_PROPERTY_FEATURES"],
 "business hotel with meeting rooms": ["MEETINGS_EVENTS"],
 "eco-friendly place with good breakfast": ["SUSTAINABILITY_ECO", "FOOD_DRINK"],
 "just need a clean place to sleep": [],
@@ -424,7 +424,7 @@ Set to true ONLY if:
 "wheelchair accessible with parking": ["ACCESSIBILITY", "PARKING_TRANSPORT"]
 },
 "rules": [
-"Only include categories if user specifically mentions related amenities/facilities",
+"Only include categories if user specifically mentions related amenities/facilities OR !something that implies the need for them!",
 "Don't assume categories from location or trip type alone",
 "Use exact category names from the list above",
 "Return empty array if only location/price/rating mentioned without amenities"
