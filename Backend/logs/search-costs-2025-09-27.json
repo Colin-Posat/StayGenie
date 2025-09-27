@@ -1,0 +1,102 @@
+[
+  {
+    "timestamp": "2025-09-27T00:19:30.693Z",
+    "searchId": "d95b77ea-3b76-46c0-8ebe-618680da6d84",
+    "userQuery": "hotels in paris",
+    "destination": "Paris, FR",
+    "hotelCount": 515,
+    "totalTokensUsed": 46822,
+    "totalCost": 0.0084669,
+    "searchDurationMs": 11406,
+    "operations": {
+      "hotelMatching": {
+        "tokens": 36892,
+        "cost": 0.005693999999999999
+      },
+      "aiInsights": {
+        "tokens": 9930,
+        "cost": 0.002772899999999999
+      }
+    }
+  },
+  {
+    "timestamp": "2025-09-27T00:20:37.436Z",
+    "searchId": "1412b886-e805-412e-9194-c5dd6626edf3",
+    "userQuery": "Tower hotels in Tokyo with Mount Fuji views",
+    "destination": "Tokyo, JP",
+    "hotelCount": 327,
+    "totalTokensUsed": 48980,
+    "totalCost": 0.00879195,
+    "searchDurationMs": 10123,
+    "operations": {
+      "hotelMatching": {
+        "tokens": 38478,
+        "cost": 0.005938199999999999
+      },
+      "aiInsights": {
+        "tokens": 10502,
+        "cost": 0.00285375
+      }
+    }
+  },
+  {
+    "timestamp": "2025-09-27T00:22:03.236Z",
+    "searchId": "1bdc22e6-f694-4d65-baf8-bdc7f0b4c271",
+    "userQuery": "Modern beach hotels in Tulum with rooftop pools",
+    "destination": "Tulum, MX",
+    "hotelCount": 98,
+    "totalTokensUsed": 28344,
+    "totalCost": 0.005767650000000001,
+    "searchDurationMs": 11811,
+    "operations": {
+      "hotelMatching": {
+        "tokens": 16936,
+        "cost": 0.0027275999999999997
+      },
+      "aiInsights": {
+        "tokens": 11408,
+        "cost": 0.00304005
+      }
+    }
+  },
+  {
+    "timestamp": "2025-09-27T00:23:45.241Z",
+    "searchId": "ac8e0f0c-846f-4491-a8e8-ba625c1c072c",
+    "userQuery": "boutique hotel in Rome near historic center",
+    "destination": "Rome, IT",
+    "hotelCount": 317,
+    "totalTokensUsed": 46227,
+    "totalCost": 0.008310599999999998,
+    "searchDurationMs": 10423,
+    "operations": {
+      "hotelMatching": {
+        "tokens": 35716,
+        "cost": 0.005484299999999999
+      },
+      "aiInsights": {
+        "tokens": 10511,
+        "cost": 0.0028263
+      }
+    }
+  },
+  {
+    "timestamp": "2025-09-27T00:29:11.235Z",
+    "searchId": "69bf9464-39ea-4db0-949b-e7af743cb141",
+    "userQuery": "Beachfront hotels in Maldives with infinity pools",
+    "destination": "Maafushi, MV",
+    "hotelCount": 20,
+    "totalTokensUsed": 14788,
+    "totalCost": 0.003605099999999999,
+    "searchDurationMs": 7708,
+    "operations": {
+      "hotelMatching": {
+        "tokens": 4490,
+        "cost": 0.0008085
+      },
+      "aiInsights": {
+        "tokens": 10298,
+        "cost": 0.0027966000000000006
+      }
+    }
+  }
+]

@@ -30,6 +30,10 @@ export interface ParsedSearchQuery {
   minCost?: number | null;  
   maxCost?: number | null; 
   cheap?: boolean;
+  findCheapestOnes?: boolean;
+  highlyRated?: boolean;
+  starRating?: number | null;
+  facilityCategories?: string[]; // ADDED: Array of facility category names from parser
 }
 
 // UPDATED: Extended HotelInfo interface to match actual API response

@@ -1910,22 +1910,17 @@ const handleBackPress = useCallback(() => {
   ) : (
     /* Fallback - Minimal floating back button */
     <View style={tw`flex-row items-center`}>
-      <TouchableOpacity
-        style={[
-          tw`w-10 h-10 items-center justify-center rounded-full bg-white`,
-          {
-            shadowColor: '#000',
-            shadowOffset: { width: 0, height: 2 },
-            shadowOpacity: 0.1,
-            shadowRadius: 8,
-            elevation: 3,
-          }
-        ]}
-        onPress={handleBackPress}
-        activeOpacity={0.8}
-      >
-        <Ionicons name="arrow-back" size={18} color="#374151" />
-      </TouchableOpacity>
+<TouchableOpacity
+  style={[
+    tw`w-7 h-7 items-center justify-center rounded-full mr-3 flex-shrink-0`,
+    { backgroundColor: '#F8FAFC' }
+  ]}
+  onPress={handleBackPress}
+  activeOpacity={0.7}
+  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}  // Easy fix - just add this!
+>
+  <Ionicons name="arrow-back" size={14} color="#64748B" />
+</TouchableOpacity>
     </View>
   )}
 </View>

@@ -379,8 +379,7 @@ const ReviewsSlide: React.FC<ReviewsSlideProps> = ({
     setError(null);
 
     try {
-      //const API_BASE_URL = 'http://localhost:3003';
-      const API_BASE_URL = "https://staygenie-wwpa.onrender.com";
+      const API_BASE_URL = __DEV__ ? 'http://localhost:3003' : "https://staygenie-wwpa.onrender.com";
       const url = `${API_BASE_URL}/api/hotels/reviews`;
       
       const response = await fetch(url, {

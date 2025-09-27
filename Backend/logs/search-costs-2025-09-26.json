@@ -298,5 +298,265 @@
         "cost": 0.0029353499999999998
       }
     }
+  },
+  {
+    "timestamp": "2025-09-26T18:28:14.035Z",
+    "searchId": "23b494eb-461d-48ba-ae54-fa401c676ce0",
+    "userQuery": "Ski hotels in Aspen with panoramic windows",
+    "destination": "Aspen, US",
+    "hotelCount": 23,
+    "totalTokensUsed": 18982,
+    "totalCost": 0.004311150000000001,
+    "searchDurationMs": 8426,
+    "operations": {
+      "hotelMatching": {
+        "tokens": 8322,
+        "cost": 0.0014229
+      },
+      "aiInsights": {
+        "tokens": 10660,
+        "cost": 0.00288825
+      }
+    }
+  },
+  {
+    "timestamp": "2025-09-26T19:27:14.205Z",
+    "searchId": "acdbabd8-118d-4d79-b3a2-35b7ce91d2a4",
+    "userQuery": "hotels with a romantic vibe in paris",
+    "destination": "Paris, FR",
+    "hotelCount": 513,
+    "totalTokensUsed": 77724,
+    "totalCost": 0.0131382,
+    "searchDurationMs": 13073,
+    "operations": {
+      "hotelMatching": {
+        "tokens": 67298,
+        "cost": 0.0102513
+      },
+      "aiInsights": {
+        "tokens": 10426,
+        "cost": 0.0028869
+      }
+    }
+  },
+  {
+    "timestamp": "2025-09-26T19:30:35.572Z",
+    "searchId": "f254b049-adab-4a1c-8886-15c8e59dd0ec",
+    "userQuery": "hotels with a romantic vibe in paris • $200 - $400",
+    "destination": "Paris, FR",
+    "hotelCount": 513,
+    "totalTokensUsed": 75436,
+    "totalCost": 0.012611399999999998,
+    "searchDurationMs": 11667,
+    "operations": {
+      "hotelMatching": {
+        "tokens": 66342,
+        "cost": 0.0101169
+      },
+      "aiInsights": {
+        "tokens": 9094,
+        "cost": 0.0024944999999999998
+      }
+    }
+  },
+  {
+    "timestamp": "2025-09-26T19:53:30.779Z",
+    "searchId": "17a3b154-9c18-4d29-8150-4c2b70d33f6f",
+    "userQuery": "Tower hotels in Tokyo with Mount Fuji views",
+    "destination": "Tokyo, JP",
+    "hotelCount": 326,
+    "totalTokensUsed": 64775,
+    "totalCost": 0.0111783,
+    "searchDurationMs": 13375,
+    "operations": {
+      "hotelMatching": {
+        "tokens": 53474,
+        "cost": 0.0081903
+      },
+      "aiInsights": {
+        "tokens": 11301,
+        "cost": 0.0029879999999999993
+      }
+    }
+  },
+  {
+    "timestamp": "2025-09-26T19:59:10.375Z",
+    "searchId": "d008ede5-c96d-4f89-858d-8a763aa22703",
+    "userQuery": "Tower hotels in Tokyo with Mount Fuji views",
+    "destination": "Tokyo, JP",
+    "hotelCount": 326,
+    "totalTokensUsed": 78465,
+    "totalCost": 0.0132588,
+    "searchDurationMs": 11141,
+    "operations": {
+      "hotelMatching": {
+        "tokens": 67220,
+        "cost": 0.010258499999999999
+      },
+      "aiInsights": {
+        "tokens": 11245,
+        "cost": 0.0030003
+      }
+    }
+  },
+  {
+    "timestamp": "2025-09-26T20:05:06.597Z",
+    "searchId": "c15ab265-c399-45db-a6f0-6fa57d7c6360",
+    "userQuery": "Tower hotels in Tokyo with Mount Fuji views",
+    "destination": "Tokyo, JP",
+    "hotelCount": 326,
+    "totalTokensUsed": 79897,
+    "totalCost": 0.013453349999999998,
+    "searchDurationMs": 11712,
+    "operations": {
+      "hotelMatching": {
+        "tokens": 68536,
+        "cost": 0.010450499999999998
+      },
+      "aiInsights": {
+        "tokens": 11361,
+        "cost": 0.0030028499999999996
+      }
+    }
+  },
+  {
+    "timestamp": "2025-09-26T20:07:56.431Z",
+    "searchId": "8364931a-4bcf-43ef-8f26-7cb0da491e97",
+    "userQuery": "Tower hotels in Tokyo with Mount Fuji views",
+    "destination": "Tokyo, JP",
+    "hotelCount": 326,
+    "totalTokensUsed": 63653,
+    "totalCost": 0.011009549999999996,
+    "searchDurationMs": 11085,
+    "operations": {
+      "hotelMatching": {
+        "tokens": 52750,
+        "cost": 0.008081699999999999
+      },
+      "aiInsights": {
+        "tokens": 10903,
+        "cost": 0.00292785
+      }
+    }
+  },
+  {
+    "timestamp": "2025-09-26T20:14:21.434Z",
+    "searchId": "4d24734b-5e52-4872-9dfb-cb209f47d5b5",
+    "userQuery": "Tower hotels in Tokyo with Mount Fuji views",
+    "destination": "Tokyo, JP",
+    "hotelCount": 311,
+    "totalTokensUsed": 60409,
+    "totalCost": 0.010513500000000002,
+    "searchDurationMs": 13686,
+    "operations": {
+      "hotelMatching": {
+        "tokens": 49902,
+        "cost": 0.0076581
+      },
+      "aiInsights": {
+        "tokens": 10507,
+        "cost": 0.0028553999999999997
+      }
+    }
+  },
+  {
+    "timestamp": "2025-09-26T20:20:20.670Z",
+    "searchId": "c608f9d6-7df2-4cf6-9390-b9594aeea478",
+    "userQuery": "Tower hotels in Tokyo with Mount Fuji views",
+    "destination": "Tokyo, JP",
+    "hotelCount": 311,
+    "totalTokensUsed": 59726,
+    "totalCost": 0.010429049999999999,
+    "searchDurationMs": 10166,
+    "operations": {
+      "hotelMatching": {
+        "tokens": 49226,
+        "cost": 0.0075612
+      },
+      "aiInsights": {
+        "tokens": 10500,
+        "cost": 0.00286785
+      }
+    }
+  },
+  {
+    "timestamp": "2025-09-26T20:29:58.374Z",
+    "searchId": "5866ff94-a9c3-4aa8-a97a-dc0543c810b8",
+    "userQuery": "Tower hotels in Tokyo with Mount Fuji views",
+    "destination": "Tokyo, JP",
+    "hotelCount": 311,
+    "totalTokensUsed": 61423,
+    "totalCost": 0.010699800000000002,
+    "searchDurationMs": 13092,
+    "operations": {
+      "hotelMatching": {
+        "tokens": 50746,
+        "cost": 0.0077856
+      },
+      "aiInsights": {
+        "tokens": 10677,
+        "cost": 0.002914199999999999
+      }
+    }
+  },
+  {
+    "timestamp": "2025-09-26T20:33:07.262Z",
+    "searchId": "340763ca-193e-4e78-8875-83647b93704a",
+    "userQuery": "\"Tower hotels in Tokyo with Mount Fuji views",
+    "destination": "Tokyo, JP",
+    "hotelCount": 311,
+    "totalTokensUsed": 59519,
+    "totalCost": 0.010330049999999999,
+    "searchDurationMs": 14759,
+    "operations": {
+      "hotelMatching": {
+        "tokens": 49500,
+        "cost": 0.0076059
+      },
+      "aiInsights": {
+        "tokens": 10019,
+        "cost": 0.00272415
+      }
+    }
+  },
+  {
+    "timestamp": "2025-09-26T23:33:59.650Z",
+    "searchId": "ecd9187e-1ddd-454d-a73a-d81173d7f8cf",
+    "userQuery": "hotels with beach club in miami",
+    "destination": "Miami, US",
+    "hotelCount": 179,
+    "totalTokensUsed": 39379,
+    "totalCost": 0.007359899999999999,
+    "searchDurationMs": 11001,
+    "operations": {
+      "hotelMatching": {
+        "tokens": 29684,
+        "cost": 0.0046146
+      },
+      "aiInsights": {
+        "tokens": 9695,
+        "cost": 0.0027452999999999996
+      }
+    }
+  },
+  {
+    "timestamp": "2025-09-26T23:36:32.610Z",
+    "searchId": "b5c6f391-644e-40ca-a701-2e8669ca2774",
+    "userQuery": "Beachfront hotels in Maldives with infinity pools",
+    "destination": "Maafushi, MV",
+    "hotelCount": 21,
+    "totalTokensUsed": 13875,
+    "totalCost": 0.00345375,
+    "searchDurationMs": 12984,
+    "operations": {
+      "hotelMatching": {
+        "tokens": 4682,
+        "cost": 0.0008391
+      },
+      "aiInsights": {
+        "tokens": 9193,
+        "cost": 0.0026146499999999996
+      }
+    }
   }
 ]

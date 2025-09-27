@@ -184,6 +184,7 @@ ${prompt}
   }
 };
 
+
 const filterRelevantAmenities = (amenitiesText: string): string => {
   if (!amenitiesText || typeof amenitiesText !== 'string') {
     return '';
@@ -191,90 +192,89 @@ const filterRelevantAmenities = (amenitiesText: string): string => {
 
   const universalBasics = [
     'Non-smoking rooms',
-    'Air conditioning',
-    'Safety deposit box',
-    'Non-smoking throughout',
+    'A/C',
+    'Safe',
+    'Non-smoking',
     'Fire extinguishers',
-    'First aid kit available',
+    'First aid',
     'Smoke alarms',
     'Invoice provided',
-    'Television in common areas',
-    'Internet access',
+    'Common TV',
+    'Internet',
     'Housekeeping on request'
   ];
 
   const covidStandards = [
-    'Staff adhere to local safety protocols',
-    'Guest rooms disinfected between stays',
-    'Cleaning standards that are effective against Coronavirus',
-    'Physical distancing rules followed',
-    'Hand sanitizer in guest room and key areas',
-    'Sanitized tableware & silverware',
-    'Contactless check-in/check-out',
-    'Guests can opt-out any cleaning services during stay',
-    'Shared stationery like menus, pens are removed',
-    'Guest room sealed after cleaning',
-    'Property cleaned by professional cleaning companies',
-    'Physical distancing in dining areas',
-    'Process in place to check health of guests',
+    'Safety protocols',
+    'Disinfected rooms',
+    'COVID cleaning',
+    'Social distancing',
+    'Hand sanitizer',
+    'Clean tableware',
+    'Contactless check',
+    'Optional cleaning',
+    'No shared items',
+    'Sealed rooms',
+    'Pro cleaning',
+    'Dining distancing',
+    'Health checks',
     // NEW COVID AMENITIES TO FILTER
-    'Face masks for guests available',
-    'Screens / Barriers between staff and guests for safety',
-    'Delivered food - securely covered',
-    'Access to health care professionals',
-    'Thermometers for guests provided by property',
-    'Bulk dispenser for toiletries'
+    'Face masks',
+    'Safety barriers',
+    'Covered food',
+    'Healthcare access',
+    'Thermometers',
+    'Bulk toiletries'
   ];
 
   const universalSecurity = [
-    '24-hour security',
+    '24hr security',
     'Security alarm',
-    'Key card access',
-    'CCTV outside property',
-    'Cashless payment available',
+    'Keycard access',
+    'Cashless payment',
     'Key access'
   ];
 
   const basicOperations = [
-    'Front desk (limited hours)',
-    'Express check-in',
-    'Express check-in/check-out',
-    'Express check-out',
+    'Limited front desk',
+    'Express checkin',
+    'Express check-in/out',
+    'Express checkout',
     'Luggage storage',
-    'Lift / Elevator',
     'Elevator',
-    'Fax/photocopying',
+    'Elevator',
+    'Fax/copy',
     'Free wired internet',
     'Free WiFi',
-    '24-hour front desk',
+    '24hr front desk',
     'Multilingual staff',
-    'Porter/bellhop',
-    'Smoke-free property'
+    'Porter',
+    'Smoke-free'
   ];
 
   const accessibilityFeatures = [
-    'Facilities for disabled guests',
-    'Wheelchair accessible',
-    'Lower bathroom sink',
-    'Emergency cord in bathroom',
-    'Visual aids: Braille',
-    'Braille or raised signage',
-    'Auditory guidance',
-    'Assistive listening devices available',
-    'Assistive listening devices in meeting rooms',
-    'Visual alarms in hallways',
-    'Stair-free path to entrance',
-    'Well-lit path to entrance',
-    'Wheelchair-accessible public washroom',
-    'Wheelchair-accessible fitness center'
+    'Disabled access',
+    'Wheelchair access',
+    'Lower sink',
+    'Emergency cord',
+    'Braille aids',
+    'Braille signs',
+    'Audio guidance',
+    'Assist devices',
+    'Meeting assist devices',
+    'Visual alarms',
+    'Step-free entrance',
+    'Well-lit entrance',
+    'Wheelchair washroom',
+    'Wheelchair fitness'
   ];
 
   const environmentalStandards = [
-    'At least 80% of all lighting comes from LEDs',
-    'LED light bulbs',
-    'Water-efficient showers only',
-    'Thin carpet in public areas',
-    'Eco-friendly toiletries',
+    '80%+ LED lighting',
+    'LED lights',
+    'Water-efficient showers',
+    'Thin carpet',
+    'Eco toiletries',
     'Recycling',
     'Water dispenser'
   ];
@@ -532,7 +532,8 @@ const gptHotelMatchingSSE = async (
   hotelMetadataMap: Map<string, Record<string, unknown>>,
   hotelsWithRates: any[],
   userInput: string,
-  searchId: string 
+  searchId: string,
+  
 ): Promise<Array<{ hotelName: string; aiMatchPercent: number; hotelData: HotelSummaryForAI }>> => {
   
   
@@ -1133,7 +1134,7 @@ const calculatePriceInfo = (hotel: HotelWithRates, nights: number) => {
 };
 
 // OPTIMIZED: Create hotel summary using data from initial API call
-const createOptimizedHotelSummaryForAI = (hotel: any, hotelMetadata: any, index: number, nights: number): any => {
+const createOptimizedHotelSummaryForAI = (hotel: any, hotelMetadata: any, index: number, nights: number, parsedQuery: ParsedSearchQuery ): any => {
   const hotelInfo = hotelMetadata || hotel.hotelInfo || {};
   
   if (!hotelInfo && !hotelMetadata) {
@@ -1169,7 +1170,7 @@ const createOptimizedHotelSummaryForAI = (hotel: any, hotelMetadata: any, index:
   const starRating = 7;
   
   // CHANGED: Now uses filtered amenities
-  const topAmenities = getCombinedAmenities(hotelInfo);
+  const topAmenities = getCombinedAmenities(hotelInfo, parsedQuery.facilityCategories);
   const fakeReviewCount = Math.floor(Math.random() * (1100 - 700 + 1)) + 700;
 
   const rawDescription = hotelInfo.hotelDescription || hotelInfo.description || 'No description available';
@@ -1415,15 +1416,22 @@ const parseRankedHotelLine = (
   }
 };
 
-const getCombinedAmenities = (hotelInfo: any): string[] => {
+const getAllAmenitiesForAI = (hotelInfo: any): string[] => {
   const allAmenities: string[] = [];
   
-  // Get facilities from facilityIds and convert to names
+  // Get ALL facilities from facilityIds (no category filtering)
   if (hotelInfo?.facilityIds && Array.isArray(hotelInfo.facilityIds)) {
-    const facilities = hotelInfo.facilityIds
-      .map((id: number) => FACILITIES_ID_TO_NAME[id])
-      .filter(Boolean);
-    allAmenities.push(...facilities);
+    hotelInfo.facilityIds.forEach((id: number) => {
+      // Search through all categories to find this facility ID
+      Object.keys(FACILITIES_ID_TO_NAME).forEach(category => {
+        if (FACILITIES_ID_TO_NAME[category][id]) {
+          const amenityName = FACILITIES_ID_TO_NAME[category][id];
+          if (!allAmenities.includes(amenityName)) {
+            allAmenities.push(amenityName);
+          }
+        }
+      });
+    });
   }
   
   // Get existing amenities
@@ -1438,11 +1446,10 @@ const getCombinedAmenities = (hotelInfo: any): string[] => {
     allAmenities.push(...amenities);
   }
   
-  // Join all amenities and filter out standard ones
+  // Filter out standard amenities and return
   const allAmenitiesText = allAmenities.join(', ');
   const filteredAmenitiesText = filterRelevantAmenities(allAmenitiesText);
   
-  // Convert back to array and add defaults if empty
   const filteredArray = filteredAmenitiesText ? 
     filteredAmenitiesText.split(', ').filter(Boolean) : [];
   
@@ -1450,8 +1457,55 @@ const getCombinedAmenities = (hotelInfo: any): string[] => {
     filteredArray.push('Wi-Fi', 'Private Bathroom', 'Room Service');
   }
   
-  // Return top 3 most relevant amenities
   return filteredArray;
+};
+
+// Simple function to get amenities based on selected categories from the dictionary
+const getCombinedAmenities = (hotelInfo: any, selectedCategories?: string[]): string[] => {
+  const allAmenities: string[] = [];
+  
+  // Get facilities from facilityIds and convert to names
+  if (hotelInfo?.facilityIds && Array.isArray(hotelInfo.facilityIds)) {
+    hotelInfo.facilityIds.forEach((id: number) => {
+      if (selectedCategories && selectedCategories.length > 0) {
+        // If categories are selected, only include amenities from those categories
+        selectedCategories.forEach(category => {
+          if (FACILITIES_ID_TO_NAME[category] && FACILITIES_ID_TO_NAME[category][id]) {
+            const amenityName = FACILITIES_ID_TO_NAME[category][id];
+            if (!allAmenities.includes(amenityName)) {
+              allAmenities.push(amenityName);
+            }
+          }
+        });
+      } else {
+        // If no categories selected, return empty array
+        return;
+      }
+    });
+  }
+  
+  // Get existing amenities from hotel.amenities array
+  if (hotelInfo?.amenities && Array.isArray(hotelInfo.amenities)) {
+    const amenities = hotelInfo.amenities
+      .map((amenity: unknown) => {
+        if (typeof amenity === 'string') return amenity;
+        if (typeof amenity === 'object' && amenity !== null && 'name' in amenity) return (amenity as any).name;
+        return null;
+      })
+      .filter(Boolean);
+    allAmenities.push(...amenities);
+  }
+  
+  // If no categories selected, return empty array
+  if (!selectedCategories || selectedCategories.length === 0) {
+    return [];
+  }
+  
+  // Filter out standard amenities and return
+  const allAmenitiesText = allAmenities.join(', ');
+  const filteredAmenitiesText = filterRelevantAmenities(allAmenitiesText);
+  
+  return filteredAmenitiesText ? filteredAmenitiesText.split(', ').filter(Boolean) : [];
 };
 
 // OPTIMIZED: Create hotel summary using existing data (no additional API calls)
@@ -1460,7 +1514,7 @@ const createHotelSummaryForInsights = (hotel: HotelWithRates, hotelMetadata: any
   const refundablePolicy = extractRefundablePolicy(hotel);
   
   // CHANGED: Now uses filtered amenities
-  const topAmenities = getCombinedAmenities(hotelMetadata);
+  const topAmenities = getAllAmenitiesForAI(hotelMetadata);
   const images = extractHotelImages(hotelMetadata);
   const photoGalleryImages = extractPhotoGalleryFromMetadata(hotelMetadata);
   
@@ -1948,7 +2002,7 @@ export const hotelSearchAndMatchController = async (req: Request, res: Response)
           return;
         }
 
-        const summary = createOptimizedHotelSummaryForAI(rateHotel, hotelMetadata, index, nights);
+        const summary = createOptimizedHotelSummaryForAI(rateHotel, hotelMetadata, index, nights, parsedQuery);
         hotelSummariesForAI.push(summary);
         
       } catch (error) {

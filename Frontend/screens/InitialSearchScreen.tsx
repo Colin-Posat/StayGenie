@@ -629,14 +629,14 @@ const InitialSearchScreen: React.FC<InitialSearchScreenProps> = ({
                   <View style={tw`items-center px-2`}>
                     {/* Mobile-responsive text sizes */}
                     <Text style={[
-                      tw`text-4xl md:text-4xl font-bold text-gray-900 text-center leading-tight mt--4`,
+                      tw`text-4xl md:text-4xl font-bold text-gray-900 text-center leading-tight mt--10`,
                       Platform.OS === 'android' && { fontFamily: 'sans-serif-medium' }
                     ]}>
                       Describe your
                     </Text>
                     <View style={tw`flex-row items-center justify-center`}>
                       <Text style={[
-                        tw`text-4xl md:text-4xl font-bold text-center leading-tight`,
+                        tw`text-4xl md:text-4xl font-bold text-center leading-tight mb--2`,
                         Platform.OS === 'android' && { fontFamily: 'sans-serif-medium' },
                         { 
                           color: TURQUOISE,

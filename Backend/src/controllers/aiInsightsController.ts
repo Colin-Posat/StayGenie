@@ -318,34 +318,39 @@ const getHotelSentimentOptimized = async (hotelId: string): Promise<HotelSentime
 
 const getPhotoGalleryImages = (hotelDetailsData: HotelSentimentData | null): string[] => {
   try {
-    if (!hotelDetailsData?.data?.hotelImages || !Array.isArray(hotelDetailsData.data.hotelImages)) {
+    const imgs = hotelDetailsData?.data?.hotelImages;
+    if (!Array.isArray(imgs) || imgs.length === 0) {
       console.warn('⚠️ No hotel images array found for photo gallery');
       return [];
     }
-    
-    const images = hotelDetailsData.data.hotelImages;
-    console.log(`📸 Processing ${images.length} hotel images for photo gallery`);
-    
-    // Extract up to 10 images, prioritizing HD URLs
-    const photoGallery = images
-      .slice(0, 10) // Take first 10 images
-      .map(image => {
-        // Prefer HD URL, fallback to regular URL
-        const imageUrl = image.urlHd || image.url;
-        console.log(`   Adding image to gallery: ${imageUrl}`);
-        return imageUrl;
-      })
-      .filter(url => url && url.trim() !== ''); // Remove any null/empty URLs
-    
-    console.log(`✅ Photo gallery created with ${photoGallery.length} images`);
-    return photoGallery;
-    
-  } catch (error) {
-    console.warn('❌ Error extracting photo gallery images:', error);
+
+    // Build index order: every other first (0,2,4,...), then fill the gaps (1,3,5,...)
+    const evens: number[] = [];
+    const odds: number[] = [];
+    for (let i = 0; i < imgs.length; i++) {
+      (i % 2 === 0 ? evens : odds).push(i);
+    }
+    const orderedIdx = [...evens, ...odds];
+
+    const out: string[] = [];
+    const seen = new Set<string>();
+
+    for (const i of orderedIdx) {
+      if (out.length >= 10) break;
+      const candidate = imgs[i];
+      const url = (candidate?.urlHd || candidate?.url || '').trim();
+      if (!url || seen.has(url)) continue;
+      seen.add(url);
+      out.push(url);
+    }
+
+    console.log(`✅ Photo gallery (every-other strategy) created with ${out.length} images`);
+    return out;
+  } catch (err) {
+    console.warn('❌ Error extracting photo gallery images:', err);
     return [];
   }
 };
-
 const getRoomOrHotelImages = (hotelDetailsData: HotelSentimentData | null): { firstImage: string | null; secondImage: string | null } => {
   try {
     if (!hotelDetailsData?.data) {
@@ -752,7 +757,7 @@ Generate content + safety rating (1-10 for tourist safety) for EACH hotel.
 GUIDELINES for topAmenities:
 - Pick EXACTLY 3 per hotel
 - First include amenities that match user search if any
-- Then fill with most interesting amenities from hotel's list
+- Then fill with most unqique amenities from hotel's list
 - Capitalize first word
 
 Return JSON array with exactly ${hotels.length} objects:
