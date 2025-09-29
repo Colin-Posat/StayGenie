@@ -1,4 +1,4 @@
-// SearchQueryCarousel.tsx - Fixed loading indicator issue
+// SearchQueryCarousel.tsx - Opens booking link on card click
 import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
@@ -9,7 +9,6 @@ import {
   Dimensions,
   Image,
   ActivityIndicator,
-  Linking,
   Alert,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
@@ -18,10 +17,8 @@ import * as WebBrowser from 'expo-web-browser';
 
 const { width } = Dimensions.get('window');
 const TURQUOISE = '#1df9ff';
-const TURQUOISE_LIGHT = '#5dfbff';
 const TURQUOISE_DARK = '#00d4e6';
-const TURQUOISE_SUBTLE = '#f0feff';
-const TURQUOISE_BORDER = '#b3f7ff';
+const DEEP_LINK_BASE_URL = 'https://staygenie.nuitee.link';
 
 const cardWidth = 170;
 const cardHeight = 170;
@@ -37,9 +34,11 @@ interface Hotel {
   city?: string;
   country?: string;
   fullAddress?: string;
+  placeId?: string;
+  tags?: string[];
+  isRefundable?: boolean;
 }
 
-// Add the in-app browser function from SwipeableHotelStoryCard
 const openInAppBrowser = async (url: string) => {
   try {
     await WebBrowser.openBrowserAsync(url, {
@@ -60,22 +59,75 @@ const openInAppBrowser = async (url: string) => {
   }
 };
 
-// Add the Google Maps link generator from SwipeableHotelStoryCard
-const generateGoogleMapsLink = (hotel: Hotel): string => {
-  let query = '';
+// Generate booking deep link with next month's dates
+const generateBookingDeepLink = (hotel: Hotel): string => {
+  let url = `${DEEP_LINK_BASE_URL}/hotels/${hotel.id}`;
+  const params = new URLSearchParams();
 
-  const locationText = hotel.city && hotel.country 
-    ? `${hotel.name} ${hotel.city} ${hotel.country}`
-    : hotel.fullAddress 
-    ? `${hotel.name} ${hotel.fullAddress}`
-    : `${hotel.name} ${hotel.location}`;
-  query = encodeURIComponent(locationText);
-  console.log(`📍 Using location text: ${locationText}`);
-  
-  return `https://www.google.com/maps/search/?api=1&query=${query}`;
+  // Calculate dates for next month (30 days from now for 3 nights)
+  const today = new Date();
+  const checkIn = new Date(today);
+  checkIn.setDate(today.getDate() + 30);
+  const checkOut = new Date(checkIn);
+  checkOut.setDate(checkIn.getDate() + 3);
+
+  const checkinStr = checkIn.toISOString().split('T')[0];
+  const checkoutStr = checkOut.toISOString().split('T')[0];
+
+  if (hotel.placeId) {
+    params.append('placeId', hotel.placeId);
+  }
+
+  params.append('checkin', checkinStr);
+  params.append('checkout', checkoutStr);
+
+  // Default occupancy: 2 adults
+  const defaultOccupancy = [{ adults: 2, children: [] }];
+  try {
+    const occupanciesString = btoa(JSON.stringify(defaultOccupancy));
+    params.append('occupancies', occupanciesString);
+  } catch (error) {
+    console.warn('Failed to encode occupancy:', error);
+  }
+
+  // Add special tags if present
+  if (hotel.tags?.includes('All Inclusive')) {
+    params.append('needAllInclusive', '1');
+  }
+  if (hotel.tags?.includes('Breakfast Included')) {
+    params.append('needBreakfast', '1');
+  }
+  if (hotel.isRefundable) {
+    params.append('needFreeCancellation', '1');
+  }
+
+  const queryString = params.toString();
+  return queryString ? `${url}?${queryString}` : url;
 };
 
-// Custom hook for intersection observer style lazy loading
+// Image cache
+class ImageCache {
+  private static cache = new Map<string, boolean>();
+  
+  static isImageCached(uri: string): boolean {
+    return this.cache.has(uri);
+  }
+  
+  static markImageCached(uri: string): void {
+    this.cache.set(uri, true);
+  }
+  
+  static preloadImages(uris: string[]): void {
+    uris.forEach(uri => {
+      Image.prefetch(uri).then(() => {
+        this.markImageCached(uri);
+      }).catch(error => {
+        console.warn('Failed to preload image:', uri, error);
+      });
+    });
+  }
+}
+
 const useLazyLoading = (threshold: number = 150) => {
   const [isVisible, setIsVisible] = useState(false);
   const [hasLoaded, setHasLoaded] = useState(false);
@@ -117,30 +169,6 @@ const useLazyLoading = (threshold: number = 150) => {
   return { isVisible, elementRef, hasLoaded };
 };
 
-// Image cache for React Native Image component
-class ImageCache {
-  private static cache = new Map<string, boolean>();
-  
-  static isImageCached(uri: string): boolean {
-    return this.cache.has(uri);
-  }
-  
-  static markImageCached(uri: string): void {
-    this.cache.set(uri, true);
-  }
-  
-  static preloadImages(uris: string[]): void {
-    uris.forEach(uri => {
-      Image.prefetch(uri).then(() => {
-        this.markImageCached(uri);
-      }).catch(error => {
-        console.warn('Failed to preload image:', uri, error);
-      });
-    });
-  }
-}
-
-// Lazy Loading Image Component
 interface LazyImageProps {
   source: { uri: string };
   style: any;
@@ -221,7 +249,6 @@ const HotelCard: React.FC<HotelCardProps> = ({ hotel, onPress, index }) => {
   const threshold = 150 + (index * 50);
   const { isVisible, elementRef, hasLoaded } = useLazyLoading(threshold);
 
-  // Reset loading states when visibility changes
   useEffect(() => {
     if (isVisible && !hasLoaded) {
       setImageLoading(true);
@@ -289,20 +316,20 @@ const HotelCard: React.FC<HotelCardProps> = ({ hotel, onPress, index }) => {
     return price.toString();
   };
 
-  // Updated handlePress to use in-app browser
-const handlePress = async () => {
-  try {
-    const mapsLink = generateGoogleMapsLink(hotel);
-    console.log(`🗺️ Opening Google Maps (web) in-app: ${mapsLink}`);
-    await openInAppBrowser(mapsLink);
-    onPress(); // Still call the original onPress for any additional functionality
-  } catch (error) {
-    console.error('Error opening Google Maps:', error);
-    Alert.alert('Unable to Open Maps', 'Please check your internet connection and try again.', [
-      { text: 'OK', onPress: () => onPress() },
-    ]);
-  }
-};
+  // UPDATED: Now opens booking link instead of Google Maps
+  const handlePress = async () => {
+    try {
+      const bookingLink = generateBookingDeepLink(hotel);
+      console.log(`🏨 Opening booking link in-app: ${bookingLink}`);
+      await openInAppBrowser(bookingLink);
+      onPress(); // Still call the original onPress for any additional functionality
+    } catch (error) {
+      console.error('Error opening booking link:', error);
+      Alert.alert('Unable to Open Booking', 'Please check your internet connection and try again.', [
+        { text: 'OK', onPress: () => onPress() },
+      ]);
+    }
+  };
 
   const handleImageLoadStart = () => {
     setImageLoading(true);
@@ -407,19 +434,17 @@ const handlePress = async () => {
             </View>
           )}
 
-          {/* Loading indicator - only show when actually loading */}
           {imageLoading && !imageError && !imageLoaded && isVisible && (
             <View style={tw`absolute inset-0 items-center justify-center bg-black/20`}>
               <ActivityIndicator size="small" color={TURQUOISE} />
             </View>
           )}
           
-          {/* Gradient overlay - only show when image is loaded */}
           {imageLoaded && !imageError && isVisible && (
             <View style={tw`absolute bottom-0 left-0 right-0 h-12 bg-gradient-to-t from-black/70 to-transparent`} />
           )}
 
-          {/* Price Badge - Top Right */}
+          {/* Price Badge */}
           <View style={tw`absolute top-3 right-3`}>
             <View style={[
               tw`px-2.5 py-1.5 rounded-xl border`,
@@ -443,7 +468,7 @@ const handlePress = async () => {
             </View>
           </View>
 
-          {/* Hotel name at bottom */}
+          {/* Hotel name */}
           <View style={tw`absolute bottom-3 left-3 right-3`}>
             <View style={[
               tw`px-2.5 py-2 rounded-xl border`,
@@ -474,13 +499,12 @@ const handlePress = async () => {
   );
 };
 
-// Single carousel row component
 interface SearchQueryCarouselProps {
   onSearchPress: (query: string) => void;
   onHotelPress?: (hotel: Hotel) => void;
   index?: number;
-  searchQuery: string; // Now required - passed from parent
-  hotels: Hotel[]; // Now required - passed from parent
+  searchQuery: string;
+  hotels: Hotel[];
 }
 
 const SearchQueryCarousel: React.FC<SearchQueryCarouselProps> = ({
@@ -494,7 +518,6 @@ const SearchQueryCarousel: React.FC<SearchQueryCarouselProps> = ({
   const slideAnimation = useRef(new Animated.Value(30)).current;
   const [isChevronPressed, setIsChevronPressed] = useState(false);
 
-  // Animation when component mounts
   useEffect(() => {
     const delay = index * 200;
     setTimeout(() => {
@@ -513,7 +536,6 @@ const SearchQueryCarousel: React.FC<SearchQueryCarouselProps> = ({
     }, delay);
   }, [index]);
 
-  // Preload images for better performance
   useEffect(() => {
     if (hotels && hotels.length > 0) {
       const imageUris = hotels.map(hotel => hotel.image).filter(Boolean);
@@ -531,7 +553,6 @@ const SearchQueryCarousel: React.FC<SearchQueryCarouselProps> = ({
     onHotelPress?.(hotel);
   };
 
-  // Don't render if no data
   if (!searchQuery || !hotels || hotels.length === 0) {
     return null;
   }
@@ -546,7 +567,7 @@ const SearchQueryCarousel: React.FC<SearchQueryCarouselProps> = ({
         },
       ]}
     >
-      {/* Search Query Header with consistent styling */}
+      {/* Search Query Header */}
       <TouchableOpacity
         onPress={handleSearchPress}
         activeOpacity={0.8}
