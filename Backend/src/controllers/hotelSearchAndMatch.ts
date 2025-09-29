@@ -106,6 +106,7 @@ class PerformanceLogger {
 
 // Configuration
 const SMART_HOTEL_LIMIT = parseInt(process.env.SMART_HOTEL_LIMIT || '100'); // More hotels to choose from
+const PRICE_CONSTRAINED_LIMIT = 1000; 
 const TARGET_HOTEL_COUNT = 15;
 
 // OpenAI instance
@@ -1827,6 +1828,10 @@ export const hotelSearchAndMatchController = async (req: Request, res: Response)
       }
     }
 
+    const hasPriceConstraint = !!(parsedQuery.minCost || parsedQuery.maxCost);
+const hotelFetchLimit = hasPriceConstraint ? PRICE_CONSTRAINED_LIMIT : SMART_HOTEL_LIMIT;
+
+
     const nights = Math.ceil((new Date(parsedQuery.checkout).getTime() - new Date(parsedQuery.checkin).getTime()) / (1000 * 60 * 60 * 24));
 
     // STEP 2: Fetch hotels with ALL metadata
@@ -1837,18 +1842,20 @@ export const hotelSearchAndMatchController = async (req: Request, res: Response)
       destination: `${parsedQuery.cityName}, ${parsedQuery.countryCode}`
     });
     
-    logger.startStep('2-FetchHotelsWithMetadata', { limit: SMART_HOTEL_LIMIT, city: parsedQuery.cityName, country: parsedQuery.countryCode });
+    logger.startStep('2-FetchHotelsWithMetadata', {limit: hotelFetchLimit, 
+  city: parsedQuery.cityName, 
+  country: parsedQuery.countryCode,
+  hasPriceConstraint  });
     
     const hotelsSearchResponse = await liteApiInstance.get('/data/hotels', {
-      params: {
-        countryCode: parsedQuery.countryCode,
-        cityName: parsedQuery.cityName,
-        language: 'en',
-        limit: SMART_HOTEL_LIMIT,
-
-      },
-      timeout: 30000
-    });
+  params: {
+    countryCode: parsedQuery.countryCode,
+    cityName: parsedQuery.cityName,
+    language: 'en',
+    limit: hotelFetchLimit,
+  },
+  timeout: 30000
+});
 
     const hotels = hotelsSearchResponse.data?.data || hotelsSearchResponse.data;
 
@@ -1891,70 +1898,125 @@ export const hotelSearchAndMatchController = async (req: Request, res: Response)
     
     logger.endStep('3-BuildMetadataMap', { metadataEntries: hotelMetadataMap.size });
 
-    // STEP 4: Fetch rates for all hotels
-    const hotelIds = hotels.map((hotel: any) => 
-      hotel.id || hotel.hotelId || hotel.hotel_id || hotel.code
-    ).filter(Boolean);
+    // STEP 4: Fetch rates with split strategy for price-constrained searches
+const hotelIds = hotels.map((hotel: any) => 
+  hotel.id || hotel.hotelId || hotel.hotel_id || hotel.code
+).filter(Boolean);
 
-    sendUpdate('progress', { 
-      message: 'Checking prices and availability for your dates...', 
-      step: 4, 
-      totalSteps: 8,
-      checkin: parsedQuery.checkin,
-      checkout: parsedQuery.checkout
-    });
+sendUpdate('progress', { 
+  message: 'Checking prices and availability for your dates...', 
+  step: 4, 
+  totalSteps: 8,
+  checkin: parsedQuery.checkin,
+  checkout: parsedQuery.checkout,
+  strategy: hasPriceConstraint && hotelIds.length >= 400 ? 'split' : 'single'
+});
 
-    logger.startStep('4-FetchRates', { hotelCount: hotelIds.length, checkin: parsedQuery.checkin, checkout: parsedQuery.checkout });
+logger.startStep('4-FetchRates', { 
+  hotelCount: hotelIds.length, 
+  checkin: parsedQuery.checkin, 
+  checkout: parsedQuery.checkout,
+  strategy: hasPriceConstraint && hotelIds.length >= 400 ? 'split-concurrent' : 'single-call'
+});
 
-    const ratesRequestBody = {
-      checkin: parsedQuery.checkin,
-      checkout: parsedQuery.checkout,
-      currency: 'USD',
-      guestNationality: 'US',
-      occupancies: [ 
-        {
-          adults: parsedQuery.adults || 2,
-          children: parsedQuery.children ? Array(parsedQuery.children).fill(10) : []
-        }
-      ],
-      timeout: 4,
-      maxRatesPerHotel: 1,
-      hotelIds: hotelIds,
-      limit: 500
-    };
-
-    const ratesResponse = await liteApiInstance.post('/hotels/rates', ratesRequestBody, {
-      timeout: 20000
-    });
-
-    let hotelsWithRates = ratesResponse.data?.data || ratesResponse.data || [];
-
-    // Ensure hotelsWithRates is always an array
-    if (!Array.isArray(hotelsWithRates)) {
-      if (hotelsWithRates && typeof hotelsWithRates === 'object') {
-        if (Array.isArray(hotelsWithRates.hotels)) {
-          hotelsWithRates = hotelsWithRates.hotels;
-        } else if (Array.isArray(hotelsWithRates.data)) {
-          hotelsWithRates = hotelsWithRates.data;
-        } else if (Array.isArray(hotelsWithRates.results)) {
-          hotelsWithRates = hotelsWithRates.results;
-        } else {
-          hotelsWithRates = [hotelsWithRates];
-        }
-      } else {
-        hotelsWithRates = [];
-      }
+const baseRatesRequest = {
+  checkin: parsedQuery.checkin,
+  checkout: parsedQuery.checkout,
+  currency: 'USD',
+  guestNationality: 'US',
+  occupancies: [ 
+    {
+      adults: parsedQuery.adults || 2,
+      children: parsedQuery.children ? Array(parsedQuery.children).fill(10) : []
     }
-    searchCostTracker.startSearch(
-    searchId, 
-    userInput, 
-    `${parsedQuery.cityName}, ${parsedQuery.countryCode}`,
-    hotelsWithRates.length
-  );
+  ],
+  timeout: 4,
+  maxRatesPerHotel: 1,
+  limit: 500
+};
 
+let hotelsWithRates: any[] = [];
 
-    logger.endStep('4-FetchRates', { hotelsWithRates: hotelsWithRates.length });
+// Split strategy for price-constrained searches with 400+ hotels
+if (hasPriceConstraint && hotelIds.length >= 400) {
+  console.log(`💰 Price constraint detected with ${hotelIds.length} hotels - using split concurrent strategy`);
+  
+  const firstHalf = hotelIds.slice(0, 500);
+  const secondHalf = hotelIds.slice(-500);
+  
+  console.log(`📊 Split: First 500 hotels + Last 500 hotels (${firstHalf.length + secondHalf.length} total)`);
+  
+  // Make both requests concurrently with 4 second timeout
+  const [firstResponse, secondResponse] = await Promise.allSettled([
+    liteApiInstance.post('/hotels/rates', {
+      ...baseRatesRequest,
+      hotelIds: firstHalf
+    }, { timeout: 4000 }),
+    
+    liteApiInstance.post('/hotels/rates', {
+      ...baseRatesRequest,
+      hotelIds: secondHalf
+    }, { timeout: 4000 })
+  ]);
+  
+  // Extract results from both calls
+  const firstBatch = firstResponse.status === 'fulfilled' 
+    ? (firstResponse.value.data?.data || firstResponse.value.data || [])
+    : [];
+    
+  const secondBatch = secondResponse.status === 'fulfilled'
+    ? (secondResponse.value.data?.data || secondResponse.value.data || [])
+    : [];
+  
+  console.log(`✅ Split results: ${firstBatch.length} from first half, ${secondBatch.length} from second half`);
+  
+  // Combine and deduplicate by hotelId
+  const combinedMap = new Map();
+  [...firstBatch, ...secondBatch].forEach((hotel: any) => {
+    const id = hotel.hotelId || hotel.id || hotel.hotel_id;
+    if (id && !combinedMap.has(id)) {
+      combinedMap.set(id, hotel);
+    }
+  });
+  
+  hotelsWithRates = Array.from(combinedMap.values());
+  console.log(`🔗 Combined: ${hotelsWithRates.length} unique hotels after deduplication`);
+  
+} else {
+  // Single call for non-price-constrained or smaller searches
+  console.log(`📞 Using single rate call for ${hotelIds.length} hotels`);
+  
+  const ratesResponse = await liteApiInstance.post('/hotels/rates', {
+    ...baseRatesRequest,
+    hotelIds: hotelIds
+  }, { timeout: 20000 });
+  
+  hotelsWithRates = ratesResponse.data?.data || ratesResponse.data || [];
+}
 
+// Ensure hotelsWithRates is always an array (existing normalization logic)
+if (!Array.isArray(hotelsWithRates)) {
+  if (hotelsWithRates && typeof hotelsWithRates === 'object' && hotelsWithRates !== null) {
+    // Use type assertion to avoid 'never' error
+    const ratesObj = hotelsWithRates as Record<string, unknown>;
+    if (Array.isArray((ratesObj as any).hotels)) {
+      hotelsWithRates = (ratesObj as any).hotels;
+    } else if (Array.isArray((ratesObj as any).data)) {
+      hotelsWithRates = (ratesObj as any).data;
+    } else if (Array.isArray((ratesObj as any).results)) {
+      hotelsWithRates = (ratesObj as any).results;
+    } else {
+      hotelsWithRates = [hotelsWithRates];
+    }
+  } else {
+    hotelsWithRates = [];
+  }
+}
+
+logger.endStep('4-FetchRates', { 
+  hotelsWithRates: hotelsWithRates.length,
+  strategy: hasPriceConstraint && hotelIds.length >= 400 ? 'split-concurrent' : 'single-call'
+});
     if (hotelsWithRates.length === 0) {
       if (isSSERequest) {
         sendUpdate('error', {
@@ -2031,11 +2093,12 @@ export const hotelSearchAndMatchController = async (req: Request, res: Response)
 
     // STEP 6: Apply hard price filter BEFORE AI matching
     sendUpdate('progress', { 
-      message: 'Filtering hotels by your budget preferences...', 
-      step: 6, 
-      totalSteps: 8
-    });
-
+  message: hasPriceConstraint 
+    ? `Filtering ${hotelsWithRates.length} hotels by your budget (${parsedQuery.minCost ? `$${parsedQuery.minCost}+` : ''}${parsedQuery.minCost && parsedQuery.maxCost ? ' - ' : ''}${parsedQuery.maxCost ? `$${parsedQuery.maxCost}` : ''})...`
+    : 'Analyzing hotel options...', 
+  step: 6, 
+  totalSteps: 8
+});
     logger.startStep('6-PriceFilter', { 
       originalCount: hotelSummariesForAI.length,
       minCost: parsedQuery.minCost,
