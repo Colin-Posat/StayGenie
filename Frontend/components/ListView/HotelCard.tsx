@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { View, Text, TouchableOpacity, Image, Linking, Alert } from 'react-native';
+import { View, Text as RNText, TouchableOpacity, Image, Linking, Alert } from 'react-native';
+import { Text } from '../../components/CustomText'; 
 import { Ionicons } from '@expo/vector-icons';
 import tw from 'twrnc';
 

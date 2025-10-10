@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   View,
-  Text,
+  Text as RNText,
   TouchableOpacity,
   SafeAreaView,
   StatusBar,
@@ -14,6 +14,7 @@ import {
   LayoutAnimation,
   Platform,
 } from 'react-native';
+import { Text } from '../components/CustomText'; 
 import { Ionicons } from '@expo/vector-icons';
 import { useFocusEffect } from '@react-navigation/native';
 import tw from 'twrnc';

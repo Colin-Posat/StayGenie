@@ -1,0 +1,80 @@
+
+=== HOTEL MATCHING PROMPT LOG ===
+Search ID: af439a22-268a-49c8-a6de-8a8fdc1d7228
+Timestamp: 2025-10-09T22:56:47.348Z
+User Query: Beachfront hotels in Maldives with infinity pools
+Destination: Maafushi, MV
+Hotel Count: 19
+Character Count: 9057
+Estimated Tokens: ~2265
+
+=== PROMPT CONTENT ===
+USER REQUEST: "Beachfront hotels in Maldives with infinity pools"
+STAY: 3 nights
+
+🎯 RANKING PRIORITY ORDER:
+1. USER PREFERENCES MATCH (Most Important)
+2. Location convenience
+3. Star rating and quality
+4. Value for money
+
+🎯 YOUR PRIMARY TASK: Analyze each hotel's description and amenities to find the BEST matches for: "Beachfront hotels in Maldives with infinity pools"
+
+📋 STEP-BY-STEP MATCHING PROCESS:
+1. READ each hotel's description carefully for keywords matching user request
+2. CHECK amenities list for relevant features 
+3. PRIORITIZE hotels that mention specific user requirements in their text
+4. RANK by relevance to user request, NOT by list position
+
+🔍 KEYWORD MATCHING EXAMPLES:
+- User wants "Central Park" → Look for "Central Park", "near park", "park views" in descriptions
+- User wants "free breakfast" → Look for "breakfast", "complimentary breakfast", "free breakfast" 
+- User wants "spa" → Look for "spa", "wellness", "massage", "treatments"
+- User wants "business hotel" → Look for "business", "conference", "meeting rooms"
+- User wants "budget" → Prioritize lower prices and "value" mentions
+- User wants "luxury" → Look for "luxury", "premium", "upscale", higher star ratings
+
+⚠️ CRITICAL RULES:
+- IGNORE the order hotels appear in the list - analyze content only
+- You MUST select exactly 15 hotels using their exact names from the list
+- Base rankings on how well each hotel matches "Beachfront hotels in Maldives with infinity pools", not on price or list position
+- If a hotel explicitly mentions user requirements, rank it higher
+- If no perfect matches exist, select the 15 closest matches available
+
+📝 REQUIRED OUTPUT FORMAT:
+1. [exact hotel name from list] | [match percentage 1-100]%
+2. [exact hotel name from list] | [match percentage 1-100]%
+3. [exact hotel name from list] | [match percentage 1-100]%
+...continue through 15
+
+Format (exact numbering required):
+1. [exact hotel name from list] | [match percentage]%
+2. [exact hotel name from list] | [match percentage]%
+3. [exact hotel name from list] | [match percentage]%
+...continue through...
+15. [exact hotel name from list] | [match percentage]%
+
+HOTELS AVAILABLE:
+1: Velana Beach Hotel Maldives | $148/night | | paradise Velana Beach Hotel Maldives, sun, sand, stunning views await you!Private Beach AccessRelax private beach, steps from rooms. a day of sunbathing partake exciting water activities, ensuring beach nothing short of spectacular.Culinary DelightsSavor delectable meals Kaalamaa Restaurant,| Private beach nearby 
+2: Rosemary Boutique | $111/night | | rooms MaafushiExquisite Dining culinary journey on-site restaurant offering delectable dishes memorable dining.Unwind RelaxEnjoy serene ambiance of garden terrace, perfect unwinding day of exploration adventure. with Easelocated, hotel bike hire guests to beautiful surroundings of Maafushi| Hot tub, Pool loungers, Beach toys 
+3: Island Ambience | $178/night | | Lush Garden OasisEscape to Island Ambience, sustainable guest house Maafushi offering serene garden setting picturesque views.Family-Friendly AtmosphereEnjoy convenience of 24h desk, welcoming family-friendly restaurant, charming terrace relaxation.Comfortable roomssIndulge well-equipped units| Beach toys 
+4: Maafushi | $69/night | | Relaxation FingertipsIndulge onsite massages free Wi-Fi, grilling charcoal BBQs. A continental breakfast served daily, friendly staff available front desk during limited hours.Comfortable roomssUnwind one of 12 air-conditioned rooms, each equipped minibar, LCD TV, complimentary Wi-Fi. Refresh|  
+5: Lea Spa Hotel | $201/night | | Beachfront 3-Star roomsLea Spa Hotel Maafushi beachfront 3-star shared lounge, terrace, bar. the convenience of concierge, tour desk, free WiFi.Comfortable Rooms Modern AmenitiesRelax rooms equipped kettle, flat-screen TV, AC, ensuite free toiletries. Some rooms feature balcony picturesque| Beach club nearby (paid), Beach toys 
+6: Kaani Beach Hotel | $120/night | | Tropical Paradise SettingNestled Maafushi Island, Kaani Beach Hotel sunny beach escape surrounded swaying coconut palm trees.Exciting On-Site ActivitiesGuests thrilling adventures like scuba diving, island picnics, dolphin watching, snorkeling, ensuring unforgettable stay.Modern Comforts| Pool loungers, Beach club nearby (paid), Beach toys 
+7: Kaani Village & Spa | $129/night | | Outdoor pool Spa TreatmentsIndulge relaxation Kaani Village & Spa's outdoor pool soothing spa treatments, perfect unwinding day of adventure.Diverse Water-Sport Activities thrill of diving, snorkeling, scuba-diving activities arranged upon request, making stay Maafushi Island unforgettable.Scenic| Pool, Pool loungers 
+8: iCom Marina Sea View | $302/night | | Scenic Views Convenient AmenitiesTake views from garden make use of amenities such complimentary wireless internet access concierges. This hotel arcade/game room, gift shops/newsstands, wedding services.Dining Options Socializing SpacesGrab bite Outside hut, one of hotel's 2 restaurants, stay take|  
+9: Arena Beach Hotel | $165/night | | slice of paradise Arena Beach Hotel, relaxation meets adventure heart of Maafushi.Private Beach OasisUnwind pristine private beach, dive into indoor pool to refreshing escape. With various recreational amenities, relaxation priority.Gourmet DiningSavor international cuisine Coco Grill Restaurant| Private beach, Beach loungers, Pool loungers 
+10: Lagoona Sunset | $80/night | | roomsDiscover comfort convenience Lagoona Sunset, 3-star hotel heart of Maafushi. in air-conditioned rooms equipped modern amenities like flat-screen TV, minibar, safety deposit box. a relaxing stay room svc free WiFi fingertips.quality services top-notch services including 24h desk, concierge,|  
+11: Crystal Sands Villa | $146/night | | Designated Smoking AreasDining OptionsConvenient ServicesEnjoy convenience of designated smoking areas, dining restaurant, room svc during limited hours. The hotel 24h desk service complimentary coffee/tea common area. With individually furnished guestrooms featuring complimentary Wi-Fi cable|  
+12: Arena Beach Hotel | $141/night | | Modern rooms Free WiFiArena Beach Hotel, located Maafushi, modern tranquil rooms free WiFi access throughout property, ensuring guests stay connected effortlessly.Water Sports Activities RelaxationGuests variety of water sports activities like diving, snorkelling, windsurfing right on-site. After| Pool, Infinity pool, Beach umbrellas, Pool loungers, Beach club nearby (paid), Beach toys 
+13: WhiteShell Island Hotel & Spa | $172/night | | Spa ServicesIndulge soothing massages spa treatments during stay hotel.Dining Entertainment OptionsSavor delicious meals restaurant, grab snacks cafes, drinks bar/lounge.Convenient Amenities ServicesBenefit from complimentary shuttle service, concierge assistance, free valet parking| Beach umbrellas, Beach towels 
+14: Seven Corals | $104/night | | Stunning ViewsEnjoy beautiful garden views relax peaceful surroundings of property.Dining OptionsIndulge delicious meals on-site restaurant grab quick snack coffee shop/cafe.Convenient AmenitiesBenefit from services like room svc, dry cleaning, luggage storage comfortable stay.Stay Seven Corals|  
+15: Salt Beach Hotel | $70/night | | luxuryIndulge complimentary wireless internet access, concierges, free babysitting. The rooftop terrace garden offer stunning views, barbecue grills perfect cozy evening.Gourmet DiningSavor delicious meals on-site restaurant grab quick bite coffee shop/cafe. 24-hour room svc ensures satisfy|  
+16: Kaani Palm Beach | $238/night | | Spa ServicesIndulge massages, body treatments, facials full-service spa relaxing rejuvenation.Recreational AmenitiesUnwind outdoor pool stay active gym day hotel's private beach perfect blend of leisure activity.Fine Dining ViewEnjoy delectable meals Palm Beach Restaurant stunning ocean view| Private beach, Beach loungers, Beach towels, Beach yoga 
+17: Kuredhi Beach Inn | $196/night | | roomss comfort style Kuredhi Beach Inn Maafushi. Each air-conditioned room equipped flat-screen TV, kettle, ensuite. complimentary toiletries stay connected free WiFi throughout property.Convenient AmenitiesOur hotel on-site restaurant dining pleasure 24h desk convenience. diving, there plenty of|  
+18: Maamadi Boutique | $145/night | | Spa ServicesIndulge massages, body treatments, facials exquisite spa to rejuvenate body mind.Convenient AmenitiesEnjoy complimentary Wi-Fi, concierges, on-site shopping hassle-free stay.Exquisite Dining delicious meals Blue Bandiya grab quick bite coffee shop, daily breakfast options await from|  
+19: Kaani Grand Seaview | $156/night | | Spa, gym, Conference Room - relaxation spa, stay active gym, host successful events conference room Kaani Grand Seaview.Ocean View Rooms Private Balcony - of ocean views from private balcony air-conditioned room equipped modern amenities like flat-screen TV, minibar, personal safe.Beachfront Dining| Pool loungers, Beach club nearby (paid), Beach toys 
+
+REMEMBER: Always select 15 hotels using exact names from the list above.
+
+=== END LOG ===

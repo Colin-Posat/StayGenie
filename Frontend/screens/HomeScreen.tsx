@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   View,
-  Text,
+  Text as RNText,
   TouchableOpacity,
   SafeAreaView,
   StatusBar,
@@ -14,6 +14,7 @@ import {
   StyleSheet,
   TextInput
 } from 'react-native';
+import { Text } from '../components/CustomText'; 
 import { Ionicons } from '@expo/vector-icons';
 import tw from 'twrnc';
 import SwipeableStoryView from '../components/StoryView/SwipeableStoryView';
@@ -30,6 +31,7 @@ import type { BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import SearchErrorScreen from '../components/HomeScreenTop/NoHotelsFoundScreen';
 const OVERLAY_BACKDROP = 'rgba(0,0,0,0.7)';
 import dotenv from 'dotenv';
+import { useFonts } from 'expo-font';
 
 import { useAuth } from '../contexts/AuthContext';
 
@@ -329,7 +331,7 @@ interface Hotel {
   safetyJustification?: string; 
 }
 const BASE_URL = __DEV__ ? 'http://localhost:3003' : "https://staygenie-wwpa.onrender.com";
-
+//const BASE_URL ="https://staygenie-wwpa.onrender.com"
 
 
 import { Dimensions } from 'react-native';
@@ -375,7 +377,11 @@ const [showErrorScreen, setShowErrorScreen] = useState(false);
 const [streamingProgress, setStreamingProgress] = useState({ step: 0, totalSteps: 8, message: '' });
 const [streamedHotels, setStreamedHotels] = useState<Hotel[]>([]);
 const [firstHotelFound, setFirstHotelFound] = useState(false);
-  
+  const [fontsLoaded] = useFonts({
+  'Merriweather-Bold': require('../assets/fonts/Merriweather_36pt-Bold.ttf'),
+  'Merriweather-Regular': require('../assets/fonts/Merriweather_36pt-Regular.ttf'),
+});
+
   // Legacy state for backward compatibility
   const [searchResults, setSearchResults] = useState<OptimizedSearchResponse | null>(null);
   
@@ -1666,261 +1672,258 @@ const handleBackPress = useCallback(() => {
       ]}
     >
 
-      {/* COMPACT HEADER WITH INTEGRATED BACK BUTTON */}
-
-
-{/* ENHANCED COMPACT HEADER WITH INTEGRATED SEARCH PILLS */}
-{/* SLEEK MODERN COMPACT HEADER */}
+{/* UPDATED HEADER - Matches Hotel Card Style */}
 <View style={tw`px-4 pt-2 pb-3 bg-gray-50`}>
   {searchQuery.trim().length > 0 ? (
     <Animated.View
       style={[
-        tw`bg-white rounded-2xl border overflow-hidden`,
-        { 
-          borderColor: '#E5E7EB',
+        {
+          borderRadius: 16,
+          backgroundColor: '#fff',
           shadowColor: '#000',
-          shadowOffset: { width: 0, height: 2 },
-          shadowOpacity: 0.08,
-          shadowRadius: 12,
-          elevation: 4,
-          transform: [{ scale: normalHeaderScale }] 
-        },
+          shadowOffset: { width: 0, height: 1 },
+          shadowOpacity: 0.1,
+          shadowRadius: 2,
+          elevation: 3,
+          transform: [{ scale: normalHeaderScale }]
+        }
       ]}
     >
-      {!isEditingSearch ? (
-        // NORMAL MODE - Sleek compact design
-        <TouchableOpacity
-          style={tw`px-4 py-3`}
-          onPress={handleEditSearchPress}
-          activeOpacity={0.8}
-          disabled={isBusy}
-        >
-          <View style={tw`flex-row items-center justify-between`}>
-            {/* Left section - Back button + Search content */}
-            <View style={tw`flex-row items-center flex-1 min-w-0`}>
-              <TouchableOpacity
-                style={[
-                  tw`w-7 h-7 items-center justify-center rounded-full mr-3 flex-shrink-0`,
-                  { backgroundColor: '#F8FAFC' }
-                ]}
-                onPress={handleBackPress}
-                activeOpacity={0.8}
-              >
-                <Ionicons name="arrow-back" size={14} color="#64748B" />
-              </TouchableOpacity>
-              
-              {/* Search query and details in compact layout */}
-              <View style={tw`flex-1 min-w-0`}>
-                <Text 
-                  style={tw`text-gray-900 text-sm font-semibold leading-tight mb-0.5`}
-                  numberOfLines={2}
-                  ellipsizeMode="tail"
+      <View style={{
+        borderRadius: 16,
+        borderWidth: 1,
+        borderColor: '#E5E7EB',
+        backgroundColor: '#fff',
+        overflow: 'hidden',
+      }}>
+        {!isEditingSearch ? (
+          // NORMAL MODE
+          <TouchableOpacity
+            style={tw`px-4 py-3`}
+            onPress={handleEditSearchPress}
+            activeOpacity={0.8}
+            disabled={isBusy}
+          >
+            <View style={tw`flex-row items-center justify-between`}>
+              <View style={tw`flex-row items-center flex-1 min-w-0`}>
+                <TouchableOpacity
+                  style={[
+                    tw`w-8 h-8 items-center justify-center rounded-xl mr-3 flex-shrink-0`,
+                    { backgroundColor: '#F9FAFB' }
+                  ]}
+                  onPress={handleBackPress}
+                  activeOpacity={0.7}
+                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
                 >
-                  {searchQuery}
-                </Text>
+                  <Ionicons name="arrow-back" size={16} color="#374151" />
+                </TouchableOpacity>
                 
-                {/* Inline trip details with minimal spacing */}
-                <View style={tw`flex-row items-center`}>
-                  <View style={tw`flex-row items-center`}>
-                    <Ionicons name="calendar" size={11} color="#00d4e6" />
-                    <Text style={tw`text-gray-500 text-xs font-medium ml-1`}>
-                      {hasFinalizedDates && confirmedCheckInDate && confirmedCheckOutDate
-                        ? formatDateRange(confirmedCheckInDate, confirmedCheckOutDate)
-                        : formatDateRange(checkInDate, checkOutDate)
-                      }
-                    </Text>
-                  </View>
+                <View style={tw`flex-1 min-w-0`}>
+                  <Text 
+                    style={{
+                      fontFamily: 'Merriweather-Regular',
+                      fontSize: 14,
+                      lineHeight: 18,
+                      color: '#111827',
+                      marginBottom: 4,
+                    }}
+                    numberOfLines={2}
+                    ellipsizeMode="tail"
+                  >
+                    {searchQuery}
+                  </Text>
                   
-                  <View style={tw`w-1 h-1 rounded-full bg-gray-300 mx-2`} />
-                  
-                  <View style={tw`flex-row items-center`}>
-                    <Ionicons name="people" size={11} color="#00d4e6" />
-                    <Text style={tw`text-gray-500 text-xs font-medium ml-1`}>
-                      {formatGuestInfo(adults, children)}
-                    </Text>
-                  </View>
-                  
-                  {/* Compact status indicator */}
-                {(isBusy || displayHotels.filter(h => !h.isPlaceholder).length > 0) && (
-                  <>
-                    <View style={tw`w-1 h-1 rounded-full bg-gray-300 mx-2`} />
+                  <View style={tw`flex-row items-center flex-wrap`}>
                     <View style={tw`flex-row items-center`}>
-                      <Ionicons 
-  name={isBusy ? "home-outline" : "home"} 
-  size={11} 
-  color={isBusy ? "#00d4e6" : "#00d4e6"} 
-/>
-                      <Text style={[
-                        tw`text-xs font-semibold ml-1`,
-                        { color: isBusy ? "#00d4e6" : "#00d4e6" }
-                      ]}>
-                        {displayHotels.filter(h => !h.isPlaceholder).length}
+                      <Ionicons name="calendar-outline" size={11} color="#6B7280" />
+                      <Text style={{
+                        fontFamily: 'Merriweather-Regular',
+                        fontSize: 11,
+                        color: '#6B7280',
+                        marginLeft: 4,
+                      }}>
+                        {hasFinalizedDates && confirmedCheckInDate && confirmedCheckOutDate
+                          ? formatDateRange(confirmedCheckInDate, confirmedCheckOutDate)
+                          : formatDateRange(checkInDate, checkOutDate)
+                        }
                       </Text>
                     </View>
-                  </>
-                )}
+                    
+                    <View style={[tw`rounded-full mx-2`, { width: 3, height: 3, backgroundColor: '#D1D5DB' }]} />
+                    
+                    <View style={tw`flex-row items-center`}>
+                      <Ionicons name="people-outline" size={11} color="#6B7280" />
+                      <Text style={{
+                        fontFamily: 'Merriweather-Regular',
+                        fontSize: 11,
+                        color: '#6B7280',
+                        marginLeft: 4,
+                      }}>
+                        {formatGuestInfo(adults, children)}
+                      </Text>
+                    </View>
+                    
+                    {(isBusy || displayHotels.filter(h => !h.isPlaceholder).length > 0) && (
+                      <>
+                        <View style={[tw`rounded-full mx-2`, { width: 3, height: 3, backgroundColor: '#D1D5DB' }]} />
+                        <View style={tw`flex-row items-center`}>
+                          <Ionicons 
+                            name={isBusy ? "home-outline" : "home"} 
+                            size={11} 
+                            color="#6B7280" 
+                          />
+                          <Text style={{
+                            fontFamily: 'Merriweather-Regular',
+                            fontSize: 11,
+                            color: '#6B7280',
+                            marginLeft: 4,
+                          }}>
+                            {displayHotels.filter(h => !h.isPlaceholder).length}
+                          </Text>
+                        </View>
+                      </>
+                    )}
+                  </View>
                 </View>
+              </View>
+
+              <View style={[
+                tw`w-8 h-8 rounded-xl items-center justify-center flex-shrink-0`,
+                { backgroundColor: 'rgba(29, 249, 255, 0.1)', marginLeft: 12 }
+              ]}>
+                <Ionicons name="pencil" size={14} color="#00D4E6" />
+              </View>
+            </View>
+          </TouchableOpacity>
+          
+        ) : (
+          // EDIT MODE
+          <View style={tw`p-4`}>
+            <View style={tw`mb-3`}>
+              <View style={[
+                tw`rounded-xl border`,
+                { borderColor: '#E5E7EB', backgroundColor: '#F9FAFB' }
+              ]}>
+                <TextInput
+                  ref={editSearchInputRef}
+                  style={[
+                    {
+                      fontFamily: 'Merriweather-Regular',
+                      fontSize: 14,
+                      lineHeight: 20,
+                      color: '#111827',
+                      padding: 14,
+                      minHeight: 90,
+                      maxHeight: 130,
+                      textAlignVertical: 'top',
+                    }
+                  ]}
+                  value={editedSearchQuery}
+                  onChangeText={setEditedSearchQuery}
+                  placeholder="Describe your perfect stay..."
+                  placeholderTextColor="#9CA3AF"
+                  multiline
+                  maxLength={1600}
+                  selectionColor="#1DF9FF"
+                  autoFocus={false}
+                />
               </View>
             </View>
 
-            {/* Right section - Edit icon */}
-            <View style={[
-               tw`w-7 h-7 rounded-full items-center justify-center flex-shrink-0`,
-  { 
-    backgroundColor: 'rgba(29, 249, 255, 0.1)',
-    marginLeft: 16,    // Custom left margin
-    marginRight: -5,   // Pull it closer to edge
-  }
-            ]}>
-              <Ionicons name="pencil" size={13} color="#00d4e6" />
+            <View style={tw`-mx-1 mb-3`}>
+              <SearchGuidePills
+                onDateSelect={(dateText) => {
+                  setEditedSearchQuery(prev => 
+                    prev.trim() ? `${prev.trim()} • ${dateText}` : dateText
+                  );
+                }}
+                onBudgetSelect={(budgetText) => {
+                  setEditedSearchQuery(prev => 
+                    prev.trim() ? `${prev.trim()} • ${budgetText}` : budgetText
+                  );
+                }}
+                onGuestsSelect={(guestsText) => {
+                  setEditedSearchQuery(prev => 
+                    prev.trim() ? `${prev.trim()} • ${guestsText}` : guestsText
+                  );
+                }}
+                onAmenitiesSelect={(amenitiesText) => {
+                  setEditedSearchQuery(prev => 
+                    prev.trim() ? `${prev.trim()} • ${amenitiesText}` : amenitiesText
+                  );
+                }}
+                onStyleSelect={(styleText) => {
+                  setEditedSearchQuery(prev => 
+                    prev.trim() ? `${prev.trim()} • ${styleText}` : styleText
+                  );
+                }}
+              />
+            </View>
+
+            <View style={tw`flex-row justify-end items-center gap-2`}>
+              <TouchableOpacity
+                style={[
+                  tw`px-4 py-2.5 rounded-xl`,
+                  { backgroundColor: '#F3F4F6' }
+                ]}
+                onPress={handleCancelEdit}
+                activeOpacity={0.7}
+              >
+                <Text style={{
+                  fontFamily: 'Merriweather-Regular',
+                  fontSize: 12,
+                  color: '#6B7280',
+                }}>
+                  Cancel
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[
+                  tw`px-5 py-2.5 rounded-xl`,
+                  editedSearchQuery.trim() && editedSearchQuery.trim() !== searchQuery
+                    ? { backgroundColor: '#111827' }
+                    : { backgroundColor: '#E5E7EB' }
+                ]}
+                onPress={handleSaveSearch}
+                activeOpacity={0.7}
+                disabled={!editedSearchQuery.trim() || editedSearchQuery.trim() === searchQuery}
+              >
+                <Text style={{
+                  fontFamily: 'Merriweather-Bold',
+                  fontSize: 12,
+                  color: editedSearchQuery.trim() && editedSearchQuery.trim() !== searchQuery
+                    ? '#ffffff'
+                    : '#9CA3AF',
+                }}>
+                  Search
+                </Text>
+              </TouchableOpacity>
             </View>
           </View>
-        </TouchableOpacity>
-        
-      ) : (
-        
-        // EDIT MODE - Modern streamlined design
-       // EDIT MODE - Modern streamlined design with top-right buttons
-<KeyboardAvoidingView
-  behavior={Platform.OS === 'ios' ? 'padding' : undefined}
-  keyboardVerticalOffset={Platform.OS === 'ios' ? 8 : 0}
->
-  <ScrollView
-    keyboardShouldPersistTaps="handled"   // 🔧 FIX: allow first tap to hit buttons
-    contentContainerStyle={tw`p-4 pb-3`}  // keep your spacing
-  >
-    
-
-
-    {/* Modern text input with subtle styling */}
-    <View style={tw`mb-4`}>
-      <View style={[
-        tw`bg-gray-50 rounded-xl border`,
-        { borderColor: '#F1F5F9' }
-      ]}>
-        <TextInput
-          ref={editSearchInputRef}
-          style={[
-            tw`text-gray-900 text-base px-4 py-3`,
-            Platform.OS === 'android' && { fontFamily: 'sans-serif' },
-            {
-              fontSize: 16,
-              lineHeight: 22,
-              minHeight: 80,
-              maxHeight: 120,
-              textAlignVertical: 'top',
-            }
-          ]}
-          value={editedSearchQuery}
-          onChangeText={setEditedSearchQuery}
-          placeholder="Describe your perfect stay..."
-          placeholderTextColor="#94A3B8"
-          multiline
-          maxLength={1600}
-          selectionColor="#00d4e6"
-          autoFocus={false}
-        />
+        )}
       </View>
-    </View>
-
-    {/* Search Guide Pills with tighter spacing */}
-    <View style={tw`-mx-1 mt--1`}>
-      <SearchGuidePills
-        onDateSelect={(dateText) => {
-          setEditedSearchQuery(prev => 
-            prev.trim() ? `${prev.trim()} • ${dateText}` : dateText
-          );
-        }}
-        onBudgetSelect={(budgetText) => {
-          setEditedSearchQuery(prev => 
-            prev.trim() ? `${prev.trim()} • ${budgetText}` : budgetText
-          );
-        }}
-        onGuestsSelect={(guestsText) => {
-          setEditedSearchQuery(prev => 
-            prev.trim() ? `${prev.trim()} • ${guestsText}` : guestsText
-          );
-        }}
-        onAmenitiesSelect={(amenitiesText) => {
-          setEditedSearchQuery(prev => 
-            prev.trim() ? `${prev.trim()} • ${amenitiesText}` : amenitiesText
-          );
-        }}
-        onStyleSelect={(styleText) => {
-          setEditedSearchQuery(prev => 
-            prev.trim() ? `${prev.trim()} • ${styleText}` : styleText
-          );
-        }}
-      />
-    </View>
-
-    {/* Bottom section with Cancel and Search buttons positioned at bottom right */}
-    <View style={tw`flex-row justify-end items-center mt--1.5`}>
-      {/* Cancel Button */}
-      <TouchableOpacity
-        style={[
-          tw`px-3 py-1.5 rounded-full mr-2`,
-          { backgroundColor: '#F1F5F9' }
-        ]}
-        onPress={handleCancelEdit}
-        activeOpacity={0.8}
-      >
-        <Text style={tw`text-gray-600 text-sm font-medium`}>
-          Cancel
-        </Text>
-      </TouchableOpacity>
-
-      {/* Search button */}
-      <TouchableOpacity
-        style={[
-          tw`px-4 py-2 rounded-full`,
-          editedSearchQuery.trim() && editedSearchQuery.trim() !== searchQuery
-            ? [
-                { 
-                  backgroundColor: '#00d4e6',
-                  shadowColor: '#00d4e6',
-                  shadowOffset: { width: 0, height: 2 },
-                  shadowOpacity: 0.2,
-                  shadowRadius: 8,
-                },
-                tw`shadow-lg`
-              ]
-            : [tw`bg-gray-100`]
-        ]}
-        onPress={handleSaveSearch}
-        activeOpacity={0.8}
-        disabled={!editedSearchQuery.trim() || editedSearchQuery.trim() === searchQuery}
-      >
-        <Text style={[
-          tw`text-sm font-semibold`,
-          editedSearchQuery.trim() && editedSearchQuery.trim() !== searchQuery
-            ? tw`text-white`
-            : tw`text-gray-400`
-        ]}>
-          Search
-        </Text>
-      </TouchableOpacity>
-    </View>
-
-  </ScrollView>
-</KeyboardAvoidingView>
-    
-      )}
     </Animated.View>
   ) : (
-    /* Fallback - Minimal floating back button */
     <View style={tw`flex-row items-center`}>
-<TouchableOpacity
-  style={[
-    tw`w-7 h-7 items-center justify-center rounded-full mr-3 flex-shrink-0`,
-    { backgroundColor: '#F8FAFC' }
-  ]}
-  onPress={handleBackPress}
-  activeOpacity={0.7}
-  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}  // Easy fix - just add this!
->
-  <Ionicons name="arrow-back" size={14} color="#64748B" />
-</TouchableOpacity>
+      <TouchableOpacity
+        style={[
+          tw`w-8 h-8 items-center justify-center rounded-xl flex-shrink-0`,
+          { 
+            backgroundColor: '#fff',
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 1 },
+            shadowOpacity: 0.1,
+            shadowRadius: 2,
+            elevation: 3,
+          }
+        ]}
+        onPress={handleBackPress}
+        activeOpacity={0.7}
+        hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+      >
+        <Ionicons name="arrow-back" size={16} color="#374151" />
+      </TouchableOpacity>
     </View>
   )}
 </View>
@@ -2017,5 +2020,29 @@ const handleBackPress = useCallback(() => {
     </SafeAreaView>
   );
 };
+
+const styles = StyleSheet.create({
+  headerShadowWrapper: {
+    borderRadius: 12,
+    backgroundColor: 'transparent',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.12,
+    shadowRadius: 10,
+    ...Platform.select({
+      android: {
+        elevation: 8,
+        backgroundColor: '#fff',
+      },
+    }),
+  },
+  headerContainer: {
+    borderRadius: 12,
+    borderWidth: 0.5,
+    borderColor: '#e0e0e0',
+    backgroundColor: '#fff',
+    overflow: 'hidden',
+  },
+});
 
 export default HomeScreen;

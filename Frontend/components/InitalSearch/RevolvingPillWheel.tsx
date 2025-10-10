@@ -2,12 +2,13 @@
 import React, { useEffect, useRef, useState } from 'react';
 import {
   View,
-  Text,
+  Text as RNText,
   TouchableOpacity,
   Animated,
   Dimensions,
   Easing,
 } from 'react-native';
+import { Text } from '../../components/CustomText'; 
 import tw from 'twrnc';
 
 const { width } = Dimensions.get('window');

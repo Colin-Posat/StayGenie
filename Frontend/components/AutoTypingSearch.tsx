@@ -1,13 +1,15 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
-  Text,
+  Text as RNText,
   TextInput,
   TouchableOpacity,
   Animated,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import tw from 'twrnc';
+
+import { Text } from '../components/CustomText'; 
 
 // Custom hook for auto-typing placeholder text
 const useTypingPlaceholder = (

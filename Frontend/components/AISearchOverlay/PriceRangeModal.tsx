@@ -2,12 +2,13 @@
 import React, { useState, useRef } from 'react';
 import {
   View,
-  Text,
+  Text as RNText,
   TouchableOpacity,
   Modal,
   PanResponder,
   Animated,
 } from 'react-native';
+import { Text } from '../../components/CustomText'; 
 import { Ionicons } from '@expo/vector-icons';
 import tw from 'twrnc';
 

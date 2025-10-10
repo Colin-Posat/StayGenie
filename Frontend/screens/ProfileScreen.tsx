@@ -2,7 +2,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import {
   View,
-  Text,
+  Text as RNText,
   TouchableOpacity,
   SafeAreaView,
   StatusBar,
@@ -11,6 +11,7 @@ import {
   Platform,
   Alert,
 } from 'react-native';
+import { Text } from '../components/CustomText'; 
 import { Ionicons } from '@expo/vector-icons';
 import tw from 'twrnc';
 import { useAuth } from '../contexts/AuthContext';

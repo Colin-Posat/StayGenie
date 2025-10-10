@@ -2,7 +2,7 @@
 import React, { useRef, useEffect, useState } from 'react';
 import {
   View,
-  Text,
+  Text as RNText,
   TouchableOpacity,
   Image,
   Animated,
@@ -13,11 +13,11 @@ import {
   Platform,
   StyleSheet
 } from 'react-native';
+import { Text } from '../../components/CustomText'; 
 import { Ionicons } from '@expo/vector-icons';
 import tw from 'twrnc';
 import { FavoritedHotel } from '../../utils/FavoritesCache';
 import { formatLocationDisplay, getCountryName } from '../../utils/countryMapping';
-import HotelChatOverlay from '../../components/HomeScreenTop/HotelChatOverlay';
 import * as WebBrowser from 'expo-web-browser';
 
 // Turquoise color constants
@@ -805,11 +805,7 @@ const FavoriteHotelCard: React.FC<FavoriteHotelCardProps> = ({
         animationType="fade"
         onRequestClose={() => setShowHotelChat(false)}
       >
-        <HotelChatOverlay
-          visible={showHotelChat}
-          onClose={() => setShowHotelChat(false)}
-          hotel={hotel as any}
-        />
+
       </Modal>
 
       {/* Confirmation modal */}

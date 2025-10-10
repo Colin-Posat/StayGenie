@@ -8,6 +8,7 @@ import { hotelBudgetRelevanceController } from '../controllers/hotelBudgetReleva
 import { conversationalRefineController } from '../controllers/conversationalRefineController';
 import { hotelChatController, fetchHotelDetailsForChatController } from '../controllers/hotelChatController';
 import { fetchHotelReviewsController } from '../controllers/hotelReviewsController'; // NEW IMPORT
+import { generateArticleController, generateBatchArticlesController } from '../controllers/articleGeneratorController';
 
 const router = express.Router();
 
@@ -30,6 +31,9 @@ router.post('/hotels/reviews', fetchHotelReviewsController); // Fetch hotel revi
 
 // Query parsing route  
 router.post('/query/parse', parseSearchQuery);
+
+router.post('/articles/generate', generateArticleController);
+router.post('/articles/generate-batch', generateBatchArticlesController);
 
 // Health check route
 router.get('/health', (req, res) => {

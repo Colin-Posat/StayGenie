@@ -1,7 +1,8 @@
 // LoadingScreen.tsx - Updated to match InitialSearchScreen style with turquoise theme
 import React, { useEffect, useRef, useState } from 'react';
-import { View, Text, Animated, Image } from 'react-native';
+import { View, Text as RNText, Animated, Image } from 'react-native';
 import tw from 'twrnc';
+import { Text } from '../../components/CustomText'; 
 
 interface LoadingScreenProps {
   searchQuery: string;

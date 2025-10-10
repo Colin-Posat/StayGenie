@@ -1,4 +1,4 @@
-// SwipeableHotelStoryCardLoadingPreview.tsx - Updated to match current card design
+// SwipeableHotelStoryCardLoadingPreview.tsx - Updated to match new card design
 import React, { useEffect, useRef } from 'react';
 import {
   View,
@@ -6,28 +6,31 @@ import {
   Dimensions,
   Animated,
   StyleSheet,
-  TouchableOpacity,
-  Image,
+  Platform,
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
-import tw from 'twrnc';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
-const CARD_WIDTH = screenWidth - 42;
-const CARD_HEIGHT = screenHeight * 0.52;
-const TURQUOISE = '#1df9ff';
+const CARD_HORIZONTAL_MARGIN = 0;
+const CAROUSEL_WIDTH = screenWidth - CARD_HORIZONTAL_MARGIN;
 
 interface LoadingPreviewProps {
   index?: number;
   totalCount?: number;
 }
 
-const ShimmerEffect: React.FC<{ 
-  width: string | number; 
-  height: number; 
+interface ShimmerEffectProps {
+  width: string | number;
+  height: number;
   style?: any;
   borderRadius?: number;
-}> = ({ width, height, style, borderRadius = 8 }) => {
+}
+
+const ShimmerEffect: React.FC<ShimmerEffectProps> = ({ 
+  width, 
+  height, 
+  style, 
+  borderRadius = 8 
+}) => {
   const shimmerAnimation = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
@@ -87,290 +90,313 @@ const ShimmerEffect: React.FC<{
   );
 };
 
-const LoadingProgressBar: React.FC = () => {
-  const progressAnimation = useRef(new Animated.Value(0)).current;
-
-  useEffect(() => {
-    const progress = Animated.loop(
-      Animated.sequence([
-        Animated.timing(progressAnimation, {
-          toValue: 1,
-          duration: 2000,
-          useNativeDriver: false,
-        }),
-        Animated.timing(progressAnimation, {
-          toValue: 0,
-          duration: 500,
-          useNativeDriver: false,
-        }),
-      ])
-    );
-    progress.start();
-
-    return () => progress.stop();
-  }, [progressAnimation]);
-
-  return (
-    <View style={[
-      tw`flex-row absolute left-4 right-4 z-30 gap-2`,
-      { top: 12 },
-      {
-        backgroundColor: 'rgba(0, 0, 0, 0.1)',
-        padding: 8,
-        borderRadius: 12,
-      }
-    ]}>
-      {[0, 1, 2, 3].map((index) => (
-        <TouchableOpacity
-          key={index}
-          style={[
-            tw`flex-1 rounded-full overflow-hidden`, 
-            {
-              height: 4,
-              backgroundColor: 'rgba(255, 255, 255, 0.3)',
-              shadowColor: '#000000',
-              shadowOffset: { width: 0, height: 1 },
-              shadowOpacity: 0.2,
-              shadowRadius: 2,
-              elevation: 2,
-            }
-          ]}
-          activeOpacity={0.7}
-        >
-          <Animated.View
-            style={[
-              tw`h-full rounded-full`,
-              {
-                backgroundColor: index === 0 ? '#1df9ff' : '#FFFFFF',
-                opacity: 0.6,
-                width: progressAnimation.interpolate({
-                  inputRange: [0, 1],
-                  outputRange: ['0%', '100%'],
-                }),
-              }
-            ]}
-          />
-        </TouchableOpacity>
-      ))}
-    </View>
-  );
-};
-
 const SwipeableHotelStoryCardLoadingPreview: React.FC<LoadingPreviewProps> = ({ 
   index = 0, 
   totalCount = 1 
 }) => {
   return (
-    <View style={[tw`rounded-2xl shadow-lg`, { position: 'relative' }]}>
-      <View
-        style={[
-          tw`bg-white overflow-hidden relative rounded-t-2xl`,
-          { width: CARD_WIDTH, height: CARD_HEIGHT },
-        ]}
-      >
-        {/* Loading Progress Bar - now with 4 slides */}
-        <LoadingProgressBar />
+    <View style={{ marginBottom: 18 }}>
+      {/* Shadow wrapper */}
+      <View style={[styles.shadowWrapper, { marginHorizontal: 0 }]}>
+        {/* Inner card */}
+        <View style={styles.cardContainer}>
+          {/* Card Content */}
+          <View style={{ backgroundColor: '#ffffff' }}>
+            {/* Image Carousel */}
+            <View style={{ marginBottom: 0, position: 'relative' }}>
+              <ShimmerEffect
+                width="100%"
+                height={screenHeight * 0.34}
+                borderRadius={0}
+              />
 
-        {/* Background Loading Image */}
-        <ShimmerEffect
-          width="100%"
-          height={CARD_HEIGHT}
-          style={{ position: 'absolute', top: 0, left: 0 }}
-          borderRadius={0}
-        />
+              {/* Price badge */}
+              <View
+                style={{
+                  position: 'absolute',
+                  top: 10,
+                  left: 10,
+                  paddingHorizontal: 10,
+                  paddingVertical: 6,
+                  borderRadius: 8,
+                  backgroundColor: '#E5E7EB',
+                  zIndex: 10,
+                }}
+              >
+                <ShimmerEffect width={70} height={16} borderRadius={4} />
+              </View>
 
-        {/* Reduced gradient for less obstruction */}
-        <View style={tw`absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-black/50 to-transparent z-1`} />
+              {/* Rating badge */}
+              <View
+                style={{
+                  position: 'absolute',
+                  top: 52,
+                  left: 10,
+                  paddingHorizontal: 10,
+                  paddingVertical: 6,
+                  borderRadius: 8,
+                  backgroundColor: '#E5E7EB',
+                  zIndex: 10,
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  gap: 4,
+                }}
+              >
+                <ShimmerEffect width={11} height={11} borderRadius={6} />
+                <ShimmerEffect width={24} height={14} borderRadius={4} />
+              </View>
 
-        {/* COMPACT TOP: Hotel info sized to content */}
-        <View style={tw`absolute top-12 left-2 right-2 z-10`}>
-          <View style={[
-            tw`bg-black/30 border border-white/15 px-2 py-1 rounded-lg self-start`,
-          ]}>
-            <ShimmerEffect width={120} height={12} borderRadius={4} />
-            <View style={tw`flex-row items-center mt-0.5`}>
-              <Ionicons name="location" size={10} color="#FFFFFF" />
-              <View style={tw`ml-1`}>
-                <ShimmerEffect width={80} height={10} borderRadius={4} />
+              {/* Images/Map toggle */}
+              <View
+                style={{
+                  position: 'absolute',
+                  top: 10,
+                  right: 10,
+                  backgroundColor: '#E5E7EB',
+                  borderRadius: 8,
+                  flexDirection: 'row',
+                  overflow: 'hidden',
+                  zIndex: 10,
+                }}
+              >
+                <View style={{ width: 75, paddingVertical: 10, alignItems: 'center', flexDirection: 'row', justifyContent: 'center', gap: 4 }}>
+                  <ShimmerEffect width={12} height={12} borderRadius={6} />
+                  <ShimmerEffect width={40} height={10} borderRadius={4} />
+                </View>
+                <View style={{ width: 75, paddingVertical: 10, alignItems: 'center', flexDirection: 'row', justifyContent: 'center', gap: 4 }}>
+                  <ShimmerEffect width={12} height={12} borderRadius={6} />
+                  <ShimmerEffect width={28} height={10} borderRadius={4} />
+                </View>
+              </View>
+
+              {/* Hotel name and location at bottom of image */}
+              <View
+                style={{
+                  position: 'absolute',
+                  bottom: 10,
+                  left: 10,
+                  right: 10,
+                  zIndex: 10,
+                }}
+              >
+                <ShimmerEffect width="70%" height={16} borderRadius={4} style={{ marginBottom: 4 }} />
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+                  <ShimmerEffect width={11} height={11} borderRadius={6} />
+                  <ShimmerEffect width="45%" height={12} borderRadius={4} />
+                </View>
+              </View>
+
+              {/* Image dots indicator */}
+              <View
+                style={{
+                  position: 'absolute',
+                  bottom: 60,
+                  left: 0,
+                  right: 0,
+                  flexDirection: 'row',
+                  justifyContent: 'center',
+                  gap: 4,
+                  zIndex: 10,
+                }}
+              >
+                {[0, 1, 2, 3].map((idx) => (
+                  <View
+                    key={idx}
+                    style={{
+                      width: idx === 0 ? 5 : 4,
+                      height: idx === 0 ? 5 : 4,
+                      borderRadius: 999,
+                      backgroundColor: '#E5E7EB',
+                    }}
+                  />
+                ))}
               </View>
             </View>
-          </View>
-        </View>
 
-        {/* COMPACT BOTTOM: Essential info only with tighter spacing */}
-        <View style={tw`absolute bottom-4 left-2 right-2 z-10`}>
-          {/* Compact price and rating row */}
-          <View style={tw`flex-row items-center justify-between mb-2`}>
-            <View style={tw`bg-black/45 border border-white/15 px-2 py-1 rounded-md`}>
-              <View style={tw`flex-row items-baseline`}>
-                <ShimmerEffect width={40} height={18} borderRadius={4} />
-                <View style={tw`ml-1`}>
-                  <ShimmerEffect width={25} height={10} borderRadius={4} />
+            {/* Content Area */}
+            <View style={{ paddingHorizontal: 14, paddingTop: 12, paddingBottom: 12 }}>
+              {/* Amenities - Horizontal scroll */}
+              <View style={{ marginBottom: 10 }}>
+                <View style={{ flexDirection: 'row', gap: 6 }}>
+                  {[0, 1, 2].map((idx) => (
+                    <View
+                      key={idx}
+                      style={{
+                        paddingHorizontal: 8,
+                        paddingVertical: 4,
+                        borderRadius: 999,
+                        backgroundColor: '#F9FAFB',
+                      }}
+                    >
+                      <ShimmerEffect 
+                        width={idx % 3 === 0 ? 52 : idx % 3 === 1 ? 48 : 45} 
+                        height={9} 
+                        borderRadius={4} 
+                      />
+                    </View>
+                  ))}
+                </View>
+              </View>
+
+              {/* Genie Says Section */}
+              <View
+                style={{
+                  backgroundColor: 'rgba(29, 249, 255, 0.06)',
+                  borderLeftWidth: 2,
+                  borderLeftColor: '#1df9ff',
+                  paddingHorizontal: 10,
+                  paddingVertical: 8,
+                  borderRadius: 8,
+                  marginBottom: 10,
+                }}
+              >
+                <View style={{ gap: 4 }}>
+                  <ShimmerEffect width="100%" height={10} borderRadius={4} />
+                  <ShimmerEffect width="95%" height={10} borderRadius={4} />
+                  <ShimmerEffect width="70%" height={10} borderRadius={4} />
+                </View>
+              </View>
+
+              {/* Separator */}
+              <View style={{ height: 1, backgroundColor: '#F3F4F6', marginBottom: 10 }} />
+
+              {/* Guest Reviews Button */}
+              <View
+                style={{
+                  backgroundColor: '#F9FAFB',
+                  borderRadius: 8,
+                  paddingHorizontal: 12,
+                  paddingVertical: 8,
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  marginBottom: 12,
+                }}
+              >
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                  <ShimmerEffect width={14} height={14} borderRadius={7} />
+                  <ShimmerEffect width={85} height={10} borderRadius={4} />
+                </View>
+                <ShimmerEffect width={13} height={13} borderRadius={7} />
+              </View>
+
+              {/* Bottom Action Bar - 3 buttons */}
+              <View
+                style={{
+                  flexDirection: 'row',
+                  alignItems: 'center',
+                  gap: 8,
+                  marginTop: 4,
+                }}
+              >
+                {/* Heart Button */}
+                <View
+                  style={{
+                    width: 40,
+                    height: 40,
+                    borderRadius: 12,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    backgroundColor: '#fff',
+                    borderWidth: 1,
+                    borderColor: '#E5E5E5',
+                  }}
+                >
+                  <ShimmerEffect width={19} height={19} borderRadius={10} />
+                </View>
+
+                {/* Ask AI Button */}
+                <View
+                  style={{
+                    flex: 1,
+                    paddingVertical: 8,
+                    paddingHorizontal: 12,
+                    borderRadius: 12,
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    backgroundColor: '#fff',
+                    borderWidth: 1,
+                    borderColor: '#E5E5E5',
+                    gap: 6,
+                  }}
+                >
+                  <View
+                    style={{
+                      width: 24,
+                      height: 24,
+                      borderRadius: 12,
+                      backgroundColor: 'rgba(29, 249, 255, 0.15)',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                  >
+                    <ShimmerEffect width={14} height={14} borderRadius={7} />
+                  </View>
+                  <ShimmerEffect width={38} height={10} borderRadius={4} />
+                </View>
+
+                {/* View Details Button */}
+                <View
+                  style={{
+                    flex: 1,
+                    paddingVertical: 8,
+                    paddingHorizontal: 12,
+                    borderRadius: 12,
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    backgroundColor: '#fff',
+                    borderWidth: 1,
+                    borderColor: '#E5E5E5',
+                    gap: 6,
+                  }}
+                >
+                  <View
+                    style={{
+                      width: 24,
+                      height: 24,
+                      borderRadius: 12,
+                      backgroundColor: 'rgba(29, 249, 255, 0.15)',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                  >
+                    <ShimmerEffect width={14} height={14} borderRadius={7} />
+                  </View>
+                  <ShimmerEffect width={58} height={10} borderRadius={4} />
                 </View>
               </View>
             </View>
-            
-            <View style={tw`bg-black/45 border border-white/15 px-2 py-1 rounded-md flex-row items-center`}>
-              <View 
-                style={[
-                  tw`w-4 h-4 rounded-full items-center justify-center mr-1`,
-                  { backgroundColor: '#E5E7EB' }
-                ]}
-              >
-                <Ionicons 
-                  name="thumbs-up" 
-                  size={8} 
-                  color="#9CA3AF"
-                />
-              </View>
-              <ShimmerEffect width={20} height={12} borderRadius={4} />
-              <View style={tw`ml-1`}>
-                <ShimmerEffect width={25} height={10} borderRadius={4} />
-              </View>
-            </View>
-          </View>
-
-          {/* Flexible amenities row - adapts to text length */}
-          <View style={tw`mb-2 flex-row flex-wrap gap-1`}>
-            {[0, 1, 2].map((idx) => (
-              <View
-                key={idx}
-                style={[
-                  tw`px-1.5 py-0.5 rounded-full`,
-                  { backgroundColor: 'rgba(0,0,0,0.4)', borderColor: 'rgba(255,255,255,0.15)', borderWidth: 1 }
-                ]}
-              >
-                <ShimmerEffect width={idx === 0 ? 40 : idx === 1 ? 35 : 30} height={9} borderRadius={4} />
-              </View>
-            ))}
-          </View>
-
-          {/* Compact AI insight with smaller text */}
-          <View style={tw`bg-black/40 p-2 rounded-md border border-white/15`}>
-            <View style={tw`flex-row items-center mb-1`}>
-              <Ionicons 
-                name="sparkles" 
-                size={10} 
-                color="#1df9ff" 
-              />
-              <Text style={tw`text-white text-[10px] font-semibold ml-1`}>
-                AI Insight
-              </Text>
-              <View style={tw`ml-2`}>
-                <Text style={tw`text-white/60 text-[10px]`}>Loading...</Text>
-              </View>
-            </View>
-            <View style={tw`gap-0.5`}>
-              <ShimmerEffect width="100%" height={10} borderRadius={4} />
-              <ShimmerEffect width="85%" height={10} borderRadius={4} />
-              <ShimmerEffect width="92%" height={10} borderRadius={4} />
-            </View>
-          </View>
-        </View>
-      </View>
-
-      {/* Bottom Action Buttons - Updated to match new responsive design */}
-      <View style={tw`bg-white rounded-b-2xl`}>
-        <View style={tw`flex-row items-center px-3 py-3 gap-2`}>
-          {/* Heart Button - Compact with rounded design */}
-          <View style={[
-            tw`w-10 h-10 items-center justify-center rounded-xl bg-white border border-gray-200`,
-            {
-              shadowColor: '#000',
-              shadowOffset: { width: 0, height: 2 },
-              shadowOpacity: 0.08,
-              shadowRadius: 3,
-              elevation: 2,
-            }
-          ]}>
-            <Ionicons name="heart-outline" size={20} color="#9CA3AF" />
-          </View>
-
-          {/* Ask Button - Responsive pill with circular icon background */}
-          <View style={[
-            tw`py-2.5 px-3 rounded-xl flex-row items-center flex-1 justify-center bg-white border border-gray-200`,
-            {
-              shadowColor: '#000',
-              shadowOffset: { width: 0, height: 2 },
-              shadowOpacity: 0.08,
-              shadowRadius: 3,
-              elevation: 2,
-              minHeight: 40,
-              maxWidth: '30%',
-            }
-          ]}>
-            <View style={[
-              tw`w-5 h-5 rounded-full items-center justify-center mr-1.5`,
-              { backgroundColor: 'rgba(29, 249, 255, 0.15)' }
-            ]}>
-              <Ionicons name="chatbubble-outline" size={12} color="#9CA3AF" />
-            </View>
-            <Text
-              style={tw`text-xs font-medium text-gray-400`}
-            >
-              Ask
-            </Text>
-          </View>
-
-          {/* Map Button - Responsive pill with circular icon background */}
-          <View style={[
-            tw`py-2.5 px-3 rounded-xl flex-row items-center flex-1 justify-center bg-white border border-gray-200`,
-            {
-              shadowColor: '#000',
-              shadowOffset: { width: 0, height: 2 },
-              shadowOpacity: 0.08,
-              shadowRadius: 3,
-              elevation: 2,
-              minHeight: 40,
-              maxWidth: '30%',
-            }
-          ]}>
-            <View style={[
-              tw`w-5 h-5 rounded-full items-center justify-center mr-1.5`,
-              { backgroundColor: 'rgba(29, 249, 255, 0.15)' }
-            ]}>
-              <Ionicons name="map-outline" size={12} color="#9CA3AF" />
-            </View>
-            <Text
-              style={tw`text-xs font-medium text-gray-400`}
-            >
-              Map
-            </Text>
-          </View>
-
-          {/* Book Button - Responsive pill with circular icon background */}
-          <View style={[
-            tw`py-2.5 px-3 rounded-xl flex-row items-center flex-1 justify-center bg-white border border-gray-200`,
-            {
-              shadowColor: '#000',
-              shadowOffset: { width: 0, height: 2 },
-              shadowOpacity: 0.08,
-              shadowRadius: 3,
-              elevation: 2,
-              minHeight: 40,
-              maxWidth: '30%',
-            }
-          ]}>
-            <View style={[
-              tw`w-5 h-5 rounded-full items-center justify-center mr-1.5`,
-              { backgroundColor: 'rgba(29, 249, 255, 0.15)' }
-            ]}>
-              <Image
-                source={require('../../assets/images/logo.png')}
-                style={{ width: 12, height: 12, tintColor: '#9CA3AF' }}
-                resizeMode="contain"
-              />
-            </View>
-            <Text
-              style={tw`text-xs font-medium text-gray-400`}
-            >
-              Book
-            </Text>
           </View>
         </View>
       </View>
     </View>
   );
 };
+
+const styles = StyleSheet.create({
+  shadowWrapper: {
+    borderRadius: 12,
+    backgroundColor: 'transparent',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    ...Platform.select({
+      android: {
+        elevation: 12,
+        backgroundColor: '#fff',
+      },
+    }),
+  },
+  cardContainer: {
+    borderRadius: 12,
+    borderWidth: 0.5,
+    borderColor: '#e0e0e0',
+    backgroundColor: '#fff',
+    overflow: 'hidden',
+  },
+});
 
 export default SwipeableHotelStoryCardLoadingPreview;

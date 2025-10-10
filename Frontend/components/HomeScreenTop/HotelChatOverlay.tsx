@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   View,
-  Text,
+  Text as RNText,
   TouchableOpacity,
   Animated,
   Dimensions,
@@ -14,6 +14,7 @@ import {
   StyleSheet,
   Keyboard,
 } from 'react-native';
+import { Text } from '../../components/CustomText'; 
 import { Ionicons } from '@expo/vector-icons';
 import tw from 'twrnc';
 import type { EnhancedHotel } from '../StoryView/SwipeableHotelStoryCard';

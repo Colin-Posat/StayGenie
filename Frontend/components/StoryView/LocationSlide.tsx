@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
-  Text,
+  Text as RNText,
   TouchableOpacity,
   Image,
   Modal,
@@ -9,9 +9,11 @@ import {
   Platform,
   Animated,
 } from 'react-native';
+import { Text } from '../../components/CustomText'; 
 import { Ionicons } from '@expo/vector-icons';
 import tw from 'twrnc';
 import { formatLocationDisplay, getCountryName } from '../../utils/countryMapping';
+import { LinearGradient } from 'expo-linear-gradient';
 
 const MAPBOX_ACCESS_TOKEN = 'pk.eyJ1IjoiY29saW5wb3NhdCIsImEiOiJjbWN3bzN2azEwMnQxMmxwdmloZ2tjbHJlIn0.F9z35Dybj12dAsSpBnMZJA';
 
@@ -25,9 +27,9 @@ const CACHE_DURATION = 24 * 60 * 60 * 1000; // 24 hours
 
 // Define zoom levels: close (14), medium (12), far (10)
 const ZOOM_LEVELS = {
-  CLOSE: 14,   // Street level detail
-  MEDIUM: 12,  // Neighborhood view  
-  FAR: 10      // City/area overview
+  CLOSE: 15,   // Street level detail
+  MEDIUM: 13,  // Neighborhood view  
+  FAR: 11      // City/area overview
 };
 
 interface Hotel {
@@ -593,8 +595,15 @@ const LocationSlide: React.FC<LocationSlideProps> = ({
         />
       )}
       
-      {/* Simple gradient for readability */}
-      <View style={tw`absolute bottom-0 left-0 right-0 h-32 bg-gradient-to-t from-black/60 to-transparent z-1`} />
+    {/* Gradient shadow matching image carousel */}
+<LinearGradient
+  colors={['rgba(0,0,0,0.7)', 'transparent']}
+  start={{ x: 0, y: 1 }}
+  end={{ x: 0, y: 0 }}
+  style={[tw`absolute bottom-0 left-0 right-0 z-20`, {
+    height: 80,
+  }]}
+/>
 
       {/* Loading indicator for static map */}
       {shouldShowLoadingIndicator() && (
@@ -621,10 +630,17 @@ const LocationSlide: React.FC<LocationSlideProps> = ({
       )}
 
       {/* Zoom in/out buttons */}
-<View style={tw`absolute top-10 right-4 gap-1`}>
+<View style={tw`absolute top-3 left-2.5 gap-1 z-30`}>
   <TouchableOpacity 
     style={[
-      tw`bg-black/70 border border-white/40 rounded-lg w-10 h-10 items-center justify-center`,
+      tw`rounded-lg w-10 h-10 items-center justify-center`,
+      { 
+        backgroundColor: 'rgba(0, 0, 0, 0.6)',
+        shadowColor: '#000', 
+        shadowOffset: { width: 0, height: 2 }, 
+        shadowOpacity: 0.2, 
+        shadowRadius: 4 
+      },
       currentZoom === ZOOM_LEVELS.CLOSE ? tw`opacity-50` : tw`opacity-100`
     ]}
     onPress={() => {
@@ -638,15 +654,22 @@ const LocationSlide: React.FC<LocationSlideProps> = ({
     <Ionicons name="search" size={16} color="#1df9ff" />
     <Ionicons 
       name="add" 
-      size={8} 
+      size={9} 
       color="#1df9ff" 
-      style={tw`absolute top-1 right-1`} 
+      style={{ position: 'absolute', top: 6, right: 6 }} 
     />
   </TouchableOpacity>
 
   <TouchableOpacity 
     style={[
-      tw`bg-black/70 border border-white/40 rounded-lg w-10 h-10 items-center justify-center`,
+      tw`rounded-lg w-10 h-10 items-center justify-center`,
+      { 
+        backgroundColor: 'rgba(0, 0, 0, 0.6)',
+        shadowColor: '#000', 
+        shadowOffset: { width: 0, height: 2 }, 
+        shadowOpacity: 0.2, 
+        shadowRadius: 4 
+      },
       currentZoom === ZOOM_LEVELS.FAR ? tw`opacity-50` : tw`opacity-100`
     ]}
     onPress={() => {
@@ -660,66 +683,14 @@ const LocationSlide: React.FC<LocationSlideProps> = ({
     <Ionicons name="search" size={16} color="#1df9ff" />
     <Ionicons 
       name="remove" 
-      size={8} 
+      size={9} 
       color="#1df9ff" 
-      style={tw`absolute top-1 right-1`} 
+      style={{ position: 'absolute', top: 6, right: 6 }} 
     />
   </TouchableOpacity>
 </View>
 
-      {/* Compact bottom content */}
-      <View style={tw`absolute bottom-4 left-2 right-2 z-10`}>
-        {hotel.nearbyAttractions && hotel.nearbyAttractions.length > 0 ? (
-          <View style={tw`bg-black/50 border border-white/20 rounded-lg p-2`}>
-            <View style={tw`flex-row items-center mb-1`}>
-              <Ionicons 
-                name={insightsStatus === 'loading' && hotel.nearbyAttractions.some(attr => attr.includes('Loading')) ? "sync" : "compass"} 
-                size={10} 
-                color="#1df9ff" 
-              />
-              <Text style={tw`text-white text-[10px] font-semibold ml-1`}>
-                Nearby
-              </Text>
-              {insightsStatus === 'loading' && hotel.nearbyAttractions.some(attr => attr.includes('Loading')) && (
-                <Text style={tw`text-white/60 text-[10px] ml-2`}>Loading...</Text>
-              )}
-            </View>
-            
-            <View style={tw`gap-0.5`}>
-              {hotel.nearbyAttractions.slice(0, 3).map((attraction, index) => (
-                <Text key={index} style={tw`text-white/90 text-[10px] leading-3`} numberOfLines={3}>
-                  • {attraction}
-                </Text>
-              ))}
-              {hotel.nearbyAttractions.length > 3 && (
-                <Text style={tw`text-white/70 text-[10px] mt-0.5`}>
-                  +{hotel.nearbyAttractions.length - 3} more
-                </Text>
-              )}
-            </View>
-          </View>
-        ) : (
-          <View style={tw`bg-black/50 border border-white/20 rounded-lg p-2`}>
-            <View style={tw`flex-row items-center`}>
-              <Ionicons name="compass" size={10} color="#1df9ff" />
-              <Text style={tw`text-white/80 text-[10px] ml-1`}>
-                {insightsStatus === 'loading' ? 'Finding nearby places...' : 'Exploring the area'}
-              </Text>
-            </View>
-          </View>
-        )}
-
-        {/* Compact location highlight if available */}
-        {hotel.locationHighlight && 
-         !hotel.locationHighlight.includes('Analyzing') && 
-         !hotel.nearbyAttractions?.some(attr => attr.includes(hotel.locationHighlight?.substring(0, 200) || '')) && (
-          <View style={tw`bg-black/50 border border-white/20 rounded-lg p-2 mt-1`}>
-            <Text style={tw`text-white/90 text-[10px] leading-3`} numberOfLines={2}>
-              💡 {hotel.locationHighlight}
-            </Text>
-          </View>
-        )}
-      </View>
+     
     </View>
   );
 };

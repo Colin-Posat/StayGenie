@@ -2,7 +2,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import {
   View,
-  Text,
+  Text as RNText,
   Modal,
   TouchableOpacity,
   TextInput,
@@ -15,6 +15,7 @@ import {
   Dimensions,
   StatusBar,
 } from 'react-native';
+import { Text } from '../../components/CustomText'; 
 import { Ionicons } from '@expo/vector-icons';
 import tw from 'twrnc';
 import { sendPasswordResetEmail } from 'firebase/auth';

@@ -1,16 +1,22 @@
-import React from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator, StackNavigationProp } from '@react-navigation/stack';
 import { createBottomTabNavigator, BottomTabNavigationProp } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
 import { Image, View, Text, Platform } from 'react-native';
 import { AuthProvider } from './contexts/AuthContext';
+import * as Font from 'expo-font';
+import * as SplashScreen from 'expo-splash-screen';
 
 // Import your screen components
 import InitialSearchScreen from './screens/InitialSearchScreen';
 import ExploreScreen from './screens/HomeScreen';
 import FavoritesScreen from './screens/FavoritesScreen';
 import ProfileScreen from './screens/ProfileScreen';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
+
+// Keep splash screen visible while loading
+SplashScreen.preventAutoHideAsync();
 
 // Type definitions
 type FindStackParamList = {
@@ -157,7 +163,7 @@ const TabNavigator = () => {
           paddingBottom: Platform.OS === 'ios' ? 28 : 15,
           paddingTop: 15,
           paddingHorizontal: 20,
-  position: Platform.OS === 'web' ? 'relative' : 'absolute',
+          position: Platform.OS === 'web' ? 'relative' : 'absolute',
           borderTopLeftRadius: 24,
           borderTopRightRadius: 24,
           elevation: 0,
@@ -208,12 +214,43 @@ const TabNavigator = () => {
 
 // Main App Component
 const App = () => {
+  const [appIsReady, setAppIsReady] = useState(false);
+
+  useEffect(() => {
+    async function loadFonts() {
+      try {
+        await Font.loadAsync({
+          'Merriweather-Regular': require('./assets/fonts/Merriweather_36pt-Regular.ttf'),
+          'Merriweather-Bold': require('./assets/fonts/Merriweather_36pt-Bold.ttf'),
+        });
+      } catch (e) {
+        console.warn('Error loading fonts:', e);
+      } finally {
+        setAppIsReady(true);
+      }
+    }
+
+    loadFonts();
+  }, []);
+
+  const onLayoutRootView = useCallback(async () => {
+    if (appIsReady) {
+      await SplashScreen.hideAsync();
+    }
+  }, [appIsReady]);
+
+  if (!appIsReady) {
+    return null;
+  }
+
   return (
-    <AuthProvider>
-      <NavigationContainer>
-        <TabNavigator />
-      </NavigationContainer>
-    </AuthProvider>
+    <GestureHandlerRootView style={{ flex: 1 }} onLayout={onLayoutRootView}>
+      <AuthProvider>
+        <NavigationContainer>
+          <TabNavigator />
+        </NavigationContainer>
+      </AuthProvider>
+    </GestureHandlerRootView>
   );
 };
 

@@ -1,0 +1,9 @@
+BASIC INFORMATION:
+Name: Hotel Istanbul Kervansaray
+Address: undefined
+City: Istanbul
+Country: TR
+Star Rating: 4.5 stars
+Guest Rating: 0/10 (0 reviews)
+Check-in: undefined
+Check-out: noon

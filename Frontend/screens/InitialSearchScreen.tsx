@@ -2,7 +2,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
-  Text,
+  Text as TextRN,
   TouchableOpacity,
   TextInput,
   SafeAreaView,
@@ -14,6 +14,7 @@ import {
   Image,
   KeyboardAvoidingView,
 } from 'react-native';
+import { Text } from '../components/CustomText'; 
 import { Ionicons } from '@expo/vector-icons';
 import tw from 'twrnc';
 import SearchGuidePills from '../components/InitalSearch/SearchGuidePills';
@@ -698,7 +699,7 @@ const InitialSearchScreen: React.FC<InitialSearchScreenProps> = ({
                       ]}
                     >
                       {/* Leading search icon */}
-                      <View style={tw`absolute left-4 top-4`}>
+                      <View style={tw`absolute left-4 top-4 z-10`}>
                         <Ionicons
                           name="sparkles"
                           size={18}
@@ -709,7 +710,37 @@ const InitialSearchScreen: React.FC<InitialSearchScreenProps> = ({
                       {/* Main input area */}
                       <View style={tw`px-4 pt-3.5`}>
                         <View style={tw`flex-row items-start`}>
-                          <View style={tw`flex-1`}>
+                          <View style={tw`flex-1 relative`}>
+                            {/* Animated placeholder overlay */}
+                            {!isFocused && !searchQuery && (
+                              <View 
+                                style={[
+                                  tw`absolute left-0 top-0`,
+                                  {
+                                    paddingLeft: 28,
+                                    paddingRight: 0,
+                                    pointerEvents: 'none',
+                                  }
+                                ]}
+                              >
+                                <Text
+                                  style={[
+                                    tw`text-base font-normal`,
+                                    Platform.OS === 'android' && { fontFamily: 'sans-serif' },
+                                    {
+                                      fontSize: INPUT_FONT_SIZE,
+                                      lineHeight: INPUT_LINE_HEIGHT,
+                                      color: '#9CA3AF',
+                                    }
+                                  ]}
+                                  numberOfLines={INPUT_VISIBLE_LINES}
+                                >
+                                  {displayText}
+                                  <Text style={{ opacity: cursorVisible ? 1 : 0 }}>|</Text>
+                                </Text>
+                              </View>
+                            )}
+                            
                             <TextInput
                               ref={textInputRef}
                               multiline
@@ -729,7 +760,7 @@ const InitialSearchScreen: React.FC<InitialSearchScreenProps> = ({
                                   paddingBottom: INPUT_BOTTOM_PAD + (Platform.OS === 'android' ? ANDROID_EXTRA_PAD : 0),
                                 },
                               ]}
-                              placeholder={getPlaceholderText()}
+                              placeholder={isFocused || searchQuery ? "Search for amazing stays..." : ""}
                               placeholderTextColor="#9CA3AF"
                               value={searchQuery}
                               onChangeText={setSearchQuery}

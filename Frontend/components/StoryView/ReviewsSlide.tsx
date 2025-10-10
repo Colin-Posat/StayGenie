@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import {
   View,
-  Text,
+  Text as  RNText,
   ScrollView,
   ActivityIndicator,
   TouchableOpacity,
@@ -10,6 +10,7 @@ import {
   Modal,
   StatusBar,
 } from 'react-native';
+import { Text } from '../../components/CustomText'; 
 import { Ionicons } from '@expo/vector-icons';
 import tw from 'twrnc';
 

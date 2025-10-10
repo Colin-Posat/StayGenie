@@ -27,7 +27,7 @@ const config: ExpoConfig = {
       foregroundImage: "./assets/adaptive-icon.png",
       backgroundColor: "#ffffff"
     },
-    edgeToEdgeEnabled: true,
+
     runtimeVersion: { policy: "appVersion" },
     googleServicesFile: "./google-services.json"
   },
