@@ -1,0 +1,9 @@
+BASIC INFORMATION:
+Name: Hôtel du Parc Saint Charles
+Address: undefined
+City: Paris
+Country: FR
+Star Rating: 2 stars
+Guest Rating: 0/10 (0 reviews)
+Check-in: midnight
+Check-out: 11:00 AM
