@@ -4,13 +4,15 @@ require File.join(File.dirname(`node --print "require.resolve('react-native/pack
 require 'json'
 podfile_properties = JSON.parse(File.read(File.join(__dir__, 'Podfile.properties.json'))) rescue {}
 
-# No global use_frameworks! or global use_modular_headers!
 platform :ios, podfile_properties['ios.deploymentTarget'] || '16.0'
 
 prepare_react_native_project!
 
 target 'StayGenie' do
   use_expo_modules!
+
+  # 👉 Simple fix: build pods as static frameworks so FirebaseAuth’s Swift shim is generated
+  use_frameworks! :linkage => :static
 
   # Autolinking config
   if ENV['EXPO_USE_COMMUNITY_AUTOLINKING'] == '1'
@@ -23,17 +25,6 @@ target 'StayGenie' do
   end
   config = use_native_modules!(config_command)
 
-  # --- Selective modular headers for Firebase bits RNFBAuth touches ---
-  pod 'GoogleUtilities',          :modular_headers => true
-  pod 'FirebaseCore',             :modular_headers => true
-  pod 'FirebaseAuth',             :modular_headers => true
-  pod 'FirebaseCoreInternal',     :modular_headers => true
-  pod 'FirebaseCoreExtension',    :modular_headers => true
-  pod 'FirebaseAuthInterop',      :modular_headers => true
-  pod 'FirebaseAppCheckInterop',  :modular_headers => true
-  pod 'RecaptchaInterop',         :modular_headers => true
-  # -------------------------------------------------------------------
-
   use_react_native!(
     :path => config[:reactNativePath],
     :hermes_enabled => podfile_properties['expo.jsEngine'].nil? || podfile_properties['expo.jsEngine'] == 'hermes',
@@ -45,52 +36,7 @@ target 'StayGenie' do
     react_native_post_install(
       installer,
       config[:reactNativePath],
-      :mac_catalyst_enabled => false,
-      :ccache_enabled => (ENV['USE_CCACHE'] == '1' || podfile_properties['apple.ccacheEnabled'] == 'true'),
+      :mac_catalyst_enabled => false
     )
-
-    # Ensure FirebaseAuth builds as a module (so imports work)
-    installer.pods_project.targets.each do |t|
-      next unless t.name == 'FirebaseAuth'
-      t.build_configurations.each do |cfg|
-        cfg.build_settings['DEFINES_MODULE'] = 'YES'
-        cfg.build_settings['CLANG_ENABLE_MODULES'] = 'YES'
-        cfg.build_settings['SWIFT_INSTALL_OBJC_HEADER'] = 'YES'
-      end
-    end
-
-    # 🔧 Patch RNFBAuth to include Obj-C header instead of the Swift shim
-    installer.pods_project.targets.each do |t|
-      next unless t.name == 'RNFBAuth'
-      t.source_build_phase.files_references.each do |file_ref|
-        next unless file_ref.path&.end_with?('RNFBAuthModule.m')
-        full_path = File.join(installer.sandbox.root, file_ref.path)
-        begin
-          src = File.read(full_path)
-          if src.include?('FirebaseAuth/FirebaseAuth-Swift.h')
-            File.write(full_path, src.gsub('FirebaseAuth/FirebaseAuth-Swift.h', 'FirebaseAuth/FirebaseAuth.h'))
-            puts "[RNFBAuth] Patched header include → FirebaseAuth/FirebaseAuth.h"
-          end
-        rescue => e
-          puts "[RNFBAuth] Patch skipped: #{e}"
-        end
-      end
-    end
-
-    # 🔧 Patch Firebase umbrella header to not require the Swift shim
-    %w[Private Public].each do |scope|
-      fb_header = File.join(installer.sandbox.root, "Headers", scope, "Firebase", "Firebase.h")
-      if File.exist?(fb_header)
-        begin
-          txt = File.read(fb_header)
-          if txt.include?('FirebaseAuth/FirebaseAuth-Swift.h')
-            File.write(fb_header, txt.gsub('FirebaseAuth/FirebaseAuth-Swift.h', 'FirebaseAuth/FirebaseAuth.h'))
-            puts "[Firebase.h] Patched Swift include → Obj-C include in #{fb_header}"
-          end
-        rescue => e
-          puts "[Firebase.h] Patch skipped: #{e}"
-        end
-      end
-    end
   end
 end
