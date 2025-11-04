@@ -4,11 +4,7 @@ require File.join(File.dirname(`node --print "require.resolve('react-native/pack
 require 'json'
 podfile_properties = JSON.parse(File.read(File.join(__dir__, 'Podfile.properties.json'))) rescue {}
 
-# ❌ REMOVE use_frameworks!
-# ✅ Keep modular headers so Firebase’s ObjC pods provide modulemaps for Swift
-use_modular_headers!
-
-# Raise iOS target (Mapbox & friends often need this)
+# No global use_frameworks! and no global use_modular_headers!
 platform :ios, podfile_properties['ios.deploymentTarget'] || '16.0'
 
 prepare_react_native_project!
@@ -24,14 +20,24 @@ target 'StayGenie' do
       '--json', '--platform', 'ios'
     ]
   end
-
   config = use_native_modules!(config_command)
 
-  # ❌ Do not re-declare use_frameworks! here
+  # ---- Selective modular headers ONLY for pods that need it (from your error) ----
+  # These lines don't add Firebase to your project; they just tweak how CocoaPods
+  # builds the transitive deps if they are present.
+  pod 'GoogleUtilities',          :modular_headers => true
+  pod 'FirebaseCore',             :modular_headers => true
+  pod 'FirebaseCoreExtension',    :modular_headers => true
+  pod 'FirebaseCoreInternal',     :modular_headers => true
+  pod 'FirebaseAuthInterop',      :modular_headers => true
+  pod 'FirebaseAppCheckInterop',  :modular_headers => true
+  pod 'RecaptchaInterop',         :modular_headers => true
+  pod 'FirebaseAuth',             :modular_headers => true
+  # -------------------------------------------------------------------------------
 
   use_react_native!(
     :path => config[:reactNativePath],
-    :hermes_enabled => podfile_properties['expo.jsEngine'] == nil || podfile_properties['expo.jsEngine'] == 'hermes',
+    :hermes_enabled => podfile_properties['expo.jsEngine'].nil? || podfile_properties['expo.jsEngine'] == 'hermes',
     :app_path => "#{Pod::Config.instance.installation_root}/..",
     :privacy_file_aggregation_enabled => podfile_properties['apple.privacyManifestAggregationEnabled'] != 'false',
   )
