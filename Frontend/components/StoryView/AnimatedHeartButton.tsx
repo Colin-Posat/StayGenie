@@ -250,7 +250,7 @@ const EnhancedHeartButton: React.FC<EnhancedHeartButtonProps> = ({
         <Ionicons
           name={displayIsLiked ? "heart" : "heart-outline"}
           size={size}
-          color={displayIsLiked ? "#EF4444" : "#6B7280"}
+          color={displayIsLiked ? "#EF4444" : "#374151"}
           style={{
             // Add a subtle glow effect for liked state
             textShadowColor: displayIsLiked ? 'rgba(239, 68, 68, 0.3)' : 'transparent',
