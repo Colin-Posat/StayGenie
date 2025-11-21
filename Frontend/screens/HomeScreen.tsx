@@ -330,8 +330,8 @@ interface Hotel {
   aiSafetyRating?: number;
   safetyJustification?: string; 
 }
-const BASE_URL = __DEV__ ? 'http://localhost:3003' : "https://staygenie-wwpa.onrender.com";
-//const BASE_URL ="https://staygenie-wwpa.onrender.com"
+//const BASE_URL = __DEV__ ? 'http://localhost:3003' : "https://staygenie-wwpa.onrender.com";
+const BASE_URL ="https://staygenie-wwpa.onrender.com"
 
 
 import { Dimensions } from 'react-native';
@@ -1861,45 +1861,64 @@ const handleBackPress = useCallback(() => {
             </View>
 
             <View style={tw`flex-row justify-end items-center gap-2`}>
-              <TouchableOpacity
-                style={[
-                  tw`px-4 py-2.5 rounded-xl`,
-                  { backgroundColor: '#F3F4F6' }
-                ]}
-                onPress={handleCancelEdit}
-                activeOpacity={0.7}
-              >
-                <Text style={{
-                  fontFamily: 'Merriweather-Regular',
-                  fontSize: 12,
-                  color: '#6B7280',
-                }}>
-                  Cancel
-                </Text>
-              </TouchableOpacity>
+  <TouchableOpacity
+    style={[
+      tw`px-4 py-2.5 rounded-xl border border-gray-200`,
+      { 
+        backgroundColor: '#ffffff',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.1,
+        shadowRadius: 2,
+        elevation: 3,
+      }
+    ]}
+    onPress={handleCancelEdit}
+    activeOpacity={0.8}
+  >
+    <Text style={{
+      fontFamily: 'Merriweather-Regular',
+      fontSize: 14,
+      color: '#374151',
+    }}>
+      Cancel
+    </Text>
+  </TouchableOpacity>
 
-              <TouchableOpacity
-                style={[
-                  tw`px-5 py-2.5 rounded-xl`,
-                  editedSearchQuery.trim() && editedSearchQuery.trim() !== searchQuery
-                    ? { backgroundColor: '#111827' }
-                    : { backgroundColor: '#E5E7EB' }
-                ]}
-                onPress={handleSaveSearch}
-                activeOpacity={0.7}
-                disabled={!editedSearchQuery.trim() || editedSearchQuery.trim() === searchQuery}
-              >
-                <Text style={{
-                  fontFamily: 'Merriweather-Bold',
-                  fontSize: 12,
-                  color: editedSearchQuery.trim() && editedSearchQuery.trim() !== searchQuery
-                    ? '#ffffff'
-                    : '#9CA3AF',
-                }}>
-                  Search
-                </Text>
-              </TouchableOpacity>
-            </View>
+  <TouchableOpacity
+    style={[
+      tw`px-5 py-2.5 rounded-xl`,
+      editedSearchQuery.trim() && editedSearchQuery.trim() !== searchQuery
+        ? { 
+            backgroundColor: '#00d4e6',
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 1 },
+            shadowOpacity: 0.1,
+            shadowRadius: 2,
+            elevation: 3,
+          }
+        : { 
+            backgroundColor: '#E5E7EB',
+            borderWidth: 1,
+            borderColor: '#D1D5DB'
+          }
+    ]}
+    onPress={handleSaveSearch}
+    activeOpacity={0.8}
+    disabled={!editedSearchQuery.trim() || editedSearchQuery.trim() === searchQuery}
+  >
+    <Text style={{
+      fontFamily: 'Merriweather-Bold',
+      fontSize: 14,
+      color: editedSearchQuery.trim() && editedSearchQuery.trim() !== searchQuery
+        ? '#ffffff'
+        : '#9CA3AF',
+    }}>
+      Search
+    </Text>
+  </TouchableOpacity>
+</View>
+
           </View>
         )}
       </View>

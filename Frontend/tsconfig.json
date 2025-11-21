@@ -3,6 +3,26 @@
   "compilerOptions": {
     "strict": true,
     "esModuleInterop": true,
-    "allowSyntheticDefaultImports": true
-  }
+    "allowSyntheticDefaultImports": true,
+
+    // Fixes your JSX error
+    "jsx": "react-native",
+
+    // REQUIRED to fix the error you are seeing
+    "moduleResolution": "bundler",
+
+    // Recommended for Expo
+    "resolveJsonModule": true,
+    "skipLibCheck": true,
+    "allowJs": true,
+
+    // Helps IntelliSense and RN-specific types
+    "types": ["react", "react-native"]
+  },
+  "include": [
+    "**/*.ts",
+    "**/*.tsx",
+    "**/*.js",
+    "**/*.jsx"
+  ]
 }

@@ -1730,8 +1730,12 @@ export const hotelSearchAndMatchController = async (req: Request, res: Response)
   // NEW: Detect if this is a GET request (SSE) or POST request (legacy)
   const isSSERequest = req.method === 'GET';
   const userInput = isSSERequest
-    ? String(req.query.q ?? req.query.userInput ?? '')
-    : req.body.userInput;
+  ? String(req.query.q ?? req.query.userInput ?? '')
+  : req.body.userInput;
+
+// ADD THIS:
+const checkInParam = isSSERequest ? req.query.checkIn : req.body.checkIn;
+const checkOutParam = isSSERequest ? req.query.checkOut : req.body.checkOut;
 
   if (!userInput?.trim()) {
     return res.status(400).json({ error: 'userInput is required' });
@@ -1808,6 +1812,13 @@ export const hotelSearchAndMatchController = async (req: Request, res: Response)
     
     const parseResponse = await internalApiInstance.post('/api/query/parse', { userInput });
     const parsedQuery: ParsedSearchQuery = parseResponse.data;
+
+    if (checkInParam && checkOutParam) {
+  parsedQuery.checkin = String(checkInParam);
+  parsedQuery.checkout = String(checkOutParam);
+  console.log(`📅 Using explicit dates: ${parsedQuery.checkin} to ${parsedQuery.checkout}`);
+}
+
     logger.endStep('1-ParseQuery', { parsedQuery });
 
     // Validate parsed data

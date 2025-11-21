@@ -7,6 +7,7 @@ import {
   Modal,
   ActivityIndicator,
   ScrollView,
+  TextInput,
 } from 'react-native';
 import { Text } from '../../components/CustomText'; 
 import { Ionicons } from '@expo/vector-icons';
@@ -33,8 +34,8 @@ const ReviewsModal: React.FC<ReviewsModalProps> = ({
   const [reviews, setReviews] = useState<any[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [showAllReviews, setShowAllReviews] = useState(false);
   const [hasScrolled, setHasScrolled] = useState(false);
+  const [searchQuery, setSearchQuery] = useState('');
   
   const [fontsLoaded] = useFonts({
     'Merriweather-Bold': require('../../assets/fonts/Merriweather_36pt-Bold.ttf'),
@@ -46,7 +47,8 @@ const ReviewsModal: React.FC<ReviewsModalProps> = ({
     setError(null);
 
     try {
-      const API_BASE_URL = __DEV__ ? 'http://localhost:3003' : "https://staygenie-wwpa.onrender.com";
+      //const API_BASE_URL = __DEV__ ? 'http://localhost:3003' : "https://staygenie-wwpa.onrender.com";
+      const API_BASE_URL ="https://staygenie-wwpa.onrender.com"
       const url = `${API_BASE_URL}/api/hotels/reviews`;
       
       const response = await fetch(url, {
@@ -86,14 +88,66 @@ const ReviewsModal: React.FC<ReviewsModalProps> = ({
     }
   }, [visible]);
 
-  const displayedReviews = showAllReviews ? reviews : reviews.slice(0, 3);
-
   const getRatingColor = (rating: number): string => {
     if (rating >= 4.5) return "#1df9ff";
     if (rating >= 4.0) return "#1df9ffE6";
     if (rating >= 3.5) return "#1df9ffCC";
     if (rating >= 3.0) return "#1df9ffB3";
     return "#1df9ff99";
+  };
+
+  // Filter reviews based on search query
+  const filteredReviews = reviews.filter((review) => {
+    if (!searchQuery.trim()) return true;
+    
+    const query = searchQuery.toLowerCase();
+    return (
+      review.headline?.toLowerCase().includes(query) ||
+      review.pros?.toLowerCase().includes(query) ||
+      review.cons?.toLowerCase().includes(query) ||
+      review.content?.toLowerCase().includes(query) ||
+      review.author?.toLowerCase().includes(query)
+    );
+  });
+
+  // Helper function to highlight matching text
+  const highlightText = (text: string | undefined) => {
+    if (!text || !searchQuery.trim()) {
+      return text;
+    }
+
+    const query = searchQuery.toLowerCase();
+    const lowerText = text.toLowerCase();
+    const index = lowerText.indexOf(query);
+
+    if (index === -1) {
+      return text;
+    }
+
+    const before = text.slice(0, index);
+    const match = text.slice(index, index + searchQuery.length);
+    const after = text.slice(index + searchQuery.length);
+
+    return { before, match, after };
+  };
+
+  // Component to render highlighted text
+  const HighlightedText = ({ text, style }: { text: string | undefined; style: any }) => {
+    const highlighted = highlightText(text);
+
+    if (!highlighted || typeof highlighted === 'string') {
+      return <Text style={style}>{text}</Text>;
+    }
+
+    return (
+      <Text style={style}>
+        {highlighted.before}
+        <Text style={[style, { backgroundColor: '#FEF08A', fontFamily: 'Merriweather-Bold' }]}>
+          {highlighted.match}
+        </Text>
+        {highlighted.after}
+      </Text>
+    );
   };
 
   if (!visible || !fontsLoaded) return null;
@@ -128,6 +182,42 @@ const ReviewsModal: React.FC<ReviewsModalProps> = ({
             
             <View style={tw`w-12`} />
           </View>
+
+          {/* Search Bar */}
+          {!loading && !error && reviews.length > 0 && (
+            <View style={tw`mt-4`}>
+              <View style={[
+                tw`flex-row items-center bg-gray-50 rounded-xl px-4 py-3 border border-gray-200`,
+              ]}>
+                <Ionicons name="search" size={20} color="#9CA3AF" />
+                <TextInput
+                  style={[
+                    tw`flex-1 ml-2 text-gray-900`,
+                    { fontFamily: 'Merriweather-Regular', fontSize: 14 }
+                  ]}
+                  placeholder="Search reviews..."
+                  placeholderTextColor="#9CA3AF"
+                  value={searchQuery}
+                  onChangeText={setSearchQuery}
+                  autoCapitalize="none"
+                  autoCorrect={false}
+                />
+                {searchQuery.length > 0 && (
+                  <TouchableOpacity 
+                    onPress={() => setSearchQuery('')}
+                    hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
+                  >
+                    <Ionicons name="close-circle" size={20} color="#9CA3AF" />
+                  </TouchableOpacity>
+                )}
+              </View>
+              {searchQuery.trim() && (
+                <Text style={[tw`text-xs text-gray-500 mt-2 ml-1`, { fontFamily: 'Merriweather-Regular' }]}>
+                  {filteredReviews.length} {filteredReviews.length === 1 ? 'review' : 'reviews'} found
+                </Text>
+              )}
+            </View>
+          )}
         </View>
 
         {/* Loading State */}
@@ -170,7 +260,7 @@ const ReviewsModal: React.FC<ReviewsModalProps> = ({
         )}
 
         {/* Empty State */}
-        {!loading && !error && displayedReviews.length === 0 && (
+        {!loading && !error && reviews.length === 0 && (
           <View style={tw`flex-1 items-center justify-center px-4`}>
             <View style={tw`bg-gray-50 border border-gray-200 rounded-xl p-6 items-center`}>
               <View style={[
@@ -189,8 +279,28 @@ const ReviewsModal: React.FC<ReviewsModalProps> = ({
           </View>
         )}
 
+        {/* No Search Results */}
+        {!loading && !error && reviews.length > 0 && filteredReviews.length === 0 && (
+          <View style={tw`flex-1 items-center justify-center px-4`}>
+            <View style={tw`bg-gray-50 border border-gray-200 rounded-xl p-6 items-center`}>
+              <View style={[
+                tw`w-12 h-12 rounded-full items-center justify-center mb-3`,
+                { backgroundColor: 'rgba(156, 163, 175, 0.1)' }
+              ]}>
+                <Ionicons name="search" size={24} color="#9CA3AF" />
+              </View>
+              <Text style={[tw`text-center mb-2`, { fontFamily: 'Merriweather-Bold' }]}>
+                No matching reviews
+              </Text>
+              <Text style={[tw`text-gray-600 text-sm text-center`, { fontFamily: 'Merriweather-Regular' }]}>
+                Try adjusting your search terms
+              </Text>
+            </View>
+          </View>
+        )}
+
         {/* Reviews List */}
-        {!loading && !error && displayedReviews.length > 0 && (
+        {!loading && !error && filteredReviews.length > 0 && (
           <ScrollView
             style={tw`flex-1`}
             contentContainerStyle={tw`p-4 pb-8`}
@@ -200,7 +310,7 @@ const ReviewsModal: React.FC<ReviewsModalProps> = ({
             }}
             scrollEventThrottle={16}
           >
-            {displayedReviews.map((review) => (
+            {filteredReviews.map((review) => (
               <View
                 key={review.id}
                 style={[
@@ -226,9 +336,10 @@ const ReviewsModal: React.FC<ReviewsModalProps> = ({
                     </Text>
                   </View>
                   <View style={tw`flex-1`}>
-                    <Text style={[tw`text-gray-900 text-sm`, { fontFamily: 'Merriweather-Bold' }]}>
-                      {review.author}
-                    </Text>
+                    <HighlightedText 
+                      text={review.author}
+                      style={[tw`text-gray-900 text-sm`, { fontFamily: 'Merriweather-Bold' }]}
+                    />
                     <Text style={[tw`text-xs text-gray-500 mt-0.5`, { fontFamily: 'Merriweather-Regular' }]}>
                       {review.date}
                     </Text>
@@ -237,9 +348,10 @@ const ReviewsModal: React.FC<ReviewsModalProps> = ({
 
                 {/* Review Headline */}
                 {review.headline && review.headline.trim() && (
-                  <Text style={[tw`text-gray-900 mb-2 text-sm leading-5`, { fontFamily: 'Merriweather-Bold' }]}>
-                    {review.headline}
-                  </Text>
+                  <HighlightedText 
+                    text={review.headline}
+                    style={[tw`text-gray-900 mb-2 text-sm leading-5`, { fontFamily: 'Merriweather-Bold' }]}
+                  />
                 )}
 
                 {/* Pros */}
@@ -252,9 +364,12 @@ const ReviewsModal: React.FC<ReviewsModalProps> = ({
                       ]}>
                         <Ionicons name="thumbs-up" size={12} color="#10B981" />
                       </View>
-                      <Text style={[tw`text-green-700 flex-1 text-xs leading-4`, { fontFamily: 'Merriweather-Regular' }]}>
-                        {review.pros}
-                      </Text>
+                      <View style={tw`flex-1`}>
+                        <HighlightedText 
+                          text={review.pros}
+                          style={[tw`text-gray-900 text-xs leading-4`, { fontFamily: 'Merriweather-Regular' }]}
+                        />
+                      </View>
                     </View>
                   </View>
                 )}
@@ -269,43 +384,25 @@ const ReviewsModal: React.FC<ReviewsModalProps> = ({
                       ]}>
                         <Ionicons name="thumbs-down" size={12} color="#EF4444" />
                       </View>
-                      <Text style={[tw`text-red-700 flex-1 text-xs leading-4`, { fontFamily: 'Merriweather-Regular' }]}>
-                        {review.cons}
-                      </Text>
+                      <View style={tw`flex-1`}>
+                        <HighlightedText 
+                          text={review.cons}
+                          style={[tw`text-gray-900 text-xs leading-4`, { fontFamily: 'Merriweather-Regular' }]}
+                        />
+                      </View>
                     </View>
                   </View>
                 )}
 
                 {/* Review Content (fallback if no pros/cons) */}
                 {review.content && !review.pros && !review.cons && (
-                  <Text style={[tw`text-xs leading-4 text-gray-700`, { fontFamily: 'Merriweather-Regular' }]}>
-                    {review.content}
-                  </Text>
+                  <HighlightedText 
+                    text={review.content}
+                    style={[tw`text-xs leading-4 text-gray-900`, { fontFamily: 'Merriweather-Regular' }]}
+                  />
                 )}
               </View>
             ))}
-
-            {/* Show More/Less Button */}
-            {reviews.length > 3 && (
-              <TouchableOpacity
-                style={[
-                  tw`py-3 px-4 rounded-xl bg-white border border-gray-200 items-center mt-2`,
-                  {
-                    shadowColor: '#000',
-                    shadowOffset: { width: 0, height: 1 },
-                    shadowOpacity: 0.08,
-                    shadowRadius: 2,
-                    elevation: 2,
-                  }
-                ]}
-                onPress={() => setShowAllReviews(!showAllReviews)}
-                activeOpacity={0.8}
-              >
-                <Text style={[tw`text-sm`, { fontFamily: 'Merriweather-Bold', color: '#00d4e6' }]}>
-                  {showAllReviews ? 'Show Less' : `Show All ${reviews.length} Reviews`}
-                </Text>
-              </TouchableOpacity>
-            )}
           </ScrollView>
         )}
       </View>

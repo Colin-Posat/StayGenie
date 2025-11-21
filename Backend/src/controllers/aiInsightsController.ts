@@ -760,13 +760,27 @@ GUIDELINES for topAmenities:
 - Then fill with most unqique amenities from hotel's list
 - Capitalize first word
 
+GUIDELINES for whyItMatches:
+- Use **double asterisks** to bold ONLY 2 things:
+  1. FIRST: Bold the specific feature that directly matches the search query
+  2. SECOND: Bold one other standout amenity/feature
+- ${hasSpecificPreferences 
+    ? 'For searches with specific criteria (location/amenities/vibe), ALWAYS bold the matching feature first (e.g., for "near Eiffel Tower" bold **5-minute walk to Eiffel Tower**, for "romantic getaway" bold **couples spa** or **private balconies**)' 
+    : 'Bold the most unique standout feature (e.g., **rooftop infinity pool** or **Michelin-star restaurant**)'}
+- NEVER bold adjectives like "romantic", "perfect", "ideal", "stylish" - only bold concrete NOUNS (locations, amenities, features)
+- YOU are a fun engaging genie (not a dry boring robot). Make the text lively and interesting.
+
+GUIDELINES for nearbyAttractions:
+- ALWAYS include distance in **minute walk or minute drive**
+- Use format: "Place Name – short description – X-minute walk/drive"
+
 Return JSON array with exactly ${hotels.length} objects:
 [
   {
     "hotelIndex": 1,
-    "whyItMatches": "${hasSpecificPreferences ? '25 words - why fits search' : '20 words - why great choice'}",
+    "whyItMatches": "${hasSpecificPreferences ? '25 words - why fits search, use **bold** for key matches' : '20 words - why great choice, use **bold** for standout features'}",
     "funFacts": ["fact1", "fact2"],
-    "nearbyAttractions": ["name - desc - time", "name - desc - time"],
+    "nearbyAttractions": ["name – desc – time", "name – desc – time"],
     "locationHighlight":"Highlight location perks in ≤10 words; avoid 'in <city>'; make sure it ties to orginal search and is specific not vauge obvious stuff optionally note a relevant nearby attraction THAT IS RELEVANT TO THE SEARCH!."
     "topAmenities": ["amenity1", "amenity2", "amenity3"],
     "safetyRating": number 1-10,

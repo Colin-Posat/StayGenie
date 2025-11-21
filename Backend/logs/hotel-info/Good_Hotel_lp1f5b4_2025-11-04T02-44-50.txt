@@ -1,0 +1,9 @@
+BASIC INFORMATION:
+Name: Good Hotel
+Address: undefined
+City: San Francisco
+Country: US
+Star Rating: 2.5 stars
+Guest Rating: 0/10 (0 reviews)
+Check-in: 3:00 PM
+Check-out: 12:00 PM

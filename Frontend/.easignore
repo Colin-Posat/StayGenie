@@ -1,0 +1,15 @@
+# ignore the Backend entirely
+../Backend/
+Backend/
+*/Backend/
+
+# ignore logs anywhere
+logs/
+**/logs/
+*.log
+
+# typical ignores
+node_modules/
+.git/
+dist/
+build/

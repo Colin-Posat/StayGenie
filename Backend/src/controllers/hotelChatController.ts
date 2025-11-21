@@ -1,4 +1,4 @@
-// controllers/hotelChatController.ts - Enhanced with hotel details fetching
+// controllers/hotelChatController.ts - Enhanced with inferential AI capabilities
 import { Request, Response } from 'express';
 import axios from 'axios';
 import OpenAI from 'openai';
@@ -14,7 +14,7 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
-// Optimized axios instance for LiteAPI (copied from aiInsightsController)
+// Optimized axios instance for LiteAPI
 const liteApiInstance = axios.create({
   baseURL: 'https://api.liteapi.travel/v3.0',
   headers: {
@@ -26,7 +26,7 @@ const liteApiInstance = axios.create({
   maxRedirects: 2,
 });
 
-// In-memory conversation storage (in production, use Redis or a database)
+// In-memory conversation storage
 const conversationStore = new Map<string, any[]>();
 
 interface HotelData {
@@ -87,10 +87,9 @@ interface HotelChatRequest {
 
 interface HotelDetailsRequest {
   hotelId: string;
-  hotelName?: string; // Optional for logging
+  hotelName?: string;
 }
 
-// Updated interface to match the actual LiteAPI response structure (copied from aiInsightsController)
 interface HotelSentimentData {
   data: {
     chain: string;
@@ -193,12 +192,10 @@ interface HotelSentimentData {
 
 const saveHotelInfoToFile = async (hotelId: string, hotelName: string, allHotelInfo: string): Promise<string> => {
   try {
-    // Create a safe filename (remove special characters)
     const safeHotelName = hotelName.replace(/[^a-z0-9]/gi, '_').toLowerCase();
     const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
     const filename = `hotel_${hotelId}_${safeHotelName}_${timestamp}.txt`;
     
-    // Create the directory if it doesn't exist
     const outputDir = path.resolve(__dirname, '../../hotel_data_exports');
     if (!fs.existsSync(outputDir)) {
       fs.mkdirSync(outputDir, { recursive: true });
@@ -206,7 +203,6 @@ const saveHotelInfoToFile = async (hotelId: string, hotelName: string, allHotelI
     
     const filePath = path.join(outputDir, filename);
     
-    // Create the file content with header
     const fileContent = `HOTEL DATA EXPORT
 ==================
 Hotel Name: ${hotelName}
@@ -224,7 +220,6 @@ ${allHotelInfo}
 END OF EXPORT
 ==================`;
 
-    // Write the file
     fs.writeFileSync(filePath, fileContent, 'utf8');
     
     console.log(`📄 Hotel data saved to: ${filePath}`);
@@ -235,7 +230,6 @@ END OF EXPORT
   }
 };
 
-// NEW: Function to fetch hotel details for chat context (adapted from aiInsightsController)
 const fetchHotelDetailsForChat = async (hotelId: string): Promise<HotelSentimentData | null> => {
   try {
     console.log(`🏨 Fetching hotel details for chat context - Hotel ID: ${hotelId}`);
@@ -244,7 +238,7 @@ const fetchHotelDetailsForChat = async (hotelId: string): Promise<HotelSentiment
       params: {
         hotelId: hotelId
       },
-      timeout: 8000 // Shorter timeout for chat context
+      timeout: 8000
     });
 
     if (response.status !== 200) {
@@ -256,11 +250,9 @@ const fetchHotelDetailsForChat = async (hotelId: string): Promise<HotelSentiment
     
     return hotelData;
   } catch (error: any) {
-    // Handle rate limiting
     if (error.response?.status === 429) {
       console.warn(`⏰ Rate limited for hotel ${hotelId} - waiting and retrying...`);
       
-      // Wait 2 seconds and retry once
       await new Promise(resolve => setTimeout(resolve, 2000));
       
       try {
@@ -296,7 +288,6 @@ const consolidateHotelInfoForChat = (hotelDetailsData: HotelSentimentData | null
   let allInfo = '';
   let sectionsProcessed = 0;
 
-  // Hotel Description
   if (hotel.hotelDescription) {
     console.log('✅ Processing hotel description for chat...');
     const cleanDescription = hotel.hotelDescription.replace(/<[^>]*>/g, '').replace(/&nbsp;/g, ' ').trim();
@@ -306,7 +297,6 @@ const consolidateHotelInfoForChat = (hotelDetailsData: HotelSentimentData | null
     console.log(`   Description length: ${cleanDescription.length} characters`);
   }
 
-  // Important Information
   if (hotel.hotelImportantInformation) {
     console.log('✅ Processing important information for chat...');
     allInfo += 'IMPORTANT INFORMATION:\n';
@@ -314,7 +304,6 @@ const consolidateHotelInfoForChat = (hotelDetailsData: HotelSentimentData | null
     sectionsProcessed++;
   }
 
-  // Hotel Facilities & Amenities
   if (hotel.hotelFacilities && hotel.hotelFacilities.length > 0) {
     console.log(`✅ Processing ${hotel.hotelFacilities.length} hotel facilities for chat...`);
     allInfo += 'HOTEL FACILITIES & AMENITIES:\n';
@@ -325,7 +314,6 @@ const consolidateHotelInfoForChat = (hotelDetailsData: HotelSentimentData | null
     sectionsProcessed++;
   }
 
-  // Additional structured facilities
   if (hotel.facilities && hotel.facilities.length > 0) {
     console.log(`✅ Processing ${hotel.facilities.length} additional facilities for chat...`);
     allInfo += 'ADDITIONAL FACILITIES:\n';
@@ -336,7 +324,6 @@ const consolidateHotelInfoForChat = (hotelDetailsData: HotelSentimentData | null
     sectionsProcessed++;
   }
 
-  // Policies
   if (hotel.policies && hotel.policies.length > 0) {
     console.log(`✅ Processing ${hotel.policies.length} hotel policies for chat...`);
     allInfo += 'HOTEL POLICIES:\n';
@@ -347,7 +334,6 @@ const consolidateHotelInfoForChat = (hotelDetailsData: HotelSentimentData | null
     sectionsProcessed++;
   }
 
-  // Sentiment Analysis
   if (hotel.sentiment_analysis) {
     console.log('✅ Processing sentiment analysis for chat...');
     const sentiment = hotel.sentiment_analysis;
@@ -380,7 +366,6 @@ const consolidateHotelInfoForChat = (hotelDetailsData: HotelSentimentData | null
     sectionsProcessed++;
   }
 
-  // Basic Information
   console.log('✅ Processing basic information for chat...');
   allInfo += 'BASIC INFORMATION:\n';
   allInfo += `Name: ${hotel.name}\n`;
@@ -404,8 +389,6 @@ const consolidateHotelInfoForChat = (hotelDetailsData: HotelSentimentData | null
   return allInfo.trim();
 };
 
-
-// NEW: Controller to fetch hotel details for chat context
 export const fetchHotelDetailsForChatController = async (req: Request, res: Response) => {
   try {
     const { hotelId, hotelName }: HotelDetailsRequest = req.body;
@@ -419,7 +402,6 @@ export const fetchHotelDetailsForChatController = async (req: Request, res: Resp
 
     console.log(`🏨 Fetching hotel details for chat context: ${hotelName || 'Unknown'} (ID: ${hotelId})`);
 
-    // Fetch hotel details from LiteAPI
     const hotelDetailsData = await fetchHotelDetailsForChat(hotelId);
     
     if (!hotelDetailsData) {
@@ -431,7 +413,6 @@ export const fetchHotelDetailsForChatController = async (req: Request, res: Resp
       });
     }
 
-    // Consolidate all hotel information
     const allHotelInfo = consolidateHotelInfoForChat(hotelDetailsData);
     let savedFilePath = null;
     try {
@@ -478,14 +459,12 @@ export const fetchHotelDetailsForChatController = async (req: Request, res: Resp
   }
 };
 
-// Generate a comprehensive hotel context for the AI
 const generateHotelContext = (hotel: HotelData): string => {
   const contexts = [
     `Hotel Name: ${hotel.name}`,
     `Hotel ID: ${hotel.id}`,
   ];
 
-  // Use the comprehensive allHotelInfo if available
   if (hotel.allHotelInfo) {
     contexts.push(`\nDetailed Hotel Information: ${hotel.allHotelInfo}`);
   } else {
@@ -495,11 +474,9 @@ const generateHotelContext = (hotel: HotelData): string => {
   return contexts.join('\n');
 };
 
-// Generate fallback response for when OpenAI is unavailable
 const generateFallbackResponse = (userMessage: string, hotel: HotelData): string => {
   const message = userMessage.toLowerCase();
   
-  // Amenities and facilities
   if (message.includes('amenities') || message.includes('facilities')) {
     const amenities = hotel.topAmenities || hotel.features || [];
     if (amenities.length > 0) {
@@ -508,7 +485,6 @@ const generateFallbackResponse = (userMessage: string, hotel: HotelData): string
     return `I'd be happy to help with amenities information for ${hotel.name}. Based on the available information, this hotel offers quality facilities and services.`;
   }
 
-  // Location and attractions
   if (message.includes('location') || message.includes('nearby') || message.includes('attractions') || message.includes('around')) {
     const attractions = hotel.nearbyAttractions || [];
     const locationInfo = hotel.locationHighlight || hotel.fullAddress || hotel.location;
@@ -521,7 +497,6 @@ const generateFallbackResponse = (userMessage: string, hotel: HotelData): string
     return response;
   }
 
-  // Rooms and accommodations
   if (message.includes('room') || message.includes('bed') || message.includes('accommodation')) {
     if (hotel.roomTypes && hotel.roomTypes.length > 0) {
       return `${hotel.name} offers various room types. ${hotel.fullDescription || 'Contact the hotel directly for detailed room information.'}`;
@@ -529,7 +504,6 @@ const generateFallbackResponse = (userMessage: string, hotel: HotelData): string
     return `${hotel.name} offers comfortable accommodations. For specific room details and availability, I recommend contacting the hotel directly.`;
   }
 
-  // Reviews and ratings
   if (message.includes('review') || message.includes('guest') || message.includes('rating') || message.includes('opinion')) {
     let response = `${hotel.name} has a ${hotel.rating}/10 rating based on ${hotel.reviews} reviews.`;
     
@@ -548,7 +522,6 @@ const generateFallbackResponse = (userMessage: string, hotel: HotelData): string
     return response;
   }
 
-  // Pricing
   if (message.includes('price') || message.includes('cost') || message.includes('rate') || message.includes('expensive')) {
     const price = hotel.pricePerNight?.display || `${hotel.price}`;
     let response = `${hotel.name} is priced at ${price} per night.`;
@@ -564,103 +537,14 @@ const generateFallbackResponse = (userMessage: string, hotel: HotelData): string
     return response;
   }
 
-  // Cancellation policy
-  if (message.includes('cancel') || message.includes('refund') || message.includes('policy')) {
-    if (hotel.isRefundable) {
-      return `Yes, ${hotel.name} offers free cancellation. ${hotel.refundableInfo || 'Check the specific terms when booking.'}`;
-    }
-    return `For cancellation policies at ${hotel.name}, please check the specific booking terms or contact the hotel directly.`;
-  }
-
-  // Parking
-  if (message.includes('parking') || message.includes('car')) {
-    const amenities = hotel.topAmenities || hotel.features || [];
-    const hasParking = amenities.some(amenity => 
-      amenity.toLowerCase().includes('parking') || amenity.toLowerCase().includes('valet')
-    );
-    
-    if (hasParking) {
-      return `Yes, ${hotel.name} offers parking facilities. Check with the hotel for specific details about rates and availability.`;
-    }
-    return `For parking information at ${hotel.name}, please contact the hotel directly for the most current details.`;
-  }
-
-  // WiFi
-  if (message.includes('wifi') || message.includes('internet')) {
-    const amenities = hotel.topAmenities || hotel.features || [];
-    const hasWifi = amenities.some(amenity => 
-      amenity.toLowerCase().includes('wifi') || amenity.toLowerCase().includes('internet')
-    );
-    
-    if (hasWifi) {
-      return `Yes, ${hotel.name} offers WiFi access. Most modern hotels provide complimentary internet access.`;
-    }
-    return `For internet access information at ${hotel.name}, please check with the hotel directly.`;
-  }
-
-  // Breakfast
-  if (message.includes('breakfast') || message.includes('food') || message.includes('dining')) {
-    const tags = hotel.tags || [];
-    const amenities = hotel.topAmenities || hotel.features || [];
-    const hasBreakfast = tags.some(tag => tag.toLowerCase().includes('breakfast')) ||
-                        amenities.some(amenity => amenity.toLowerCase().includes('breakfast'));
-    
-    if (hasBreakfast) {
-      return `Yes, ${hotel.name} offers breakfast services. Check your booking for inclusion details.`;
-    }
-    return `For dining and breakfast information at ${hotel.name}, please contact the hotel directly for current offerings.`;
-  }
-
-  // Pool and spa
-  if (message.includes('pool') || message.includes('spa') || message.includes('fitness') || message.includes('gym')) {
-    const amenities = hotel.topAmenities || hotel.features || [];
-    const hasPool = amenities.some(amenity => 
-      amenity.toLowerCase().includes('pool') || 
-      amenity.toLowerCase().includes('spa') ||
-      amenity.toLowerCase().includes('fitness') ||
-      amenity.toLowerCase().includes('gym')
-    );
-    
-    if (hasPool) {
-      const relevantAmenities = amenities.filter(amenity => 
-        amenity.toLowerCase().includes('pool') || 
-        amenity.toLowerCase().includes('spa') ||
-        amenity.toLowerCase().includes('fitness') ||
-        amenity.toLowerCase().includes('gym')
-      );
-      return `Yes, ${hotel.name} offers: ${relevantAmenities.join(', ')}.`;
-    }
-    return `For recreation and wellness facilities at ${hotel.name}, please contact the hotel directly for current amenities.`;
-  }
-
-  // Check-in/out times
-  if (message.includes('check') && (message.includes('in') || message.includes('out')) || message.includes('time')) {
-    return `For check-in and check-out times at ${hotel.name}, please contact the hotel directly as these can vary. Standard check-in is typically 3-4 PM and check-out is 11 AM-12 PM.`;
-  }
-
-  // Pet policy
-  if (message.includes('pet') || message.includes('dog') || message.includes('cat') || message.includes('animal')) {
-    const amenities = hotel.topAmenities || hotel.features || [];
-    const petFriendly = amenities.some(amenity => 
-      amenity.toLowerCase().includes('pet') || amenity.toLowerCase().includes('dog')
-    );
-    
-    if (petFriendly) {
-      return `${hotel.name} appears to be pet-friendly. Please contact the hotel directly to confirm their current pet policy and any associated fees.`;
-    }
-    return `For pet policies at ${hotel.name}, please contact the hotel directly as policies can vary and change.`;
-  }
-
-  // Generic fallback
-  return `I'd be happy to help you learn more about ${hotel.name}! I have information about their amenities, location, reviews, and pricing. Could you please be more specific about what you'd like to know? For example, you can ask about rooms, amenities, location, reviews, or policies.`;
+  return `I'd be happy to help you learn more about ${hotel.name}! I have information about their amenities, location, reviews, and pricing. Could you please be more specific about what you'd like to know?`;
 };
 
-// Main chat controller function
+// MAIN ENHANCED CHAT CONTROLLER
 export const hotelChatController = async (req: Request, res: Response) => {
   try {
     const { conversationId, userMessage, hotelData, chatHistory = [] }: HotelChatRequest = req.body;
 
-    // Validation
     if (!conversationId || !userMessage || !hotelData) {
       return res.status(400).json({
         success: false,
@@ -678,110 +562,76 @@ export const hotelChatController = async (req: Request, res: Response) => {
     console.log(`🏨 Hotel chat request for ${hotelData.name} (ID: ${hotelData.id})`);
     console.log(`💬 User message: "${userMessage}"`);
 
-    // Generate hotel context for AI
     const hotelContext = generateHotelContext(hotelData);
 
-    // DEBUG: Log the hotel data and generated context
-    console.log('📊 DEBUG - Hotel Data Received:');
-    console.log('- Hotel ID:', hotelData.id);
-    console.log('- Hotel Name:', hotelData.name);
-    console.log('- allHotelInfo type:', typeof hotelData.allHotelInfo);
-    console.log('- allHotelInfo value:', hotelData.allHotelInfo);
-    console.log('- allHotelInfo length:', hotelData.allHotelInfo?.length || 'undefined/null');
-    
-    if (hotelData.allHotelInfo) {
-      console.log('- allHotelInfo preview:', hotelData.allHotelInfo.substring(0, 300) + '...');
-    } else {
-      console.log('- allHotelInfo is empty, null, or undefined!');
-    }
-    
-    console.log('\n🤖 DEBUG - Generated Context for GPT:');
-    console.log('Context length:', hotelContext.length);
-    console.log('Full context:');
-    console.log('='.repeat(50));
-    console.log(hotelContext);
-    console.log('='.repeat(50));
-
-    // Get or initialize conversation history
     let conversation = conversationStore.get(conversationId) || [];
 
-    // Add user message to conversation
     conversation.push({
       role: 'user',
       content: userMessage
     });
 
     try {
-      // Create system message with hotel context
-     const systemMessage = {
+      // ENHANCED SYSTEM PROMPT - Allows inference with VERY concise responses!
+      const systemMessage = {
         role: 'system' as const,
-        content: `You are a helpful hotel concierge AI for this specific hotel. Answer questions directly using the provided information.
+        content: `You are a helpful hotel concierge AI for ${hotelData.name}. Answer questions directly and briefly.
+
+CRITICAL RULES FOR RESPONSES:
+- Maximum 2 short sentences (30-40 words total max)
+- Get to the point immediately - no setup or context
+- Use simple, direct language
+- If you need to mention a caveat, make it brief (5 words max)
+
+You CAN infer:
+- Suitability for different travelers
+- Neighborhood vibe from location/reviews
+- Value assessment
+- Potential concerns from reviews
+
+You CANNOT:
+- Make up specific facts not in the data
+- Write long explanations
+
+Examples of GOOD responses:
+"Yes, great for families! Spacious rooms and kid-friendly amenities."
+"The location is near Tulum's main attractions with easy beach access."
+"It's around $150/night with free cancellation included."
+
+Examples of BAD responses (too long):
+"Lumina at Mudra Tulum is conveniently located near some of Tulum's top attractions, including the Tulum Archeological Site and the Tulum Bus station, making it easy for guests to explore the area's rich culture and stunning natural beauty..."
 
 Hotel Information:
-${hotelContext}
-
-Response Guidelines:
-- Keep responses short and direct (1-2 sentences max)
-- Include all relevant facts but no extra fluff
-- Be helpful and friendly but concise
-- Use specific details from the hotel data
-- If you don't have info, say so briefly and suggest contacting the hotel
-- Don't repeat the hotel name unless necessary
-
-Examples:
-User: "Does this hotel have a pool?"
-You: "Yes! We have [specific pool info from data]."
-
-User: "What's the price?"
-You: "[Exact price from data] per night with [any included perks]."
-
-User: "What's nearby?"
-You: "You're close to [2-3 top attractions from data]."
-`
+${hotelContext}`
       };
 
-      // Prepare messages for OpenAI (system + recent conversation)
       const messages = [
         systemMessage,
-        ...conversation.slice(-10) // Last 10 messages for context
+        ...conversation.slice(-10)
       ];
 
-      console.log('\n📤 DEBUG - Full GPT Request:');
-      console.log('Messages array length:', messages.length);
-      console.log('System message length:', systemMessage.content.length);
-      console.log('System message preview:');
-      console.log(systemMessage.content.substring(0, 500) + '...');
-      console.log('Recent conversation messages:', conversation.slice(-10).length);
-
-      console.log(`🤖 Sending request to OpenAI for ${hotelData.name}...`);
+      console.log(`🤖 Sending enhanced request to OpenAI for ${hotelData.name}...`);
 
       const completion = await openai.chat.completions.create({
-  model: 'gpt-4o-mini',
-  messages: messages,
-  max_tokens: 120,          // ↓ from 300
-  temperature: 0.3,         // ↓ for tighter wording
-  presence_penalty: 0.0,    // keep it focused
-  frequency_penalty: 0.2,   // reduce repetition slightly
-});
-
+        model: 'gpt-4o-mini',
+        messages: messages,
+        max_tokens: 60,        // Very short responses only
+        temperature: 0.4,      // Lower for more focused responses
+        presence_penalty: 0.1, // Slight penalty for verbosity
+        frequency_penalty: 0.5, // Strong penalty to reduce wordiness
+      });
 
       const aiResponse = completion.choices[0]?.message?.content?.trim();
-
-      console.log('\n📥 DEBUG - GPT Response:');
-      console.log('Response length:', aiResponse?.length || 0);
-      console.log('Response content:', aiResponse || 'No response');
 
       if (!aiResponse) {
         throw new Error('Empty response from OpenAI');
       }
 
-      // Add AI response to conversation
       conversation.push({
         role: 'assistant',
         content: aiResponse
       });
 
-      // Store updated conversation (limit to last 20 messages)
       conversationStore.set(conversationId, conversation.slice(-20));
 
       console.log(`✅ Generated AI response for ${hotelData.name} chat`);
@@ -796,10 +646,8 @@ You: "You're close to [2-3 top attractions from data]."
     } catch (openaiError: any) {
       console.error('❌ OpenAI API error:', openaiError);
 
-      // Generate fallback response
       const fallbackResponse = generateFallbackResponse(userMessage, hotelData);
 
-      // Add fallback response to conversation
       conversation.push({
         role: 'assistant',
         content: fallbackResponse

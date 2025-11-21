@@ -573,7 +573,7 @@ const SearchQueryCarousel: React.FC<SearchQueryCarouselProps> = ({
         onPress={handleSearchPress}
         activeOpacity={0.8}
         style={[
-          tw`ml-1 mr-2 mb-4 px-2.4 py-2.5 rounded-xl border bg-white border-gray-200`,
+          tw`ml-1 mr-.5 mb-4 px-2.4 py-2.5 rounded-xl border bg-white border-gray-200`,
           {
             shadowColor: '#000',
             shadowOffset: { width: 0, height: 1 },

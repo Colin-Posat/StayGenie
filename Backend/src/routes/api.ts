@@ -1,4 +1,4 @@
-// src/routes/api.ts - Updated with hotel reviews endpoint
+// src/routes/api.ts - Updated with hotel reviews endpoint and article generation
 import express from 'express';
 import { hotelSearchAndMatchController } from '../controllers/hotelSearchAndMatch';
 import { aiInsightsController } from '../controllers/aiInsightsController';
@@ -7,8 +7,9 @@ import { generateSuggestions } from '../controllers/aiSuggestionsController';
 import { hotelBudgetRelevanceController } from '../controllers/hotelBudgetRelevanceController';
 import { conversationalRefineController } from '../controllers/conversationalRefineController';
 import { hotelChatController, fetchHotelDetailsForChatController } from '../controllers/hotelChatController';
-import { fetchHotelReviewsController } from '../controllers/hotelReviewsController'; // NEW IMPORT
+import { fetchHotelReviewsController } from '../controllers/hotelReviewsController';
 import { generateArticleController, generateBatchArticlesController } from '../controllers/articleGeneratorController';
+import { pushArticleController } from '../controllers/articlePushController';
 
 const router = express.Router();
 
@@ -26,19 +27,21 @@ router.post('/hotels/conversational-refine', conversationalRefineController); //
 router.post('/hotels/fetch-details-for-chat', fetchHotelDetailsForChatController); // Fetch hotel details for chat context
 router.post('/hotels/chat', hotelChatController); // Hotel-specific AI chat
 
-// NEW: Hotel reviews route
+// Hotel reviews route
 router.post('/hotels/reviews', fetchHotelReviewsController); // Fetch hotel reviews with sentiment analysis
 
 // Query parsing route  
 router.post('/query/parse', parseSearchQuery);
 
-router.post('/articles/generate', generateArticleController);
-router.post('/articles/generate-batch', generateBatchArticlesController);
+// Article generation routes
+router.post('/articles/generate', generateArticleController); // Generate single article
+router.post('/articles/generate-batch', generateBatchArticlesController); // Generate multiple articles
+router.post('/articles/push', pushArticleController); // Receive and save generated articles
 
 // Health check route
 router.get('/health', (req, res) => {
   res.status(200).json({
-     status: 'OK',
+    status: 'OK',
     timestamp: new Date().toISOString(),
     service: 'StayGenie Backend'
   });
@@ -47,7 +50,7 @@ router.get('/health', (req, res) => {
 // Test route to verify API is working
 router.get('/test', (req, res) => {
   res.status(200).json({
-     message: 'StayGenie API is working!',
+    message: 'StayGenie API is working!',
     endpoints: [
       'POST /api/hotels/search-and-match - Hotel search + Llama AI matching (Stage 1)',
       'POST /api/hotels/ai-insights - GPT content generation + sentiment insights (Stage 2)',
@@ -56,8 +59,11 @@ router.get('/test', (req, res) => {
       'POST /api/hotels/conversational-refine - Conversational search refinement',
       'POST /api/hotels/fetch-details-for-chat - Fetch comprehensive hotel details for chat context',
       'POST /api/hotels/chat - Hotel-specific AI chat assistant',
-      'POST /api/hotels/reviews - NEW: Fetch hotel reviews with sentiment analysis',
+      'POST /api/hotels/reviews - Fetch hotel reviews with sentiment analysis',
       'POST /api/query/parse - Parse natural language hotel search queries',
+      'POST /api/articles/generate - Generate single article with AI',
+      'POST /api/articles/generate-batch - Generate multiple articles (batch processing)',
+      'POST /api/articles/push - Receive and save generated articles',
       'GET /api/health - Health check',
       'GET /api/test - Test endpoint'
     ],
@@ -108,7 +114,7 @@ router.get('/test', (req, res) => {
         benefits: 'Rich hotel context, personalized assistance, comprehensive Q&A, enhanced user experience'
       },
       hotelReviewsWorkflow: {
-        newFeature: 'NEW Hotel Reviews with Sentiment Analysis',
+        feature: 'Hotel Reviews with Sentiment Analysis',
         endpoint: 'POST /api/hotels/reviews',
         features: [
           'Real guest reviews from LiteAPI reviews endpoint',
@@ -133,6 +139,67 @@ router.get('/test', (req, res) => {
           sentiment: 'AI-generated sentiment analysis'
         },
         benefits: 'Authentic guest feedback, AI insights, enhanced booking confidence'
+      },
+      articleGenerationWorkflow: {
+        feature: 'AI-Powered Article Generation',
+        endpoints: {
+          single: 'POST /api/articles/generate',
+          batch: 'POST /api/articles/generate-batch'
+        },
+        features: [
+          'Hotel search and matching via SSE streaming',
+          'AI-generated article titles, excerpts, and introductions',
+          'Automated hotel description summarization',
+          'Context-aware highlight generation for each hotel',
+          'Up to 6 hotels per article with complete metadata',
+          'Hotel ID preservation for deep linking',
+          'Batch processing support for multiple articles',
+          'Dates automatically set to 3 months in future'
+        ],
+        singleArticleRequest: {
+          city: 'string (optional)',
+          query: 'string (required) - Hotel search query',
+          title: 'string (required) - Article title'
+        },
+        batchRequest: {
+          articles: 'Array of article queries (city, query, title)'
+        },
+        responseFormat: {
+          single: {
+            success: 'boolean',
+            article: {
+              city: 'string',
+              query: 'string',
+              title: 'string',
+              excerpt: 'string - 2-3 sentences explaining value',
+              intro: 'string - Single engaging sentence',
+              hotels: [
+                {
+                  id: 'string - Hotel system ID for deep linking',
+                  name: 'string',
+                  image: 'string - URL',
+                  description: 'string - AI-summarized',
+                  highlight: 'string - Feature matching article theme',
+                  price: 'string',
+                  rating: 'number (optional)',
+                  location: 'string (optional)',
+                  tags: 'array (optional)',
+                  isRefundable: 'boolean (optional)',
+                  placeId: 'string (optional)'
+                }
+              ]
+            }
+          },
+          batch: {
+            success: 'boolean',
+            totalRequested: 'number',
+            totalGenerated: 'number',
+            totalFailed: 'number',
+            articles: 'Array of generated articles',
+            errors: 'Array of error objects'
+          }
+        },
+        benefits: 'Automated content creation, SEO-ready articles, deep linking support, batch processing'
       }
     }
   });

@@ -1,0 +1,103 @@
+
+=== HOTEL MATCHING PROMPT LOG ===
+Search ID: bd0bc045-e0a3-4db2-8d43-a68409c8308b
+Timestamp: 2025-11-03T22:33:06.794Z
+User Query: find a hotel in sardinia italy thay is near costa smeralda. it should have a restaurant in the hotel and have a view of the ocean • Nov 19, 2025 - Nov 27, 2025 • $400 - $800
+Destination: Olbia, IT
+Hotel Count: 41
+Character Count: 19310
+Estimated Tokens: ~4828
+
+=== PROMPT CONTENT ===
+USER REQUEST: "find a hotel in sardinia italy thay is near costa smeralda. it should have a restaurant in the hotel and have a view of the ocean • Nov 19, 2025 - Nov 27, 2025 • $400 - $800"
+STAY: 8 nights
+💰 PREFERRED BUDGET: $400 - $800/night
+
+🎯 RANKING PRIORITY ORDER:
+1. USER PREFERENCES MATCH (Most Important)
+2. Location convenience
+3. Star rating and quality
+4. Value for money
+
+🎯 YOUR PRIMARY TASK: Analyze each hotel's description and amenities to find the BEST matches for: "find a hotel in sardinia italy thay is near costa smeralda. it should have a restaurant in the hotel and have a view of the ocean • Nov 19, 2025 - Nov 27, 2025 • $400 - $800"
+
+📋 STEP-BY-STEP MATCHING PROCESS:
+1. READ each hotel's description carefully for keywords matching user request
+2. CHECK amenities list for relevant features 
+3. PRIORITIZE hotels that mention specific user requirements in their text
+4. RANK by relevance to user request, NOT by list position
+
+🔍 KEYWORD MATCHING EXAMPLES:
+- User wants "Central Park" → Look for "Central Park", "near park", "park views" in descriptions
+- User wants "free breakfast" → Look for "breakfast", "complimentary breakfast", "free breakfast" 
+- User wants "spa" → Look for "spa", "wellness", "massage", "treatments"
+- User wants "business hotel" → Look for "business", "conference", "meeting rooms"
+- User wants "budget" → Prioritize lower prices and "value" mentions
+- User wants "luxury" → Look for "luxury", "premium", "upscale", higher star ratings
+
+⚠️ CRITICAL RULES:
+- IGNORE the order hotels appear in the list - analyze content only
+- You MUST select exactly 15 hotels using their exact names from the list
+- Base rankings on how well each hotel matches "find a hotel in sardinia italy thay is near costa smeralda. it should have a restaurant in the hotel and have a view of the ocean • Nov 19, 2025 - Nov 27, 2025 • $400 - $800", not on price or list position
+- If a hotel explicitly mentions user requirements, rank it higher
+- If no perfect matches exist, select the 15 closest matches available
+
+📝 REQUIRED OUTPUT FORMAT:
+1. [exact hotel name from list] | [match percentage 1-100]%
+2. [exact hotel name from list] | [match percentage 1-100]%
+3. [exact hotel name from list] | [match percentage 1-100]%
+...continue through 15
+
+Format (exact numbering required):
+1. [exact hotel name from list] | [match percentage]%
+2. [exact hotel name from list] | [match percentage]%
+3. [exact hotel name from list] | [match percentage]%
+...continue through...
+15. [exact hotel name from list] | [match percentage]%
+
+HOTELS AVAILABLE:
+1: White House Luxury Hospitality | $197/night | | Stay OlbiaExpress Check-in Check-out - seamless arrival departure White House Hospitality express check-in check-out services.Wellness Packages Outdoor Pool - variety of wellness packages to rejuvenate yourself during stay. Take refreshing dip seasonal outdoor pool.Convenient Amenities Activities -| Restaurant, Terrace, Shared lounge, Grocery delivery, Outdoor furniture, Coffee shop, Snack bar, Japanese garden, Vegetarian menu 
+2: NG Guest House l'Acquedotto | $190/night | | NG Guest House l'Acquedotto charming rooms located 300 meters from heart of Olbia. Guests convenience of free WiFi well-equipped kitchen each unit, featuring oven, microwave, fridge. For comfortable stay, rooms fitted flat-screen TV, AC, some lovely balcony. The property private check-in/check-out| Shared lounge, Shared kitchen 
+3: Jazz Hotel | $108/night | | roomsJazz Hotel, located near Olbia Costa Smeralda Airport city centre, modern air-conditioned rooms LCD TVs free Wi-Fi. The modern, private terraces, spa baths suites provide touch of luxury.Relaxation DiningGuests unwind pool hot tub, emotional shower, Turkish bath. The on-site restaurant serves| Restaurant, Room service, Terrace, Soundproof rooms, Packed lunch, Allergy-free room, Kids meals, Outdoor furniture, Coffee shop, Fruits, Room food delivery, Room service app, Snack bar, Charcoal grill, Vegetarian menu 
+4: Colonna Palace Hotel Mediterraneo | $113/night | | Convenient City-Center LocationModern Amenities Business FacilitiesProximity to Beaches Entertainment Options perfect blend of convenience comfort centrally located hotel, catering to both business leisure travelers. With modern meeting rooms easy access to transportation, property ideal hosting| Terrace, Room food delivery 
+5: Welcomely - Superior Room - Dith Piaf | $175/night | | Make yourself home this located apartment Olbia.Convenient LocationJust short distance from Olbia Seafront Gulf of Olbia, easy access to key attractions like Piazza Matteotti National Archaeological Museum of Olbia.Modern ComfortsEnjoy comforts of home well-equipped amenities, ensuring relaxing|  
+6: Bed & Breakfast Dessole | $126/night | | Charming B&B near Olbia's Historic CenterSardinian-inspired Rooms: charm of Sardinia decorated rooms featuring modern amenities like free Wi-Fi, TV, minibar.Delicious Breakfast Buffet: Start day delightful sweet savory buffet offering variety of pastries, cakes, fresh juices. Gluten-free options| Room service, Terrace, Outdoor furniture, Room food delivery, Japanese garden, Vegetarian menu 
+7: Casa Solmes Rooms | $61/night | | City Views breathtaking city views from Casa Solmes, located 6.5 km from Olbia Harbour. Each unit modern amenities like AC, flat-screen TVs, free WiFi. Some rooms offer private terraces garden views truly relaxing stay.Convenient ServicesEnjoy hassle-free stay private entrance, airport transfers,| Terrace, Outdoor furniture 
+8: Olbia Domus Inn | $128/night | | Central Location OlbiaLocated near vibrant Corso Umberto, Olbia Domus Inn convenience charm stay Olbia.Comfortable Modern RoomsEnjoy cozy rooms free WiFi, stylish decor, essential amenities, providing relaxing retreat day of exploring city.Unique Outdoor Courtyard Nearby Attractions newly renovated| Outdoor furniture 
+9: Al Mare da Francesca | $108/night | | rooms SeaInfinity Pool Sun TerraceAl Mare da Francesca guests access to inviting infinity pool relaxing sun terrace, perfect soaking Mediterranean sun style.Convenient Amenities ServicesGuests air-conditioned rooms modern amenities like flat-screen TVs, ensuites, sea views select units. The| Packed lunch, Grocery delivery, Shared kitchen, Coffee shop, Japanese garden 
+10: Double A Luxury Room | $79/night | | Spa Facilities RelaxationIndulge Double Room spa facilities, offering perfect retreat day of sightseeing.Comfortable Well-Equipped Rooms air-conditioned rooms private entrances, free WiFi, scenic views, ensuring comfortable stay.Convenient Location Exploringcentral Olbia, property easy access to| Terrace, Allergy-free room, Japanese garden 
+11: Domus Regia | $84/night | | City-Center Comfort ConvenienceModern Amenities: Each unit Domus Regia ensuite, AC, flat-screen TV, fridge. complimentary bed linens towels during stay.Car Rental Service: Take advantage of on-site car rental service to beautiful surroundings own pace.Prime Location: downtown Olbia, city views free| Allergy-free room, Room food delivery, Shopping 
+12: Tramas Hotel & Spa | $102/night | | rooms Heart of OlbiaStunning Views Modern AmenitiesAdmire panoramic view of Olbia's historic center from sun terrace. free WiFi throughout property. Your furnished room includes LCD TV, satellite channels, AC. in Spa Treatments Delicious BreakfastStart day complimentary sweet savory breakfast| Room service, Terrace, Soundproof rooms, Shared lounge, Allergy-free room, Outdoor furniture, Fruits, Room food delivery, Japanese garden, Vegetarian menu 
+13: Welcomely - Deluxe Room - Charles Aznavour | $189/night | | Prime LocationLocated Olbia City Centre, this apartment proximity to Olbia Seafront Port of Olbia easy exploration of area.Comfortable roomsRelax well-appointed rooms designed to make feel home during stay Olbia.Convenient AmenitiesEnjoy nearby attractions, restaurants, shopping options, making|  
+14: Hotel Stella 2000 | $78/night | | International Restaurant Diverse MenusIndulge culinary journey Stella 2000's international restaurant, offering variety of delicious dishes to satisfy taste buds.Modern Amenities ComfortRelax modern air-conditioned rooms equipped free Wi-Fi, flat-screen TV, minibar. the natural light fresh air from| Restaurant, Room service, Coffee shop, Room food delivery, Snack bar, Vegetarian menu 
+15: Intra Rooms | $71/night | | Convenient Comfortable Stay OlbiaModern Amenities: Intra Rooms air-conditioned rooms free WiFi, flat-screen TVs, soundproofing peaceful stay. Each unit equipped desk, ensuite, heating facilities, ensuring comfortable guests.Convenience Fingertips: convenience of private entrance, free private| Soundproof rooms, Grocery delivery, Allergy-free room, Shared kitchen, Coffee shop, Room food delivery, Art gallery 
+16: Les Suites Magnolia | $81/night | | rooms Les Suites Magnolia decorated rooms featuring modern amenities such AC, flat-screen TVs, free WiFi. Some rooms offer terraces garden views truly relaxing stay.Convenient Locationlocated short distance from Olbia Harbour various popular attractions, including San Simplicio Church Archeological| Shared lounge, Japanese garden 
+17: Domos Pintadas Apt. 2 Porto Rotondo | $82/night | | AmenitiesEnjoy views from terrace garden. Stay connected wireless internet access (surcharge).Featured AmenitiesBenefit from wired internet access (surcharge) multilingual staff. Self-parking complimentary.Comfortable StayRelax air-conditioned apartment kitchenette, refrigerator, oven. Additional| Terrace, Garden, Outdoor furniture 
+18: Olbia City Hotel | $55/night | | roomsIndulge stay 4-star Olbia City Hotel, classic-style rooms boast modern amenities like minibar, safe, flat-screen TV.Convenient LocationLocated 5-minute drive from Olbia's city center, hotel easy access to bustling hub short distance from sandy Pittulongu beach vibrant harbour.Relaxing| Room service, Terrace, Soundproof rooms, Packed lunch, Shared lounge, Allergy-free room, Outdoor furniture, Coffee shop, Fruits, Japanese garden 
+19: Welcomely - Light Room Vista Citt - Aznavour | $177/night | | Prime LocationLocated Olbia City Centre, this apartment proximity to Olbia Seafront Gulf of Olbia, making ideal choice travelers looking to beauty of region.Convenient AmenitiesEnjoy convenience of being 5-minute drive to Port of Olbia, ensuring easy access to transportation hubs travel|  
+20: Welcomely - Light Room Vistamare - Sergio Endrigo | $183/night | | Make yourself home this apartment located Olbia City Centre. Convenient Location: stone's throw away from Olbia Seafront Gulf of Olbia. Nearby Attractions: Piazza Matteotti, Basilica of San Simplicio, more walkable. Airport Accessibility: 4.3 km from Costa Smeralda Airport easy travel connections.|  
+21: WALLURE - Tickled Hotel & Wellness | $129/night | | 4-Star roomsLocated Olbia, WALLURE - Tickled Hotel & Wellness 4-star short distance from Isola di Tavolara. Guests convenience of room svc unwind terrace, making stay truly relaxing.Modern Amenities ComfortEach room hotel equipped AC, flat-screen TV, free WiFi. Guests delicious Italian breakfast| Terrace, Soundproof rooms, Outdoor furniture, Room food delivery, Room service app 
+22: Essenza Hotel | $90/night | | Recreation AmenitiesComplimentary ServicesLuxurious roomssWith stay Essenza Hotel, you'll centrally located Olbia, 5-minute drive of Port of Olbia Gulf of Olbia. This beach property 13.9 mi (22.3 km) from Cala Brandinchi Beach 0.4 mi (0.6 km) from Olbia Seafront. Make reservation today memorable.| Terrace, Outdoor furniture, Breakfast (paid), Library, Rooftop terrace, Fully fenced 
+23: Smeralda Flats | $66/night | | roomssIndulge air-conditioned rooms featuring fully equipped kitchens private balconies bedding comfortable stay.Convenient LocationCentrally located Olbia, 5-minute drive of Port of Olbia Piazza Matteotti, allowing to city easily.Nearby AttractionsImmerse yourself city's culture attractions like| Designer stores 
+24: Hotel Panorama | $118/night | | Wellness gymIndulge relaxation rejuvenation wellness center, complete top-of-the-line facilities expert staff to cater to every need. Stay fit energized during stay complimentary access to modern gym.Convenient LocationLocated steps away from vibrant pedestrian area, Hotel Panorama easy access to| Room service, Terrace, Soundproof rooms, Shared lounge, Coffee shop, Room food delivery, Snack bar, Vegetarian menu 
+25: Welcomely - Superior Room - Lucio Dalla | $174/night | | Prime Locationcentral Olbia City Centre, apartment stone's throw away from Olbia Seafront Gulf of Olbia.Modern AmenitiesEnjoy comfortable stay modern amenities, ensuring relaxing during visit to Olbia City Centre.Nearby AttractionsExplore nearby attractions such Port of Olbia Basilica of San|  
+26: Welcomely - Deluxe Room - Frank Sinatra | $189/night | | Convenient LocationEnjoy prime location of apartment, Olbia Seafront Gulf of Olbia short walk away. the charming Piazza Matteotti historic landmarks like Basilica of San Simplicio, all easy reach.Modern AmenitiesRelax comfort well-equipped apartment featuring modern amenities pleasant stay. Unwind|  
+27: Domos Pintadas Villetta in Porto Rotondo | $97/night | | Scenic Views Convenient AmenitiesTake views from terrace garden make use of amenities such wireless internet access (surcharge).Well-Equipped Comfortable RoomsMake yourself comfortable this air-conditioned vacation home, featuring kitchenette refrigerator oven.Convenient LocationWith stay this| Terrace, Garden, Outdoor furniture 
+28: Villa Kalè | $4595/night | | Amenities hasTerrace garden stunning viewsComplimentary wireless internet accessFree self-parkingComfortable roomsAir-conditioned villa kitchenCoffee/tea maker providedCrib/infant bed available upon request (surcharge)Nearby AttractionsMia Beach, Costa Corallina Beach, Porto San Paolo BeachEasy| Terrace, Garden 
+29: Mercure Olbia | $123/night | | perfect blend of comfort modern elegance Mercure Olbia, stone's throw from stunning port of Olbia.Stylish roomsOur modern rooms designed relaxation, featuring AC, satellite flat-screen TVs, well-stocked minibars. Each room ensuite equipped shower hairdryer, ensuring comfortable stay.Wellness| Restaurant, Room service, Soundproof rooms, Smoking area, Allergy-free room, Kids meals, Outdoor furniture, Coffee shop, Room food delivery, Breakfast (paid), Snack bar, Vegetarian menu 
+30: Felix Hotels - Hotel Felix Olbia | $139/night | | Stunning Views of Olbia Bay beauty of Olbia from comfort of room's terrace Felix Hotel. the breathtaking views of Olbia Bay leave mesmerized.Rooftop Restaurant PoolIndulge culinary delight rooftop restaurant overlooking picturesque surroundings. Unwind taking refreshing dip pool, perfect relaxation| Restaurant, Room service, Terrace, Packed lunch, Shared lounge, Kids meals, Outdoor furniture, Coffee shop, Room food delivery, Snack bar, Japanese garden, Rooftop garden, Vegetarian menu 
+31: Domos Pintadas Apt. 3 Porto Rotondo | $82/night | | Terrace Garden Views: breathtaking views from terrace garden, perfect relaxing unwinding during stay.Fully Equipped Apartment: Feel home air-conditioned apartment complete kitchenette, refrigerator, oven, electric kettle, washing machine convenience.Convenient Location: La Marinella Beach 3 km away| Terrace, Garden, Outdoor furniture 
+32: Olbia, Near Costa Smeralda Airport - Non-smoking | $162/night | | Terrace Breathtaking ViewsEnjoy stunning views from terrace staying connected complimentary wireless internet. Free onsite parking adds to convenience.Convenient LocationExplore nearby attractions such Marina di Olbia Gulf of Olbia, both short distance from apartment. Easy access to major landmarks| Terrace, Outdoor furniture 
+33: Guest House Suite Olbia | $98/night | | Terrace Stunning ViewsEnjoy breathtaking views from terrace of Guest House Suite Olbia. Relax unwind taking beauty of surroundings.Modern AmenitiesMake most of complimentary wireless internet access during stay. Stay connected entertained LCD televisions cable programming room.Convenient| Terrace 
+34: Domos Pintadas Apt. 4 Porto Rotondo | $82/night | | Beautiful Views from Terrace GardenEnjoy stunning vistas from terrace garden Olbia apartment. The perfect spots to unwind soak surroundings.Convenient AmenitiesTake advantage of variety of amenities offered, including both wired wireless internet access connectivity needs. Our multilingual staff| Terrace, Garden, Outdoor furniture 
+35: Welcomely - Light Room Vistamare - Domenico Modugno | $192/night | | Prime LocationLocated Olbia City Centre, apartment stone's throw away from popular attractions such Olbia Seafront Piazza Matteotti.Convenient AmenitiesEnjoy easy access to Port of Olbia other key landmarks apartment 5-minute drive from these destinations.Nearby AttractionsExplore beautiful beaches|  
+36: Domos Pintadas Cottage in Porto Rotondo | $137/night | | Scenic ViewsEnjoy stunning vistas from terrace garden of this vacation home.Convenient AmenitiesUtilize complimentary Wi-Fi, self-parking, fully equipped kitchenette during stay.Nearby AttractionsExplore beautiful beaches landmarks short drive away from property.Take views, amenities, book stay| Terrace, Garden, Outdoor furniture 
+37: City Garden Guest House | $67/night | | Charming Guest House OlbiaConvenient Location: Situated 3 km from Isola Bianca Harbour, City Garden Guest House easy access to transportation bus stop 50 meters away.Comfortable rooms: Each air-conditioned room equipped flat-screen TV, ensuite, seating area. Some rooms feature terrace balcony| Terrace, Allergy-free room, Outdoor furniture, Japanese garden, Vegetarian menu 
+38: Grand Hotel President Olbia | $175/night | | perfect blend of convenience Grand Hotel President Olbia, every stay becomes memorable escape.Breathtaking Rooftop TerraceTake stunning panoramic views from rooftop terrace, ideal romantic evenings casual gatherings friends. AmenitiesStay connected complimentary high-speed Wi-Fi room svc enjoying| Free breakfast, Terrace, Rooftop terrace, Free buffet breakfast 
+39: Welcomely - Superior Room - Louis Armstrong | $174/night | | Prime Locationcentral Olbia City Centre, apartment convenient access to Olbia Seafront, Piazza Matteotti, more.Modern AmenitiesEnjoy comfortable stay modern amenities including fully equipped kitchen, spacious living area, complimentary Wi-Fi.Nearby AttractionsExplore Port of Olbia, Basilica of San|  
+40: La Locanda Del Conte Mameli | $98/night | | City Views Convenient LocationEnjoy stunning city views La Locanda Del Conte Mameli, located 300 meters from city center. nearby attractions like San Simplicio Church Olbia Harbour during stay.Comfortable Rooms Modern AmenitiesRelax well-equipped rooms featuring flat-screen TVs, AC, ensuites free| Room service, Soundproof rooms, Shared lounge, Allergy-free room, Kids meals, Vegetarian menu 
+41: Casa Satta 1925 | $120/night | | Charming Oasis Olbia City CenterHistoric Elegance: Step into Casa Satta 1925, restored property offering glimpse into Olbia's past. The elegant rooms feature free WiFi, some boasting balconies overlooking garden.Tranquil Garden Retreat: Unwind peaceful garden morning coffee terrace. The lush| Outdoor furniture, Japanese garden 
+
+REMEMBER: Always select 15 hotels using exact names from the list above.
+
+=== END LOG ===

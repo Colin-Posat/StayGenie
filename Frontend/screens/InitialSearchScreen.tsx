@@ -14,7 +14,7 @@ import {
   Image,
   KeyboardAvoidingView,
 } from 'react-native';
-import { Text } from '../components/CustomText'; 
+import { Text } from '../components/CustomText';
 import { Ionicons } from '@expo/vector-icons';
 import tw from 'twrnc';
 import SearchGuidePills from '../components/InitalSearch/SearchGuidePills';
@@ -100,9 +100,9 @@ interface InitialSearchScreenProps {
   onSearchStart?: (query: string) => void;
 }
 
-const InitialSearchScreen: React.FC<InitialSearchScreenProps> = ({ 
+const InitialSearchScreen: React.FC<InitialSearchScreenProps> = ({
   navigation,
-  onSearchStart 
+  onSearchStart
 }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [isFocused, setIsFocused] = useState(false);
@@ -110,19 +110,19 @@ const InitialSearchScreen: React.FC<InitialSearchScreenProps> = ({
   const [showScrollHint, setShowScrollHint] = useState(false);
   const [searchQueryCarousels, setSearchQueryCarousels] = useState<SearchQueryWithHotels[]>([]);
   const [isTransitioning, setIsTransitioning] = useState(false);
-  
+
   // Refs
   const textInputRef = useRef<TextInput>(null);
-  
+
   // Get auth context for recent searches
-  const { 
-    getRecentSearches, 
-    addRecentSearch, 
+  const {
+    getRecentSearches,
+    addRecentSearch,
     clearRecentSearches,
     removeRecentSearch,
-    isAuthenticated 
+    isAuthenticated
   } = useAuth();
-  
+
   // Animation values
   const fadeAnimation = useRef(new Animated.Value(0)).current;
   const slideAnimation = useRef(new Animated.Value(40)).current;
@@ -134,7 +134,7 @@ const InitialSearchScreen: React.FC<InitialSearchScreenProps> = ({
   const pulsingShadow = useRef(new Animated.Value(0)).current;
   const heightAnimation = useRef(new Animated.Value(60)).current;
   const scrollHintOpacity = useRef(new Animated.Value(0)).current;
-  
+
   // Transition animations
   const screenSlideOut = useRef(new Animated.Value(0)).current;
   const contentFadeOut = useRef(new Animated.Value(1)).current;
@@ -212,7 +212,7 @@ const InitialSearchScreen: React.FC<InitialSearchScreenProps> = ({
   // Handle focus with cursor positioning
   const handleFocus = () => {
     setIsFocused(true);
-    
+
     if (searchQuery && textInputRef.current) {
       setTimeout(() => {
         textInputRef.current?.setNativeProps({
@@ -226,7 +226,7 @@ const InitialSearchScreen: React.FC<InitialSearchScreenProps> = ({
   const handleClear = () => {
     setSearchQuery('');
     setShowScrollHint(false);
-    
+
     if (textInputRef.current) {
       textInputRef.current.focus();
     }
@@ -334,7 +334,7 @@ const InitialSearchScreen: React.FC<InitialSearchScreenProps> = ({
   // Transition animation function
   const performTransitionAnimation = (callback: () => void) => {
     setIsTransitioning(true);
-    
+
     Animated.parallel([
       Animated.timing(screenSlideOut, {
         toValue: -width,
@@ -364,7 +364,7 @@ const InitialSearchScreen: React.FC<InitialSearchScreenProps> = ({
   // Search Guide Pills handlers
   const handleStyleSelect = (styleText: string) => {
     console.log('Hotel style selected from pills:', styleText);
-    
+
     if (searchQuery.trim()) {
       setSearchQuery(prev => `${prev.trim()} • ${styleText}`);
     } else {
@@ -374,7 +374,7 @@ const InitialSearchScreen: React.FC<InitialSearchScreenProps> = ({
 
   const handleAmenitiesSelect = (amenitiesText: string) => {
     console.log('Amenities selected from pills:', amenitiesText);
-    
+
     if (searchQuery.trim()) {
       setSearchQuery(prev => `${prev.trim()} • ${amenitiesText}`);
     } else {
@@ -384,7 +384,7 @@ const InitialSearchScreen: React.FC<InitialSearchScreenProps> = ({
 
   const handleGuestsSelect = (guestsText: string) => {
     console.log('Guests selected from pills:', guestsText);
-    
+
     if (searchQuery.trim()) {
       setSearchQuery(prev => `${prev.trim()} • ${guestsText}`);
     } else {
@@ -394,7 +394,7 @@ const InitialSearchScreen: React.FC<InitialSearchScreenProps> = ({
 
   const handleBudgetSelect = (budgetText: string) => {
     console.log('Budget selected from pills:', budgetText);
-    
+
     if (searchQuery.trim()) {
       setSearchQuery(prev => `${prev.trim()} • ${budgetText}`);
     } else {
@@ -404,7 +404,7 @@ const InitialSearchScreen: React.FC<InitialSearchScreenProps> = ({
 
   const handleDateSelect = (dateText: string) => {
     console.log('Date selected from pills:', dateText);
-    
+
     if (searchQuery.trim()) {
       setSearchQuery(prev => `${prev.trim()} • ${dateText}`);
     } else {
@@ -417,7 +417,7 @@ const InitialSearchScreen: React.FC<InitialSearchScreenProps> = ({
     if (searchQuery.trim() && !isTransitioning) {
       const trimmedQuery = searchQuery.trim();
       console.log('Starting search transition for:', trimmedQuery);
-      
+
       if (isAuthenticated) {
         try {
           await addRecentSearch(trimmedQuery);
@@ -425,11 +425,11 @@ const InitialSearchScreen: React.FC<InitialSearchScreenProps> = ({
           console.error('Failed to save recent search:', error);
         }
       }
-      
+
       performTransitionAnimation(() => {
         if (navigation) {
-          navigation.navigate('Results', { 
-            searchQuery: trimmedQuery 
+          navigation.navigate('Results', {
+            searchQuery: trimmedQuery
           });
         }
         onSearchStart?.(trimmedQuery);
@@ -441,7 +441,7 @@ const InitialSearchScreen: React.FC<InitialSearchScreenProps> = ({
   const handleRecentSearchPress = async (search: string) => {
     if (!isTransitioning) {
       console.log('Starting recent search transition for:', search);
-      
+
       if (isAuthenticated) {
         try {
           await addRecentSearch(search);
@@ -449,11 +449,11 @@ const InitialSearchScreen: React.FC<InitialSearchScreenProps> = ({
           console.error('Failed to update recent search:', error);
         }
       }
-      
+
       performTransitionAnimation(() => {
         if (navigation) {
-          navigation.navigate('Results', { 
-            searchQuery: search 
+          navigation.navigate('Results', {
+            searchQuery: search
           });
         }
         onSearchStart?.(search);
@@ -487,7 +487,7 @@ const InitialSearchScreen: React.FC<InitialSearchScreenProps> = ({
   const handleSearchQueryPress = async (query: string) => {
     if (!isTransitioning) {
       console.log('Starting search query carousel transition for:', query);
-      
+
       if (isAuthenticated) {
         try {
           await addRecentSearch(query);
@@ -495,11 +495,11 @@ const InitialSearchScreen: React.FC<InitialSearchScreenProps> = ({
           console.error('Failed to save recent search:', error);
         }
       }
-      
+
       performTransitionAnimation(() => {
         if (navigation) {
-          navigation.navigate('Results', { 
-            searchQuery: query 
+          navigation.navigate('Results', {
+            searchQuery: query
           });
         }
         onSearchStart?.(query);
@@ -523,7 +523,7 @@ const InitialSearchScreen: React.FC<InitialSearchScreenProps> = ({
   const getFloatingElementTransform = (index: number, scale = 1) => {
     const baseY = (index * 150) % height;
     const baseX = (index * 120) % width;
-    
+
     return {
       transform: [
         {
@@ -583,8 +583,8 @@ const InitialSearchScreen: React.FC<InitialSearchScreenProps> = ({
             contentInsetAdjustmentBehavior="automatic"
           >
             <View style={tw`h-12`} />
-            
-            <Animated.View 
+
+            <Animated.View
               style={[
                 tw`items-center`,
                 {
@@ -595,7 +595,7 @@ const InitialSearchScreen: React.FC<InitialSearchScreenProps> = ({
             >
               {/* Enhanced Header section - Mobile optimized */}
               <View style={tw`items-center mb-6 w-full px-2`}>
-                <Animated.View 
+                <Animated.View
                   style={[
                     tw`mb-3`,
                     {
@@ -612,7 +612,7 @@ const InitialSearchScreen: React.FC<InitialSearchScreenProps> = ({
                   <View style={tw`flex-row items-center justify-center`}>
                   </View>
                 </Animated.View>
-                
+
                 <Animated.View
                   style={[
                     tw`mb-4`,
@@ -639,7 +639,7 @@ const InitialSearchScreen: React.FC<InitialSearchScreenProps> = ({
                       <Text style={[
                         tw`text-4xl md:text-4xl font-bold text-center leading-tight mb--2`,
                         Platform.OS === 'android' && { fontFamily: 'sans-serif-medium' },
-                        { 
+                        {
                           color: TURQUOISE,
                           textShadowColor: 'rgba(29, 249, 255, 0.3)',
                           textShadowOffset: { width: 0, height: 2 },
@@ -670,7 +670,7 @@ const InitialSearchScreen: React.FC<InitialSearchScreenProps> = ({
 
               {/* Mobile-optimized Search Bar */}
               <View style={tw`w-full items-center px-2`}>
-                <Animated.View 
+                <Animated.View
                   style={[
                     tw`relative mb-4 w-full`,
                     { transform: [{ scale: searchBarScale }] }
@@ -678,7 +678,7 @@ const InitialSearchScreen: React.FC<InitialSearchScreenProps> = ({
                 >
                   {/* Make the entire container tappable */}
                   <TouchableOpacity activeOpacity={0.9} onPress={focusInput} accessibilityRole="search">
-                    <Animated.View 
+                    <Animated.View
                       style={[
                         tw`bg-white rounded-2xl shadow-lg border`,
                         {
@@ -713,7 +713,7 @@ const InitialSearchScreen: React.FC<InitialSearchScreenProps> = ({
                           <View style={tw`flex-1 relative`}>
                             {/* Animated placeholder overlay */}
                             {!isFocused && !searchQuery && (
-                              <View 
+                              <View
                                 style={[
                                   tw`absolute left-0 top-0`,
                                   {
@@ -740,7 +740,7 @@ const InitialSearchScreen: React.FC<InitialSearchScreenProps> = ({
                                 </Text>
                               </View>
                             )}
-                            
+
                             <TextInput
                               ref={textInputRef}
                               multiline
@@ -812,10 +812,10 @@ const InitialSearchScreen: React.FC<InitialSearchScreenProps> = ({
                             activeOpacity={0.8}
                             disabled={!searchQuery.trim() || isTransitioning}
                           >
-                            <Ionicons 
-                              name={isTransitioning ? 'hourglass' : 'arrow-forward'} 
-                              size={16} 
-                              color={searchQuery.trim().length > 0 && !isTransitioning ? 'white' : '#9CA3AF'} 
+                            <Ionicons
+                              name={isTransitioning ? 'hourglass' : 'arrow-forward'}
+                              size={16}
+                              color={searchQuery.trim().length > 0 && !isTransitioning ? 'white' : '#9CA3AF'}
                             />
                           </TouchableOpacity>
                         </View>
@@ -906,7 +906,7 @@ const InitialSearchScreen: React.FC<InitialSearchScreenProps> = ({
         </Animated.View>
       </KeyboardAvoidingView>
     </SafeAreaView>
-  ); 
+  );
 };
 
 export default InitialSearchScreen;

@@ -18,5 +18,3 @@ export const Text = (props: TextProps) => {
   // Put our fontFamily at the **end** so it wins over earlier styles
   return <RNText {...props} style={[props.style, { fontFamily }]} />;
 };
-
-export * from 'react-native';

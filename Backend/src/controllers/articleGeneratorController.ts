@@ -41,6 +41,28 @@ interface ArticleOutput {
   hotels: HotelArticle[];
 }
 
+function getThreeMonthsFromNow(): { checkIn: string; checkOut: string } {
+  const today = new Date();
+  
+  // Add 3 months to today
+  const checkInDate = new Date(today);
+  checkInDate.setMonth(checkInDate.getMonth() + 3);
+  
+  // Check-out is 2 nights after check-in
+  const checkOutDate = new Date(checkInDate);
+  checkOutDate.setDate(checkOutDate.getDate() + 2);
+  
+  // Format as YYYY-MM-DD
+  const formatDate = (date: Date): string => {
+    return date.toISOString().split('T')[0];
+  };
+  
+  return {
+    checkIn: formatDate(checkInDate),
+    checkOut: formatDate(checkOutDate)
+  };
+}
+
 async function searchAndMatchHotelsSSE(query: string): Promise<any[]> {
   console.log(`Searching for hotels with SSE streaming: "${query}"`);
   
@@ -48,8 +70,13 @@ async function searchAndMatchHotelsSSE(query: string): Promise<any[]> {
     const hotels: any[] = [];
     let buffer = '';
     
-    // Use GET request with query parameter for SSE
-    const url = `${BASE_URL}/api/hotels/search-and-match/stream?q=${encodeURIComponent(query)}`;
+    // Get dates 3 months from now
+    const { checkIn, checkOut } = getThreeMonthsFromNow();
+    
+    // Use GET request with query parameter for SSE - NOW WITH DATES
+    const url = `${BASE_URL}/api/hotels/search-and-match/stream?q=${encodeURIComponent(query)}&checkIn=${checkIn}&checkOut=${checkOut}`;
+    
+    console.log(`📅 Using dates: ${checkIn} to ${checkOut}`);
     
     fetch(url)
       .then(response => {
