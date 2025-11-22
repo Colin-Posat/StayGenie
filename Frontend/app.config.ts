@@ -49,6 +49,7 @@ const config: ExpoConfig = {
   plugins: [
     "@react-native-firebase/app",
     "expo-web-browser",
+    "expo-speech-recognition",
 
     // -------- MAPBOX PLUGIN (IMPORTANT) --------
     [

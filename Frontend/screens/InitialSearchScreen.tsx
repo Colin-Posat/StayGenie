@@ -1,4 +1,4 @@
-// InitialSearchScreen.tsx - Updated with faster, more interesting auto-typing
+// InitialSearchScreen.tsx - Updated with Speech-to-Text functionality
 import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
@@ -13,6 +13,7 @@ import {
   ScrollView,
   Image,
   KeyboardAvoidingView,
+  Alert,
 } from 'react-native';
 import { Text } from '../components/CustomText';
 import { Ionicons } from '@expo/vector-icons';
@@ -23,6 +24,10 @@ import SearchQueryCarousel from '../components/InitalSearch/SearchQueryCarousel'
 import { getRandomCarousels } from '../utils/carouselData';
 import { useFocusEffect } from '@react-navigation/native';
 import { useAuth } from '../contexts/AuthContext';
+import {
+  ExpoSpeechRecognitionModule,
+  useSpeechRecognitionEvent,
+} from 'expo-speech-recognition';
 
 const { width, height } = Dimensions.get('window');
 
@@ -110,6 +115,10 @@ const InitialSearchScreen: React.FC<InitialSearchScreenProps> = ({
   const [showScrollHint, setShowScrollHint] = useState(false);
   const [searchQueryCarousels, setSearchQueryCarousels] = useState<SearchQueryWithHotels[]>([]);
   const [isTransitioning, setIsTransitioning] = useState(false);
+  
+  // Speech recognition state
+  const [isListening, setIsListening] = useState(false);
+  const [recognizing, setRecognizing] = useState(false);
 
   // Refs
   const textInputRef = useRef<TextInput>(null);
@@ -134,6 +143,7 @@ const InitialSearchScreen: React.FC<InitialSearchScreenProps> = ({
   const pulsingShadow = useRef(new Animated.Value(0)).current;
   const heightAnimation = useRef(new Animated.Value(60)).current;
   const scrollHintOpacity = useRef(new Animated.Value(0)).current;
+  const micPulse = useRef(new Animated.Value(1)).current;
 
   // Transition animations
   const screenSlideOut = useRef(new Animated.Value(0)).current;
@@ -184,6 +194,135 @@ const InitialSearchScreen: React.FC<InitialSearchScreenProps> = ({
     10,  // Faster deleting speed (was 40)
     1500 // Shorter delay (was 2000)
   );
+
+  // Speech Recognition Event Listeners
+  useSpeechRecognitionEvent('start', () => {
+    console.log('Speech recognition started');
+    setRecognizing(true);
+  });
+
+  useSpeechRecognitionEvent('end', () => {
+    console.log('Speech recognition ended');
+    setRecognizing(false);
+    setIsListening(false);
+  });
+
+  useSpeechRecognitionEvent('result', (event) => {
+    console.log('Speech recognition result:', event);
+    const transcript = event.results[0]?.transcript;
+    if (transcript) {
+      setSearchQuery(transcript);
+    }
+  });
+
+  useSpeechRecognitionEvent('error', (event) => {
+    console.error('Speech recognition error:', event);
+    setRecognizing(false);
+    setIsListening(false);
+    
+    // Handle specific error cases
+    if (event.error === 'not-allowed') {
+      Alert.alert(
+        'Microphone Permission Required',
+        'Please enable microphone access in your device settings to use voice search.',
+        [{ text: 'OK' }]
+      );
+    } else {
+      Alert.alert(
+        'Voice Search Error',
+        'Could not process voice input. Please try again.',
+        [{ text: 'OK' }]
+      );
+    }
+  });
+
+  // Microphone pulse animation
+  useEffect(() => {
+    if (isListening) {
+      const pulseAnim = Animated.loop(
+        Animated.sequence([
+          Animated.timing(micPulse, {
+            toValue: 1.2,
+            duration: 600,
+            useNativeDriver: true,
+          }),
+          Animated.timing(micPulse, {
+            toValue: 1,
+            duration: 600,
+            useNativeDriver: true,
+          }),
+        ])
+      );
+      pulseAnim.start();
+      return () => pulseAnim.stop();
+    } else {
+      micPulse.setValue(1);
+    }
+  }, [isListening]);
+
+  // Request permissions and start listening
+  const startListening = async () => {
+    try {
+      // Request permissions
+      const { status, granted } = await ExpoSpeechRecognitionModule.requestPermissionsAsync();
+      
+      if (!granted) {
+        Alert.alert(
+          'Permission Required',
+          'Microphone access is needed for voice search. Please enable it in your device settings.',
+          [{ text: 'OK' }]
+        );
+        return;
+      }
+
+      // Start speech recognition
+      setIsListening(true);
+      ExpoSpeechRecognitionModule.start({
+        lang: 'en-US',
+        interimResults: true,
+        maxAlternatives: 1,
+        continuous: false,
+        requiresOnDeviceRecognition: false,
+        addsPunctuation: false,
+        contextualStrings: [
+          'hotel',
+          'resort',
+          'beach',
+          'mountain',
+          'luxury',
+          'boutique',
+          'villa',
+          'spa',
+          'pool',
+          'view',
+        ],
+      });
+    } catch (error) {
+      console.error('Error starting speech recognition:', error);
+      setIsListening(false);
+      Alert.alert(
+        'Voice Search Error',
+        'Could not start voice search. Please try again.',
+        [{ text: 'OK' }]
+      );
+    }
+  };
+
+  // Stop listening
+  const stopListening = () => {
+    ExpoSpeechRecognitionModule.stop();
+    setIsListening(false);
+    setRecognizing(false);
+  };
+
+  // Toggle voice input
+  const handleVoiceInput = () => {
+    if (isListening) {
+      stopListening();
+    } else {
+      startListening();
+    }
+  };
 
   // Load 3 random carousel collections on mount
   useEffect(() => {
@@ -247,7 +386,14 @@ const InitialSearchScreen: React.FC<InitialSearchScreenProps> = ({
 
       setIsTransitioning(false);
       setIsFocused(false);
-    }, [])
+      
+      // Stop listening if leaving screen
+      return () => {
+        if (isListening) {
+          stopListening();
+        }
+      };
+    }, [isListening])
   );
 
   // Continuous floating animation for background elements
@@ -795,12 +941,23 @@ const InitialSearchScreen: React.FC<InitialSearchScreenProps> = ({
                             </TouchableOpacity>
                           )}
 
+                          {/* Voice Input Button */}
                           <TouchableOpacity
-                            onPress={focusInput}
+                            onPress={handleVoiceInput}
                             style={tw`w-8 h-8 items-center justify-center`}
                             activeOpacity={0.7}
                           >
-                            <Ionicons name="mic" size={18} color="#6B7280" />
+                            <Animated.View
+                              style={{
+                                transform: [{ scale: micPulse }],
+                              }}
+                            >
+                              <Ionicons 
+                                name={isListening ? "mic" : "mic-outline"} 
+                                size={18} 
+                                color={isListening ? TURQUOISE : "#6B7280"} 
+                              />
+                            </Animated.View>
                           </TouchableOpacity>
 
                           <TouchableOpacity
@@ -824,6 +981,29 @@ const InitialSearchScreen: React.FC<InitialSearchScreenProps> = ({
                   </TouchableOpacity>
                 </Animated.View>
               </View>
+
+              {/* Listening indicator */}
+              {isListening && (
+                <Animated.View
+                  style={[
+                    tw`mb-4 px-4 py-2 bg-${TURQUOISE}/10 rounded-full flex-row items-center`,
+                    {
+                      opacity: fadeAnimation,
+                    }
+                  ]}
+                >
+                  <Animated.View
+                    style={{
+                      transform: [{ scale: micPulse }],
+                    }}
+                  >
+                    <Ionicons name="mic" size={16} color={TURQUOISE} />
+                  </Animated.View>
+                  <Text style={[tw`ml-2 text-sm`, { color: TURQUOISE }]}>
+                    {recognizing ? 'Listening...' : 'Tap to stop'}
+                  </Text>
+                </Animated.View>
+              )}
 
               {/* Mobile-optimized Suggestions section */}
               <View style={tw`w-full px-2 mb-5`}>
