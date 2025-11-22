@@ -983,27 +983,29 @@ const InitialSearchScreen: React.FC<InitialSearchScreenProps> = ({
               </View>
 
               {/* Listening indicator */}
-              {isListening && (
-                <Animated.View
-                  style={[
-                    tw`mb-4 px-4 py-2 bg-${TURQUOISE}/10 rounded-full flex-row items-center`,
-                    {
-                      opacity: fadeAnimation,
-                    }
-                  ]}
-                >
-                  <Animated.View
-                    style={{
-                      transform: [{ scale: micPulse }],
-                    }}
-                  >
-                    <Ionicons name="mic" size={16} color={TURQUOISE} />
-                  </Animated.View>
-                  <Text style={[tw`ml-2 text-sm`, { color: TURQUOISE }]}>
-                    {recognizing ? 'Listening...' : 'Tap to stop'}
-                  </Text>
-                </Animated.View>
-              )}
+            {isListening && (
+  <Animated.View
+    style={[
+      tw`mb-4 px-4 py-2 rounded-full flex-row items-center`,
+      {
+        opacity: fadeAnimation,
+        // 10% turquoise background
+        backgroundColor: 'rgba(29, 249, 255, 0.1)',
+      },
+    ]}
+  >
+    <Animated.View
+      style={{
+        transform: [{ scale: micPulse }],
+      }}
+    >
+      <Ionicons name="mic" size={16} color={TURQUOISE} />
+    </Animated.View>
+    <Text style={[tw`ml-2 text-sm`, { color: TURQUOISE }]}>
+      {recognizing ? 'Listening...' : 'Tap to stop'}
+    </Text>
+  </Animated.View>
+)}
 
               {/* Mobile-optimized Suggestions section */}
               <View style={tw`w-full px-2 mb-5`}>

@@ -50,6 +50,13 @@ const config: ExpoConfig = {
     "@react-native-firebase/app",
     "expo-web-browser",
     "expo-speech-recognition",
+      [
+        "expo-speech-recognition",
+        {
+          "microphonePermission": "Allow StayGenie to use your microphone for voice search.",
+          "speechRecognitionPermission": "Allow StayGenie to use speech recognition to understand your hotel requests."
+        }
+      ],
 
     // -------- MAPBOX PLUGIN (IMPORTANT) --------
     [
