@@ -1066,26 +1066,29 @@ const dotAnimations = useRef(
       }
     ]}
     onPress={async () => {
-      try {
-        const shareUrl = generateHotelDeepLink(
-          hotel,
-          checkInDate,
-          checkOutDate,
-          adults,
-          children,
-          placeId,
-          occupancies
-        );
-        
-        await Share.share({
-          message: `Check out ${hotel.name} in ${displayLocation}! ${shareUrl}`,
-          url: shareUrl,
-          title: `${hotel.name} - StayGenie`,
-        });
-      } catch (error) {
-        console.log('Error sharing:', error);
-      }
-    }}
+  try {
+    const shareUrl = generateHotelDeepLink(
+      hotel,
+      checkInDate,
+      checkOutDate,
+      adults,
+      children,
+      placeId,
+      occupancies
+    );
+
+    const shareMessage =
+      `Check out ${hotel.name}!\n\n` +
+      `${shareUrl}`;
+
+    await Share.share({
+      message: shareMessage,
+    });
+  } catch (error) {
+    console.log('Error sharing:', error);
+  }
+}}
+
     activeOpacity={0.8}
   >
     <Ionicons name="share-outline" size={19} color="#374151" />
