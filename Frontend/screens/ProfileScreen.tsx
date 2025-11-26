@@ -19,6 +19,7 @@ import EmailSignUpModal from '../components/SignupLogin/EmailSignUpModal';
 import EmailSignInModal from '../components/SignupLogin/EmailSignInModal';
 import ForgotPasswordModal from '../components/SignupLogin/ForgotPasswordModal'; // Add this import
 import HelpFeedbackModal from '../components/Profile/HelpFeedbackModal';
+import { Svg, Path } from 'react-native-svg';
 
 // Consistent color constants
 const TURQUOISE = '#1df9ff';

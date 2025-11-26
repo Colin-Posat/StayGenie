@@ -181,19 +181,19 @@ const EmailSignInModal: React.FC<EmailSignInModalProps> = ({
       <View style={tw`flex-1 justify-center items-center px-4`}>
         <Animated.View
           style={[
-            tw`bg-white rounded-3xl w-full max-w-sm`,
+            tw`bg-white rounded-xl w-full max-w-sm border border-gray-200`,
             {
               transform: [{ scale: scaleAnimation }],
               shadowColor: '#000',
-              shadowOffset: { width: 0, height: 10 },
-              shadowOpacity: 0.25,
-              shadowRadius: 20,
-              elevation: 20,
+              shadowOffset: { width: 0, height: 1 },
+              shadowOpacity: 0.1,
+              shadowRadius: 2,
+              elevation: 3,
             }
           ]}
         >
           {/* Header */}
-          <View style={tw`flex-row items-center justify-between px-6 pt-6 mb-4`}>
+          <View style={tw`flex-row items-center justify-between px-5 pt-5 mb-3`}>
             <View style={tw`flex-1 pr-4`}>
               <Text style={tw`text-2xl font-bold text-gray-900`}>
                 Welcome Back
@@ -204,7 +204,7 @@ const EmailSignInModal: React.FC<EmailSignInModalProps> = ({
             </View>
             <TouchableOpacity
               style={[
-                tw`w-10 h-10 rounded-full items-center justify-center`,
+                tw`w-9 h-9 rounded-full items-center justify-center`,
                 { backgroundColor: '#F3F4F6' }
               ]}
               onPress={handleClose}
@@ -215,28 +215,33 @@ const EmailSignInModal: React.FC<EmailSignInModalProps> = ({
           </View>
 
           {/* Form content */}
-          <View style={tw`px-6 pb-6`}>
+          <View style={tw`px-5 pb-5`}>
             {/* Form Fields */}
-            <View style={tw`mb-6`}>
+            <View style={tw`mb-5`}>
               {/* Email Input */}
-              <View style={tw`mb-5`}>
-                <Text style={tw`text-sm font-medium text-gray-700 mb-3`}>
+              <View style={tw`mb-4`}>
+                <Text style={tw`text-sm font-medium text-gray-700 mb-2`}>
                   Email Address
                 </Text>
                 <View style={[
-                  tw`flex-row items-center border rounded-2xl px-4`,
+                  tw`flex-row items-center border rounded-xl px-4`,
                   { 
-                    height: 56,
+                    height: 52,
                     borderColor: email ? TURQUOISE_LIGHT : '#E5E7EB', 
                     backgroundColor: '#FAFAFA',
                     borderWidth: email ? 1.5 : 1,
                   }
                 ]}>
-                  <Ionicons 
-                    name="mail-outline" 
-                    size={20} 
-                    color={email ? TURQUOISE_DARK : "#9CA3AF"} 
-                  />
+                  <View style={[
+                    tw`w-6 h-6 rounded-full items-center justify-center`,
+                    { backgroundColor: email ? 'rgba(29, 249, 255, 0.15)' : '#F3F4F6' }
+                  ]}>
+                    <Ionicons 
+                      name="mail-outline" 
+                      size={14} 
+                      color={email ? TURQUOISE_DARK : "#9CA3AF"} 
+                    />
+                  </View>
                   <TextInput
                     style={[
                       tw`flex-1 ml-3 text-base text-gray-900`,
@@ -262,24 +267,29 @@ const EmailSignInModal: React.FC<EmailSignInModalProps> = ({
               </View>
 
               {/* Password Input */}
-              <View style={tw`mb-4`}>
-                <Text style={tw`text-sm font-medium text-gray-700 mb-3`}>
+              <View style={tw`mb-3`}>
+                <Text style={tw`text-sm font-medium text-gray-700 mb-2`}>
                   Password
                 </Text>
                 <View style={[
-                  tw`flex-row items-center border rounded-2xl px-4`,
+                  tw`flex-row items-center border rounded-xl px-4`,
                   { 
-                    height: 56,
+                    height: 52,
                     borderColor: password ? TURQUOISE_LIGHT : '#E5E7EB', 
                     backgroundColor: '#FAFAFA',
                     borderWidth: password ? 1.5 : 1,
                   }
                 ]}>
-                  <Ionicons 
-                    name="lock-closed-outline" 
-                    size={20} 
-                    color={password ? TURQUOISE_DARK : "#9CA3AF"} 
-                  />
+                  <View style={[
+                    tw`w-6 h-6 rounded-full items-center justify-center`,
+                    { backgroundColor: password ? 'rgba(29, 249, 255, 0.15)' : '#F3F4F6' }
+                  ]}>
+                    <Ionicons 
+                      name="lock-closed-outline" 
+                      size={14} 
+                      color={password ? TURQUOISE_DARK : "#9CA3AF"} 
+                    />
+                  </View>
                   <TextInput
                     style={[
                       tw`flex-1 ml-3 text-base text-gray-900`,
@@ -308,11 +318,16 @@ const EmailSignInModal: React.FC<EmailSignInModalProps> = ({
                     style={tw`p-2 -m-1`}
                     disabled={isLoading}
                   >
-                    <Ionicons 
-                      name={showPassword ? "eye-off-outline" : "eye-outline"} 
-                      size={20} 
-                      color={password ? TURQUOISE_DARK : "#9CA3AF"} 
-                    />
+                    <View style={[
+                      tw`w-6 h-6 rounded-full items-center justify-center`,
+                      { backgroundColor: password ? 'rgba(29, 249, 255, 0.15)' : '#F3F4F6' }
+                    ]}>
+                      <Ionicons 
+                        name={showPassword ? "eye-off-outline" : "eye-outline"} 
+                        size={14} 
+                        color={password ? TURQUOISE_DARK : "#9CA3AF"} 
+                      />
+                    </View>
                   </TouchableOpacity>
                 </View>
               </View>
@@ -321,7 +336,7 @@ const EmailSignInModal: React.FC<EmailSignInModalProps> = ({
               <TouchableOpacity
                 onPress={handleForgotPassword}
                 activeOpacity={0.7}
-                style={tw`self-end mb-6`}
+                style={tw`self-end mb-5`}
                 disabled={isLoading}
               >
                 <Text style={[tw`text-sm font-medium`, { color: TURQUOISE_DARK }]}>
@@ -333,15 +348,15 @@ const EmailSignInModal: React.FC<EmailSignInModalProps> = ({
             {/* Sign In Button */}
             <TouchableOpacity
               style={[
-                tw`p-4 rounded-2xl flex-row items-center justify-center mb-6`,
+                tw`p-3.5 rounded-xl flex-row items-center justify-center mb-5 border border-gray-200`,
                 { 
                   backgroundColor: isLoading ? '#9CA3AF' : TURQUOISE,
                   opacity: isLoading ? 0.7 : 1,
-                  shadowColor: TURQUOISE,
-                  shadowOffset: { width: 0, height: 4 },
-                  shadowOpacity: 0.3,
-                  shadowRadius: 8,
-                  elevation: 8,
+                  shadowColor: '#000',
+                  shadowOffset: { width: 0, height: 1 },
+                  shadowOpacity: 0.1,
+                  shadowRadius: 2,
+                  elevation: 3,
                 }
               ]}
               onPress={handleSignIn}
@@ -357,8 +372,13 @@ const EmailSignInModal: React.FC<EmailSignInModalProps> = ({
                 </>
               ) : (
                 <>
-                  <Ionicons name="log-in-outline" size={20} color="white" />
-                  <Text style={tw`text-white font-semibold text-base ml-3`}>
+                  <View style={[
+                    tw`w-6 h-6 rounded-full items-center justify-center mr-2`,
+                    { backgroundColor: 'rgba(255, 255, 255, 0.2)' }
+                  ]}>
+                    <Ionicons name="log-in-outline" size={14} color="white" />
+                  </View>
+                  <Text style={tw`text-white font-semibold text-base`}>
                     Sign In
                   </Text>
                 </>

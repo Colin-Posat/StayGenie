@@ -438,8 +438,6 @@ const enhanceHotel = (hotel: Hotel): EnhancedHotel => {
         }
         showsVerticalScrollIndicator={false}
         contentContainerStyle={tw`py-2`}
-        getItemLayout={getItemLayout}
-        removeClippedSubviews={true}
         maxToRenderPerBatch={3}
         windowSize={5}
         initialNumToRender={2}

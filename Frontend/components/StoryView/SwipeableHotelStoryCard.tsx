@@ -818,6 +818,7 @@ const dotAnimations = useRef(
     { 
       fontFamily: 'Merriweather-Regular',
       lineHeight: 18,
+      
     }
   ]}
   numberOfLines={isExpanded ? undefined : 4}

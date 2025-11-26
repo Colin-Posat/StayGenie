@@ -13,7 +13,7 @@ const config: ExpoConfig = {
   newArchEnabled: false,
 
   splash: {
-    image: "./assets/splash-icon.png",
+    image: "./assets/images/logo.png", // Changed to your umbrella logo
     resizeMode: "contain",
     backgroundColor: "#ffffff"
   },
@@ -27,7 +27,7 @@ const config: ExpoConfig = {
 
   android: {
     adaptiveIcon: {
-      foregroundImage: "./assets/adaptive-icon.png",
+      foregroundImage: "./assets/images/logo.png", // Also update adaptive icon
       backgroundColor: "#ffffff"
     },
     runtimeVersion: { policy: "appVersion" },
@@ -35,7 +35,7 @@ const config: ExpoConfig = {
   },
 
   web: { 
-    favicon: "./assets/favicon.png" 
+    favicon: "./assets/images/logo.png" // And favicon
   },
 
   extra: {
@@ -50,15 +50,12 @@ const config: ExpoConfig = {
     "@react-native-firebase/app",
     "expo-web-browser",
     "expo-speech-recognition",
-
-    // -------- MAPBOX PLUGIN (IMPORTANT) --------
     [
       "@rnmapbox/maps",
       {
         RNMapboxMapsDownloadToken: process.env.MAPBOX_SECRET_TOKEN
       }
     ]
-    // -------------------------------------------
   ]
 };
 

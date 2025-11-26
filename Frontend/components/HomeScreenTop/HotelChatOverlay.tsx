@@ -318,28 +318,34 @@ const HotelChatOverlay: React.FC<HotelChatOverlayProps> = ({
           <TouchableOpacity
             key={index}
             style={[
-              tw`flex-row items-center px-3 py-2 rounded-full`,
+              tw`flex-row items-center px-2.5 py-2 rounded-xl border border-gray-200 bg-white`,
               {
-                backgroundColor: TURQUOISE_SUBTLE,
-                borderColor: TURQUOISE_BORDER,
-                borderWidth: 1,
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 1 },
+                shadowOpacity: 0.1,
+                shadowRadius: 2,
+                elevation: 3,
               }
             ]}
             onPress={() => {
               Keyboard.dismiss();
               handleSuggestionPress(suggestion);
             }}
-            activeOpacity={0.7}
+            activeOpacity={0.8}
             disabled={isTyping}
           >
-            <Ionicons
-              name={suggestion.icon}
-              size={12}
-              color="#4B5563"
-              style={tw`mr-1`}
-            />
+            <View style={[
+              tw`w-5 h-5 rounded-full items-center justify-center mr-1.5`,
+              { backgroundColor: 'rgba(29, 249, 255, 0.15)' }
+            ]}>
+              <Ionicons
+                name={suggestion.icon}
+                size={11}
+                color={TURQUOISE_DARK}
+              />
+            </View>
             <Text
-              style={[tw`text-xs font-medium`, { color: '#4B5563' }]}
+              style={[tw`text-xs font-medium text-gray-800`]}
               numberOfLines={1}
             >
               {suggestion.text}
@@ -355,7 +361,7 @@ const HotelChatOverlay: React.FC<HotelChatOverlayProps> = ({
     return (
       <View style={[tw`flex-row items-end mb-3 px-4`, isAI ? tw`justify-start` : tw`justify-end`]}>
         {isAI && (
-          <View style={[tw`w-6 h-6 rounded-full items-center justify-center mr-2`, { backgroundColor: TURQUOISE + '15' }]}>
+          <View style={[tw`w-6 h-6 rounded-full items-center justify-center mr-2`, { backgroundColor: 'rgba(29, 249, 255, 0.15)' }]}>
             <Ionicons name="sparkles" size={12} color={TURQUOISE_DARK} />
           </View>
         )}
@@ -364,7 +370,7 @@ const HotelChatOverlay: React.FC<HotelChatOverlayProps> = ({
             tw`rounded-2xl px-3 py-2`,
             { maxWidth: screenWidth * 0.65 },
             isAI
-              ? { backgroundColor: '#F8FAFC', borderColor: TURQUOISE + '20', borderWidth: 1 }
+              ? { backgroundColor: '#F8FAFC', borderColor: '#E5E7EB', borderWidth: 1 }
               : { backgroundColor: TURQUOISE }
           ]}
         >
@@ -383,7 +389,7 @@ const HotelChatOverlay: React.FC<HotelChatOverlayProps> = ({
 
   const TypingIndicator = () => (
     <View style={tw`flex-row items-end mb-3 px-4 justify-start`}>
-      <View style={[tw`w-6 h-6 rounded-full items-center justify-center mr-2`, { backgroundColor: TURQUOISE + '15' }]}>
+      <View style={[tw`w-6 h-6 rounded-full items-center justify-center mr-2`, { backgroundColor: 'rgba(29, 249, 255, 0.15)' }]}>
         <Ionicons name="sparkles" size={12} color={TURQUOISE_DARK} />
       </View>
       <View style={[tw`bg-gray-100 rounded-2xl px-3 py-2 flex-row items-center`]}>
@@ -423,14 +429,15 @@ const HotelChatOverlay: React.FC<HotelChatOverlayProps> = ({
           <Animated.View style={[{ transform: [{ translateY: slideAnim }, { scale: scaleAnim }] }]}>
             <View
               style={[
-                tw`bg-white rounded-2xl overflow-hidden`,
+                tw`bg-white rounded-xl overflow-hidden border border-gray-200`,
                 {
                   width: panelWidth,
                   height: panelHeight,
-                  shadowColor: TURQUOISE,
-                  shadowOffset: { width: 0, height: 8 },
-                  shadowOpacity: 0.15,
-                  shadowRadius: 20,
+                  shadowColor: '#000',
+                  shadowOffset: { width: 0, height: 1 },
+                  shadowOpacity: 0.1,
+                  shadowRadius: 2,
+                  elevation: 3,
                 },
               ]}
             >
@@ -443,11 +450,14 @@ const HotelChatOverlay: React.FC<HotelChatOverlayProps> = ({
                     </Text>
                   </View>
                   <TouchableOpacity
-                    style={[tw`ml-3 w-8 h-8 rounded-full items-center justify-center`, { backgroundColor: TURQUOISE + '10' }]}
+                    style={[
+                      tw`ml-3 w-8 h-8 rounded-full items-center justify-center`,
+                      { backgroundColor: '#F3F4F6' }
+                    ]}
                     onPress={onClose}
                     hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
                   >
-                    <Ionicons name="close" size={16} color={TURQUOISE_DARK} />
+                    <Ionicons name="close" size={16} color="#6B7280" />
                   </TouchableOpacity>
                 </View>
               </View>
@@ -477,21 +487,22 @@ const HotelChatOverlay: React.FC<HotelChatOverlayProps> = ({
                     style={[
                       tw`flex-1 rounded-xl border`,
                       {
-                        backgroundColor: '#F8FAFC',
-                        borderColor: contextReady ? (TURQUOISE + '20') : '#E5E7EB',
+                        backgroundColor: '#FAFAFA',
+                        borderColor: inputText ? TURQUOISE_LIGHT : '#E5E7EB',
+                        borderWidth: inputText ? 1.5 : 1,
                         maxHeight: 100,
                       },
                     ]}
                   >
-<TextInput
-  style={[
-    tw`px-3 py-2 text-base text-gray-900`, // changed text-sm → text-base
-    { lineHeight: Platform.OS === 'ios' ? 20 : 20, minHeight: 42 },
-  ]}
+                    <TextInput
+                      style={[
+                        tw`px-3 py-2 text-base text-gray-900`,
+                        { lineHeight: Platform.OS === 'ios' ? 20 : 20, minHeight: 42 },
+                      ]}
                       value={inputText}
                       onChangeText={setInputText}
                       placeholder={contextReady ? 'Ask about this hotel…' : 'Please wait…'}
-                      placeholderTextColor="#94A3B8"
+                      placeholderTextColor="#9CA3AF"
                       multiline
                       maxLength={500}
                       editable={contextReady && !isTyping}
@@ -499,30 +510,40 @@ const HotelChatOverlay: React.FC<HotelChatOverlayProps> = ({
                       onSubmitEditing={handleSend}
                       blurOnSubmit
                       enablesReturnKeyAutomatically
+                      selectionColor={TURQUOISE}
                     />
                   </View>
 
                   <TouchableOpacity
                     style={[
-                      tw`w-12 h-12 rounded-2xl items-center justify-center`,
+                      tw`w-11 h-11 rounded-xl items-center justify-center border border-gray-200`,
                       {
-                        backgroundColor: inputText.trim() && contextReady && !isTyping ? TURQUOISE : '#E5E7EB',
-                        shadowColor: inputText.trim() && contextReady && !isTyping ? TURQUOISE : 'transparent',
-                        shadowOffset: { width: 0, height: 2 },
-                        shadowOpacity: inputText.trim() && contextReady && !isTyping ? 0.2 : 0,
-                        shadowRadius: 4,
+                        backgroundColor: inputText.trim() && contextReady && !isTyping ? TURQUOISE : '#F3F4F6',
+                        shadowColor: '#000',
+                        shadowOffset: { width: 0, height: 1 },
+                        shadowOpacity: inputText.trim() && contextReady && !isTyping ? 0.1 : 0,
+                        shadowRadius: 2,
                         elevation: inputText.trim() && contextReady && !isTyping ? 3 : 0,
                       },
                     ]}
                     onPress={handleSend}
                     disabled={!inputText.trim() || !contextReady || isTyping}
-                    activeOpacity={0.85}
+                    activeOpacity={0.8}
                   >
-                    <Ionicons
-                      name="send"
-                      size={18}
-                      color={inputText.trim() && contextReady && !isTyping ? 'white' : '#9CA3AF'}
-                    />
+                    <View style={[
+                      tw`w-6 h-6 rounded-full items-center justify-center`,
+                      { 
+                        backgroundColor: inputText.trim() && contextReady && !isTyping 
+                          ? 'rgba(255, 255, 255, 0.2)' 
+                          : 'transparent'
+                      }
+                    ]}>
+                      <Ionicons
+                        name="send"
+                        size={14}
+                        color={inputText.trim() && contextReady && !isTyping ? 'white' : '#9CA3AF'}
+                      />
+                    </View>
                   </TouchableOpacity>
                 </View>
               </View>
