@@ -1,37 +1,42 @@
-// FavoriteHotelCard.tsx - Updated with trash icon and consistent button styling
-import React, { useRef, useEffect, useState } from 'react';
+// FavoriteHotelCard.tsx - SwipeableHotelStoryCard with delete button
+import React, { useState, useRef, useEffect } from 'react';
 import {
   View,
-  Text as RNText,
+  Text,
   TouchableOpacity,
   Image,
+  Dimensions,
+  ScrollView,
+  Modal,
+  Share,
   Animated,
   Easing,
-  Alert,
-  Linking,
-  Modal,
-  Platform,
-  StyleSheet
 } from 'react-native';
-import { Text } from '../../components/CustomText'; 
+import { LinearGradient } from 'expo-linear-gradient';
 import { Ionicons } from '@expo/vector-icons';
 import tw from 'twrnc';
-import { FavoritedHotel } from '../../utils/FavoritesCache';
-import { formatLocationDisplay, getCountryName } from '../../utils/countryMapping';
+import AnimatedHeartButton from '../StoryView/AnimatedHeartButton';
 import * as WebBrowser from 'expo-web-browser';
+import HotelChatOverlay from '../../components/HomeScreenTop/HotelChatOverlay';
+import { formatLocationDisplay } from '../../utils/countryMapping';
+import { PanGestureHandler, TapGestureHandler } from 'react-native-gesture-handler';
+import ReviewsModal from '../StoryView/ReviewsModal';
+import PhotoGallerySlide from '../StoryView/PhotoGallerySlide';
+import LocationSlide from '../StoryView/LocationSlide';
+import { useFonts } from 'expo-font';
 
-// Turquoise color constants
+const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
+const CARD_WIDTH = screenWidth - 37;
+const CARD_HEIGHT = screenHeight * 0.35;
+
 const TURQUOISE = '#1df9ff';
-const TURQUOISE_LIGHT = '#5dfbff';
 const TURQUOISE_DARK = '#00d4e6';
-
-// Base deep link URL
 const DEEP_LINK_BASE_URL = 'https://staygenie.nuitee.link';
 
 interface FavoriteHotelCardProps {
-  hotel: FavoritedHotel;
-  onPress: (hotel: FavoritedHotel) => void;
-  onRemove: (hotel: FavoritedHotel) => void;
+  hotel: any;
+  onPress: (hotel: any) => void;
+  onRemove: (hotel: any) => void;
   index: number;
   checkInDate?: Date;
   checkOutDate?: Date;
@@ -39,134 +44,107 @@ interface FavoriteHotelCardProps {
   children?: number;
   placeId?: string;
   occupancies?: any[];
+  onFavoriteSuccess?: (hotelName: string) => void;
 }
 
-// Helper function to generate hotel deep link URL
-const generateHotelDeepLink = (
-  hotel: FavoritedHotel,
-  checkInDate?: Date,
-  checkOutDate?: Date,
-  adults: number = 2,
-  children: number = 0,
-  placeId?: string,
-  occupancies?: any[]
-): string => {
-  let url = `${DEEP_LINK_BASE_URL}/hotels/${hotel.id}`;
-  const params = new URLSearchParams();
+// Ken Burns Image Component
+const KenBurnsImage: React.FC<{ uri: string; isActive: boolean }> = ({ uri, isActive }) => {
+  const scaleAnim = useRef(new Animated.Value(1)).current;
+  const translateXAnim = useRef(new Animated.Value(0)).current;
+  const translateYAnim = useRef(new Animated.Value(0)).current;
 
-  if (placeId || hotel.placeId) {
-    params.append('placeId', placeId || hotel.placeId!);
-  }
+  useEffect(() => {
+    if (isActive) {
+      const createLoop = () => {
+        return Animated.loop(
+          Animated.sequence([
+            Animated.parallel([
+              Animated.timing(scaleAnim, {
+                toValue: 1.12,
+                duration: 12000,
+                useNativeDriver: true,
+              }),
+              Animated.timing(translateXAnim, {
+                toValue: -10,
+                duration: 12000,
+                useNativeDriver: true,
+              }),
+              Animated.timing(translateYAnim, {
+                toValue: -8,
+                duration: 12000,
+                useNativeDriver: true,
+              }),
+            ]),
+            Animated.parallel([
+              Animated.timing(scaleAnim, {
+                toValue: 1,
+                duration: 12000,
+                useNativeDriver: true,
+              }),
+              Animated.timing(translateXAnim, {
+                toValue: 0,
+                duration: 12000,
+                useNativeDriver: true,
+              }),
+              Animated.timing(translateYAnim, {
+                toValue: 0,
+                duration: 12000,
+                useNativeDriver: true,
+              }),
+            ]),
+          ])
+        );
+      };
 
-  if (checkInDate) {
-    params.append('checkin', checkInDate.toISOString().split('T')[0]);
-  }
-  if (checkOutDate) {
-    params.append('checkout', checkOutDate.toISOString().split('T')[0]);
-  }
-
-  if (occupancies && occupancies.length > 0) {
-    try {
-      const occupanciesString = btoa(JSON.stringify(occupancies));
-      params.append('occupancies', occupanciesString);
-    } catch (error) {
-      console.warn('Failed to encode occupancies:', error);
+      const animation = createLoop();
+      animation.start();
+      return () => animation.stop();
+    } else {
+      scaleAnim.setValue(1);
+      translateXAnim.setValue(0);
+      translateYAnim.setValue(0);
     }
-  } else if (adults || children) {
-    const defaultOccupancy = [{ adults, children: children > 0 ? [children] : [] }];
-    try {
-      const occupanciesString = btoa(JSON.stringify(defaultOccupancy));
-      params.append('occupancies', occupanciesString);
-    } catch (error) {
-      console.warn('Failed to encode default occupancy:', error);
-    }
-  }
+  }, [isActive]);
 
-  if (hotel.tags?.includes('All Inclusive')) {
-    params.append('needAllInclusive', '1');
-  }
-  if (hotel.tags?.includes('Breakfast Included')) {
-    params.append('needBreakfast', '1');
-  }
-
-  if (hotel.isRefundable) {
-    params.append('needFreeCancellation', '1');
-  }
-
-  const queryString = params.toString();
-  return queryString ? `${url}?${queryString}` : url;
+  return (
+    <Animated.View
+      style={{
+        width: CARD_WIDTH,
+        height: CARD_HEIGHT,
+        transform: [
+          { scale: scaleAnim },
+          { translateX: translateXAnim },
+          { translateY: translateYAnim },
+        ],
+      }}
+    >
+      <Image source={{ uri }} style={tw`w-full h-full`} resizeMode="cover" />
+    </Animated.View>
+  );
 };
 
-// Helper function to generate Google Maps link
-const generateGoogleMapsLink = (hotel: FavoritedHotel, checkin?: Date, checkout?: Date, adults: number = 2, children: number = 0): string => {
-  let query = '';
-
-  const locationText = hotel.city && hotel.country 
-    ? `${hotel.name} ${hotel.city} ${hotel.country}`
-    : hotel.fullAddress 
-    ? `${hotel.name} ${hotel.fullAddress}`
-    : `${hotel.name} ${hotel.location}`;
-  query = encodeURIComponent(locationText);
-  
-  let url = `https://www.google.com/maps/search/?api=1&query=${query}`;
-  
-  if (checkin && checkout) {
-    const checkinStr = checkin.toISOString().split('T')[0];
-    const checkoutStr = checkout.toISOString().split('T')[0];
-    
-    url += `&hotel_dates=${checkinStr},${checkoutStr}`;
-    url += `&hotel_adults=${adults}`;
-    
-    if (children > 0) {
-      url += `&hotel_children=${children}`;
-    }
-  }
-  
-  return url;
-};
-
-// Simple confirmation modal
-interface ConfirmationModalProps {
+// Confirmation Modal
+const ConfirmationModal: React.FC<{
   isVisible: boolean;
   hotelName: string;
   onConfirm: () => void;
   onCancel: () => void;
-}
-
-const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
-  isVisible,
-  hotelName,
-  onConfirm,
-  onCancel,
-}) => {
-  const fadeAnimation = useRef(new Animated.Value(0)).current;
-  const scaleAnimation = useRef(new Animated.Value(0.8)).current;
+}> = ({ isVisible, hotelName, onConfirm, onCancel }) => {
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const scaleAnim = useRef(new Animated.Value(0.8)).current;
 
   useEffect(() => {
     if (isVisible) {
       Animated.parallel([
-        Animated.timing(fadeAnimation, {
+        Animated.timing(fadeAnim, {
           toValue: 1,
           duration: 200,
           useNativeDriver: true,
         }),
-        Animated.timing(scaleAnimation, {
+        Animated.timing(scaleAnim, {
           toValue: 1,
           duration: 200,
           easing: Easing.out(Easing.back(1.1)),
-          useNativeDriver: true,
-        }),
-      ]).start();
-    } else {
-      Animated.parallel([
-        Animated.timing(fadeAnimation, {
-          toValue: 0,
-          duration: 150,
-          useNativeDriver: true,
-        }),
-        Animated.timing(scaleAnimation, {
-          toValue: 0.8,
-          duration: 150,
           useNativeDriver: true,
         }),
       ]).start();
@@ -176,14 +154,11 @@ const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
   if (!isVisible) return null;
 
   return (
-    <View style={tw`rounded-2xl absolute inset-0 items-center justify-center z-50 bg-black/50`}>
+    <View style={tw`absolute inset-0 items-center justify-center z-50 bg-black/50`}>
       <Animated.View
         style={[
           tw`bg-white rounded-2xl p-6 mx-6 shadow-xl`,
-          { 
-            transform: [{ scale: scaleAnimation }],
-            opacity: fadeAnimation,
-          }
+          { transform: [{ scale: scaleAnim }], opacity: fadeAnim }
         ]}
       >
         <Text style={tw`text-lg font-semibold text-black mb-2`}>
@@ -215,286 +190,14 @@ const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
   );
 };
 
-const getRatingColor = (rating: number): string => {
-  if (rating >= 8.0) return TURQUOISE;
-  if (rating >= 7.0) return TURQUOISE + 'E6';
-  if (rating >= 6.0) return TURQUOISE + 'CC';
-  if (rating >= 5.0) return TURQUOISE + 'B3';
-  if (rating >= 4.0) return TURQUOISE + '99';
-  return TURQUOISE + '80';
-};
-
-// AI Insights Dropdown Component
-interface AIInsightsDropdownProps {
-  hotel: FavoritedHotel;
-  isExpanded: boolean;
-  onToggle: () => void;
-}
-
-const AIInsightsDropdown: React.FC<AIInsightsDropdownProps> = ({
-  hotel,
-  isExpanded,
-  onToggle
-}) => {
-  const animatedHeight = useRef(new Animated.Value(0)).current;
-  const rotateAnimation = useRef(new Animated.Value(0)).current;
-
-  useEffect(() => {
-    Animated.parallel([
-      Animated.timing(animatedHeight, {
-        toValue: isExpanded ? 1 : 0,
-        duration: 300,
-        easing: Easing.bezier(0.4, 0, 0.2, 1),
-        useNativeDriver: false,
-      }),
-      Animated.timing(rotateAnimation, {
-        toValue: isExpanded ? 1 : 0,
-        duration: 300,
-        easing: Easing.bezier(0.4, 0, 0.2, 1),
-        useNativeDriver: true,
-      }),
-    ]).start();
-  }, [isExpanded]);
-
-  const rotateInterpolate = rotateAnimation.interpolate({
-    inputRange: [0, 1],
-    outputRange: ['0deg', '180deg'],
+const parseBoldText = (text: string, boldStyle: any, normalStyle: any) => {
+  const parts = text.split(/(\*\*.*?\*\*)/g);
+  return parts.map((part, index) => {
+    if (part.startsWith('**') && part.endsWith('**')) {
+      return <Text key={index} style={boldStyle}>{part.slice(2, -2)}</Text>;
+    }
+    return <Text key={index} style={normalStyle}>{part}</Text>;
   });
-
-  // Get category ratings with fallbacks
-  const getRatings = () => {
-    if (hotel.categoryRatings) {
-      return hotel.categoryRatings;
-    }
-    
-    // Parse from guestInsights if available
-    if (hotel.guestInsights && !hotel.guestInsights.includes('Loading')) {
-      try {
-        const defaultRatings = {
-          cleanliness: 6.0,
-          service: 6.0,
-          location: 6.0,
-          roomQuality: 6.0
-        };
-
-        const lines = hotel.guestInsights.split('\n');
-        const ratings = { ...defaultRatings };
-
-        lines.forEach((line: string) => {
-          if (line.includes('Cleanliness:')) {
-            const match = line.match(/(\d+\.?\d*)/);
-            if (match) ratings.cleanliness = parseFloat(match[1]);
-          } else if (line.includes('Service:')) {
-            const match = line.match(/(\d+\.?\d*)/);
-            if (match) ratings.service = parseFloat(match[1]);
-          } else if (line.includes('Location:')) {
-            const match = line.match(/(\d+\.?\d*)/);
-            if (match) ratings.location = parseFloat(match[1]);
-          } else if (line.includes('Room Quality:')) {
-            const match = line.match(/(\d+\.?\d*)/);
-            if (match) ratings.roomQuality = parseFloat(match[1]);
-          }
-        });
-
-        return ratings;
-      } catch (error) {
-        console.warn('Failed to parse ratings:', error);
-      }
-    }
-    
-    // Ultimate fallback: mock ratings based on overall rating
-    const baseRating = hotel.rating || 6.0;
-    return {
-      cleanliness: Math.min(10, baseRating + 0.2),
-      service: Math.min(10, baseRating - 0.1),
-      location: Math.min(10, baseRating + 0.3),
-      roomQuality: Math.min(10, baseRating - 0.2)
-    };
-  };
-
-  const ratings = getRatings();
-
-  const generateAIInsight = (): string => {
-    if (hotel.whyItMatches && !hotel.whyItMatches.includes('progress') && !hotel.whyItMatches.includes('loading')) {
-      return hotel.whyItMatches;
-    }
-    
-    if (hotel.aiExcerpt && !hotel.aiExcerpt.includes('progress')) {
-      return hotel.aiExcerpt;
-    }
-
-    if (hotel.locationHighlight && !hotel.locationHighlight.includes('Analyzing')) {
-      return hotel.locationHighlight;
-    }
-
-    return "This hotel perfectly matches your preferences with its excellent location, premium amenities, and outstanding guest reviews. The combination of comfort, style, and convenience makes it an ideal choice for your stay.";
-  };
-
-  const mockNearbyAttractions = hotel.nearbyAttractions?.length ? hotel.nearbyAttractions : [
-    "City Center • 0.2 mi",
-    "Main Shopping District • 0.5 mi", 
-    "Historic Quarter • 0.8 mi",
-    "Transportation Hub • 1.1 mi"
-  ];
-
-  return (
-    <View style={tw`bg-white border-t border-gray-50`}>
-      <TouchableOpacity
-        style={tw`flex-row items-center justify-between px-4 py-3`}
-        onPress={onToggle}
-        activeOpacity={0.7}
-      >
-        <View style={tw`flex-row items-center`}>
-          <View style={[tw`w-6 h-6 rounded-full items-center justify-center mr-3`, { backgroundColor: TURQUOISE + '20' }]}>
-            <Ionicons name="information-circle" size={12} color={TURQUOISE_DARK} />
-          </View>
-          <Text style={tw`text-gray-900 font-medium text-sm`}>
-            View More Details
-          </Text>
-        </View>
-        <Animated.View style={{ transform: [{ rotate: rotateInterpolate }] }}>
-          <Ionicons name="chevron-up" size={16} color="#9CA3AF" />
-        </Animated.View>
-      </TouchableOpacity>
-      
-      <Animated.View 
-        style={[
-          tw`overflow-hidden`,
-          { 
-            maxHeight: animatedHeight.interpolate({
-              inputRange: [0, 1],
-              outputRange: [0, 500],
-            }),
-            opacity: animatedHeight,
-          }
-        ]}
-      >
-        <View style={tw`px-4 pb-4`}>
-
-          {/* Category Ratings */}
-          <View style={tw`mb-4`}>
-            <Text style={tw`text-gray-900 font-medium text-sm mb-3`}>Guest Ratings</Text>
-            <View style={tw`gap-2`}>
-              <View style={tw`flex-row gap-2`}>
-                <View style={tw`flex-1 bg-gray-50 border border-gray-100 rounded-lg p-2 flex-row items-center`}>
-                  <View 
-                    style={[
-                      tw`w-7 h-7 rounded-full items-center justify-center`,
-                      { backgroundColor: getRatingColor(ratings.cleanliness) }
-                    ]}
-                  >
-                    <Text 
-                      style={[
-                        tw`text-xs font-bold`,
-                        { 
-                          color: '#FFFFFF',
-                          textShadowColor: '#000000',
-                          textShadowOffset: { width: 0.5, height: 0.5 },
-                          textShadowRadius: 1
-                        }
-                      ]}
-                    >
-                      {ratings.cleanliness.toFixed(1)}
-                    </Text>
-                  </View>
-                  <Text style={tw`text-gray-800 text-xs font-medium ml-2 flex-1`}>Cleanliness</Text>
-                </View>
-
-                <View style={tw`flex-1 bg-gray-50 border border-gray-100 rounded-lg p-2 flex-row items-center`}>
-                  <View 
-                    style={[
-                      tw`w-7 h-7 rounded-full items-center justify-center`,
-                      { backgroundColor: getRatingColor(ratings.service) }
-                    ]}
-                  >
-                    <Text 
-                      style={[
-                        tw`text-xs font-bold`,
-                        { 
-                          color: '#FFFFFF',
-                          textShadowColor: '#000000',
-                          textShadowOffset: { width: 0.5, height: 0.5 },
-                          textShadowRadius: 1
-                        }
-                      ]}
-                    >
-                      {ratings.service.toFixed(1)}
-                    </Text>
-                  </View>
-                  <Text style={tw`text-gray-800 text-xs font-medium ml-2 flex-1`}>Service</Text>
-                </View>
-              </View>
-
-              <View style={tw`flex-row gap-2`}>
-                <View style={tw`flex-1 bg-gray-50 border border-gray-100 rounded-lg p-2 flex-row items-center`}>
-                  <View 
-                    style={[
-                      tw`w-7 h-7 rounded-full items-center justify-center`,
-                      { backgroundColor: getRatingColor(ratings.location) }
-                    ]}
-                  >
-                    <Text 
-                      style={[
-                        tw`text-xs font-bold`,
-                        { 
-                          color: '#FFFFFF',
-                          textShadowColor: '#000000',
-                          textShadowOffset: { width: 0.5, height: 0.5 },
-                          textShadowRadius: 1
-                        }
-                      ]}
-                    >
-                      {ratings.location.toFixed(1)}
-                    </Text>
-                  </View>
-                  <Text style={tw`text-gray-800 text-xs font-medium ml-2 flex-1`}>Location</Text>
-                </View>
-
-                <View style={tw`flex-1 bg-gray-50 border border-gray-100 rounded-lg p-2 flex-row items-center`}>
-                  <View 
-                    style={[
-                      tw`w-7 h-7 rounded-full items-center justify-center`,
-                      { backgroundColor: getRatingColor(ratings.roomQuality) }
-                    ]}
-                  >
-                    <Text 
-                      style={[
-                        tw`text-xs font-bold`,
-                        { 
-                          color: '#FFFFFF',
-                          textShadowColor: '#000000',
-                          textShadowOffset: { width: 0.5, height: 0.5 },
-                          textShadowRadius: 1
-                        }
-                      ]}
-                    >
-                      {ratings.roomQuality.toFixed(1)}
-                    </Text>
-                  </View>
-                  <Text style={tw`text-gray-800 text-xs font-medium ml-2 flex-1`}>Rooms</Text>
-                </View>
-              </View>
-            </View>
-          </View>
-
-          {/* Nearby Attractions */}
-          <View>
-            <Text style={tw`text-gray-900 font-medium text-sm mb-3`}>Nearby Attractions</Text>
-            <View style={tw`bg-gray-50 p-3 rounded-xl`}>
-              {mockNearbyAttractions.slice(0, 4).map((attraction: string, index: number) => (
-                <View key={index} style={tw`flex-row items-center ${index === 0 ? '' : 'mt-2'}`}>
-                  <View style={[tw`w-1.5 h-1.5 rounded-full mr-2`, { backgroundColor: TURQUOISE }]} />
-                  <Text style={tw`text-gray-700 text-sm flex-1`}>
-                    {attraction}
-                  </Text>
-                </View>
-              ))}
-            </View>
-          </View>
-        </View>
-      </Animated.View>
-    </View>
-  );
 };
 
 const FavoriteHotelCard: React.FC<FavoriteHotelCardProps> = ({
@@ -507,21 +210,133 @@ const FavoriteHotelCard: React.FC<FavoriteHotelCardProps> = ({
   adults = 2,
   children = 0,
   placeId,
-  occupancies
+  occupancies,
+  onFavoriteSuccess,
 }) => {
-  const fadeAnimation = useRef(new Animated.Value(0)).current;
-  const [showConfirmModal, setShowConfirmModal] = useState(false);
-  const [showAIInsights, setShowAIInsights] = useState(false);
+  const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [showHotelChat, setShowHotelChat] = useState(false);
+  const [isExpanded, setIsExpanded] = useState(false);
+  const [showConfirmModal, setShowConfirmModal] = useState(false);
+  const [showReviewsModal, setShowReviewsModal] = useState(false);
+  const [showPhotoGallery, setShowPhotoGallery] = useState(false);
+  const [showMapView, setShowMapView] = useState(false);
+  const expandAnim = useRef(new Animated.Value(0)).current;
+  const genieShimmerAnim = useRef(new Animated.Value(0)).current;
+  const panRef = useRef(null);
+  const tapRef = useRef(null);
+
+  const [fontsLoaded] = useFonts({
+    'Merriweather-Bold': require('../../assets/fonts/Merriweather_36pt-Bold.ttf'),
+    'Merriweather-Regular': require('../../assets/fonts/Merriweather_36pt-Regular.ttf'),
+  });
 
   useEffect(() => {
-    Animated.timing(fadeAnimation, {
-      toValue: 1,
-      duration: 400 + (index * 80),
-      easing: Easing.out(Easing.cubic),
-      useNativeDriver: true,
-    }).start();
-  }, [index]);
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(genieShimmerAnim, {
+          toValue: 1,
+          duration: 2500,
+          useNativeDriver: true,
+        }),
+        Animated.timing(genieShimmerAnim, {
+          toValue: 0,
+          duration: 2500,
+          useNativeDriver: true,
+        }),
+      ])
+    ).start();
+  }, []);
+
+  const images = React.useMemo(() => {
+    const collected: string[] = [];
+    const MAX_IMAGES = 10;
+
+    if (hotel.photoGalleryImages?.length) {
+      collected.push(...hotel.photoGalleryImages.slice(0, MAX_IMAGES));
+    }
+    if (collected.length < MAX_IMAGES && hotel.images?.length) {
+      for (const img of hotel.images) {
+        if (collected.length >= MAX_IMAGES) break;
+        if (img && !collected.includes(img)) collected.push(img);
+      }
+    }
+    if (collected.length < MAX_IMAGES && hotel.firstRoomImage && !collected.includes(hotel.firstRoomImage)) {
+      collected.push(hotel.firstRoomImage);
+    }
+    if (collected.length < MAX_IMAGES && hotel.secondRoomImage && !collected.includes(hotel.secondRoomImage)) {
+      collected.push(hotel.secondRoomImage);
+    }
+    if (collected.length < MAX_IMAGES && hotel.thirdImageHd && !collected.includes(hotel.thirdImageHd)) {
+      collected.push(hotel.thirdImageHd);
+    }
+    if (collected.length === 0 && hotel.image) {
+      collected.push(hotel.image);
+    }
+
+    return collected.filter(img => 
+      img && img.trim() !== '' && 
+      (img.startsWith('http://') || img.startsWith('https://') || img.startsWith('//'))
+    );
+  }, [hotel]);
+
+  // Create enhanced hotel object with all collected images for PhotoGallerySlide
+  const enhancedHotel = React.useMemo(() => {
+    return {
+      ...hotel,
+      photoGalleryImages: images,
+      images: images,
+    };
+  }, [hotel, images]);
+
+  const displayLocation = hotel.city && hotel.country
+    ? formatLocationDisplay(hotel.city, hotel.country)
+    : hotel.location;
+
+  const getDisplayPrice = () => {
+    if (hotel.pricePerNight) {
+      return `$${hotel.pricePerNight.amount}`;
+    }
+    return `$${hotel.price}`;
+  };
+
+  const generateHotelDeepLink = () => {
+    const url = new URL(`${DEEP_LINK_BASE_URL}/hotels/${hotel.id}`);
+    if (placeId) url.searchParams.set('placeId', placeId);
+    if (checkInDate) url.searchParams.set('checkin', checkInDate.toISOString().split('T')[0]);
+    if (checkOutDate) url.searchParams.set('checkout', checkOutDate.toISOString().split('T')[0]);
+
+    if (occupancies?.length) {
+      const enc = typeof btoa !== 'undefined' ? btoa(JSON.stringify(occupancies)) : JSON.stringify(occupancies);
+      url.searchParams.set('occupancies', enc);
+    } else if (adults || children) {
+      const defOcc = [{ adults, children: children > 0 ? [children] : [] }];
+      const enc = typeof btoa !== 'undefined' ? btoa(JSON.stringify(defOcc)) : JSON.stringify(defOcc);
+      url.searchParams.set('occupancies', enc);
+    }
+
+    if (hotel.topAmenities?.includes('All Inclusive')) url.searchParams.set('needAllInclusive', '1');
+    if (hotel.topAmenities?.includes('Breakfast Included')) url.searchParams.set('needBreakfast', '1');
+
+    return url.toString();
+  };
+
+  const handleBookNow = async () => {
+    const deepLinkUrl = generateHotelDeepLink();
+    await WebBrowser.openBrowserAsync(deepLinkUrl, {
+      presentationStyle: WebBrowser.WebBrowserPresentationStyle.PAGE_SHEET,
+      dismissButtonStyle: 'done',
+      showTitle: true,
+    });
+  };
+
+  const handleShare = async () => {
+    try {
+      const shareUrl = generateHotelDeepLink();
+      await Share.share({ message: `Check out ${hotel.name}!\n\n${shareUrl}` });
+    } catch (error) {
+      console.log('Error sharing:', error);
+    }
+  };
 
   const handleRemove = () => {
     setShowConfirmModal(true);
@@ -532,308 +347,546 @@ const FavoriteHotelCard: React.FC<FavoriteHotelCardProps> = ({
     onRemove(hotel);
   };
 
-  const handleCancelRemove = () => {
-    setShowConfirmModal(false);
+  const toggleExpanded = () => {
+    const toValue = isExpanded ? 0 : 1;
+    setIsExpanded(!isExpanded);
+    Animated.spring(expandAnim, {
+      toValue,
+      useNativeDriver: false,
+      tension: 100,
+      friction: 10,
+    }).start();
   };
 
-  // Updated WebBrowser call with better configuration
-  const handleViewDetails = async () => {
-    const mapsLink = generateGoogleMapsLink(hotel, checkInDate, checkOutDate, adults, children);
-    
-    await WebBrowser.openBrowserAsync(mapsLink, {
-      presentationStyle: WebBrowser.WebBrowserPresentationStyle.PAGE_SHEET,
-      dismissButtonStyle: 'done',
-      // These options help keep it in web view
-      controlsColor: '#000000ff',
-      toolbarColor: '#ffffff',
-      // Prevent automatic app switching
-      showTitle: true,
-      showInRecents: false,
-    });
+  const handleScroll = (event: any) => {
+    const contentOffsetX = event.nativeEvent.contentOffset.x;
+    const index = Math.round(contentOffsetX / CARD_WIDTH);
+    setCurrentImageIndex(index);
   };
 
-  const handleBookNow = async () => {
-    const deepLinkUrl = generateHotelDeepLink(hotel, checkInDate, checkOutDate, adults, children, placeId, occupancies);
-    await WebBrowser.openBrowserAsync(deepLinkUrl, {
-    presentationStyle: WebBrowser.WebBrowserPresentationStyle.PAGE_SHEET,
-    dismissButtonStyle: 'done',
-    // These options help keep it in web view
-    controlsColor: '#000000ff',
-    toolbarColor: '#ffffff',
-    // Prevent automatic app switching
-    showTitle: true,
-    showInRecents: false,
-  });
-  };
-
-  const getDisplayPrice = () => {
-    if (hotel.pricePerNight) {
-      const getCurrencySymbol = (currencyCode: string) => {
-        switch (currencyCode.toUpperCase()) {
-          case 'USD': return '$';
-          case 'EUR': return '€';
-          case 'GBP': return '£';
-          case 'JPY': return '¥';
-          case 'CAD': return 'C$';
-          case 'AUD': return 'A$';
-          default: return currencyCode;
-        }
-      };
-      
-      return `${getCurrencySymbol(hotel.pricePerNight.currency)}${hotel.pricePerNight.amount}`;
+  const handleTap = ({ nativeEvent }: any) => {
+    // 5 === State.END
+    if (nativeEvent.state === 5 && !showMapView) {
+      setShowPhotoGallery(true);
     }
-    return `${hotel.price}`;
   };
 
-  const getLocationDisplay = () => {
-    if (hotel.city) {
-      return hotel.city;
-    }
-    return hotel.location;
-  };
+  if (!fontsLoaded) {
+    return null;
+  }
 
   return (
-    <Animated.View
-      style={[
-        tw`mb-4`,
-        { opacity: fadeAnimation }
-      ]}
-    >
-      {/* Outer shadow wrapper - NO overflow or rounding */}
-      <View style={styles.shadowWrapper}>
-        {/* Inner container - handles rounding and overflow */}
-        <View
+    <View style={tw`mb-4`}>
+      <View style={[tw`rounded-2xl`, {
+        width: CARD_WIDTH,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.15,
+        shadowRadius: 8,
+        elevation: 8,
+      }]}>
+        <View style={[tw`border-2 border-gray-300 rounded-2xl overflow-hidden bg-white`]}>
+          <View style={{ height: CARD_HEIGHT }}>
+        {!showMapView ? (
+          <PanGestureHandler ref={panRef} activeOffsetX={[-12, 12]}>
+            <TapGestureHandler
+              ref={tapRef}
+              waitFor={panRef}
+              onHandlerStateChange={handleTap}
+            >
+              <View>
+                <ScrollView
+                  horizontal
+                  pagingEnabled
+                  showsHorizontalScrollIndicator={false}
+                  onScroll={handleScroll}
+                  scrollEventThrottle={16}
+                >
+                  {images.map((img, idx) => (
+                    <View key={idx} style={{ width: CARD_WIDTH, height: CARD_HEIGHT, overflow: 'hidden' }}>
+                      <KenBurnsImage uri={img} isActive={idx === currentImageIndex} />
+                    </View>
+                  ))}
+                </ScrollView>
+              </View>
+            </TapGestureHandler>
+          </PanGestureHandler>
+        ) : (
+          <LocationSlide
+            hotel={hotel}
+            insightsStatus="complete"
+            isVisible={true}
+          />
+        )}
+
+        {/* Top Gradient for Hotel Name (only show in image view) */}
+        {!showMapView && (
+          <LinearGradient
+            colors={['rgba(0,0,0,0.7)', 'transparent']}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 0, y: 1 }}
+            style={[tw`absolute top-0 left-0 right-0 z-20`, { height: 100 }]}
+          />
+        )}
+
+        {/* Hotel Name - Top Left (always visible) */}
+        {!showMapView && (
+          <View style={[tw`absolute top-2.5 left-2.5 z-30 px-1`, { right: 100 }]}>
+            <Text style={[tw`text-white text-base mb-0.5`, {
+              fontFamily: 'Merriweather-Bold',
+              textShadowColor: 'rgba(0, 0, 0, 1)',
+              textShadowOffset: { width: 0, height: 1 },
+              textShadowRadius: 4
+            }]} numberOfLines={2}>
+              {hotel.name}
+            </Text>
+            <View style={tw`flex-row items-center gap-1`}>
+              <Ionicons name="location" size={11} color="#FFF" />
+              <Text style={[tw`text-white text-xs`, {
+                fontFamily: 'Merriweather-Regular',
+                textShadowColor: 'rgba(0, 0, 0, 1)',
+                textShadowOffset: { width: 0, height: 1 },
+                textShadowRadius: 4
+              }]} numberOfLines={1}>
+                {displayLocation}
+              </Text>
+            </View>
+          </View>
+        )}
+
+        {/* DELETE BUTTON - Top Right (always visible) */}
+        <View style={tw`absolute top-2.5 right-2.5 z-30`}>
+          <TouchableOpacity
+            onPress={handleRemove}
+            style={[
+              tw`w-9 h-9 rounded-full items-center justify-center`,
+              { backgroundColor: 'rgba(0, 0, 0, 0.6)' }
+            ]}
+            activeOpacity={0.7}
+          >
+            <Ionicons name="trash-outline" size={16} color="#EF4444" />
+          </TouchableOpacity>
+        </View>
+
+        {/* Price and Rating - Bottom Left */}
+        {!showMapView && (
+          <View style={tw`absolute bottom-2.5 left-2.5 z-30`}>
+            <View style={[
+              tw`rounded-xl flex-row items-center overflow-hidden`,
+              {
+                backgroundColor: 'rgba(0, 0, 0, 0.6)',
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 2 },
+                shadowOpacity: 0.2,
+                shadowRadius: 4
+              }
+            ]}>
+              <View style={tw`px-3 py-1.8 flex-row items-baseline gap-0.5`}>
+                <Text style={[tw`text-base text-white`, { fontFamily: 'Merriweather-Bold' }]}>
+                  {getDisplayPrice()}
+                </Text>
+                <Text style={[tw`text-xs text-white/80`, { fontFamily: 'Merriweather-Regular' }]}>
+                  /night
+                </Text>
+              </View>
+
+              <View style={[{ width: 1, height: 16, backgroundColor: 'rgba(255, 255, 255, 0.3)' }]} />
+
+              {/* Rating Section - Clickable */}
+              <TouchableOpacity
+                onPress={() => setShowReviewsModal(true)}
+                activeOpacity={0.7}
+                style={tw`px-3 py-1.8 flex-row items-center gap-1`}
+              >
+                <Ionicons name="star" size={11} color="#FFF" />
+                <Text style={[tw`text-white text-sm`, { fontFamily: 'Merriweather-Bold' }]}>
+                  {hotel.rating?.toFixed(1) || 'N/A'}
+                </Text>
+                <Ionicons name="chevron-forward" size={10} color="rgba(255, 255, 255, 0.6)" />
+              </TouchableOpacity>
+            </View>
+          </View>
+        )}
+
+        {/* Images/Map Toggle - Bottom Right */}
+        <View style={tw`absolute bottom-2.5 right-2.5 z-40`}>
+          <TouchableOpacity
+            onPress={() => setShowMapView(!showMapView)}
+            style={[
+              tw`py-2.8 px-3 rounded-xl flex-row items-center gap-1.5`,
+              {
+                backgroundColor: 'rgba(0, 0, 0, 0.6)',
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 2 },
+                shadowOpacity: 0.2,
+                shadowRadius: 4
+              }
+            ]}
+            activeOpacity={0.7}
+          >
+            <Ionicons
+              name={showMapView ? "images" : "map"}
+              size={12}
+              color="#FFF"
+            />
+            <Text style={[
+              tw`text-xs text-white`,
+              {
+                fontFamily: 'Merriweather-Bold',
+              }
+            ]}>
+              {showMapView ? "Show Images" : "Show Map"}
+            </Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Image Indicators - Top Right (only show when not in map view) */}
+        {!showMapView && images.length > 1 && (
+          <View style={tw`absolute top-3.5 right-2.5 z-30`}>
+            <View style={[
+              tw`px-2.5 py-1.5 rounded-full`,
+              { backgroundColor: 'rgba(0, 0, 0, 0.5)' }
+            ]}>
+              <View style={tw`flex-row items-center gap-1`}>
+                {images.map((_, idx) => {
+                  const isActive = idx === currentImageIndex;
+                  const distance = Math.abs(idx - currentImageIndex);
+                  
+                  return (
+                    <View
+                      key={idx}
+                      style={[
+                        tw`rounded-full`,
+                        {
+                          width: isActive ? 6 : distance === 1 ? 4 : 3,
+                          height: isActive ? 6 : distance === 1 ? 4 : 3,
+                          backgroundColor: isActive 
+                            ? '#FFFFFF' 
+                            : distance === 1 
+                              ? 'rgba(255,255,255,0.5)' 
+                              : 'rgba(255,255,255,0.3)',
+                          opacity: distance > 2 ? 0.4 : 1,
+                        }
+                      ]}
+                    />
+                  );
+                })}
+              </View>
+            </View>
+          </View>
+        )}
+      </View>
+
+      {/* Bottom Section */}
+      <View style={tw`mx-3 my-3`}>
+        <TouchableOpacity
+          onPress={toggleExpanded}
+          activeOpacity={0.8}
           style={[
-            tw`bg-white rounded-2xl overflow-hidden border border-gray-100`,
+            tw`rounded-xl mb-2.5`,
+            {
+              backgroundColor: 'white',
+              borderWidth: 1,
+              borderColor: '#E5E7EB',
+              overflow: 'hidden',
+            }
           ]}
         >
-          <TouchableOpacity
-            onPress={() => onPress(hotel)}
-            activeOpacity={0.98}
-          >
-            {/* Main Card Content */}
-            <View style={tw`flex-row`}>
-              {/* Hotel Image */}
-              <View style={tw`relative w-32 h-32`}>
-                <Image
-                  source={{ uri: hotel.image }}
-                  style={tw`w-full h-full`}
-                  resizeMode="cover"
-                />
-                {/* Rating badge on image */}
-                <View 
-                  style={[
-                    tw`absolute top-2 left-2 px-2 py-1 rounded-lg flex-row items-center`,
-                    { backgroundColor: 'rgba(0, 0, 0, 0.7)' }
-                  ]}
-                >
-                  <View 
-                    style={[
-                      tw`w-4 h-4 rounded-full items-center justify-center mr-1`,
-                      { backgroundColor: getRatingColor(hotel.rating || 0) }
-                    ]}
+          <View style={tw`px-3 py-2.5`}>
+            {hotel.whyItMatches ? (
+              <View style={tw`mb-1.5`}>
+                <View style={tw`flex-row items-center mb-1.5`}>
+                  <Animated.View
+                    style={{
+                      opacity: genieShimmerAnim.interpolate({
+                        inputRange: [0, 0.5, 1],
+                        outputRange: [1, 0.7, 1]
+                      }),
+                    }}
                   >
-                    <Ionicons 
-                      name="thumbs-up" 
-                      size={8} 
-                      color="#FFFFFF"
-                      style={{
-                        textShadowColor: '#000000',
-                        textShadowOffset: { width: 0.5, height: 0.5 },
-                        textShadowRadius: 1
-                      }}
-                    />
-                  </View>
-                  <Text style={tw`text-white text-xs font-semibold`}>
+                    <LinearGradient
+                      colors={[TURQUOISE, TURQUOISE_DARK]}
+                      start={{ x: 0, y: 0 }}
+                      end={{ x: 1, y: 0 }}
+                      style={[tw`px-2 py-1 rounded-full`, { alignSelf: 'flex-start' }]}
+                    >
+                      <View style={tw`flex-row items-center`}>
+                        <Ionicons name="sparkles" size={10} color="white" style={tw`mr-1`} />
+                        <Text style={[
+                          tw`text-[10px] text-white`,
+                          { fontFamily: 'Merriweather-Bold', letterSpacing: 0.5 }
+                        ]}>
+                          Genie Says
+                        </Text>
+                      </View>
+                    </LinearGradient>
+                  </Animated.View>
+                </View>
+
+                <Text 
+                  style={[
+                    tw`text-[13px] text-gray-800 mb-1`,
+                    { fontFamily: 'Merriweather-Regular', lineHeight: 18 }
+                  ]}
+                  numberOfLines={isExpanded ? undefined : 4}
+                >
+                  {parseBoldText(
+                    hotel.whyItMatches,
+                    [tw`text-[13px] text-gray-800`, { fontFamily: 'Merriweather-Bold', lineHeight: 18 }],
+                    [tw`text-[13px] text-gray-800`, { fontFamily: 'Merriweather-Regular', lineHeight: 18 }]
+                  )}
+                </Text>
+              </View>
+            ) : (
+              <View style={tw`flex-row items-center justify-between mb-1`}>
+                <View style={tw`flex-row items-center`}>
+                  <Ionicons name="star" size={13} color="#FCD34D" style={tw`mr-1`} />
+                  <Text style={[tw`text-[13px] text-gray-800`, { fontFamily: 'Merriweather-Bold' }]}>
                     {hotel.rating?.toFixed(1) || 'N/A'}
                   </Text>
-                </View>
-              </View>
-
-              {/* Hotel Information */}
-              <View style={tw`flex-1 p-4`}>
-                <View style={tw`flex-row justify-between items-start mb-2`}>
-                  <View style={tw`flex-1 pr-2`}>
-                    <Text style={tw`text-base font-semibold text-gray-900 leading-tight mb-1`}>
-                      {hotel.name}
-                    </Text>
-                    <View style={tw`flex-row items-center mb-2`}>
-                      <Ionicons name="location-outline" size={14} color="#6B7280" />
-                      <Text style={tw`text-sm text-gray-600 ml-1 flex-1`} numberOfLines={1}>
-                        {getLocationDisplay()}
-                      </Text>
-                    </View>
-                  </View>
-                  
-                  {/* Updated Remove button with trash icon */}
-                  <TouchableOpacity
-                    style={tw`w-8 h-8 bg-red-50 rounded-full items-center justify-center`}
-                    onPress={handleRemove}
-                    activeOpacity={0.7}
-                  >
-                    <Ionicons name="trash-outline" size={16} color="#EF4444" />
-                  </TouchableOpacity>
-                </View>
-
-                {/* Price */}
-                <View style={tw`flex-row items-center justify-between`}>
-                  <Text style={tw`text-lg font-bold text-gray-900`}>
-                    {getDisplayPrice()}
-                    <Text style={tw`text-sm font-normal text-gray-600`}>/night</Text>
+                  <Text style={[tw`text-[11px] text-gray-500 ml-1`, { fontFamily: 'Merriweather-Regular' }]}>
+                    ({hotel.reviews || 0} reviews)
                   </Text>
                 </View>
               </View>
+            )}
+
+            <View style={tw`flex-row items-center justify-center pt-1.5 border-t border-gray-100`}>
+              <Text style={[
+                tw`text-[11px] text-gray-500 mr-0.5`,
+                { fontFamily: 'Merriweather-Regular' }
+              ]}>
+                {isExpanded ? 'Show Less' : 'Show More'}
+              </Text>
+              <Animated.View
+                style={{
+                  transform: [{
+                    rotate: expandAnim.interpolate({
+                      inputRange: [0, 1],
+                      outputRange: ['0deg', '180deg']
+                    })
+                  }]
+                }}
+              >
+                <Ionicons name="chevron-down" size={12} color="#9CA3AF" />
+              </Animated.View>
+            </View>
+          </View>
+
+          {isExpanded && hotel.topAmenities && hotel.topAmenities.length > 0 && (
+            <Animated.View style={{ opacity: expandAnim }}>
+              <View style={tw`px-3 pb-2.5`}>
+                <Text style={[
+                  tw`text-[10px] text-gray-500 mb-1.5 ml-0.5`,
+                  { fontFamily: 'Merriweather-Bold', letterSpacing: 0.5 }
+                ]}>
+                  TOP AMENITIES
+                </Text>
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  contentContainerStyle={tw`gap-1.5`}
+                >
+                  {hotel.topAmenities.slice(0, 6).map((amenity: any, idx: any) => (
+                    <View
+                      key={`${amenity}-${idx}`}
+                      style={[
+                        tw`px-2 py-1 rounded-lg border border-gray-200`,
+                        { backgroundColor: '#FFFFFF' }
+                      ]}
+                    >
+                      <Text style={[
+                        tw`text-[11px] text-gray-700`,
+                        { fontFamily: 'Merriweather-Regular' }
+                      ]}>
+                        {amenity}
+                      </Text>
+                    </View>
+                  ))}
+                </ScrollView>
+
+                {/* Guest Reviews Summary */}
+                <TouchableOpacity
+                  style={[
+                    tw`py-2 px-2.5 rounded-xl flex-row items-center justify-between bg-white border border-gray-200 mt-2.5`,
+                    {
+                      shadowColor: '#000',
+                      shadowOffset: { width: 0, height: 1 },
+                      shadowOpacity: 0.1,
+                      shadowRadius: 2,
+                      elevation: 3,
+                    }
+                  ]}
+                  onPress={() => setShowReviewsModal(true)}
+                  activeOpacity={0.7}
+                >
+                  <View style={tw`flex-row items-center gap-1.5`}>
+                    <View style={[
+                      tw`w-5 h-5 rounded-full items-center justify-center`,
+                      { backgroundColor: 'rgba(29, 249, 255, 0.15)' }
+                    ]}>
+                      <Ionicons name="chatbubbles-outline" size={11} color={TURQUOISE_DARK} />
+                    </View>
+                    <Text style={[
+                      tw`text-[13px] text-gray-800`,
+                      { fontFamily: 'Merriweather-Regular' }
+                    ]}>
+                      Read guest reviews
+                    </Text>
+                  </View>
+                  <Ionicons name="chevron-forward" size={12} color="#9CA3AF" />
+                </TouchableOpacity>
+              </View>
+            </Animated.View>
+          )}
+        </TouchableOpacity>
+
+        {/* Action Buttons */}
+        <View style={tw`flex-row items-center gap-2`}>
+          <TouchableOpacity
+            style={[
+              tw`py-2.5 px-3 rounded-xl flex-1 bg-white border border-gray-200`,
+              {
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 2 },
+                shadowOpacity: 0.15,
+                shadowRadius: 3,
+                elevation: 3,
+              }
+            ]}
+            onPress={() => setShowHotelChat(true)}
+            activeOpacity={0.8}
+          >
+            <View style={tw`flex-row items-center justify-center`}>
+              <View style={[
+                tw`w-5 h-5 rounded-full items-center justify-center mr-1.5`,
+                { backgroundColor: 'rgba(29, 249, 255, 0.15)' }
+              ]}>
+                <Ionicons name="sparkles" size={11} color={TURQUOISE_DARK} />
+              </View>
+              <Text style={[
+                tw`text-[13px] text-gray-800`,
+                { fontFamily: 'Merriweather-Regular' }
+              ]}>
+                Ask AI
+              </Text>
             </View>
           </TouchableOpacity>
 
-          {/* Updated Action Buttons - Consistent with SwipeableHotelStoryCard */}
-          <View style={tw`flex-row items-center px-3 py-3 gap-2 border-t border-gray-50`}>
-            {/* Ask - Responsive pill that shrinks gracefully */}
-            <TouchableOpacity
-              style={[
-                tw`py-2.5 px-3 rounded-xl flex-row items-center flex-1 justify-center bg-white border border-gray-200`,
-                {
-                  shadowColor: '#000',
-                  shadowOffset: { width: 0, height: 2 },
-                  shadowOpacity: 0.08,
-                  shadowRadius: 3,
-                  elevation: 2,
-                  minHeight: 40,
-                }
-              ]}
-              onPress={() => setShowHotelChat(true)}
-              activeOpacity={0.8}
-            >
+          <TouchableOpacity
+            style={[
+              tw`py-2.5 px-3 rounded-xl flex-1 bg-white border border-gray-200`,
+              {
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 2 },
+                shadowOpacity: 0.15,
+                shadowRadius: 3,
+                elevation: 3,
+              }
+            ]}
+            onPress={handleBookNow}
+            activeOpacity={0.8}
+          >
+            <View style={tw`flex-row items-center justify-center`}>
               <View style={[
                 tw`w-5 h-5 rounded-full items-center justify-center mr-1.5`,
                 { backgroundColor: 'rgba(29, 249, 255, 0.15)' }
               ]}>
-                <Ionicons name="chatbubble-outline" size={12} color={TURQUOISE_DARK} />
+                <Ionicons name="eye-outline" size={11} color={TURQUOISE_DARK} />
               </View>
-              <Text 
-                style={tw`text-xs font-medium text-gray-800`}
-                numberOfLines={1}
-                adjustsFontSizeToFit
-                minimumFontScale={0.8}
-              >
-                Ask
-              </Text>
-            </TouchableOpacity>
-
-            {/* Map - Responsive pill that shrinks gracefully */}
-            <TouchableOpacity
-              style={[
-                tw`py-2.5 px-3 rounded-xl flex-row items-center flex-1 justify-center bg-white border border-gray-200`,
-                {
-                  shadowColor: '#000',
-                  shadowOffset: { width: 0, height: 2 },
-                  shadowOpacity: 0.08,
-                  shadowRadius: 3,
-                  elevation: 2,
-                  minHeight: 40,
-                }
-              ]}
-              onPress={handleViewDetails}
-              activeOpacity={0.8}
-            >
-              <View style={[
-                tw`w-5 h-5 rounded-full items-center justify-center mr-1.5`,
-                { backgroundColor: 'rgba(29, 249, 255, 0.15)' }
+              <Text style={[
+                tw`text-[13px] text-gray-800`,
+                { fontFamily: 'Merriweather-Regular' }
               ]}>
-                <Ionicons name="map-outline" size={12} color={TURQUOISE_DARK} />
-              </View>
-              <Text 
-                style={tw`text-xs font-medium text-gray-800`}
-                numberOfLines={1}
-                adjustsFontSizeToFit
-                minimumFontScale={0.8}
-              >
-                Map
-              </Text>
-            </TouchableOpacity>
-
-            {/* Book - Responsive pill that shrinks gracefully */}
-            <TouchableOpacity
-              style={[
-                tw`py-2.5 px-3 rounded-xl flex-row items-center flex-1 justify-center bg-white border border-gray-200`,
-                {
-                  shadowColor: '#000',
-                  shadowOffset: { width: 0, height: 2 },
-                  shadowOpacity: 0.08,
-                  shadowRadius: 3,
-                  elevation: 2,
-                  minHeight: 40,
-                }
-              ]}
-              onPress={handleBookNow}
-              activeOpacity={0.8}
-            >
-              <View style={[
-                tw`w-5 h-5 rounded-full items-center justify-center mr-1.5`,
-                { backgroundColor: 'rgba(29, 249, 255, 0.15)' }
-              ]}>
-                <Image
-                  source={require('../../assets/images/logo.png')}
-                  style={{ width: 12, height: 12, tintColor: TURQUOISE_DARK }}
-                  resizeMode="contain"
-                />
-              </View>
-              <Text 
-                style={tw`text-xs font-medium text-gray-800`}
-                numberOfLines={1}
-                adjustsFontSizeToFit
-                minimumFontScale={0.8}
-              >
                 Book
               </Text>
-            </TouchableOpacity>
+            </View>
+          </TouchableOpacity>
+<TouchableOpacity
+            style={[
+              tw`w-11 h-11 items-center justify-center rounded-xl bg-white border border-gray-200`,
+              {
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 2 },
+                shadowOpacity: 0.15,
+                shadowRadius: 3,
+                elevation: 3,
+              }
+            ]}
+            onPress={handleShare}
+            activeOpacity={0.8}
+          >
+            <Ionicons name="share-outline" size={19} color="#374151" />
+          </TouchableOpacity>
+          <View
+            style={[
+              tw`w-11 h-11 items-center justify-center rounded-xl bg-white border border-gray-200`,
+              {
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 2 },
+                shadowOpacity: 0.15,
+                shadowRadius: 3,
+                elevation: 3,
+              }
+            ]}
+          >
+            <AnimatedHeartButton
+              hotel={hotel}
+              size={19}
+              onFavoriteSuccess={onFavoriteSuccess}
+            />
           </View>
 
-          {/* AI Insights Dropdown */}
-          <AIInsightsDropdown
-            hotel={hotel}
-            isExpanded={showAIInsights}
-            onToggle={() => setShowAIInsights(!showAIInsights)}
-          />
+          
         </View>
       </View>
 
-      {/* Hotel Chat Modal */}
       <Modal
         visible={showHotelChat}
         transparent
         animationType="fade"
         onRequestClose={() => setShowHotelChat(false)}
       >
-
+        <HotelChatOverlay
+          visible={showHotelChat}
+          onClose={() => setShowHotelChat(false)}
+          hotel={hotel}
+        />
       </Modal>
 
-      {/* Confirmation modal */}
+      <ReviewsModal
+        visible={showReviewsModal}
+        hotelId={hotel.id}
+        hotelName={hotel.name}
+        overallRating={hotel.rating}
+        totalReviews={hotel.reviews}
+        onClose={() => setShowReviewsModal(false)}
+      />
+
+      <Modal
+        visible={showPhotoGallery}
+        transparent={false}
+        animationType="slide"
+        onRequestClose={() => setShowPhotoGallery(false)}
+        statusBarTranslucent={true}
+      >
+        <PhotoGallerySlide
+          hotel={enhancedHotel}
+          insightsStatus="complete"
+          onClose={() => setShowPhotoGallery(false)}
+        />
+      </Modal>
+
       <ConfirmationModal
         isVisible={showConfirmModal}
         hotelName={hotel.name}
         onConfirm={handleConfirmRemove}
-        onCancel={handleCancelRemove}
+        onCancel={() => setShowConfirmModal(false)}
       />
-    </Animated.View>
+        </View>
+      </View>
+    </View>
   );
 };
-
-// Shadow styles - platform specific
-const styles = StyleSheet.create({
-  shadowWrapper: {
-    ...Platform.select({
-      ios: {
-        shadowColor: '#000',
-        shadowOpacity: 0.15,
-        shadowRadius: 10,
-        shadowOffset: { width: 0, height: 6 },
-      },
-      android: {
-        elevation: 6,
-      },
-    }),
-  },
-});
 
 export default FavoriteHotelCard;

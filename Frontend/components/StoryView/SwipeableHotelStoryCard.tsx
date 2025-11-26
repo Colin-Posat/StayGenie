@@ -527,14 +527,15 @@ const dotAnimations = useRef(
   images.map(() => new Animated.Value(0))
 ).current;
   return (
-    <View style={[tw`rounded-2xl overflow-hidden bg-white`, {
-      width: CARD_WIDTH,
-      shadowColor: '#000',
-      shadowOffset: { width: 0, height: 4 },
-      shadowOpacity: 0.15,
-      shadowRadius: 8,
-      elevation: 8,
-    }]}>
+  <View style={[tw`rounded-2xl`, {
+    width: CARD_WIDTH,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 8,
+    elevation: 8,
+  }]}>
+    <View style={[tw`border-2 border-gray-200 rounded-2xl overflow-hidden bg-white`]}>
       <View style={{ height: CARD_HEIGHT }}>
         {!showMapView ? (
           <PanGestureHandler
@@ -1028,33 +1029,11 @@ const dotAnimations = useRef(
         tw`text-[13px] text-gray-800`,
         { fontFamily: 'Merriweather-Regular' }
       ]}>
-        Book Now
+        Book
       </Text>
     </View>
   </TouchableOpacity>
-
-    {/* Favorite Button */}
-  <View
-    style={[
-      tw`w-11 h-11 items-center justify-center rounded-xl bg-white border border-gray-200`,
-      {
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.15,
-        shadowRadius: 3,
-        elevation: 3,
-      }
-    ]}
-  >
-    <AnimatedHeartButton
-      hotel={hotel}
-      size={19}
-      onShowSignUpModal={openSignUp}
-      onFavoriteSuccess={onFavoriteSuccess}
-    />
-  </View>
-  
-  {/* Share Button */}
+    {/* Share Button */}
   <TouchableOpacity
     style={[
       tw`w-11 h-11 items-center justify-center rounded-xl bg-white border border-gray-200`,
@@ -1094,6 +1073,29 @@ const dotAnimations = useRef(
   >
     <Ionicons name="share-outline" size={19} color="#374151" />
   </TouchableOpacity>
+
+    {/* Favorite Button */}
+  <View
+    style={[
+      tw`w-11 h-11 items-center justify-center rounded-xl bg-white border border-gray-200`,
+      {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.15,
+        shadowRadius: 3,
+        elevation: 3,
+      }
+    ]}
+  >
+    <AnimatedHeartButton
+      hotel={hotel}
+      size={19}
+      onShowSignUpModal={openSignUp}
+      onFavoriteSuccess={onFavoriteSuccess}
+    />
+  </View>
+  
+
 </View>
 </View>
 
@@ -1151,6 +1153,7 @@ const dotAnimations = useRef(
           onClose={() => setShowPhotoGallery(false)}
         />
       </Modal>
+    </View>
     </View>
   );
 };

@@ -330,11 +330,10 @@ const enhanceHotel = (hotel: Hotel): EnhancedHotel => {
     const safetySource = hotel.aiSafetyRating ? 'AI-Enhanced' : 'Standard';
     
     return (
-      <View style={tw`px-5 mb-6`}>
-        <View style={[
-          tw`border border-black/10 shadow-md rounded-2xl`,
-          isNewlyStreamed && tw`border-blue-400 shadow-blue-200 shadow-lg`
-        ]}>
+  <View style={tw`px-5 mb-6`}>
+    <View style={[
+      isNewlyStreamed && tw`border-blue-400 shadow-blue-200 shadow-lg`
+    ]}>
           {/* New hotel streaming indicator */}
           {isNewlyStreamed && (
             <View style={tw`absolute -top-2 -right-2 bg-blue-500 px-2 py-1 rounded-full z-10`}>

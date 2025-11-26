@@ -138,6 +138,11 @@ const EnhancedHeartButton: React.FC<EnhancedHeartButtonProps> = ({
         location: hotelData.location,
         image: hotelData.image || hotelData.images?.[0],
         images: hotelData.images,
+        // ADD ALL IMAGE FIELDS - This is what was missing!
+        photoGalleryImages: hotelData.photoGalleryImages,
+        firstRoomImage: hotelData.firstRoomImage,
+        secondRoomImage: hotelData.secondRoomImage,
+        thirdImageHd: hotelData.thirdImageHd,
         price: hotelData.price,
         rating: hotelData.rating,
         reviews: hotelData.reviews,
@@ -163,6 +168,8 @@ const EnhancedHeartButton: React.FC<EnhancedHeartButtonProps> = ({
         refundableTag: hotelData.refundableTag,
         fullDescription: hotelData.fullDescription,
         fullAddress: hotelData.fullAddress,
+        categoryRatings: hotelData.categoryRatings,
+        placeId: hotelData.placeId,
       });
       
       // Success - trigger popup if hotel was favorited and we should show the popup
