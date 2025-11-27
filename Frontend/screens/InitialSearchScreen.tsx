@@ -1,4 +1,4 @@
-// InitialSearchScreen.tsx - Updated with Speech-to-Text functionality
+// InitialSearchScreen.tsx - Updated with React Native Voice
 import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
@@ -24,10 +24,8 @@ import SearchQueryCarousel from '../components/InitalSearch/SearchQueryCarousel'
 import { getRandomCarousels } from '../utils/carouselData';
 import { useFocusEffect } from '@react-navigation/native';
 import { useAuth } from '../contexts/AuthContext';
-import {
-  ExpoSpeechRecognitionModule,
-  useSpeechRecognitionEvent,
-} from 'expo-speech-recognition';
+//import Voice from '@react-native-voice/Voice';
+import { initAnalytics, logEvent } from '../config/firebaseConfig';
 
 const { width, height } = Dimensions.get('window');
 
@@ -190,51 +188,70 @@ const InitialSearchScreen: React.FC<InitialSearchScreenProps> = ({
 
   const { displayText, cursorVisible } = useTypingPlaceholder(
     hotelSearchSuggestions,
-    15,  // Faster typing speed (was 80)
-    10,  // Faster deleting speed (was 40)
-    1500 // Shorter delay (was 2000)
+    15,
+    10,
+    1500
   );
+/*
+  // Setup Voice event listeners
+  useEffect(() => {
+    Voice.onSpeechStart = onSpeechStart;
+    Voice.onSpeechEnd = onSpeechEnd;
+    Voice.onSpeechResults = onSpeechResults;
+    Voice.onSpeechPartialResults = onSpeechPartialResults;
+    Voice.onSpeechError = onSpeechError;
 
-  // Speech Recognition Event Listeners
-  useSpeechRecognitionEvent('start', () => {
-    console.log('Speech recognition started');
+    return () => {
+      Voice.destroy().then(Voice.removeAllListeners);
+    };
+  }, []);
+
+  // Voice event handlers
+  const onSpeechStart = (e: any) => {
+    console.log('Speech recognition started', e);
     setRecognizing(true);
-  });
+  };
 
-  useSpeechRecognitionEvent('end', () => {
-    console.log('Speech recognition ended');
+  const onSpeechEnd = (e: any) => {
+    console.log('Speech recognition ended', e);
     setRecognizing(false);
     setIsListening(false);
-  });
+  };
 
-  useSpeechRecognitionEvent('result', (event) => {
-    console.log('Speech recognition result:', event);
-    const transcript = event.results[0]?.transcript;
-    if (transcript) {
-      setSearchQuery(transcript);
+  const onSpeechResults = (e: any) => {
+    console.log('Speech recognition results:', e);
+    if (e.value && e.value[0]) {
+      setSearchQuery(e.value[0]);
     }
-  });
+  };
 
-  useSpeechRecognitionEvent('error', (event) => {
-    console.error('Speech recognition error:', event);
+  const onSpeechPartialResults = (e: any) => {
+    console.log('Partial results:', e);
+    if (e.value && e.value[0]) {
+      setSearchQuery(e.value[0]);
+    }
+  };
+
+  const onSpeechError = (e: any) => {
+    console.error('Speech recognition error:', e);
     setRecognizing(false);
     setIsListening(false);
     
     // Handle specific error cases
-    if (event.error === 'not-allowed') {
+    if (e.error?.message?.includes('permission') || e.error?.code === '9') {
       Alert.alert(
         'Microphone Permission Required',
         'Please enable microphone access in your device settings to use voice search.',
         [{ text: 'OK' }]
       );
-    } else {
+    } else if (e.error?.code !== '7') { // Code 7 is "no match" which is normal
       Alert.alert(
         'Voice Search Error',
         'Could not process voice input. Please try again.',
         [{ text: 'OK' }]
       );
     }
-  });
+  };
 
   // Microphone pulse animation
   useEffect(() => {
@@ -260,43 +277,11 @@ const InitialSearchScreen: React.FC<InitialSearchScreenProps> = ({
     }
   }, [isListening]);
 
-  // Request permissions and start listening
+  // Start listening
   const startListening = async () => {
     try {
-      // Request permissions
-      const { status, granted } = await ExpoSpeechRecognitionModule.requestPermissionsAsync();
-      
-      if (!granted) {
-        Alert.alert(
-          'Permission Required',
-          'Microphone access is needed for voice search. Please enable it in your device settings.',
-          [{ text: 'OK' }]
-        );
-        return;
-      }
-
-      // Start speech recognition
       setIsListening(true);
-      ExpoSpeechRecognitionModule.start({
-        lang: 'en-US',
-        interimResults: true,
-        maxAlternatives: 1,
-        continuous: false,
-        requiresOnDeviceRecognition: false,
-        addsPunctuation: false,
-        contextualStrings: [
-          'hotel',
-          'resort',
-          'beach',
-          'mountain',
-          'luxury',
-          'boutique',
-          'villa',
-          'spa',
-          'pool',
-          'view',
-        ],
-      });
+      await Voice.start('en-US');
     } catch (error) {
       console.error('Error starting speech recognition:', error);
       setIsListening(false);
@@ -309,10 +294,16 @@ const InitialSearchScreen: React.FC<InitialSearchScreenProps> = ({
   };
 
   // Stop listening
-  const stopListening = () => {
-    ExpoSpeechRecognitionModule.stop();
-    setIsListening(false);
-    setRecognizing(false);
+  const stopListening = async () => {
+    try {
+      await Voice.stop();
+      setIsListening(false);
+      setRecognizing(false);
+    } catch (error) {
+      console.error('Error stopping speech recognition:', error);
+      setIsListening(false);
+      setRecognizing(false);
+    }
   };
 
   // Toggle voice input
@@ -323,7 +314,7 @@ const InitialSearchScreen: React.FC<InitialSearchScreenProps> = ({
       startListening();
     }
   };
-
+*/
   // Load 3 random carousel collections on mount
   useEffect(() => {
     const randomCarousels = getRandomCarousels(3);
@@ -390,7 +381,7 @@ const InitialSearchScreen: React.FC<InitialSearchScreenProps> = ({
       // Stop listening if leaving screen
       return () => {
         if (isListening) {
-          stopListening();
+          //stopListening();
         }
       };
     }, [isListening])
@@ -563,6 +554,16 @@ const InitialSearchScreen: React.FC<InitialSearchScreenProps> = ({
     if (searchQuery.trim() && !isTransitioning) {
       const trimmedQuery = searchQuery.trim();
       console.log('Starting search transition for:', trimmedQuery);
+
+      try {
+      await logEvent('hotel_search', {
+        search_term: trimmedQuery,
+        search_length: trimmedQuery.length,
+        method: isListening ? 'voice' : 'text', // Track if it was voice or text input
+      });
+    } catch (error) {
+      console.error('Failed to log search event:', error);
+    }
 
       if (isAuthenticated) {
         try {
@@ -943,7 +944,7 @@ const InitialSearchScreen: React.FC<InitialSearchScreenProps> = ({
 
                           {/* Voice Input Button */}
                           <TouchableOpacity
-                            onPress={handleVoiceInput}
+                         //   onPress={handleVoiceInput}
                             style={tw`w-8 h-8 items-center justify-center`}
                             activeOpacity={0.7}
                           >
@@ -986,8 +987,9 @@ const InitialSearchScreen: React.FC<InitialSearchScreenProps> = ({
               {isListening && (
                 <Animated.View
                   style={[
-                    tw`mb-4 px-4 py-2 bg-${TURQUOISE}/10 rounded-full flex-row items-center`,
+                    tw`mb-4 px-4 py-2 rounded-full flex-row items-center`,
                     {
+                      backgroundColor: `${TURQUOISE}1A`,
                       opacity: fadeAnimation,
                     }
                   ]}

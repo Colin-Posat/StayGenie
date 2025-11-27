@@ -13,7 +13,7 @@ const config: ExpoConfig = {
   newArchEnabled: false,
 
   splash: {
-    image: "./assets/images/logo.png", // Changed to your umbrella logo
+    image: "./assets/images/logo.png",
     resizeMode: "contain",
     backgroundColor: "#ffffff"
   },
@@ -27,19 +27,20 @@ const config: ExpoConfig = {
 
   android: {
     adaptiveIcon: {
-      foregroundImage: "./assets/images/logo.png", // Also update adaptive icon
+      foregroundImage: "./assets/images/logo.png",
       backgroundColor: "#ffffff"
     },
+    package: "com.colinps.staygenie",
     runtimeVersion: { policy: "appVersion" },
     googleServicesFile: "./google-services.json"
   },
 
-  web: { 
-    favicon: "./assets/images/logo.png" // And favicon
+  web: {
+    favicon: "./assets/images/logo.png"
   },
 
   extra: {
-    eas: { projectId: "391713d4-1f73-45c0-a82e-e4ad89ac6f20" },
+    eas: { projectId: "391713d4-1f73-45c0-a82e-e4ad89ac6f20" }
   },
 
   updates: {
@@ -48,6 +49,15 @@ const config: ExpoConfig = {
 
   plugins: [
     "@react-native-firebase/app",
+    // Removed analytics plugin - it auto-configures when @react-native-firebase/app is present
+    [
+      "expo-build-properties",
+      {
+        ios: {
+          useFrameworks: "static"
+        }
+      }
+    ],
     "expo-web-browser",
     "expo-speech-recognition",
     [
