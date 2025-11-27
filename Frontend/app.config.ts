@@ -19,11 +19,20 @@ const config: ExpoConfig = {
   },
 
   ios: {
-    supportsTablet: true,
-    bundleIdentifier: "com.colinps.staygenie",
-    runtimeVersion: "1.0.0",
-    googleServicesFile: "./GoogleService-Info.plist"
-  },
+  supportsTablet: true,
+  bundleIdentifier: "com.colinps.staygenie",
+  runtimeVersion: "1.0.0",
+  googleServicesFile: "./GoogleService-Info.plist",
+  infoPlist: {
+    CFBundleURLTypes: [
+      {
+        CFBundleURLSchemes: [
+          "com.googleusercontent.apps.962898883484-q94pa2l7olvh9c8jj4iee3fvni9rnedm"
+        ]
+      }
+    ]
+  }
+},
 
   android: {
     adaptiveIcon: {

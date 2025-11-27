@@ -30,14 +30,10 @@ import {
 } from 'firebase/firestore';
 
 // Expo Auth imports
-import * as AuthSession from 'expo-auth-session';
-import * as WebBrowser from 'expo-web-browser';
+import { GoogleSignin } from '@react-native-google-signin/google-signin';
 
 // Import Firebase config
 import { auth, db } from '../config/firebaseConfig';
-
-// Complete the browser session for mobile
-WebBrowser.maybeCompleteAuthSession();
 
 // Updated User interface with favorites
 export interface User {
@@ -418,38 +414,44 @@ const loadUserData = async (firebaseUser: FirebaseUser) => {
     }
   };
 
-  // Sign in with Google - Expo compatible
-  const signInWithGoogle = async (): Promise<void> => {
-    try {
-      setIsLoading(true);
+const signInWithGoogle = async (): Promise<void> => {
+  try {
+    setIsLoading(true);
 
-      const request = new AuthSession.AuthRequest({
-        clientId: '962898883484-62afgb3pgqglhlntco5d1sl10keluqrr.apps.googleusercontent.com',
-        scopes: ['openid', 'profile', 'email'],
-        responseType: AuthSession.ResponseType.IdToken,
-        redirectUri: AuthSession.makeRedirectUri(),
-         usePKCE: false,  
-      });
+    // Check if device supports Google Play Services
+    await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
+    
+    // Perform sign in
+    const { data } = await GoogleSignin.signIn();
+    console.log('✅ Got user info from Google:', data?.user.email);
 
-      const result = await request.promptAsync({
-        authorizationEndpoint: 'https://accounts.google.com/o/oauth2/v2/auth',
-      });
-
-      if (result.type === 'success' && result.params.id_token) {
-        const credential = GoogleAuthProvider.credential(result.params.id_token);
-        await signInWithCredential(auth, credential);
-        console.log('✅ Expo Google sign in successful');
-      } else {
-        throw new Error('Google sign in was cancelled or failed');
-      }
-
-    } catch (error: any) {
-      console.error('Expo Google sign in error:', error);
-      throw new Error(`Failed to sign in with Google: ${error.message}`);
-    } finally {
-      setIsLoading(false);
+    // Create Firebase credential with the ID token
+    if (!data?.idToken) {
+      throw new Error('No ID token received from Google Sign-In');
     }
-  };
+    
+    const credential = GoogleAuthProvider.credential(data.idToken);
+    
+    // Sign in to Firebase
+    await signInWithCredential(auth, credential);
+    console.log('✅ Firebase sign in successful');
+
+  } catch (error: any) {
+    console.error('Native Google sign in error:', error);
+    
+    if (error.code === 'SIGN_IN_CANCELLED') {
+      throw new Error('Sign in was cancelled');
+    } else if (error.code === 'IN_PROGRESS') {
+      throw new Error('Sign in already in progress');
+    } else if (error.code === 'PLAY_SERVICES_NOT_AVAILABLE') {
+      throw new Error('Play Services not available');
+    } else {
+      throw new Error(`Failed to sign in with Google: ${error.message}`);
+    }
+  } finally {
+    setIsLoading(false);
+  }
+};
 
   // Sign out
 const signOutUser = async (): Promise<void> => {
