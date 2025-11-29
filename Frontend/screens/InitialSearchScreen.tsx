@@ -1,4 +1,4 @@
-// InitialSearchScreen.tsx - Updated with React Native Voice
+// InitialSearchScreen.tsx - Updated with clean sound wave animation
 import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
@@ -24,8 +24,8 @@ import SearchQueryCarousel from '../components/InitalSearch/SearchQueryCarousel'
 import { getRandomCarousels } from '../utils/carouselData';
 import { useFocusEffect } from '@react-navigation/native';
 import { useAuth } from '../contexts/AuthContext';
-//import Voice from '@react-native-voice/Voice';
 import { initAnalytics, logEvent } from '../config/firebaseConfig';
+import Voice from '@react-native-voice/voice';
 
 const { width, height } = Dimensions.get('window');
 
@@ -117,7 +117,7 @@ const InitialSearchScreen: React.FC<InitialSearchScreenProps> = ({
   // Speech recognition state
   const [isListening, setIsListening] = useState(false);
   const [recognizing, setRecognizing] = useState(false);
-
+  
   // Refs
   const textInputRef = useRef<TextInput>(null);
 
@@ -141,7 +141,11 @@ const InitialSearchScreen: React.FC<InitialSearchScreenProps> = ({
   const pulsingShadow = useRef(new Animated.Value(0)).current;
   const heightAnimation = useRef(new Animated.Value(60)).current;
   const scrollHintOpacity = useRef(new Animated.Value(0)).current;
-  const micPulse = useRef(new Animated.Value(1)).current;
+  
+  // Sound wave animations - smooth and continuous
+  const soundWave1 = useRef(new Animated.Value(0)).current;
+  const soundWave2 = useRef(new Animated.Value(0)).current;
+  const soundWave3 = useRef(new Animated.Value(0)).current;
 
   // Transition animations
   const screenSlideOut = useRef(new Animated.Value(0)).current;
@@ -192,129 +196,66 @@ const InitialSearchScreen: React.FC<InitialSearchScreenProps> = ({
     10,
     1500
   );
-/*
-  // Setup Voice event listeners
+
+  // ---------------------------
+  // React Native Voice Setup
+  // ---------------------------
   useEffect(() => {
     Voice.onSpeechStart = onSpeechStart;
     Voice.onSpeechEnd = onSpeechEnd;
     Voice.onSpeechResults = onSpeechResults;
-    Voice.onSpeechPartialResults = onSpeechPartialResults;
     Voice.onSpeechError = onSpeechError;
 
-    return () => {
-      Voice.destroy().then(Voice.removeAllListeners);
-    };
+    return () => Voice.destroy().then(Voice.removeAllListeners);
   }, []);
 
-  // Voice event handlers
-  const onSpeechStart = (e: any) => {
-    console.log('Speech recognition started', e);
+  const onSpeechStart = () => {
+    setIsListening(true);
     setRecognizing(true);
   };
 
-  const onSpeechEnd = (e: any) => {
-    console.log('Speech recognition ended', e);
+  const onSpeechEnd = () => {
     setRecognizing(false);
+  };
+
+  const onSpeechResults = (event: any) => {
+    if (event.value && event.value.length > 0) {
+      setSearchQuery(event.value[0]);
+    }
+  };
+
+  const onSpeechError = (error: any) => {
+    console.error('Voice error:', error);
     setIsListening(false);
-  };
-
-  const onSpeechResults = (e: any) => {
-    console.log('Speech recognition results:', e);
-    if (e.value && e.value[0]) {
-      setSearchQuery(e.value[0]);
-    }
-  };
-
-  const onSpeechPartialResults = (e: any) => {
-    console.log('Partial results:', e);
-    if (e.value && e.value[0]) {
-      setSearchQuery(e.value[0]);
-    }
-  };
-
-  const onSpeechError = (e: any) => {
-    console.error('Speech recognition error:', e);
     setRecognizing(false);
-    setIsListening(false);
-    
-    // Handle specific error cases
-    if (e.error?.message?.includes('permission') || e.error?.code === '9') {
-      Alert.alert(
-        'Microphone Permission Required',
-        'Please enable microphone access in your device settings to use voice search.',
-        [{ text: 'OK' }]
-      );
-    } else if (e.error?.code !== '7') { // Code 7 is "no match" which is normal
-      Alert.alert(
-        'Voice Search Error',
-        'Could not process voice input. Please try again.',
-        [{ text: 'OK' }]
-      );
-    }
   };
 
-  // Microphone pulse animation
-  useEffect(() => {
-    if (isListening) {
-      const pulseAnim = Animated.loop(
-        Animated.sequence([
-          Animated.timing(micPulse, {
-            toValue: 1.2,
-            duration: 600,
-            useNativeDriver: true,
-          }),
-          Animated.timing(micPulse, {
-            toValue: 1,
-            duration: 600,
-            useNativeDriver: true,
-          }),
-        ])
-      );
-      pulseAnim.start();
-      return () => pulseAnim.stop();
-    } else {
-      micPulse.setValue(1);
-    }
-  }, [isListening]);
-
-  // Start listening
   const startListening = async () => {
     try {
-      setIsListening(true);
       await Voice.start('en-US');
-    } catch (error) {
-      console.error('Error starting speech recognition:', error);
-      setIsListening(false);
-      Alert.alert(
-        'Voice Search Error',
-        'Could not start voice search. Please try again.',
-        [{ text: 'OK' }]
-      );
+    } catch (e) {
+      console.error('start error:', e);
     }
   };
 
-  // Stop listening
   const stopListening = async () => {
     try {
       await Voice.stop();
-      setIsListening(false);
-      setRecognizing(false);
-    } catch (error) {
-      console.error('Error stopping speech recognition:', error);
-      setIsListening(false);
-      setRecognizing(false);
+    } catch (e) {
+      console.error('stop error:', e);
     }
   };
 
-  // Toggle voice input
   const handleVoiceInput = () => {
     if (isListening) {
       stopListening();
+      setIsListening(false);
     } else {
       startListening();
+      setIsListening(true);
     }
   };
-*/
+
   // Load 3 random carousel collections on mount
   useEffect(() => {
     const randomCarousels = getRandomCarousels(3);
@@ -386,6 +327,75 @@ const InitialSearchScreen: React.FC<InitialSearchScreenProps> = ({
       };
     }, [isListening])
   );
+
+  // Smooth sound wave animation when listening
+  useEffect(() => {
+    if (!isListening) {
+      // Reset all waves to 0
+      soundWave1.setValue(0);
+      soundWave2.setValue(0);
+      soundWave3.setValue(0);
+      return;
+    }
+
+    // Staggered smooth wave animations
+    const wave1Animation = Animated.loop(
+      Animated.sequence([
+        Animated.timing(soundWave1, {
+          toValue: 1,
+          duration: 400,
+          useNativeDriver: true,
+        }),
+        Animated.timing(soundWave1, {
+          toValue: 0,
+          duration: 400,
+          useNativeDriver: true,
+        }),
+      ])
+    );
+
+    const wave2Animation = Animated.loop(
+      Animated.sequence([
+        Animated.delay(133), // Stagger by 1/3 of the cycle
+        Animated.timing(soundWave2, {
+          toValue: 1,
+          duration: 400,
+          useNativeDriver: true,
+        }),
+        Animated.timing(soundWave2, {
+          toValue: 0,
+          duration: 400,
+          useNativeDriver: true,
+        }),
+      ])
+    );
+
+    const wave3Animation = Animated.loop(
+      Animated.sequence([
+        Animated.delay(266), // Stagger by 2/3 of the cycle
+        Animated.timing(soundWave3, {
+          toValue: 1,
+          duration: 400,
+          useNativeDriver: true,
+        }),
+        Animated.timing(soundWave3, {
+          toValue: 0,
+          duration: 400,
+          useNativeDriver: true,
+        }),
+      ])
+    );
+
+    wave1Animation.start();
+    wave2Animation.start();
+    wave3Animation.start();
+
+    return () => {
+      wave1Animation.stop();
+      wave2Animation.stop();
+      wave3Animation.stop();
+    };
+  }, [isListening]);
 
   // Continuous floating animation for background elements
   useEffect(() => {
@@ -468,6 +478,34 @@ const InitialSearchScreen: React.FC<InitialSearchScreenProps> = ({
     ]).start();
   }, [isFocused]);
 
+  // Clean sound wave component
+  const SoundWave = () => {
+    return (
+      <View style={tw`flex-row items-center justify-center mr-2`}>
+        {[soundWave1, soundWave2, soundWave3].map((wave, i) => (
+          <Animated.View
+            key={i}
+            style={{
+              width: 3,
+              height: 14,
+              backgroundColor: TURQUOISE,
+              borderRadius: 2,
+              marginHorizontal: 1.5,
+              transform: [
+                {
+                  scaleY: wave.interpolate({
+                    inputRange: [0, 1],
+                    outputRange: [0.3, 1],
+                  }),
+                },
+              ],
+            }}
+          />
+        ))}
+      </View>
+    );
+  };
+
   // Transition animation function
   const performTransitionAnimation = (callback: () => void) => {
     setIsTransitioning(true);
@@ -540,30 +578,56 @@ const InitialSearchScreen: React.FC<InitialSearchScreenProps> = ({
   };
 
   const handleDateSelect = (dateText: string) => {
-    console.log('Date selected from pills:', dateText);
+  console.log('Date selected from pills:', dateText);
 
-    if (searchQuery.trim()) {
-      setSearchQuery(prev => `${prev.trim()} • ${dateText}`);
-    } else {
-      setSearchQuery(dateText);
+  setSearchQuery(prev => {
+    if (!prev.trim()) return dateText;
+
+    // Regex to match the exact date format you generate:
+    // Example: "Nov 28, 2025 - Dec 3, 2025"
+    const dateRegex = /\b([A-Z][a-z]{2}\s\d{1,2},\s\d{4})\s*-\s*([A-Z][a-z]{2}\s\d{1,2},\s\d{4})\b/g;
+
+    let cleaned = prev.replace(dateRegex, '').trim();
+
+    // Remove leftover bullets or double spaces from previous date removal
+    cleaned = cleaned.replace(/•\s*•/g, '•').trim();
+    cleaned = cleaned.replace(/^•\s*/, '').replace(/\s*•$/, '');
+
+    // Add bullet only if something already exists
+    return cleaned.length > 0 ? `${cleaned} • ${dateText}` : dateText;
+  });
+};
+
+  const stopMicIfTyping = async () => {
+    if (isListening) {
+      try {
+        await Voice.stop();
+      } catch (e) {
+        console.error("stop error:", e);
+      }
+      setIsListening(false);
+      setRecognizing(false);
     }
   };
 
   // Search handler with recent searches tracking
   const handleSearch = async () => {
+    if (isListening) await stopListening();
+    setIsListening(false);
+
     if (searchQuery.trim() && !isTransitioning) {
       const trimmedQuery = searchQuery.trim();
       console.log('Starting search transition for:', trimmedQuery);
 
       try {
-      await logEvent('hotel_search', {
-        search_term: trimmedQuery,
-        search_length: trimmedQuery.length,
-        method: isListening ? 'voice' : 'text', // Track if it was voice or text input
-      });
-    } catch (error) {
-      console.error('Failed to log search event:', error);
-    }
+        await logEvent('hotel_search', {
+          search_term: trimmedQuery,
+          search_length: trimmedQuery.length,
+          method: isListening ? 'voice' : 'text',
+        });
+      } catch (error) {
+        console.error('Failed to log search event:', error);
+      }
 
       if (isAuthenticated) {
         try {
@@ -910,7 +974,10 @@ const InitialSearchScreen: React.FC<InitialSearchScreenProps> = ({
                               placeholder={isFocused || searchQuery ? "Search for amazing stays..." : ""}
                               placeholderTextColor="#9CA3AF"
                               value={searchQuery}
-                              onChangeText={setSearchQuery}
+                              onChangeText={(text) => {
+                                stopMicIfTyping();
+                                setSearchQuery(text);
+                              }}
                               onFocus={handleFocus}
                               onBlur={() => setIsFocused(false)}
                               onSubmitEditing={handleSearch}
@@ -931,7 +998,8 @@ const InitialSearchScreen: React.FC<InitialSearchScreenProps> = ({
                       {/* Bottom action bar */}
                       <View style={tw`flex-row items-center justify-end px-4 py-3 border-t border-gray-100`}>
                         <View style={tw`flex-row items-center`}>
-                          {searchQuery.length > 0 && (
+                          {/* Clear button - only when text exists AND mic is NOT listening */}
+                          {searchQuery.length > 0 && !isListening && (
                             <TouchableOpacity
                               onPress={handleClear}
                               activeOpacity={0.7}
@@ -942,28 +1010,26 @@ const InitialSearchScreen: React.FC<InitialSearchScreenProps> = ({
                             </TouchableOpacity>
                           )}
 
-                          {/* Voice Input Button */}
+                          {/* Sound wave - ONLY when mic is listening */}
+                          {isListening && <SoundWave />}
+
+                          {/* Mic button - static, no pulsing */}
                           <TouchableOpacity
-                         //   onPress={handleVoiceInput}
+                            onPress={handleVoiceInput}
                             style={tw`w-8 h-8 items-center justify-center`}
                             activeOpacity={0.7}
                           >
-                            <Animated.View
-                              style={{
-                                transform: [{ scale: micPulse }],
-                              }}
-                            >
-                              <Ionicons 
-                                name={isListening ? "mic" : "mic-outline"} 
-                                size={18} 
-                                color={isListening ? TURQUOISE : "#6B7280"} 
-                              />
-                            </Animated.View>
+                            <Ionicons
+                              name={isListening ? "mic" : "mic-outline"}
+                              size={18}
+                              color={isListening ? TURQUOISE : "#6B7280"}
+                            />
                           </TouchableOpacity>
 
+                          {/* Search button */}
                           <TouchableOpacity
                             style={[
-                              tw`w-8 h-8 items-center justify-center rounded-full`,
+                              tw`w-8 h-8 items-center justify-center rounded-full ml-2`,
                               { backgroundColor: searchQuery.trim().length > 0 && !isTransitioning ? TURQUOISE : '#E5E7EB' }
                             ]}
                             onPress={handleSearch}
@@ -983,40 +1049,52 @@ const InitialSearchScreen: React.FC<InitialSearchScreenProps> = ({
                 </Animated.View>
               </View>
 
-              {/* Listening indicator */}
-              {isListening && (
-                <Animated.View
-                  style={[
-                    tw`mb-4 px-4 py-2 rounded-full flex-row items-center`,
-                    {
-                      backgroundColor: `${TURQUOISE}1A`,
-                      opacity: fadeAnimation,
-                    }
-                  ]}
-                >
-                  <Animated.View
-                    style={{
-                      transform: [{ scale: micPulse }],
-                    }}
-                  >
-                    <Ionicons name="mic" size={16} color={TURQUOISE} />
-                  </Animated.View>
-                  <Text style={[tw`ml-2 text-sm`, { color: TURQUOISE }]}>
-                    {recognizing ? 'Listening...' : 'Tap to stop'}
-                  </Text>
-                </Animated.View>
-              )}
-
               {/* Mobile-optimized Suggestions section */}
               <View style={tw`w-full px-2 mb-5`}>
                 <SearchGuidePills
-                  onPillPress={handleSearchGuidePillPress}
-                  onDateSelect={handleDateSelect}
-                  onBudgetSelect={handleBudgetSelect}
-                  onGuestsSelect={handleGuestsSelect}
-                  onAmenitiesSelect={handleAmenitiesSelect}
-                  onStyleSelect={handleStyleSelect}
-                />
+  onPillPress={(...args) => {
+    stopListening();     // <<< STOP MIC IMMEDIATELY
+    setIsListening(false);
+    setRecognizing(false);
+    handleSearchGuidePillPress(...args);
+  }}
+
+  onDateSelect={(date) => {
+    stopListening();     // <<< STOP MIC IMMEDIATELY
+    setIsListening(false);
+    setRecognizing(false);
+    handleDateSelect(date);
+  }}
+
+  onBudgetSelect={(budget) => {
+    stopListening();     // <<< STOP MIC IMMEDIATELY
+    setIsListening(false);
+    setRecognizing(false);
+    handleBudgetSelect(budget);
+  }}
+
+  onGuestsSelect={(guests) => {
+    stopListening();     // <<< STOP MIC IMMEDIATELY
+    setIsListening(false);
+    setRecognizing(false);
+    handleGuestsSelect(guests);
+  }}
+
+  onAmenitiesSelect={(amenities) => {
+    stopListening();     // <<< STOP MIC IMMEDIATELY
+    setIsListening(false);
+    setRecognizing(false);
+    handleAmenitiesSelect(amenities);
+  }}
+
+  onStyleSelect={(style) => {
+    stopListening();     // <<< STOP MIC IMMEDIATELY
+    setIsListening(false);
+    setRecognizing(false);
+    handleStyleSelect(style);
+  }}
+/>
+
               </View>
             </Animated.View>
 

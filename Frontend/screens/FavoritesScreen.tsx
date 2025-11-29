@@ -1,4 +1,4 @@
-// FavoritesScreen.tsx - Updated with ProfileScreen matching sign-up layout
+// FavoritesScreen.tsx - Updated with modern empty state matching sign-in UI
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   View,
@@ -110,99 +110,93 @@ interface UIState {
   lastDataHash: string;
 }
 
-// Sleek empty state - consistent with InitialSearchScreen aesthetic
+// Modern empty state - consistent with sign-in UI style
 const EmptyFavorites: React.FC<{ onExplore: () => void }> = ({ onExplore }) => {
   const fadeAnimation = useRef(new Animated.Value(0)).current;
-  const floatAnimation = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    Animated.parallel([
-      Animated.timing(fadeAnimation, {
-        toValue: 1,
-        duration: 800,
-        useNativeDriver: true,
-      }),
-      Animated.loop(
-        Animated.sequence([
-          Animated.timing(floatAnimation, {
-            toValue: 1,
-            duration: 3000,
-            useNativeDriver: true,
-          }),
-          Animated.timing(floatAnimation, {
-            toValue: 0,
-            duration: 3000,
-            useNativeDriver: true,
-          }),
-        ])
-      ),
-    ]).start();
+    Animated.timing(fadeAnimation, {
+      toValue: 1,
+      duration: 600,
+      useNativeDriver: true,
+    }).start();
   }, []);
-
-  const translateY = floatAnimation.interpolate({
-    inputRange: [0, 1],
-    outputRange: [0, -8],
-  });
 
   return (
     <Animated.View
       style={[
-        tw`flex-1 items-center justify-center px-6`,
+        tw`flex-1 items-center px-6 pt-28`,
         { opacity: fadeAnimation }
       ]}
     >
-      <Animated.View 
-        style={[
-          tw`items-center`,
-          { transform: [{ translateY }] }
-        ]}
-      >
-        <View style={[
-          tw`w-20 h-20 rounded-3xl items-center justify-center mb-6`,
-          { 
-            backgroundColor: 'rgba(29, 249, 255, 0.08)',
-            borderWidth: 1,
-            borderColor: 'rgba(29, 249, 255, 0.2)',
-          }
-        ]}>
-          <Ionicons name="heart-outline" size={28} color={TURQUOISE} />
-        </View>
+      <View style={[
+        tw`p-8 rounded-2xl w-full max-w-sm`,
+        { 
+          backgroundColor: '#FFFFFF',
+          shadowColor: '#000000',
+          shadowOffset: { width: 0, height: 2 },
+          shadowOpacity: 0.06,
+          shadowRadius: 8,
+          elevation: 2,
+          borderWidth: 1,
+          borderColor: 'rgba(0, 0, 0, 0.04)',
+        }
+      ]}>
+        <View style={tw`items-center`}>
+          <View style={[
+            tw`w-16 h-16 rounded-2xl items-center justify-center mb-4`,
+            { backgroundColor: 'rgba(29, 249, 255, 0.08)' }
+          ]}>
+            <Ionicons name="heart-outline" size={28} color={TURQUOISE} />
+          </View>
 
-        <Text style={[
-          tw`text-3xl font-bold text-center mb-3`,
-          { color: '#1F2937' }
-        ]}>
-          No Favorites Yet
-        </Text>
-
-        <Text style={[
-          tw`text-base text-center leading-6 mb-8 max-w-xs`,
-          { color: '#6B7280' }
-        ]}>
-          Start exploring and save hotels you love for easy access later.
-        </Text>
-
-        <TouchableOpacity
-          style={[
-            tw`py-4 px-8 rounded-2xl flex-row items-center`,
-            { 
-              backgroundColor: TURQUOISE,
-              shadowColor: 'rgba(29, 249, 255, 0.3)',
-              shadowOffset: { width: 0, height: 8 },
-              shadowOpacity: 0.4,
-              shadowRadius: 16,
-              elevation: 8,
-            }
-          ]}
-          onPress={onExplore}
-          activeOpacity={0.9}
-        >
-          <Ionicons name="search" size={18} color="#FFFFFF" />
-          <Text style={tw`text-white font-semibold text-base ml-2`}>
-            Explore Hotels
+          <Text style={[
+            tw`text-xl font-bold text-center mb-2`,
+            { color: '#1F2937' }
+          ]}>
+            No Favorites Yet
           </Text>
-        </TouchableOpacity>
-      </Animated.View>
+
+          <Text style={[
+            tw`text-sm text-center mb-6 max-w-xs`,
+            { color: '#6B7280' }
+          ]}>
+            Start exploring and save hotels you love for easy access later
+          </Text>
+
+          <TouchableOpacity
+            style={[
+              tw`px-4 py-4 rounded-xl flex-row items-center justify-center w-full bg-white border border-gray-200`,
+              {
+                shadowColor: '#000',
+                shadowOffset: {
+                  width: 0,
+                  height: 1,
+                },
+                shadowOpacity: 0.1,
+                shadowRadius: 2,
+                elevation: 3,
+              }
+            ]}
+            onPress={onExplore}
+            activeOpacity={0.8}
+          >
+            <View style={[
+              tw`w-6 h-6 rounded-full items-center justify-center mr-3`,
+              { backgroundColor: 'rgba(29, 249, 255, 0.15)' }
+            ]}>
+              <Ionicons
+                name="search"
+                size={14}
+                color={TURQUOISE_DARK}
+              />
+            </View>
+            <Text style={tw`text-base font-medium text-gray-800`}>
+              Explore Hotels
+            </Text>
+          </TouchableOpacity>
+        </View>
+      </View>
     </Animated.View>
   );
 };

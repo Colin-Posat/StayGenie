@@ -290,7 +290,7 @@ const SwipeableHotelStoryCard: React.FC<SwipeableHotelStoryCardProps> = ({
 }) => {
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [showReviewsModal, setShowReviewsModal] = useState(false);
-  const [showMapView, setShowMapView] = useState(false);
+  const [showFullMap, setShowFullMap] = useState(false);
   const [showPhotoGallery, setShowPhotoGallery] = useState(false);
   const scrollViewRef = useRef<any>(null);
   const DEEP_LINK_BASE_URL = 'https://staygenie.nuitee.link';
@@ -328,7 +328,7 @@ const SwipeableHotelStoryCard: React.FC<SwipeableHotelStoryCardProps> = ({
 
   const handleTap = ({ nativeEvent }: any) => {
     // 5 === State.END
-    if (nativeEvent.state === 5 && !showMapView) {
+    if (nativeEvent.state === 5) {
       setShowPhotoGallery(true);
     }
   };
@@ -354,6 +354,19 @@ const SwipeableHotelStoryCard: React.FC<SwipeableHotelStoryCardProps> = ({
   });
 };
   
+const getTotalPrice = (hotel: Hotel, checkInDate?: Date, checkOutDate?: Date) => {
+  if (!hotel?.pricePerNight || !checkInDate || !checkOutDate) return null;
+
+  const oneDay = 1000 * 60 * 60 * 24;
+  const nights = Math.max(
+    1,
+    Math.round((checkOutDate.getTime() - checkInDate.getTime()) / oneDay)
+  );
+
+  return hotel.pricePerNight.amount * nights;
+};
+
+
   const toggleExpanded = () => {
     const toValue = isExpanded ? 0 : 1;
     setIsExpanded(!isExpanded);
@@ -422,6 +435,16 @@ const SwipeableHotelStoryCard: React.FC<SwipeableHotelStoryCardProps> = ({
     setCurrentImageIndex(index);
   };
 
+  const formatShortDateRange = (checkIn: Date, checkOut: Date) => {
+  const opts: Intl.DateTimeFormatOptions = { month: 'short', day: 'numeric' };
+
+  const start = checkIn.toLocaleDateString('en-US', opts);
+  const end = checkOut.toLocaleDateString('en-US', opts);
+
+  return `${start} – ${end}`;
+};
+
+
   const getDisplayPrice = () => {
     if (hotel.pricePerNight) {
       return `$${hotel.pricePerNight.amount}`;
@@ -430,59 +453,82 @@ const SwipeableHotelStoryCard: React.FC<SwipeableHotelStoryCardProps> = ({
   };
 
   const openInAppBrowser = async (url: string) => {
-    try {
-      await WebBrowser.openBrowserAsync(url, {
-        presentationStyle: WebBrowser.WebBrowserPresentationStyle.PAGE_SHEET,
-        dismissButtonStyle: 'done',
-        showTitle: true,
-        toolbarColor: '#ffffff',
-        controlsColor: '#000000ff',
-        enableBarCollapsing: true,
-        secondaryToolbarColor: '#f6f6f6',
-        showInRecents: false,
-      });
-    } catch {
-      try { await Linking.openURL(url); } catch { }
-    }
-  };
+  try {
+    // Force open in Safari (external browser)
+    await Linking.openURL(url);
+  } catch (err) {
+    console.log("❌ Failed to open URL:", err);
+    Alert.alert("Error", "Could not open the link.");
+  }
+};
 
-  const generateHotelDeepLink = (
-    hotel: Hotel,
-    checkInDate?: Date,
-    checkOutDate?: Date,
-    adults: number = 2,
-    children: number = 0,
-    placeId?: string,
-    occupancies?: any[]
-  ) => {
-    const url = new URL(`${DEEP_LINK_BASE_URL}/hotels/${hotel.id}`);
-    if (placeId) url.searchParams.set('placeId', placeId);
-    if (checkInDate) url.searchParams.set('checkin', checkInDate.toISOString().split('T')[0]);
-    if (checkOutDate) url.searchParams.set('checkout', checkOutDate.toISOString().split('T')[0]);
+  // --- Booking.com affiliate constants ---
+const BOOKING_AID = "304142";
+const BOOKING_LABEL_BASE = "staygenie_blog";
+const AWIN_MID = "6776";
+const AWIN_AFFID = "2062217";
 
-    if (occupancies?.length) {
-      const enc = typeof btoa !== 'undefined' ? btoa(JSON.stringify(occupancies)) : JSON.stringify(occupancies);
-      url.searchParams.set('occupancies', enc);
-    } else if (adults || children) {
-      const defOcc = [{ adults, children: children > 0 ? [children] : [] }];
-      const enc = typeof btoa !== 'undefined' ? btoa(JSON.stringify(defOcc)) : JSON.stringify(defOcc);
-      url.searchParams.set('occupancies', enc);
-    }
+function slugify(input: string): string {
+  return input
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/&/g, " and ")
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "")
+    .replace(/--+/g, "-");
+}
+function formatDate(d?: Date): string | undefined {
+  if (!d) return undefined;
+  return d.toISOString().split("T")[0]; // YYYY-MM-DD
+}
 
-    if (hotel.topAmenities?.includes('All Inclusive')) url.searchParams.set('needAllInclusive', '1');
-    if (hotel.topAmenities?.includes('Breakfast Included')) url.searchParams.set('needBreakfast', '1');
+const generateHotelDeepLink = (
+  hotel: Hotel,
+  city?: string,
+  checkInDate?: Date,
+  checkOutDate?: Date,
+  adults: number = 2,
+  children: number = 0
+): string => {
 
-    return url.toString();
-  };
+  const bookingUrl = new URL("https://www.booking.com/searchresults.html");
 
-  useEffect(() => {
-    Animated.spring(slideAnim, {
-      toValue: showMapView ? 1 : 0,
-      useNativeDriver: true,
-      tension: 80,
-      friction: 10,
-    }).start();
-  }, [showMapView]);
+  const searchText = city ? `${hotel.name}, ${city}` : hotel.name;
+  bookingUrl.searchParams.set("ss", searchText);
+  bookingUrl.searchParams.set("ssne", searchText);
+  bookingUrl.searchParams.set("ssne_untouched", searchText);
+
+  // OPTIONAL DATES
+  const checkin = formatDate(checkInDate);
+  const checkout = formatDate(checkOutDate);
+
+  if (checkin) bookingUrl.searchParams.set("checkin", checkin);
+  if (checkout) bookingUrl.searchParams.set("checkout", checkout);
+
+  // Occupancy
+  bookingUrl.searchParams.set("group_adults", String(adults));
+  bookingUrl.searchParams.set("group_children", String(children));
+  bookingUrl.searchParams.set("no_rooms", "1");
+  bookingUrl.searchParams.set("lang", "en-us");
+  bookingUrl.searchParams.set("selected_currency", "USD");
+  bookingUrl.searchParams.set("sb", "1");
+  bookingUrl.searchParams.set("src", "searchresults");
+
+  // Affiliate metadata
+  const label = `${BOOKING_LABEL_BASE}_${slugify(hotel.name)}`.slice(0, 60);
+  bookingUrl.searchParams.set("aid", BOOKING_AID);
+  bookingUrl.searchParams.set("label", label);
+
+  // AWIN wrapper
+  const awin = new URL("https://www.awin1.com/cread.php");
+  awin.searchParams.set("awinmid", AWIN_MID);
+  awin.searchParams.set("awinaffid", AWIN_AFFID);
+  awin.searchParams.set("ued", bookingUrl.toString());
+
+  return awin.toString();
+};
+
 
   const handleAskAI = () => {
     setShowHotelChat(true);
@@ -492,14 +538,13 @@ const SwipeableHotelStoryCard: React.FC<SwipeableHotelStoryCardProps> = ({
   const handleViewDetailsPress = async () => {
     try {
       const url = generateHotelDeepLink(
-        hotel,
-        checkInDate,
-        checkOutDate,
-        adults,
-        children,
-        placeId,
-        occupancies
-      );
+  hotel,
+  hotel.city || hotel.location,  // or use your city prop
+  checkInDate,
+  checkOutDate,
+  adults,
+  children
+);
       await openInAppBrowser(url);
     } catch {
       Alert.alert('Error', 'Failed to open hotel page. Please try again.');
@@ -512,9 +557,7 @@ const SwipeableHotelStoryCard: React.FC<SwipeableHotelStoryCardProps> = ({
   };
 
   const handleImagePress = () => {
-    if (!showMapView) {
-      setShowPhotoGallery(true);
-    }
+    setShowPhotoGallery(true);
   };
 
   if (!fontsLoaded) {
@@ -535,136 +578,195 @@ const dotAnimations = useRef(
     shadowRadius: 8,
     elevation: 8,
   }]}>
+
+    {/* FULL INTERACTION LOCK */}
+    {(isInsightsLoading || insightsStatus === "loading" || insightsStatus === "partial") && (
+      <View
+        pointerEvents="auto"
+        style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          zIndex: 99999,
+          backgroundColor: 'rgba(255,255,255,0)',
+        }}
+      />
+    )}
+
+    
     <View style={[tw`border-2 border-gray-200 rounded-2xl overflow-hidden bg-white`]}>
       <View style={{ height: CARD_HEIGHT }}>
-        {!showMapView ? (
-          <PanGestureHandler
-            ref={panRef}
-            activeOffsetX={[-12, 12]}
+        <PanGestureHandler
+          ref={panRef}
+          activeOffsetX={[-12, 12]}
+        >
+          <TapGestureHandler
+            ref={tapRef}
+            waitFor={panRef}
+            onHandlerStateChange={handleTap}
           >
-            <TapGestureHandler
-              ref={tapRef}
-              waitFor={panRef}
-              onHandlerStateChange={handleTap}
-            >
-              <View>
-                <ScrollView
-                  ref={scrollViewRef}
-                  horizontal
-                  pagingEnabled
-                  showsHorizontalScrollIndicator={false}
-                  onScroll={handleScroll}
-                  scrollEventThrottle={16}
-                  scrollEnabled={true}
-                >
-                  {images.map((img, idx) => (
-                    <View key={idx} style={{ width: CARD_WIDTH, height: CARD_HEIGHT, overflow: 'hidden' }}>
-                      <KenBurnsImage uri={img} isActive={idx === currentImageIndex} />
-                    </View>
-                  ))}
-                </ScrollView>
-              </View>
-            </TapGestureHandler>
-          </PanGestureHandler>
-        ) : (
-          <LocationSlide
-            hotel={hotel}
-            insightsStatus={insightsStatus}
-            isVisible={true}
-          />
-        )}
+            <View>
+              <ScrollView
+                ref={scrollViewRef}
+                horizontal
+                pagingEnabled
+                showsHorizontalScrollIndicator={false}
+                onScroll={handleScroll}
+                scrollEventThrottle={16}
+                scrollEnabled={true}
+              >
+                {images.map((img, idx) => (
+                  <View key={idx} style={{ width: CARD_WIDTH, height: CARD_HEIGHT, overflow: 'hidden' }}>
+                    <KenBurnsImage uri={img} isActive={idx === currentImageIndex} />
+                  </View>
+                ))}
+              </ScrollView>
+            </View>
+          </TapGestureHandler>
+        </PanGestureHandler>
 
         {/* Top Gradient for Hotel Name */}
-        {!showMapView && (
-          <LinearGradient
-            colors={['rgba(0,0,0,0.7)', 'transparent']}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 0, y: 1 }}
-            style={[tw`absolute top-0 left-0 right-0 z-20`, {
-              height: 100,
-            }]}
-          />
-        )}
+        <LinearGradient
+          colors={['rgba(0,0,0,0.7)', 'transparent']}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 0, y: 1 }}
+          style={[tw`absolute top-0 left-0 right-0 z-20`, {
+            height: 100,
+          }]}
+        />
 
        {/* Hotel Name - Top Left */}
-{!showMapView && (
-  <View style={[tw`absolute top-2.5 left-2.5 z-30 px-1`, { right: 100 }]}>
-    <Text style={[tw`text-white text-base mb-0.5`, {
-      fontFamily: 'Merriweather-Bold',
+<View style={[tw`absolute top-2.5 left-2.5 z-30 px-1`, { right: 100 }]}>
+  <Text style={[tw`text-white text-base mb-0.5`, {
+    fontFamily: 'Merriweather-Bold',
+    textShadowColor: 'rgba(0, 0, 0, 1)',
+    textShadowOffset: { width: 0, height: 1 },
+    textShadowRadius: 4
+  }]} numberOfLines={2}>
+    {hotel.name}
+  </Text>
+  <View style={tw`flex-row items-center gap-1`}>
+    <Ionicons name="location" size={11} color="#FFF" />
+    <Text style={[tw`text-white text-xs`, {
+      fontFamily: 'Merriweather-Regular',
       textShadowColor: 'rgba(0, 0, 0, 1)',
       textShadowOffset: { width: 0, height: 1 },
       textShadowRadius: 4
-    }]} numberOfLines={2}>
-      {hotel.name}
+    }]} numberOfLines={1}>
+      {displayLocation}
     </Text>
-    <View style={tw`flex-row items-center gap-1`}>
-      <Ionicons name="location" size={11} color="#FFF" />
-      <Text style={[tw`text-white text-xs`, {
-        fontFamily: 'Merriweather-Regular',
-        textShadowColor: 'rgba(0, 0, 0, 1)',
-        textShadowOffset: { width: 0, height: 1 },
-        textShadowRadius: 4
-      }]} numberOfLines={1}>
-        {displayLocation}
-      </Text>
-    </View>
   </View>
-)}
+</View>
 
-     {/* Price and Rating - Bottom Left */}
-{!showMapView && (
-  <View style={tw`absolute bottom-2.5 left-2.5 z-30`}>
-    <View style={[
-      tw`rounded-xl flex-row items-center overflow-hidden`,
+{/* Availability Mini-Bar (matching other bars) */}
+{hotel.hasAvailability !== false && checkInDate && checkOutDate && (
+  <View
+    style={[
+      tw`absolute bottom-14 left-2.5 z-40 flex-row items-center`,
       {
-        backgroundColor: 'rgba(0, 0, 0, 0.6)',
+        backgroundColor: 'rgba(0,0,0,0.5)',
+        paddingHorizontal: 10,
+        paddingVertical: 5,
+        borderRadius: 10,
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 2 },
         shadowOpacity: 0.2,
-        shadowRadius: 4
-      }
-    ]}>
-      {/* Price Section */}
-      <View style={tw`px-3 py-1.8 flex-row items-baseline gap-0.5`}>
-        <Text style={[tw`text-base text-white`, { fontFamily: 'Merriweather-Bold' }]}>
-          {getDisplayPrice()}
-        </Text>
-        <Text style={[tw`text-xs text-white/80`, { fontFamily: 'Merriweather-Regular' }]}>
-          /night
-        </Text>
-      </View>
+        shadowRadius: 3,
+      },
+    ]}
+  >
+    {/* Green Dot */}
+    <View
+      style={[
+        tw`rounded-full mr-1`,
+        { width: 6, height: 6, backgroundColor: '#4ade80' }
+      ]}
+    />
 
-      {/* Vertical Divider */}
-      <View style={[
-        {
-          width: 1,
-          height: 16,
-          backgroundColor: 'rgba(255, 255, 255, 0.3)'
-        }
-      ]} />
-
-      {/* Rating Section - Clickable */}
-      <TouchableOpacity
-        onPress={() => setShowReviewsModal(true)}
-        activeOpacity={0.7}
-        style={tw`px-3 py-1.8 flex-row items-center gap-1`}
-      >
-        <Ionicons name="star" size={11} color="#FFF" />
-        <Text style={[tw`text-white text-sm`, { fontFamily: 'Merriweather-Bold' }]}>
-          {hotel.rating.toFixed(1)}
-        </Text>
-        <Ionicons name="chevron-forward" size={10} color="rgba(255, 255, 255, 0.6)" />
-      </TouchableOpacity>
-    </View>
+    {/* Text */}
+    <Text
+      style={[
+        tw`text-[10px] text-white`,
+        { fontFamily: 'Merriweather-Regular', letterSpacing: 0.2 }
+      ]}
+    >
+      Available {formatShortDateRange(checkInDate, checkOutDate)}
+    </Text>
   </View>
 )}
 
 
-{/* Images/Map Toggle - Bottom Right */}
-{/* Images/Map Toggle - Bottom Right */}
+
+
+{/* Price and Rating - Bottom Left */}
+<View style={tw`absolute bottom-2.5 left-2.5 z-30`}>
+  <View
+    style={[
+      tw`rounded-xl overflow-hidden`,
+      {
+        backgroundColor: 'rgba(0,0,0,0.6)',
+        flexDirection: 'row',
+        alignItems: 'center',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.2,
+        shadowRadius: 4,
+      },
+    ]}
+  >
+    {/* LEFT SIDE */}
+    <View style={tw`px-3 py-2`}>
+      {/* PRICE PER NIGHT */}
+      <View style={tw`flex-row items-baseline gap-0.5`}>
+        <Text
+          style={[tw`text-base text-white`, { fontFamily: 'Merriweather-Bold' }]}
+        >
+          {getDisplayPrice()}
+        </Text>
+        <Text
+          style={[tw`text-xs text-white/80`, { fontFamily: 'Merriweather-Regular' }]}
+        >
+          /night
+        </Text>
+      </View>
+    </View>
+
+    {/* DIVIDER */}
+    <View
+      style={{
+        width: 1,
+        height: '70%',
+        backgroundColor: 'rgba(255,255,255,0.3)',
+      }}
+    />
+
+    {/* RIGHT SIDE — RATING */}
+    <TouchableOpacity
+      onPress={() => setShowReviewsModal(true)}
+      activeOpacity={0.7}
+      style={tw`px-3 py-2 flex-row items-center gap-1`}
+    >
+      <Ionicons name="star" size={11} color="#FFF" />
+      <Text style={[tw`text-white text-sm`, { fontFamily: 'Merriweather-Bold' }]}>
+        {hotel.rating.toFixed(1)}
+      </Text>
+      <Ionicons
+        name="chevron-forward"
+        size={10}
+        color="rgba(255,255,255,0.6)"
+      />
+    </TouchableOpacity>
+  </View>
+</View>
+
+
+
+{/* Show Map Button - Bottom Right */}
 <View style={tw`absolute bottom-2.5 right-2.5 z-40`}>
   <TouchableOpacity
-    onPress={() => setShowMapView(!showMapView)}
+    onPress={() => setShowFullMap(true)}
     style={[
       tw`py-2.8 px-3 rounded-xl flex-row items-center gap-1.5`,
       {
@@ -678,7 +780,7 @@ const dotAnimations = useRef(
     activeOpacity={0.7}
   >
     <Ionicons
-      name={showMapView ? "images" : "map"}
+      name="map"
       size={12}
       color="#FFF"
     />
@@ -688,7 +790,7 @@ const dotAnimations = useRef(
         fontFamily: 'Merriweather-Bold',
       }
     ]}>
-      {showMapView ? "Show Images" : "Show Map"}
+      Show Map
     </Text>
   </TouchableOpacity>
 </View>
@@ -696,7 +798,7 @@ const dotAnimations = useRef(
 
 
       {/* Image Indicators - Top Right (Sleek & Responsive) */}
-{!showMapView && images && images.length > 1 && (
+{images && images.length > 1 && (
   <View style={tw`absolute top-3.5 right-2.5 z-30`}>
     <View
       style={[
@@ -1151,6 +1253,21 @@ const dotAnimations = useRef(
           hotel={hotel}
           insightsStatus={insightsStatus}
           onClose={() => setShowPhotoGallery(false)}
+        />
+      </Modal>
+
+      {/* Full Screen Interactive Map Modal */}
+      <Modal
+        visible={showFullMap}
+        animationType="slide"
+        onRequestClose={() => setShowFullMap(false)}
+        statusBarTranslucent={true}
+      >
+        <LocationSlide
+          hotel={hotel}
+          insightsStatus={insightsStatus}
+          isVisible={showFullMap}
+          onClose={() => setShowFullMap(false)}
         />
       </Modal>
     </View>

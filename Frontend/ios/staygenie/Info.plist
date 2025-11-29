@@ -22,10 +22,10 @@
     <string>1.0.0</string>
     <key>CFBundleSignature</key>
     <string>????</string>
-    
+
     <key>GIDClientID</key>
     <string>962898883484-q94pa2l7olvh9c8jj4iee3fvni9rnedm.apps.googleusercontent.com</string>
-    
+
     <key>CFBundleURLTypes</key>
     <array>
       <dict>
@@ -42,12 +42,32 @@
         </array>
       </dict>
     </array>
+
     <key>CFBundleVersion</key>
     <string>1</string>
+
     <key>LSMinimumSystemVersion</key>
     <string>12.0</string>
     <key>LSRequiresIPhoneOS</key>
     <true/>
+
+    <!-- PRIVACY KEYS REQUIRED BY APPLE -->
+    <key>NSMicrophoneUsageDescription</key>
+    <string>This app uses your microphone to let you search for hotels using your voice.</string>
+
+    <key>NSSpeechRecognitionUsageDescription</key>
+    <string>This app uses speech recognition so you can search for hotels with your voice.</string>
+
+    <key>NSPhotoLibraryUsageDescription</key>
+    <string>This app needs access to your photo library so you can upload or select images.</string>
+
+    <key>NSPhotoLibraryAddUsageDescription</key>
+    <string>This app needs permission to save photos to your library.</string>
+
+    <key>NSCameraUsageDescription</key>
+    <string>This app may use your camera to capture photos if needed.</string>
+
+    <!-- NETWORK / SECURITY -->
     <key>NSAppTransportSecurity</key>
     <dict>
       <key>NSAllowsArbitraryLoads</key>
@@ -55,23 +75,29 @@
       <key>NSAllowsLocalNetworking</key>
       <true/>
     </dict>
+
     <key>RCTNewArchEnabled</key>
     <true/>
     <key>UILaunchStoryboardName</key>
     <string>SplashScreen</string>
+
     <key>UIRequiredDeviceCapabilities</key>
     <array>
       <string>arm64</string>
     </array>
+
     <key>UIRequiresFullScreen</key>
     <false/>
+
     <key>UIStatusBarStyle</key>
     <string>UIStatusBarStyleDefault</string>
+
     <key>UISupportedInterfaceOrientations</key>
     <array>
       <string>UIInterfaceOrientationPortrait</string>
       <string>UIInterfaceOrientationPortraitUpsideDown</string>
     </array>
+
     <key>UISupportedInterfaceOrientations~ipad</key>
     <array>
       <string>UIInterfaceOrientationPortrait</string>
@@ -79,8 +105,10 @@
       <string>UIInterfaceOrientationLandscapeLeft</string>
       <string>UIInterfaceOrientationLandscapeRight</string>
     </array>
+
     <key>UIUserInterfaceStyle</key>
     <string>Light</string>
+
     <key>UIViewControllerBasedStatusBarAppearance</key>
     <false/>
   </dict>
