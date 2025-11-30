@@ -1,39 +1,15 @@
-// Frontend/src/contexts/AuthContext.tsx - Updated with favorites change notifications
+// Frontend/src/contexts/AuthContext.tsx - Fully RN Firebase (Auth + Firestore)
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
 import { Platform } from 'react-native';
-import { 
-  User as FirebaseUser,
-  createUserWithEmailAndPassword,
-  signInWithEmailAndPassword,
-  signOut as firebaseSignOut,
-  onAuthStateChanged,
-  sendPasswordResetEmail,
-  updateProfile,
-  GoogleAuthProvider,
-  signInWithCredential
-} from 'firebase/auth';
-import {
-  doc,
-  setDoc,
-  getDoc,
-  updateDoc,
-  arrayUnion,
-  arrayRemove,
-  collection,
-  addDoc,
-  deleteDoc,
-  query,
-  where,
-  getDocs,
-  orderBy,
-  limit // Add this import
-} from 'firebase/firestore';
+import auth from '@react-native-firebase/auth';
+import firestore from '@react-native-firebase/firestore';
+import type { FirebaseAuthTypes } from '@react-native-firebase/auth';
 
 // Expo Auth imports
 import { GoogleSignin } from '@react-native-google-signin/google-signin';
 
-// Import Firebase config
-import { auth, db } from '../config/firebaseConfig';
+// Type alias for Firebase User
+export type FirebaseUser = FirebaseAuthTypes.User;
 
 // Updated User interface with favorites
 export interface User {
@@ -41,7 +17,7 @@ export interface User {
   email: string;
   name: string;
   favoriteHotels: string[];
-  recentSearches: string[]; // Add this line
+  recentSearches: string[];
   createdAt: string;
 }
 
@@ -105,10 +81,10 @@ export interface FavoriteHotel {
   [key: string]: any;
 }
 
-// NEW: Add favorites change listener type
+// Favorites change listener type
 type FavoritesChangeListener = () => void;
 
-// Auth context interface - Updated with change notifications
+// Auth context interface
 interface AuthContextType {
   // State
   user: User | null;
@@ -128,7 +104,7 @@ interface AuthContextType {
   signOut: () => Promise<void>;
   sendPasswordReset: (email: string) => Promise<void>;
   
-  // Favorites actions - Updated with rich data support
+  // Favorites actions
   addFavoriteHotel: (hotel: FavoriteHotel) => Promise<void>;
   removeFavoriteHotel: (hotelId: string) => Promise<void>;
   toggleFavoriteHotel: (hotel: FavoriteHotel) => Promise<boolean>;
@@ -136,7 +112,7 @@ interface AuthContextType {
   getFavoriteHotels: () => string[];
   getFavoriteHotelsData: () => Promise<FavoriteHotel[]>;
   
-  // NEW: Change notification system
+  // Change notification system
   onFavoritesChange: (listener: FavoritesChangeListener) => () => void;
   notifyFavoritesChanged: () => void;
   
@@ -153,7 +129,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   const [firebaseUser, setFirebaseUser] = useState<FirebaseUser | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   
-  // NEW: Store favorites change listeners
+  // Store favorites change listeners
   const [favoritesChangeListeners, setFavoritesChangeListeners] = useState<Set<FavoritesChangeListener>>(new Set());
 
   const isAuthenticated = !!user && !!firebaseUser;
@@ -165,7 +141,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     return cleanUsername.charAt(0).toUpperCase() + cleanUsername.slice(1) || 'User';
   };
 
-  // NEW: Notify all listeners that favorites have changed
+  // Notify all listeners that favorites have changed
   const notifyFavoritesChanged = useCallback(() => {
     console.log('🔔 Notifying favorites changed to', favoritesChangeListeners.size, 'listeners');
     favoritesChangeListeners.forEach(listener => {
@@ -177,7 +153,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     });
   }, [favoritesChangeListeners]);
 
-  // NEW: Add favorites change listener
+  // Add favorites change listener
   const onFavoritesChange = useCallback((listener: FavoritesChangeListener): (() => void) => {
     setFavoritesChangeListeners(prev => new Set([...prev, listener]));
     
@@ -193,7 +169,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   // Listen for authentication state changes
   useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+    const unsubscribe = auth().onAuthStateChanged(async (firebaseUser) => {
+      console.log('🔐 Auth state changed:', firebaseUser?.uid);
       setFirebaseUser(firebaseUser);
       
       if (firebaseUser) {
@@ -208,153 +185,175 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     return unsubscribe;
   }, []);
 
-const addRecentSearch = async (query: string, replaceQuery?: string): Promise<void> => {
-  if (!firebaseUser || !user || !query.trim()) {
-    return;
-  }
-
-  try {
-    const trimmedQuery = query.trim();
-    const trimmedReplaceQuery = replaceQuery?.trim();
-    
-    let updatedSearches: string[];
-    
-    if (trimmedReplaceQuery && trimmedReplaceQuery !== trimmedQuery) {
-      // Replace the original query with the new one
-      updatedSearches = [
-        trimmedQuery,
-        ...user.recentSearches.filter(search => 
-          search !== trimmedQuery && search !== trimmedReplaceQuery
-        )
-      ].slice(0, 10);
-      
-      console.log(`Replacing "${trimmedReplaceQuery}" with "${trimmedQuery}" in recent searches`);
-    } else {
-      // Normal behavior - add to front, remove duplicates
-      updatedSearches = [
-        trimmedQuery,
-        ...user.recentSearches.filter(search => search !== trimmedQuery)
-      ].slice(0, 10);
+  const addRecentSearch = async (query: string, replaceQuery?: string): Promise<void> => {
+    if (!firebaseUser || !user || !query.trim()) {
+      return;
     }
 
-    await updateDoc(doc(db, 'users', firebaseUser.uid), {
-      recentSearches: updatedSearches
-    });
+    try {
+      const trimmedQuery = query.trim();
+      const trimmedReplaceQuery = replaceQuery?.trim();
+      
+      let updatedSearches: string[];
+      
+      if (trimmedReplaceQuery && trimmedReplaceQuery !== trimmedQuery) {
+        // Replace the original query with the new one
+        updatedSearches = [
+          trimmedQuery,
+          ...user.recentSearches.filter(search => 
+            search !== trimmedQuery && search !== trimmedReplaceQuery
+          )
+        ].slice(0, 10);
+        
+        console.log(`Replacing "${trimmedReplaceQuery}" with "${trimmedQuery}" in recent searches`);
+      } else {
+        // Normal behavior - add to front, remove duplicates
+        updatedSearches = [
+          trimmedQuery,
+          ...user.recentSearches.filter(search => search !== trimmedQuery)
+        ].slice(0, 10);
+      }
 
-    // Update local state
-    setUser(prev => prev ? {
-      ...prev,
-      recentSearches: updatedSearches
-    } : null);
+      await firestore()
+        .collection('users')
+        .doc(firebaseUser.uid)
+        .update({
+          recentSearches: updatedSearches
+        });
 
-    console.log('Recent search saved:', trimmedQuery);
-    
-  } catch (error) {
-    console.error('Failed to save recent search:', error);
-  }
-};
+      // Update local state
+      setUser(prev => prev ? {
+        ...prev,
+        recentSearches: updatedSearches
+      } : null);
 
-const getRecentSearches = (): string[] => {
-  return user?.recentSearches || [];
-};
+      console.log('Recent search saved:', trimmedQuery);
+      
+    } catch (error) {
+      console.error('Failed to save recent search:', error);
+    }
+  };
 
-const clearRecentSearches = async (): Promise<void> => {
-  if (!firebaseUser || !user) {
-    return;
-  }
+  const getRecentSearches = (): string[] => {
+    return user?.recentSearches || [];
+  };
 
-  try {
-    await updateDoc(doc(db, 'users', firebaseUser.uid), {
-      recentSearches: []
-    });
+  const clearRecentSearches = async (): Promise<void> => {
+    if (!firebaseUser || !user) {
+      return;
+    }
 
-    setUser(prev => prev ? {
-      ...prev,
-      recentSearches: []
-    } : null);
+    try {
+      await firestore()
+        .collection('users')
+        .doc(firebaseUser.uid)
+        .update({
+          recentSearches: []
+        });
 
-    console.log('Recent searches cleared');
-    
-  } catch (error) {
-    console.error('Failed to clear recent searches:', error);
-  }
-};
+      setUser(prev => prev ? {
+        ...prev,
+        recentSearches: []
+      } : null);
 
-const removeRecentSearch = async (searchToRemove: string): Promise<void> => {
-  if (!firebaseUser || !user) {
-    return;
-  }
+      console.log('Recent searches cleared');
+      
+    } catch (error) {
+      console.error('Failed to clear recent searches:', error);
+    }
+  };
 
-  try {
-    const updatedSearches = user.recentSearches.filter(search => search !== searchToRemove);
+  const removeRecentSearch = async (searchToRemove: string): Promise<void> => {
+    if (!firebaseUser || !user) {
+      return;
+    }
 
-    await updateDoc(doc(db, 'users', firebaseUser.uid), {
-      recentSearches: updatedSearches
-    });
+    try {
+      const updatedSearches = user.recentSearches.filter(search => search !== searchToRemove);
 
-    setUser(prev => prev ? {
-      ...prev,
-      recentSearches: updatedSearches
-    } : null);
+      await firestore()
+        .collection('users')
+        .doc(firebaseUser.uid)
+        .update({
+          recentSearches: updatedSearches
+        });
 
-    console.log('Removed recent search:', searchToRemove);
-    
-  } catch (error) {
-    console.error('Failed to remove recent search:', error);
-  }
-};
+      setUser(prev => prev ? {
+        ...prev,
+        recentSearches: updatedSearches
+      } : null);
+
+      console.log('Removed recent search:', searchToRemove);
+      
+    } catch (error) {
+      console.error('Failed to remove recent search:', error);
+    }
+  };
+
   // Load user data from Firestore
- // Update the loadUserData function
-const loadUserData = async (firebaseUser: FirebaseUser) => {
-  try {
-    const userDoc = await getDoc(doc(db, 'users', firebaseUser.uid));
-    
-    if (userDoc.exists()) {
-      const userData = userDoc.data() as Omit<User, 'id'>;
-      setUser({
-        id: firebaseUser.uid,
-        ...userData,
-        // Ensure arrays are always initialized
-        favoriteHotels: userData.favoriteHotels || [],
-        recentSearches: userData.recentSearches || [] // Add this line
-      });
-    } else {
-      const defaultName = firebaseUser.displayName || generateDefaultName(firebaseUser.email || '');
+  const loadUserData = async (firebaseUser: FirebaseUser) => {
+    try {
+      console.log('🔍 Loading user data for:', firebaseUser.uid);
       
-      const newUser: User = {
-        id: firebaseUser.uid,
-        email: firebaseUser.email || '',
-        name: defaultName,
-        favoriteHotels: [],
-        recentSearches: [], // Add this line
-        createdAt: new Date().toISOString(),
-      };
+      const userDoc = await firestore()
+        .collection('users')
+        .doc(firebaseUser.uid)
+        .get();
       
-      await setDoc(doc(db, 'users', firebaseUser.uid), {
-        email: newUser.email,
-        name: newUser.name,
-        favoriteHotels: newUser.favoriteHotels,
-        recentSearches: newUser.recentSearches, // Add this line
-        createdAt: newUser.createdAt,
-      });
-      
-      setUser(newUser);
+      if (userDoc.exists()) {
+        const userData = userDoc.data() as Omit<User, 'id'>;
+        setUser({
+          id: firebaseUser.uid,
+          ...userData,
+          // Ensure arrays are always initialized
+          favoriteHotels: userData.favoriteHotels || [],
+          recentSearches: userData.recentSearches || []
+        });
+        console.log('✅ User data loaded from Firestore');
+      } else {
+        console.log('📝 Creating new user document');
+        const defaultName = firebaseUser.displayName || generateDefaultName(firebaseUser.email || '');
+        
+        const newUser: User = {
+          id: firebaseUser.uid,
+          email: firebaseUser.email || '',
+          name: defaultName,
+          favoriteHotels: [],
+          recentSearches: [],
+          createdAt: new Date().toISOString(),
+        };
+        
+        await firestore()
+          .collection('users')
+          .doc(firebaseUser.uid)
+          .set({
+            email: newUser.email,
+            name: newUser.name,
+            favoriteHotels: newUser.favoriteHotels,
+            recentSearches: newUser.recentSearches,
+            createdAt: newUser.createdAt,
+          });
+        
+        setUser(newUser);
+        console.log('✅ New user document created');
+      }
+    } catch (error: any) {
+      console.error('❌ Error loading user data:', error);
+      console.error('Error code:', error.code);
+      console.error('Error message:', error.message);
     }
-  } catch (error) {
-    console.error('Error loading user data:', error);
-  }
-};
+  };
 
   // Sign up with email and password
   const signUp = async (email: string, password: string): Promise<void> => {
     try {
       setIsLoading(true);
       
-      const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+      const userCredential = await auth().createUserWithEmailAndPassword(email, password);
       const firebaseUser = userCredential.user;
       
       const defaultName = generateDefaultName(email);
-      await updateProfile(firebaseUser, { displayName: defaultName });
+      await firebaseUser.updateProfile({ displayName: defaultName });
       
       const newUser: Omit<User, 'id'> = {
         email: firebaseUser.email || '',
@@ -364,7 +363,10 @@ const loadUserData = async (firebaseUser: FirebaseUser) => {
         recentSearches: []
       };
       
-      await setDoc(doc(db, 'users', firebaseUser.uid), newUser);
+      await firestore()
+        .collection('users')
+        .doc(firebaseUser.uid)
+        .set(newUser);
       
       setUser({
         id: firebaseUser.uid,
@@ -393,7 +395,7 @@ const loadUserData = async (firebaseUser: FirebaseUser) => {
   const signIn = async (email: string, password: string): Promise<void> => {
     try {
       setIsLoading(true);
-      await signInWithEmailAndPassword(auth, email, password);
+      await auth().signInWithEmailAndPassword(email, password);
     } catch (error: any) {
       console.error('Sign in error:', error);
       
@@ -414,60 +416,61 @@ const loadUserData = async (firebaseUser: FirebaseUser) => {
     }
   };
 
-const signInWithGoogle = async (): Promise<void> => {
-  try {
-    setIsLoading(true);
+  const signInWithGoogle = async (): Promise<void> => {
+    try {
+      setIsLoading(true);
 
-    // Check if device supports Google Play Services
-    await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
-    
-    // Perform sign in
-    const { data } = await GoogleSignin.signIn();
-    console.log('✅ Got user info from Google:', data?.user.email);
+      // Check if device supports Google Play Services
+      await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
+      
+      // Perform sign in
+      const { data } = await GoogleSignin.signIn();
+      console.log('✅ Got user info from Google:', data?.user.email);
 
-    // Create Firebase credential with the ID token
-    if (!data?.idToken) {
-      throw new Error('No ID token received from Google Sign-In');
+      // Create Firebase credential with the ID token
+      if (!data?.idToken) {
+        throw new Error('No ID token received from Google Sign-In');
+      }
+      
+      const googleCredential = auth.GoogleAuthProvider.credential(data.idToken);
+      
+      // Sign in to Firebase
+      await auth().signInWithCredential(googleCredential);
+      console.log('✅ Firebase sign in successful');
+
+    } catch (error: any) {
+      console.error('Native Google sign in error:', error);
+      
+      if (error.code === 'SIGN_IN_CANCELLED') {
+        throw new Error('Sign in was cancelled');
+      } else if (error.code === 'IN_PROGRESS') {
+        throw new Error('Sign in already in progress');
+      } else if (error.code === 'PLAY_SERVICES_NOT_AVAILABLE') {
+        throw new Error('Play Services not available');
+      } else {
+        throw new Error(`Failed to sign in with Google: ${error.message}`);
+      }
+    } finally {
+      setIsLoading(false);
     }
-    
-    const credential = GoogleAuthProvider.credential(data.idToken);
-    
-    // Sign in to Firebase
-    await signInWithCredential(auth, credential);
-    console.log('✅ Firebase sign in successful');
-
-  } catch (error: any) {
-    console.error('Native Google sign in error:', error);
-    
-    if (error.code === 'SIGN_IN_CANCELLED') {
-      throw new Error('Sign in was cancelled');
-    } else if (error.code === 'IN_PROGRESS') {
-      throw new Error('Sign in already in progress');
-    } else if (error.code === 'PLAY_SERVICES_NOT_AVAILABLE') {
-      throw new Error('Play Services not available');
-    } else {
-      throw new Error(`Failed to sign in with Google: ${error.message}`);
-    }
-  } finally {
-    setIsLoading(false);
-  }
-};
+  };
 
   // Sign out
-const signOutUser = async (): Promise<void> => {
-  try {
-    await firebaseSignOut(auth);  // ← Use the renamed import
-    setUser(null);
-    setFirebaseUser(null);
-  } catch (error) {
-    console.error('Sign out error:', error);
-    throw new Error('Failed to sign out');
-  }
-};
+  const signOutUser = async (): Promise<void> => {
+    try {
+      await auth().signOut();
+      setUser(null);
+      setFirebaseUser(null);
+    } catch (error) {
+      console.error('Sign out error:', error);
+      throw new Error('Failed to sign out');
+    }
+  };
+
   // Send password reset email
   const sendPasswordReset = async (email: string): Promise<void> => {
     try {
-      await sendPasswordResetEmail(auth, email);
+      await auth().sendPasswordResetEmail(email);
     } catch (error: any) {
       console.error('Password reset error:', error);
       
@@ -482,7 +485,7 @@ const signOutUser = async (): Promise<void> => {
     }
   };
 
-  // UPDATED: Add favorite hotel with change notification
+  // Add favorite hotel with change notification
   const addFavoriteHotel = async (hotel: FavoriteHotel): Promise<void> => {
     if (!firebaseUser || !user) {
       throw new Error('Must be signed in to add favorites');
@@ -498,12 +501,19 @@ const signOutUser = async (): Promise<void> => {
       ) as FavoriteHotel;
 
       // Store complete hotel data in a separate favorites collection
-      await addDoc(collection(db, 'users', firebaseUser.uid, 'favoriteHotels'), cleanHotelData);
+      await firestore()
+        .collection('users')
+        .doc(firebaseUser.uid)
+        .collection('favoriteHotels')
+        .add(cleanHotelData);
 
       // Also add hotel ID to user's favoriteHotels array for quick lookup
-      await updateDoc(doc(db, 'users', firebaseUser.uid), {
-        favoriteHotels: arrayUnion(hotel.id)
-      });
+      await firestore()
+        .collection('users')
+        .doc(firebaseUser.uid)
+        .update({
+          favoriteHotels: firestore.FieldValue.arrayUnion(hotel.id)
+        });
 
       // Update local state
       setUser(prev => prev ? {
@@ -513,7 +523,7 @@ const signOutUser = async (): Promise<void> => {
 
       console.log(`✅ Added "${hotel.name}" to favorites with complete data`);
       
-      // NEW: Notify listeners that favorites changed
+      // Notify listeners that favorites changed
       notifyFavoritesChanged();
       
     } catch (error) {
@@ -522,7 +532,7 @@ const signOutUser = async (): Promise<void> => {
     }
   };
 
-  // UPDATED: Remove favorite hotel with change notification
+  // Remove favorite hotel with change notification
   const removeFavoriteHotel = async (hotelId: string): Promise<void> => {
     if (!firebaseUser || !user) {
       throw new Error('Must be signed in to remove favorites');
@@ -530,20 +540,26 @@ const signOutUser = async (): Promise<void> => {
 
     try {
       // Remove from user's favoriteHotels array
-      await updateDoc(doc(db, 'users', firebaseUser.uid), {
-        favoriteHotels: arrayRemove(hotelId)
-      });
+      await firestore()
+        .collection('users')
+        .doc(firebaseUser.uid)
+        .update({
+          favoriteHotels: firestore.FieldValue.arrayRemove(hotelId)
+        });
 
       // Remove from favorites subcollection
-      const favoritesQuery = query(
-        collection(db, 'users', firebaseUser.uid, 'favoriteHotels'),
-        where('id', '==', hotelId)
-      );
-      const querySnapshot = await getDocs(favoritesQuery);
+      const favoritesSnapshot = await firestore()
+        .collection('users')
+        .doc(firebaseUser.uid)
+        .collection('favoriteHotels')
+        .where('id', '==', hotelId)
+        .get();
       
-      querySnapshot.forEach(async (doc) => {
-        await deleteDoc(doc.ref);
+      const batch = firestore().batch();
+      favoritesSnapshot.forEach((doc) => {
+        batch.delete(doc.ref);
       });
+      await batch.commit();
 
       // Update local state
       setUser(prev => prev ? {
@@ -553,7 +569,7 @@ const signOutUser = async (): Promise<void> => {
 
       console.log(`✅ Removed hotel ${hotelId} from favorites`);
       
-      // NEW: Notify listeners that favorites changed
+      // Notify listeners that favorites changed
       notifyFavoritesChanged();
       
     } catch (error) {
@@ -562,7 +578,7 @@ const signOutUser = async (): Promise<void> => {
     }
   };
 
-  // UPDATED: Toggle favorite hotel with change notification
+  // Toggle favorite hotel with change notification
   const toggleFavoriteHotel = async (hotel: FavoriteHotel): Promise<boolean> => {
     if (!firebaseUser || !user) {
       throw new Error('Must be signed in to toggle favorites');
@@ -604,14 +620,15 @@ const signOutUser = async (): Promise<void> => {
     }
 
     try {
-      const favoritesQuery = query(
-        collection(db, 'users', firebaseUser.uid, 'favoriteHotels'),
-        orderBy('addedAt', 'desc') // Most recent first
-      );
-      const querySnapshot = await getDocs(favoritesQuery);
+      const favoritesSnapshot = await firestore()
+        .collection('users')
+        .doc(firebaseUser.uid)
+        .collection('favoriteHotels')
+        .orderBy('addedAt', 'desc') // Most recent first
+        .get();
       
       const favoriteHotels: FavoriteHotel[] = [];
-      querySnapshot.forEach((doc) => {
+      favoritesSnapshot.forEach((doc) => {
         const data = doc.data() as FavoriteHotel;
         favoriteHotels.push(data);
       });
@@ -633,32 +650,31 @@ const signOutUser = async (): Promise<void> => {
     }
   };
 
-// Update the value object
-const value: AuthContextType = {
-  user,
-  firebaseUser,
-  isAuthenticated,
-  isLoading,
-  signIn,
-  signUp,
-  signInWithGoogle,
-  signOut: signOutUser,
-  sendPasswordReset,
-  addFavoriteHotel,
-  removeFavoriteHotel,
-  toggleFavoriteHotel,
-  isFavoriteHotel,
-  getFavoriteHotels,
-  getFavoriteHotelsData,
-  onFavoritesChange,
-  notifyFavoritesChanged,
-  // Add these new methods
-  removeRecentSearch,
-  addRecentSearch,
-  getRecentSearches,
-  clearRecentSearches,
-  requireAuth,
-};
+  // Context value
+  const value: AuthContextType = {
+    user,
+    firebaseUser,
+    isAuthenticated,
+    isLoading,
+    signIn,
+    signUp,
+    signInWithGoogle,
+    signOut: signOutUser,
+    sendPasswordReset,
+    addFavoriteHotel,
+    removeFavoriteHotel,
+    toggleFavoriteHotel,
+    isFavoriteHotel,
+    getFavoriteHotels,
+    getFavoriteHotelsData,
+    onFavoritesChange,
+    notifyFavoritesChanged,
+    removeRecentSearch,
+    addRecentSearch,
+    getRecentSearches,
+    clearRecentSearches,
+    requireAuth,
+  };
 
   return (
     <AuthContext.Provider value={value}>

@@ -452,13 +452,20 @@ const getTotalPrice = (hotel: Hotel, checkInDate?: Date, checkOutDate?: Date) =>
     return `$${hotel.price}`;
   };
 
-  const openInAppBrowser = async (url: string) => {
+const openInAppBrowser = async (url: string) => {
   try {
-    // Force open in Safari (external browser)
-    await Linking.openURL(url);
-  } catch (err) {
-    console.log("❌ Failed to open URL:", err);
-    Alert.alert("Error", "Could not open the link.");
+    await WebBrowser.openBrowserAsync(url, {
+      presentationStyle: WebBrowser.WebBrowserPresentationStyle.PAGE_SHEET,
+      dismissButtonStyle: 'done',
+      showTitle: true,
+      toolbarColor: '#ffffff',
+      controlsColor: '#000000ff',
+      enableBarCollapsing: true,
+      secondaryToolbarColor: '#f6f6f6',
+      showInRecents: false,
+    });
+  } catch {
+    try { await Linking.openURL(url); } catch { }
   }
 };
 
@@ -485,48 +492,31 @@ function formatDate(d?: Date): string | undefined {
 
 const generateHotelDeepLink = (
   hotel: Hotel,
-  city?: string,
   checkInDate?: Date,
   checkOutDate?: Date,
   adults: number = 2,
-  children: number = 0
-): string => {
+  children: number = 0,
+  placeId?: string,
+  occupancies?: any[]
+) => {
+  const url = new URL(`${DEEP_LINK_BASE_URL}/hotels/${hotel.id}`);
+  if (placeId) url.searchParams.set('placeId', placeId);
+  if (checkInDate) url.searchParams.set('checkin', checkInDate.toISOString().split('T')[0]);
+  if (checkOutDate) url.searchParams.set('checkout', checkOutDate.toISOString().split('T')[0]);
 
-  const bookingUrl = new URL("https://www.booking.com/searchresults.html");
+  if (occupancies?.length) {
+    const enc = typeof btoa !== 'undefined' ? btoa(JSON.stringify(occupancies)) : JSON.stringify(occupancies);
+    url.searchParams.set('occupancies', enc);
+  } else if (adults || children) {
+    const defOcc = [{ adults, children: children > 0 ? [children] : [] }];
+    const enc = typeof btoa !== 'undefined' ? btoa(JSON.stringify(defOcc)) : JSON.stringify(defOcc);
+    url.searchParams.set('occupancies', enc);
+  }
 
-  const searchText = city ? `${hotel.name}, ${city}` : hotel.name;
-  bookingUrl.searchParams.set("ss", searchText);
-  bookingUrl.searchParams.set("ssne", searchText);
-  bookingUrl.searchParams.set("ssne_untouched", searchText);
+  if (hotel.topAmenities?.includes('All Inclusive')) url.searchParams.set('needAllInclusive', '1');
+  if (hotel.topAmenities?.includes('Breakfast Included')) url.searchParams.set('needBreakfast', '1');
 
-  // OPTIONAL DATES
-  const checkin = formatDate(checkInDate);
-  const checkout = formatDate(checkOutDate);
-
-  if (checkin) bookingUrl.searchParams.set("checkin", checkin);
-  if (checkout) bookingUrl.searchParams.set("checkout", checkout);
-
-  // Occupancy
-  bookingUrl.searchParams.set("group_adults", String(adults));
-  bookingUrl.searchParams.set("group_children", String(children));
-  bookingUrl.searchParams.set("no_rooms", "1");
-  bookingUrl.searchParams.set("lang", "en-us");
-  bookingUrl.searchParams.set("selected_currency", "USD");
-  bookingUrl.searchParams.set("sb", "1");
-  bookingUrl.searchParams.set("src", "searchresults");
-
-  // Affiliate metadata
-  const label = `${BOOKING_LABEL_BASE}_${slugify(hotel.name)}`.slice(0, 60);
-  bookingUrl.searchParams.set("aid", BOOKING_AID);
-  bookingUrl.searchParams.set("label", label);
-
-  // AWIN wrapper
-  const awin = new URL("https://www.awin1.com/cread.php");
-  awin.searchParams.set("awinmid", AWIN_MID);
-  awin.searchParams.set("awinaffid", AWIN_AFFID);
-  awin.searchParams.set("ued", bookingUrl.toString());
-
-  return awin.toString();
+  return url.toString();
 };
 
 
@@ -535,21 +525,22 @@ const generateHotelDeepLink = (
     onHotelPress?.();
   };
 
-  const handleViewDetailsPress = async () => {
-    try {
-      const url = generateHotelDeepLink(
-  hotel,
-  hotel.city || hotel.location,  // or use your city prop
-  checkInDate,
-  checkOutDate,
-  adults,
-  children
-);
-      await openInAppBrowser(url);
-    } catch {
-      Alert.alert('Error', 'Failed to open hotel page. Please try again.');
-    }
-  };
+const handleViewDetailsPress = async () => {
+  try {
+    const url = generateHotelDeepLink(
+      hotel,
+      checkInDate,
+      checkOutDate,
+      adults,
+      children,
+      placeId,
+      occupancies
+    );
+    await openInAppBrowser(url);
+  } catch {
+    Alert.alert('Error', 'Failed to open hotel page. Please try again.');
+  }
+};
 
   const openSignUp = () => {
     if (onShowSignUpModal) return onShowSignUpModal();

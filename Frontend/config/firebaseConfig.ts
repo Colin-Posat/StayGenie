@@ -1,42 +1,15 @@
 // Frontend/src/config/firebaseConfig.ts
 
-import { initializeApp, getApps, FirebaseApp } from "firebase/app";
-import { getAuth, Auth } from "firebase/auth";
-import { getFirestore, Firestore } from "firebase/firestore";
-
-// Native GA4 analytics (works with Expo Dev Client)
+// Native Firebase modules
+import auth from "@react-native-firebase/auth";
 import analytics from "@react-native-firebase/analytics";
+import firestore from "@react-native-firebase/firestore";
 
-// -------------------------------------
-// Firebase Web SDK (Auth + Firestore)
-// -------------------------------------
+// Export services - all native now
+export { auth };
+export const db = firestore(); // RN Firebase Firestore instead of Web SDK
 
-const firebaseConfig = {
-  apiKey: "AIzaSyCLQtjPbz__O49nFfwEKyzvf-hYUENsMnQ",
-  authDomain: "staygenie-749de.firebaseapp.com",
-  projectId: "staygenie-749de",
-  storageBucket: "staygenie-749de.firebasestorage.app",
-  messagingSenderId: "962898883484",
-  appId: "1:962898883484:web:651374cdd684066941ce59",
-  measurementId: "G-E4QYE8M1V3"
-};
-
-// Ensure Firebase app initialized once
-let app: FirebaseApp;
-if (getApps().length === 0) {
-  app = initializeApp(firebaseConfig);
-} else {
-  app = getApps()[0];
-}
-
-// Export Firebase services
-export const auth: Auth = getAuth(app);
-export const db: Firestore = getFirestore(app);
-
-// -------------------------------------
-// GA4 Analytics (Native)
-// -------------------------------------
-
+// Analytics setup (same as before)
 let analyticsInitialized = false;
 
 export function initAnalytics() {
@@ -72,5 +45,3 @@ export const logEvent = async (event: string, params?: object) => {
     console.error("❌ Error logging GA4 event:", err);
   }
 };
-
-export default app;

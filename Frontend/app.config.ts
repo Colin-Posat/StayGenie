@@ -56,26 +56,27 @@ const config: ExpoConfig = {
     url: "https://u.expo.dev/391713d4-1f73-45c0-a82e-e4ad89ac6f20"
   },
 
-  plugins: [
-    "@react-native-firebase/app",
-    // Removed analytics plugin - it auto-configures when @react-native-firebase/app is present
-    [
-      "expo-build-properties",
-      {
-        ios: {
-          useFrameworks: "static"
-        }
+plugins: [
+  "expo-secure-store",
+  "@react-native-firebase/app",
+  "@react-native-firebase/auth",
+  [
+    "expo-build-properties",
+    {
+      ios: {
+        useFrameworks: "static"
       }
-    ],
-    "expo-web-browser",
-    "expo-speech-recognition",
-    [
-      "@rnmapbox/maps",
-      {
-        RNMapboxMapsDownloadToken: process.env.MAPBOX_SECRET_TOKEN
-      }
-    ]
+    }
+  ],
+  "expo-web-browser",
+  "expo-speech-recognition",
+  [
+    "@rnmapbox/maps",
+    {
+      RNMapboxMapsDownloadToken: process.env.MAPBOX_SECRET_TOKEN
+    }
   ]
+]
 };
 
 export default config;
