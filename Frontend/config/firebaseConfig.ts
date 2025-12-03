@@ -1,47 +1,84 @@
 // Frontend/src/config/firebaseConfig.ts
+import { Platform } from "react-native";
 
-// Native Firebase modules
-import auth from "@react-native-firebase/auth";
-import analytics from "@react-native-firebase/analytics";
-import firestore from "@react-native-firebase/firestore";
+// Native Firebase (iOS/Android)
+import nativeAuth from "@react-native-firebase/auth";
+import nativeAnalytics from "@react-native-firebase/analytics";
+import nativeFirestore from "@react-native-firebase/firestore";
 
-// Export services - all native now
-export { auth };
-export const db = firestore(); // RN Firebase Firestore instead of Web SDK
+// -------------------------------------------------------
+// WEB MOCKS — prevents crashes when testing in browser
+// -------------------------------------------------------
+const webAuth = {
+  currentUser: null,
+  onAuthStateChanged: (cb: any) => {
+    cb(null);
+    return () => {};
+  },
+  createUserWithEmailAndPassword: async () => {
+    throw new Error("Auth not available on web (mock).");
+  },
+  signInWithEmailAndPassword: async () => {
+    throw new Error("Auth not available on web (mock).");
+  },
+  signOut: async () => {},
+  sendPasswordResetEmail: async () => {},
+  GoogleAuthProvider: { credential: () => ({}) },
+};
 
-// Analytics setup (same as before)
+const webFirestore = {
+  collection: () => ({
+    doc: () => ({
+      set: async () => {},
+      update: async () => {},
+      get: async () => ({ exists: false, data: () => ({}) }),
+      collection: () => ({
+        add: async () => {},
+        get: async () => ({ forEach: () => {} }),
+        where: () => ({ get: async () => ({ forEach: () => {} }) }),
+        orderBy: () => ({ get: async () => ({ forEach: () => {} }) }),
+      }),
+    }),
+  }),
+  FieldValue: {
+    arrayUnion: () => {},
+    arrayRemove: () => {},
+  },
+};
+
+const webAnalytics = {
+  logEvent: async () => {},
+  setAnalyticsCollectionEnabled: async () => {},
+};
+
+// -------------------------------------------------------
+// EXPORTS (Auto-switch based on platform)
+// -------------------------------------------------------
+export const auth = Platform.OS === "web" ? webAuth : nativeAuth();
+export const db = Platform.OS === "web" ? webFirestore : nativeFirestore();
+
 let analyticsInitialized = false;
 
 export function initAnalytics() {
-  console.log("🔵 ATTEMPTING TO INITIALIZE GA4...");
-  
-  if (analyticsInitialized) {
-    console.log("🟢 GA4 Analytics already initialized");
+  if (Platform.OS === "web") {
+    console.log("ℹ️ Web mock analytics enabled.");
     return;
   }
 
-  try {
-    console.log("🟡 Setting up analytics...");
-    analytics()
+  if (!analyticsInitialized) {
+    nativeAnalytics()
       .setAnalyticsCollectionEnabled(true)
       .then(() => {
         analyticsInitialized = true;
-        console.log("🟢 GA4 Analytics initialized successfully!");
-      })
-      .catch((err) => {
-        console.log("🔴 Error initializing GA4:", err);
+        console.log("🟢 Analytics initialized");
       });
-  } catch (err) {
-    console.log("🔴 Error setting up GA4:", err);
   }
 }
 
 export const logEvent = async (event: string, params?: object) => {
-  console.log("📊 ATTEMPTING TO LOG EVENT:", event, params);
-  try {
-    await analytics().logEvent(event, params);
-    console.log("✅ Event logged successfully:", event);
-  } catch (err) {
-    console.error("❌ Error logging GA4 event:", err);
+  if (Platform.OS === "web") {
+    console.log("📊 (web mock) Event logged:", event, params);
+    return;
   }
+  await nativeAnalytics().logEvent(event, params);
 };

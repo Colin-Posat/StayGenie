@@ -1,4 +1,4 @@
-// Frontend/src/contexts/AuthContext.tsx - Fully RN Firebase (Auth + Firestore)
+// Frontend/src/contexts/AuthContext.tsx - Fully RN Firebase (Auth + Firestore) with Web Testing Mode
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
 import { Platform } from 'react-native';
 import auth from '@react-native-firebase/auth';
@@ -7,6 +7,9 @@ import type { FirebaseAuthTypes } from '@react-native-firebase/auth';
 
 // Expo Auth imports
 import { GoogleSignin } from '@react-native-google-signin/google-signin';
+
+// Web mode detection
+const IS_WEB = Platform.OS === 'web';
 
 // Type alias for Firebase User
 export type FirebaseUser = FirebaseAuthTypes.User;
@@ -123,16 +126,32 @@ interface AuthContextType {
 // Create context
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+// ============================================================================
+// WEB MOCK DATA - For testing in browser
+// ============================================================================
+const WEB_MOCK_USER: User = {
+  id: 'web-test-user',
+  email: 'test@staygenie.com',
+  name: 'Test User',
+  favoriteHotels: [],
+  recentSearches: [],
+  createdAt: new Date().toISOString(),
+};
+
+// In-memory storage for web testing
+let webMockFavorites: FavoriteHotel[] = [];
+let webMockRecentSearches: string[] = [];
+
 // Auth provider component
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(null);
+  const [user, setUser] = useState<User | null>(IS_WEB ? WEB_MOCK_USER : null);
   const [firebaseUser, setFirebaseUser] = useState<FirebaseUser | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+  const [isLoading, setIsLoading] = useState(!IS_WEB); // Web mode starts as loaded
   
   // Store favorites change listeners
   const [favoritesChangeListeners, setFavoritesChangeListeners] = useState<Set<FavoritesChangeListener>>(new Set());
 
-  const isAuthenticated = !!user && !!firebaseUser;
+  const isAuthenticated = IS_WEB ? true : (!!user && !!firebaseUser);
 
   // Helper function to generate a default name from email
   const generateDefaultName = (email: string): string => {
@@ -167,8 +186,13 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     };
   }, []);
 
-  // Listen for authentication state changes
+  // Listen for authentication state changes (NATIVE ONLY)
   useEffect(() => {
+    if (IS_WEB) {
+      console.log('🌐 Web mode: Auth bypass enabled');
+      return;
+    }
+
     const unsubscribe = auth().onAuthStateChanged(async (firebaseUser) => {
       console.log('🔐 Auth state changed:', firebaseUser?.uid);
       setFirebaseUser(firebaseUser);
@@ -185,29 +209,60 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     return unsubscribe;
   }, []);
 
+  // ============================================================================
+  // RECENT SEARCHES
+  // ============================================================================
+
   const addRecentSearch = async (query: string, replaceQuery?: string): Promise<void> => {
-    if (!firebaseUser || !user || !query.trim()) {
+    if (!query.trim()) {
       return;
     }
 
+    const trimmedQuery = query.trim();
+    const trimmedReplaceQuery = replaceQuery?.trim();
+
     try {
-      const trimmedQuery = query.trim();
-      const trimmedReplaceQuery = replaceQuery?.trim();
-      
+      // WEB MODE - Use in-memory storage
+      if (IS_WEB) {
+        let updatedSearches: string[];
+        
+        if (trimmedReplaceQuery && trimmedReplaceQuery !== trimmedQuery) {
+          updatedSearches = [
+            trimmedQuery,
+            ...webMockRecentSearches.filter(search => 
+              search !== trimmedQuery && search !== trimmedReplaceQuery
+            )
+          ].slice(0, 10);
+          console.log(`[Web] Replacing "${trimmedReplaceQuery}" with "${trimmedQuery}"`);
+        } else {
+          updatedSearches = [
+            trimmedQuery,
+            ...webMockRecentSearches.filter(search => search !== trimmedQuery)
+          ].slice(0, 10);
+        }
+
+        webMockRecentSearches = updatedSearches;
+        setUser(prev => prev ? { ...prev, recentSearches: updatedSearches } : null);
+        console.log('[Web] Recent search saved:', trimmedQuery);
+        return;
+      }
+
+      // NATIVE MODE - Use Firebase
+      if (!firebaseUser || !user) {
+        return;
+      }
+
       let updatedSearches: string[];
       
       if (trimmedReplaceQuery && trimmedReplaceQuery !== trimmedQuery) {
-        // Replace the original query with the new one
         updatedSearches = [
           trimmedQuery,
           ...user.recentSearches.filter(search => 
             search !== trimmedQuery && search !== trimmedReplaceQuery
           )
         ].slice(0, 10);
-        
         console.log(`Replacing "${trimmedReplaceQuery}" with "${trimmedQuery}" in recent searches`);
       } else {
-        // Normal behavior - add to front, remove duplicates
         updatedSearches = [
           trimmedQuery,
           ...user.recentSearches.filter(search => search !== trimmedQuery)
@@ -221,12 +276,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           recentSearches: updatedSearches
         });
 
-      // Update local state
-      setUser(prev => prev ? {
-        ...prev,
-        recentSearches: updatedSearches
-      } : null);
-
+      setUser(prev => prev ? { ...prev, recentSearches: updatedSearches } : null);
       console.log('Recent search saved:', trimmedQuery);
       
     } catch (error) {
@@ -235,15 +285,27 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   const getRecentSearches = (): string[] => {
+    if (IS_WEB) {
+      return webMockRecentSearches;
+    }
     return user?.recentSearches || [];
   };
 
   const clearRecentSearches = async (): Promise<void> => {
-    if (!firebaseUser || !user) {
-      return;
-    }
-
     try {
+      // WEB MODE
+      if (IS_WEB) {
+        webMockRecentSearches = [];
+        setUser(prev => prev ? { ...prev, recentSearches: [] } : null);
+        console.log('[Web] Recent searches cleared');
+        return;
+      }
+
+      // NATIVE MODE
+      if (!firebaseUser || !user) {
+        return;
+      }
+
       await firestore()
         .collection('users')
         .doc(firebaseUser.uid)
@@ -251,11 +313,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           recentSearches: []
         });
 
-      setUser(prev => prev ? {
-        ...prev,
-        recentSearches: []
-      } : null);
-
+      setUser(prev => prev ? { ...prev, recentSearches: [] } : null);
       console.log('Recent searches cleared');
       
     } catch (error) {
@@ -264,11 +322,20 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   const removeRecentSearch = async (searchToRemove: string): Promise<void> => {
-    if (!firebaseUser || !user) {
-      return;
-    }
-
     try {
+      // WEB MODE
+      if (IS_WEB) {
+        webMockRecentSearches = webMockRecentSearches.filter(search => search !== searchToRemove);
+        setUser(prev => prev ? { ...prev, recentSearches: webMockRecentSearches } : null);
+        console.log('[Web] Removed recent search:', searchToRemove);
+        return;
+      }
+
+      // NATIVE MODE
+      if (!firebaseUser || !user) {
+        return;
+      }
+
       const updatedSearches = user.recentSearches.filter(search => search !== searchToRemove);
 
       await firestore()
@@ -278,11 +345,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           recentSearches: updatedSearches
         });
 
-      setUser(prev => prev ? {
-        ...prev,
-        recentSearches: updatedSearches
-      } : null);
-
+      setUser(prev => prev ? { ...prev, recentSearches: updatedSearches } : null);
       console.log('Removed recent search:', searchToRemove);
       
     } catch (error) {
@@ -290,7 +353,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
-  // Load user data from Firestore
+  // ============================================================================
+  // NATIVE FIREBASE HELPERS
+  // ============================================================================
+
+  // Load user data from Firestore (NATIVE ONLY)
   const loadUserData = async (firebaseUser: FirebaseUser) => {
     try {
       console.log('🔍 Loading user data for:', firebaseUser.uid);
@@ -305,7 +372,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         setUser({
           id: firebaseUser.uid,
           ...userData,
-          // Ensure arrays are always initialized
           favoriteHotels: userData.favoriteHotels || [],
           recentSearches: userData.recentSearches || []
         });
@@ -344,8 +410,19 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
+  // ============================================================================
+  // AUTHENTICATION METHODS
+  // ============================================================================
+
   // Sign up with email and password
   const signUp = async (email: string, password: string): Promise<void> => {
+    // WEB MODE - Mock success
+    if (IS_WEB) {
+      console.log('[Web] Mock sign up:', email);
+      return;
+    }
+
+    // NATIVE MODE
     try {
       setIsLoading(true);
       
@@ -393,6 +470,13 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   // Sign in with email and password
   const signIn = async (email: string, password: string): Promise<void> => {
+    // WEB MODE - Mock success
+    if (IS_WEB) {
+      console.log('[Web] Mock sign in:', email);
+      return;
+    }
+
+    // NATIVE MODE
     try {
       setIsLoading(true);
       await auth().signInWithEmailAndPassword(email, password);
@@ -417,24 +501,27 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
   };
 
   const signInWithGoogle = async (): Promise<void> => {
+    // WEB MODE - Mock success
+    if (IS_WEB) {
+      console.log('[Web] Mock Google sign in');
+      return;
+    }
+
+    // NATIVE MODE
     try {
       setIsLoading(true);
 
-      // Check if device supports Google Play Services
       await GoogleSignin.hasPlayServices({ showPlayServicesUpdateDialog: true });
       
-      // Perform sign in
       const { data } = await GoogleSignin.signIn();
       console.log('✅ Got user info from Google:', data?.user.email);
 
-      // Create Firebase credential with the ID token
       if (!data?.idToken) {
         throw new Error('No ID token received from Google Sign-In');
       }
       
       const googleCredential = auth.GoogleAuthProvider.credential(data.idToken);
       
-      // Sign in to Firebase
       await auth().signInWithCredential(googleCredential);
       console.log('✅ Firebase sign in successful');
 
@@ -457,6 +544,13 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   // Sign out
   const signOutUser = async (): Promise<void> => {
+    // WEB MODE - Mock success
+    if (IS_WEB) {
+      console.log('[Web] Mock sign out');
+      return;
+    }
+
+    // NATIVE MODE
     try {
       await auth().signOut();
       setUser(null);
@@ -469,6 +563,13 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   // Send password reset email
   const sendPasswordReset = async (email: string): Promise<void> => {
+    // WEB MODE - Mock success
+    if (IS_WEB) {
+      console.log('[Web] Mock password reset sent to:', email);
+      return;
+    }
+
+    // NATIVE MODE
     try {
       await auth().sendPasswordResetEmail(email);
     } catch (error: any) {
@@ -485,14 +586,37 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
+  // ============================================================================
+  // FAVORITES METHODS
+  // ============================================================================
+
   // Add favorite hotel with change notification
   const addFavoriteHotel = async (hotel: FavoriteHotel): Promise<void> => {
-    if (!firebaseUser || !user) {
-      throw new Error('Must be signed in to add favorites');
-    }
-
     try {
-      // Clean the hotel data to remove undefined values (Firestore doesn't allow undefined)
+      // WEB MODE - Use in-memory storage
+      if (IS_WEB) {
+        const hotelWithDate = {
+          ...hotel,
+          addedAt: new Date().toISOString(),
+        };
+        
+        webMockFavorites.push(hotelWithDate);
+        
+        setUser(prev => prev ? {
+          ...prev,
+          favoriteHotels: [...prev.favoriteHotels, hotel.id]
+        } : null);
+
+        console.log(`[Web] Added "${hotel.name}" to favorites`);
+        notifyFavoritesChanged();
+        return;
+      }
+
+      // NATIVE MODE
+      if (!firebaseUser || !user) {
+        throw new Error('Must be signed in to add favorites');
+      }
+
       const cleanHotelData = Object.fromEntries(
         Object.entries({
           ...hotel,
@@ -500,14 +624,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         }).filter(([_, value]) => value !== undefined)
       ) as FavoriteHotel;
 
-      // Store complete hotel data in a separate favorites collection
       await firestore()
         .collection('users')
         .doc(firebaseUser.uid)
         .collection('favoriteHotels')
         .add(cleanHotelData);
 
-      // Also add hotel ID to user's favoriteHotels array for quick lookup
       await firestore()
         .collection('users')
         .doc(firebaseUser.uid)
@@ -515,15 +637,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           favoriteHotels: firestore.FieldValue.arrayUnion(hotel.id)
         });
 
-      // Update local state
       setUser(prev => prev ? {
         ...prev,
         favoriteHotels: [...prev.favoriteHotels, hotel.id]
       } : null);
 
       console.log(`✅ Added "${hotel.name}" to favorites with complete data`);
-      
-      // Notify listeners that favorites changed
       notifyFavoritesChanged();
       
     } catch (error) {
@@ -534,12 +653,26 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   // Remove favorite hotel with change notification
   const removeFavoriteHotel = async (hotelId: string): Promise<void> => {
-    if (!firebaseUser || !user) {
-      throw new Error('Must be signed in to remove favorites');
-    }
-
     try {
-      // Remove from user's favoriteHotels array
+      // WEB MODE - Use in-memory storage
+      if (IS_WEB) {
+        webMockFavorites = webMockFavorites.filter(h => h.id !== hotelId);
+        
+        setUser(prev => prev ? {
+          ...prev,
+          favoriteHotels: prev.favoriteHotels.filter(id => id !== hotelId)
+        } : null);
+
+        console.log(`[Web] Removed hotel ${hotelId} from favorites`);
+        notifyFavoritesChanged();
+        return;
+      }
+
+      // NATIVE MODE
+      if (!firebaseUser || !user) {
+        throw new Error('Must be signed in to remove favorites');
+      }
+
       await firestore()
         .collection('users')
         .doc(firebaseUser.uid)
@@ -547,7 +680,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
           favoriteHotels: firestore.FieldValue.arrayRemove(hotelId)
         });
 
-      // Remove from favorites subcollection
       const favoritesSnapshot = await firestore()
         .collection('users')
         .doc(firebaseUser.uid)
@@ -561,15 +693,12 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       });
       await batch.commit();
 
-      // Update local state
       setUser(prev => prev ? {
         ...prev,
         favoriteHotels: prev.favoriteHotels.filter(id => id !== hotelId)
       } : null);
 
       console.log(`✅ Removed hotel ${hotelId} from favorites`);
-      
-      // Notify listeners that favorites changed
       notifyFavoritesChanged();
       
     } catch (error) {
@@ -580,6 +709,22 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   // Toggle favorite hotel with change notification
   const toggleFavoriteHotel = async (hotel: FavoriteHotel): Promise<boolean> => {
+    // WEB MODE
+    if (IS_WEB) {
+      const isCurrentlyFavorited = user?.favoriteHotels.includes(hotel.id) || false;
+      
+      if (isCurrentlyFavorited) {
+        await removeFavoriteHotel(hotel.id);
+        console.log(`[Web] Toggled OFF: ${hotel.name}`);
+        return false;
+      } else {
+        await addFavoriteHotel(hotel);
+        console.log(`[Web] Toggled ON: ${hotel.name}`);
+        return true;
+      }
+    }
+
+    // NATIVE MODE
     if (!firebaseUser || !user) {
       throw new Error('Must be signed in to toggle favorites');
     }
@@ -590,11 +735,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       if (isCurrentlyFavorited) {
         await removeFavoriteHotel(hotel.id);
         console.log(`Toggled OFF: ${hotel.name}`);
-        return false; // Now not favorited
+        return false;
       } else {
         await addFavoriteHotel(hotel);
         console.log(`Toggled ON: ${hotel.name}`);
-        return true; // Now favorited
+        return true;
       }
     } catch (error) {
       console.error('Toggle favorite error:', error);
@@ -615,6 +760,13 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
   // Get complete favorite hotels data from Firestore
   const getFavoriteHotelsData = async (): Promise<FavoriteHotel[]> => {
+    // WEB MODE - Return in-memory favorites
+    if (IS_WEB) {
+      console.log(`[Web] Retrieved ${webMockFavorites.length} favorite hotels`);
+      return [...webMockFavorites].reverse(); // Most recent first
+    }
+
+    // NATIVE MODE
     if (!firebaseUser || !user) {
       return [];
     }
@@ -624,7 +776,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         .collection('users')
         .doc(firebaseUser.uid)
         .collection('favoriteHotels')
-        .orderBy('addedAt', 'desc') // Most recent first
+        .orderBy('addedAt', 'desc')
         .get();
       
       const favoriteHotels: FavoriteHotel[] = [];
