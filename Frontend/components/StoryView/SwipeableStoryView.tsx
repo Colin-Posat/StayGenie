@@ -436,7 +436,7 @@ const enhanceHotel = (hotel: Hotel): EnhancedHotel => {
             : `hotel-${item.id}`
         }
         showsVerticalScrollIndicator={false}
-        contentContainerStyle={tw`py-2`}
+        contentContainerStyle={tw`py-2 pb-2`}
         maxToRenderPerBatch={3}
         windowSize={5}
         initialNumToRender={2}

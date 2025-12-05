@@ -180,7 +180,6 @@ const GridDateSelectionModal: React.FC<GridDateSelectionModalProps> = ({
 
   const handleDateSelect = (date: Date) => {
     if (Platform.OS === 'ios') {
-      Vibration.vibrate(10);
     }
 
     if (selectedDateType === 'checkin') {

@@ -189,7 +189,6 @@ const HotelStylesSelectionModal: React.FC<HotelStylesSelectionModalProps> = ({
 
   const handleStyleToggle = (styleId: string) => {
     if (Platform.OS === 'ios') {
-      Vibration.vibrate(10);
     }
 
     setSelectedStyles(prev => {

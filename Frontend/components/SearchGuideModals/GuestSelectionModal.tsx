@@ -88,7 +88,6 @@ const GuestsSelectionModal: React.FC<GuestsSelectionModalProps> = ({
 
   const handleCountChange = (type: keyof GuestCounts, increment: boolean) => {
     if (Platform.OS === 'ios') {
-      Vibration.vibrate(10);
     }
 
     setGuestCounts(prev => {

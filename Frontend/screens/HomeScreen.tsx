@@ -556,6 +556,19 @@ const handleCancelEdit = () => {
 const handleSaveSearch = async () => {
   if (editedSearchQuery.trim() && editedSearchQuery.trim() !== searchQuery) {
     const newQuery = editedSearchQuery.trim();
+    
+    // ✅ Cancel any ongoing search before starting new one
+    if ((global as any).cleanupSSESearch) {
+      (global as any).cleanupSSESearch();
+    }
+    
+    // Clear previous results
+    setDisplayHotels([]);
+    setStage1Results(null);
+    setStage2Results(null);
+    setShowPlaceholders(false);
+    setFirstHotelFound(false);
+    
     setSearchQuery(newQuery);
     await executeSearch(newQuery);
     await saveRecentSearch(newQuery);
@@ -1702,7 +1715,6 @@ const handleBackPress = useCallback(() => {
             style={tw`px-4 py-3`}
             onPress={handleEditSearchPress}
             activeOpacity={0.8}
-            disabled={isBusy}
           >
             <View style={tw`flex-row items-center justify-between`}>
               <View style={tw`flex-row items-center flex-1 min-w-0`}>

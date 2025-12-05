@@ -120,7 +120,6 @@ const BudgetSelectionModal: React.FC<BudgetSelectionModalProps> = ({
 
   const handleBudgetSelect = (budget: BudgetRange) => {
     if (Platform.OS === 'ios') {
-      Vibration.vibrate(10);
     }
     setSelectedBudget(budget.id);
   };

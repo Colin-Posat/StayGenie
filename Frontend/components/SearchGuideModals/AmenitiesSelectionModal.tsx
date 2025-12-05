@@ -118,7 +118,6 @@ const CompactAmenitiesSelectionModal: React.FC<AmenitiesSelectionModalProps> = (
 
   const handleAmenityToggle = (amenityId: string) => {
     if (Platform.OS === 'ios') {
-      Vibration.vibrate(10);
     }
 
     setSelectedAmenities(prev => {

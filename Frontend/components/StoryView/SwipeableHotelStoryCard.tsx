@@ -668,13 +668,7 @@ const dotAnimations = useRef(
       },
     ]}
   >
-    {/* Green Dot */}
-    <View
-      style={[
-        tw`rounded-full mr-1`,
-        { width: 6, height: 6, backgroundColor: '#4ade80' }
-      ]}
-    />
+
 
     {/* Text */}
     <Text

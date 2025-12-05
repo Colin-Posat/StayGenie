@@ -72,6 +72,7 @@ const HotelChatOverlay: React.FC<HotelChatOverlayProps> = ({
 
   const scrollRef = useRef<ScrollView>(null);
   const inputRef = useRef<TextInput>(null);
+  const inputTextRef = useRef('');
 
   // Animations — mirror ConversationalRefineOverlay
   const slideAnim = useRef(new Animated.Value(20)).current;   // small vertical offset
@@ -212,6 +213,7 @@ const HotelChatOverlay: React.FC<HotelChatOverlayProps> = ({
 
     setMessages(prev => [...prev, userMsg]);
     setInputText('');
+    inputTextRef.current = '';
     setIsTyping(true);
     scrollToEnd();
 
@@ -287,14 +289,17 @@ const HotelChatOverlay: React.FC<HotelChatOverlayProps> = ({
     scrollToEnd();
   };
 
-  const handleSend = useCallback(() => {
+  const handleSend = () => {
     if (isTyping || !contextReady) return;
-    const msg = inputText.trim();
+    const msg = inputTextRef.current.trim();
     if (!msg) return;
-    setInputText('');
-    Keyboard.dismiss();
     sendMessage(msg);
-  }, [inputText, isTyping, contextReady]);
+  };
+
+  const handleInputChange = (text: string) => {
+    setInputText(text);
+    inputTextRef.current = text;
+  };
 
   const handleSuggestionPress = (suggestion: typeof HOTEL_QUESTION_SUGGESTIONS[0]) => {
     if (contextReady && !isTyping) {
@@ -482,10 +487,10 @@ const HotelChatOverlay: React.FC<HotelChatOverlayProps> = ({
               <View style={[tw`px-4 py-3 border-t border-gray-100`]}>
                 {contextReady && !isLoading && <SuggestionPills />}
 
-                <View style={tw`flex-row items-end gap-2`}>
+                <View style={tw`flex-row items-end`}>
                   <View
                     style={[
-                      tw`flex-1 rounded-xl border`,
+                      tw`flex-1 rounded-xl border mr-2`,
                       {
                         backgroundColor: '#FAFAFA',
                         borderColor: inputText ? TURQUOISE_LIGHT : '#E5E7EB',
@@ -500,50 +505,34 @@ const HotelChatOverlay: React.FC<HotelChatOverlayProps> = ({
                         { lineHeight: Platform.OS === 'ios' ? 20 : 20, minHeight: 42 },
                       ]}
                       value={inputText}
-                      onChangeText={setInputText}
+                      onChangeText={handleInputChange}
                       placeholder={contextReady ? 'Ask about this hotel…' : 'Please wait…'}
                       placeholderTextColor="#9CA3AF"
                       multiline
                       maxLength={500}
                       editable={contextReady && !isTyping}
                       returnKeyType="send"
-                      onSubmitEditing={handleSend}
-                      blurOnSubmit
-                      enablesReturnKeyAutomatically
+                      blurOnSubmit={false}
                       selectionColor={TURQUOISE}
                     />
                   </View>
 
                   <TouchableOpacity
                     style={[
-                      tw`w-11 h-11 rounded-xl items-center justify-center border border-gray-200`,
+                      tw`w-11 h-11 rounded-xl items-center justify-center`,
                       {
                         backgroundColor: inputText.trim() && contextReady && !isTyping ? TURQUOISE : '#F3F4F6',
-                        shadowColor: '#000',
-                        shadowOffset: { width: 0, height: 1 },
-                        shadowOpacity: inputText.trim() && contextReady && !isTyping ? 0.1 : 0,
-                        shadowRadius: 2,
-                        elevation: inputText.trim() && contextReady && !isTyping ? 3 : 0,
                       },
                     ]}
                     onPress={handleSend}
                     disabled={!inputText.trim() || !contextReady || isTyping}
-                    activeOpacity={0.8}
+                    activeOpacity={0.7}
                   >
-                    <View style={[
-                      tw`w-6 h-6 rounded-full items-center justify-center`,
-                      { 
-                        backgroundColor: inputText.trim() && contextReady && !isTyping 
-                          ? 'rgba(255, 255, 255, 0.2)' 
-                          : 'transparent'
-                      }
-                    ]}>
-                      <Ionicons
-                        name="send"
-                        size={14}
-                        color={inputText.trim() && contextReady && !isTyping ? 'white' : '#9CA3AF'}
-                      />
-                    </View>
+                    <Ionicons
+                      name="send"
+                      size={18}
+                      color={inputText.trim() && contextReady && !isTyping ? 'white' : '#9CA3AF'}
+                    />
                   </TouchableOpacity>
                 </View>
               </View>
