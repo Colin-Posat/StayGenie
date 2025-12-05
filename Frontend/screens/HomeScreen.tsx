@@ -12,7 +12,8 @@ import {
   Modal,
   TouchableWithoutFeedback,
   StyleSheet,
-  TextInput
+  TextInput,
+  AppState
 } from 'react-native';
 import { Text } from '../components/CustomText'; 
 import { Ionicons } from '@expo/vector-icons';
@@ -340,6 +341,8 @@ import { Dimensions } from 'react-native';
 
 
 const HomeScreen = () => {
+  const searchCompleted = useRef(false);
+
   const { addRecentSearch } = useAuth();
   const screenSlideOut = useRef(new Animated.Value(0)).current;
   const contentFadeOut = useRef(new Animated.Value(1)).current;
@@ -394,6 +397,8 @@ const [aiSuggestionsLoaded, setAiSuggestionsLoaded] = useState(false);
   
 const [isEditingSearch, setIsEditingSearch] = useState(false);
 const [editedSearchQuery, setEditedSearchQuery] = useState('');
+const searchHasStarted = useRef(false);
+
 
 const editContainerHeight = useRef(new Animated.Value(0)).current;
 const editContentOpacity = useRef(new Animated.Value(0)).current;
@@ -419,6 +424,7 @@ const [favoritedHotelName, setFavoritedHotelName] = useState('');
   const [children, setChildren] = useState(0);
   const [showAiOverlay, setShowAiOverlay] = useState(false);
 const editModeOpacity = useRef(new Animated.Value(0)).current;
+const searchWasActive = useRef(false);
 
   // Cleanup polling on unmount
   useEffect(() => {
@@ -707,6 +713,7 @@ const handleStreamingUpdate = async (data: any, userInput?: string) => {
       break;
 
     case 'complete':
+      searchCompleted.current = true; 
       console.log('🎉 All hotels found and AI-enhanced!');
       
       setStreamingProgress({
@@ -930,6 +937,8 @@ const executeStreamingSearch = async (userInput: string) => {
 
   let eventSource: any = null;
   let timeoutId: NodeJS.Timeout | null = null;
+   searchHasStarted.current = true; 
+   searchCompleted.current = false; 
 
   try {
     console.log('🌊 Starting SSE Real-time Streaming Search...');
@@ -999,6 +1008,7 @@ const executeStreamingSearch = async (userInput: string) => {
             break;
             
           case 'complete':
+            searchCompleted.current = true; 
             handleStreamingUpdate({ type: 'complete', ...data }, userInput);
             
             // Close connection on completion
@@ -1294,6 +1304,50 @@ useEffect(() => {
       executeSearch(params.searchQuery);
     }
   }, [params?.searchQuery]);
+
+ useEffect(() => {
+  const subscription = AppState.addEventListener('change', (state) => {
+    
+    // -----------------------------------------
+    // 1. APP GOES TO BACKGROUND
+    // -----------------------------------------
+if (state === 'background' || state === 'inactive') {
+  console.log("📱 App moved to background");
+
+  // Only restart if user left *mid-search*
+  if (searchHasStarted.current && !searchCompleted.current) {
+    console.log("⏸️ Search interrupted — will restart on resume");
+    searchWasActive.current = true;
+  } else {
+    console.log("⏹️ Search had finished — no restart needed");
+    searchWasActive.current = false;
+  }
+
+  if ((global as any).cleanupSSESearch) {
+    (global as any).cleanupSSESearch();
+  }
+
+  return;
+}
+
+
+    // -----------------------------------------
+    // 2. APP RETURNS TO FOREGROUND
+    // -----------------------------------------
+if (state === 'active') {
+  console.log("📱 App returned to foreground");
+
+  if (searchWasActive.current) {
+    console.log("🔄 Restarting interrupted search...");
+    searchWasActive.current = false;
+    searchHasStarted.current = false;
+    executeSearch(searchQuery);
+  }
+}
+  });
+
+  return () => subscription.remove();
+}, [isStreamingSearch, searchQuery]);
 
   useEffect(() => {
   return () => {
