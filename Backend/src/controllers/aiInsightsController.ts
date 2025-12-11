@@ -756,12 +756,14 @@ Generate content + safety rating (1-10 for tourist safety) for EACH hotel.
 
 GUIDELINES for topAmenities:
 - Pick EXACTLY 3 per hotel
-- CRITICAL: ONLY select from the AMENITIES list provided for each hotel - DO NOT make up or add amenities not in the list
-- First include amenities that match user search if any
+- First include amenities that match user search if any THEN INCLUDE MOST UNIQUE AMENITIES
+- CRITICAL: ONLY select from the AMENITIES list provided for each hotel - DO NOT make up or add amenities not in the list just to match users search!!
 - Then fill with most unique amenities from hotel's list
 - Capitalize first word
 - If a hotel has fewer than 3 amenities listed, only return what's available
-- Copy the amenity names EXACTLY as they appear in the AMENITIES list DONT MAKE UP ONES JUST TO MATCH THE USER SEARCH
+- CRITiCAL:MAKE SURE THE AMENTIEIS YOU LIST ARE INTERESTING AND NOT BORING STUFF LIKE "Free Wi-Fi" UNLESS IT'S REALLY RELEVANT TO THE SEARCH!!!
+- NEVER INCLUDE FREE WIFI PRIVATE CHECK IN CHECK OUT OR OUTDOOR CCTV IN THE LIST 
+
 
 GUIDELINES for whyItMatches:
 - Use **double asterisks** to bold ONLY 2 things:
