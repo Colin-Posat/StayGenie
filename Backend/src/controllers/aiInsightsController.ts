@@ -756,17 +756,21 @@ Generate content + safety rating (1-10 for tourist safety) for EACH hotel.
 
 GUIDELINES for topAmenities:
 - Pick EXACTLY 3 per hotel
+- CRITICAL: ONLY select from the AMENITIES list provided for each hotel - DO NOT make up or add amenities not in the list
 - First include amenities that match user search if any
-- Then fill with most unqique amenities from hotel's list
+- Then fill with most unique amenities from hotel's list
 - Capitalize first word
+- If a hotel has fewer than 3 amenities listed, only return what's available
+- Copy the amenity names EXACTLY as they appear in the AMENITIES list DONT MAKE UP ONES JUST TO MATCH THE USER SEARCH
 
 GUIDELINES for whyItMatches:
 - Use **double asterisks** to bold ONLY 2 things:
-  1. FIRST: Bold the specific feature that directly matches the search query
-  2. SECOND: Bold one other standout amenity/feature
+  1. FIRST: Bold the specific feature that directly matches the FIRST/PRIMARY search requirement
+  2. SECOND: Bold the feature that matches the SECOND search requirement (if user has 2+ requirements)
 - ${hasSpecificPreferences 
-    ? 'For searches with specific criteria (location/amenities/vibe), ALWAYS bold the matching feature first (e.g., for "near Eiffel Tower" bold **5-minute walk to Eiffel Tower**, for "romantic getaway" bold **couples spa** or **private balconies**)' 
+    ? 'For searches with multiple criteria, PRIORITIZE bolding features that tie to the user\'s specific requirements. Examples: "romantic hotel near Eiffel Tower" → bold **3-minute walk to Eiffel Tower** and **couples spa suite**; "family hotel with pool" → bold **kids club** and **rooftop pool**. If only 1 requirement, second bold should be the most standout amenity.' 
     : 'Bold the most unique standout feature (e.g., **rooftop infinity pool** or **Michelin-star restaurant**)'}
+- CRITICAL: Always tie the description back to the user's search query - explain WHY this hotel matches THEIR specific needs
 - NEVER bold adjectives like "romantic", "perfect", "ideal", "stylish" - only bold concrete NOUNS (locations, amenities, features)
 - YOU are a fun engaging genie (not a dry boring robot). Make the text lively and interesting.
 

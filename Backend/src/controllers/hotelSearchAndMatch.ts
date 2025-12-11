@@ -1806,20 +1806,36 @@ const checkOutParam = isSSERequest ? req.query.checkOut : req.body.checkOut;
     const enableStreaming = isSSERequest;
 
     // STEP 1: Parse user input
-    sendUpdate('progress', { message: 'Understanding your request...', step: 1, totalSteps: 8 });
-    
-    logger.startStep('1-ParseQuery', { userInput });
-    
-    const parseResponse = await internalApiInstance.post('/api/query/parse', { userInput });
-    const parsedQuery: ParsedSearchQuery = parseResponse.data;
+    // STEP 1: Parse user input
+sendUpdate('progress', { message: 'Understanding your request...', step: 1, totalSteps: 8 });
 
-    if (checkInParam && checkOutParam) {
+logger.startStep('1-ParseQuery', { userInput });
+
+const parseResponse = await internalApiInstance.post('/api/query/parse', { userInput });
+const parsedQuery: ParsedSearchQuery = parseResponse.data;
+
+if (checkInParam && checkOutParam) {
   parsedQuery.checkin = String(checkInParam);
   parsedQuery.checkout = String(checkOutParam);
   console.log(`📅 Using explicit dates: ${parsedQuery.checkin} to ${parsedQuery.checkout}`);
 }
 
-    logger.endStep('1-ParseQuery', { parsedQuery });
+logger.endStep('1-ParseQuery', { parsedQuery });
+
+// 🆕 SEND DATES IMMEDIATELY AFTER PARSING
+sendUpdate('progress', { 
+  message: 'Understanding your request...', 
+  step: 1, 
+  totalSteps: 8,
+  searchParams: {
+    checkin: parsedQuery.checkin,
+    checkout: parsedQuery.checkout,
+    adults: parsedQuery.adults || 2,
+    children: parsedQuery.children || 0,
+    cityName: parsedQuery.cityName,
+    countryCode: parsedQuery.countryCode
+  }
+});
 
     // Validate parsed data
     if (!parsedQuery.checkin || !parsedQuery.checkout || !parsedQuery.countryCode || !parsedQuery.cityName) {
