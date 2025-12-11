@@ -361,6 +361,7 @@ const [shouldShowChevron, setShouldShowChevron] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearching, setIsSearching] = useState(false);
   const [isInsightsLoading, setIsInsightsLoading] = useState(false);
+  const [searchParamsLoading, setSearchParamsLoading] = useState(false);
 
   // Add error handling state
 const [searchError, setSearchError] = useState<{
@@ -575,6 +576,9 @@ const handleSaveSearch = async () => {
     setShowPlaceholders(false);
     setFirstHotelFound(false);
     
+    // 🆕 SET LOADING STATE FOR SEARCH PARAMS
+    setSearchParamsLoading(true);
+    
     setSearchQuery(newQuery);
     await executeSearch(newQuery);
     await saveRecentSearch(newQuery);
@@ -611,13 +615,43 @@ const handleStreamingUpdate = async (data: any, userInput?: string) => {
   console.log('📡 Streaming update received:', data.type);
 
   switch (data.type) {
-    case 'progress':
-      setStreamingProgress({
-        step: data.step || 0,
-        totalSteps: data.totalSteps || 8,
-        message: data.message || 'Processing...'
-      });
-      
+case 'progress':
+  setStreamingProgress({
+    step: data.step || 0,
+    totalSteps: data.totalSteps || 8,
+    message: data.message || 'Processing...'
+  });
+  
+  // UPDATE DATES IMMEDIATELY WHEN RECEIVED
+  if (data.searchParams) {
+    console.log('📅 Received parsed dates early:', data.searchParams);
+    
+    // 🆕 CLEAR LOADING STATE WHEN REAL DATA ARRIVES
+    setSearchParamsLoading(false);
+    
+    if (data.searchParams.checkin) {
+      const checkinDate = new Date(data.searchParams.checkin + 'T12:00:00');
+      setCheckInDate(checkinDate);
+      console.log('✅ Updated check-in date:', checkinDate);
+    }
+    
+    if (data.searchParams.checkout) {
+      const checkoutDate = new Date(data.searchParams.checkout + 'T12:00:00');
+      setCheckOutDate(checkoutDate);
+      console.log('✅ Updated check-out date:', checkoutDate);
+    }
+    
+    if (data.searchParams.adults) {
+      setAdults(data.searchParams.adults);
+      console.log('✅ Updated adults:', data.searchParams.adults);
+    }
+    
+    if (data.searchParams.children) {
+      setChildren(data.searchParams.children);
+      console.log('✅ Updated children:', data.searchParams.children);
+    }
+  }
+
       if (data.destination && !checkInDate) {
         const defaultCheckIn = new Date();
         defaultCheckIn.setDate(defaultCheckIn.getDate() + 7);
@@ -715,7 +749,7 @@ const handleStreamingUpdate = async (data: any, userInput?: string) => {
     case 'complete':
       searchCompleted.current = true; 
       console.log('🎉 All hotels found and AI-enhanced!');
-      
+      setSearchParamsLoading(false);
       setStreamingProgress({
         step: 8,
         totalSteps: 8,
@@ -754,6 +788,7 @@ const handleStreamingUpdate = async (data: any, userInput?: string) => {
       setShowPlaceholders(false);
       setIsSearching(false);
       setIsStreamingSearch(false);
+      setSearchParamsLoading(false);
       setShowErrorScreen(true);
       break;
 
@@ -948,6 +983,8 @@ const executeStreamingSearch = async (userInput: string) => {
     setStage2Results(null);
     setCurrentSearchId(null);
     
+    setSearchParamsLoading(true);
+
     // Set loading state
     setShowPlaceholders(true);
     setIsStreamingSearch(true);
@@ -1799,57 +1836,65 @@ const handleBackPress = useCallback(() => {
                     {searchQuery}
                   </Text>
                   
-                  <View style={tw`flex-row items-center flex-wrap`}>
-                    <View style={tw`flex-row items-center`}>
-                      <Ionicons name="calendar-outline" size={11} color="#6B7280" />
-                      <Text style={{
-                        fontFamily: 'Merriweather-Regular',
-                        fontSize: 11,
-                        color: '#6B7280',
-                        marginLeft: 4,
-                      }}>
-                        {hasFinalizedDates && confirmedCheckInDate && confirmedCheckOutDate
-                          ? formatDateRange(confirmedCheckInDate, confirmedCheckOutDate)
-                          : formatDateRange(checkInDate, checkOutDate)
-                        }
-                      </Text>
-                    </View>
-                    
-                    <View style={[tw`rounded-full mx-2`, { width: 3, height: 3, backgroundColor: '#D1D5DB' }]} />
-                    
-                    <View style={tw`flex-row items-center`}>
-                      <Ionicons name="people-outline" size={11} color="#6B7280" />
-                      <Text style={{
-                        fontFamily: 'Merriweather-Regular',
-                        fontSize: 11,
-                        color: '#6B7280',
-                        marginLeft: 4,
-                      }}>
-                        {formatGuestInfo(adults, children)}
-                      </Text>
-                    </View>
-                    
-                    {(isBusy || displayHotels.filter(h => !h.isPlaceholder).length > 0) && (
-                      <>
-                        <View style={[tw`rounded-full mx-2`, { width: 3, height: 3, backgroundColor: '#D1D5DB' }]} />
-                        <View style={tw`flex-row items-center`}>
-                          <Ionicons 
-                            name={isBusy ? "home-outline" : "home"} 
-                            size={11} 
-                            color="#6B7280" 
-                          />
-                          <Text style={{
-                            fontFamily: 'Merriweather-Regular',
-                            fontSize: 11,
-                            color: '#6B7280',
-                            marginLeft: 4,
-                          }}>
-                            {displayHotels.filter(h => !h.isPlaceholder).length}
-                          </Text>
-                        </View>
-                      </>
-                    )}
-                  </View>
+<View style={tw`flex-row items-center flex-wrap`}>
+  <View style={tw`flex-row items-center`}>
+    <Ionicons name="calendar-outline" size={11} color="#6B7280" />
+    <Text style={{
+      fontFamily: 'Merriweather-Regular',
+      fontSize: 11,
+      color: searchParamsLoading ? '#9CA3AF' : '#6B7280',
+      marginLeft: 4,
+      fontStyle: searchParamsLoading ? 'italic' : 'normal'
+    }}>
+      {searchParamsLoading 
+        ? 'Loading dates...'
+        : (hasFinalizedDates && confirmedCheckInDate && confirmedCheckOutDate
+            ? formatDateRange(confirmedCheckInDate, confirmedCheckOutDate)
+            : formatDateRange(checkInDate, checkOutDate)
+          )
+      }
+    </Text>
+  </View>
+  
+  <View style={[tw`rounded-full mx-2`, { width: 3, height: 3, backgroundColor: '#D1D5DB' }]} />
+  
+  <View style={tw`flex-row items-center`}>
+    <Ionicons name="people-outline" size={11} color="#6B7280" />
+    <Text style={{
+      fontFamily: 'Merriweather-Regular',
+      fontSize: 11,
+      color: searchParamsLoading ? '#9CA3AF' : '#6B7280',
+      marginLeft: 4,
+      fontStyle: searchParamsLoading ? 'italic' : 'normal'
+    }}>
+      {searchParamsLoading 
+        ? 'Loading...'
+        : formatGuestInfo(adults, children)
+      }
+    </Text>
+  </View>
+  
+  {(isBusy || displayHotels.filter(h => !h.isPlaceholder).length > 0) && (
+    <>
+      <View style={[tw`rounded-full mx-2`, { width: 3, height: 3, backgroundColor: '#D1D5DB' }]} />
+      <View style={tw`flex-row items-center`}>
+        <Ionicons 
+          name={isBusy ? "home-outline" : "home"} 
+          size={11} 
+          color="#6B7280" 
+        />
+        <Text style={{
+          fontFamily: 'Merriweather-Regular',
+          fontSize: 11,
+          color: '#6B7280',
+          marginLeft: 4,
+        }}>
+          {displayHotels.filter(h => !h.isPlaceholder).length}
+        </Text>
+      </View>
+    </>
+  )}
+</View>
                 </View>
               </View>
 
