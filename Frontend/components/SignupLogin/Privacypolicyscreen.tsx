@@ -7,7 +7,7 @@ import {
   StatusBar,
   SafeAreaView,
 } from 'react-native';
-import { Text } from '../../components/CustomText';
+import { Text } from '../CustomText';
 import { Ionicons } from '@expo/vector-icons';
 import tw from 'twrnc';
 

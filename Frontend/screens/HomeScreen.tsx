@@ -585,12 +585,15 @@ const handleSaveSearch = async () => {
       (global as any).cleanupSSESearch();
     }
     
-    // Clear previous results
+    // Clear previous results AND date state
     setDisplayHotels([]);
     setStage1Results(null);
     setStage2Results(null);
     setShowPlaceholders(false);
     setFirstHotelFound(false);
+    
+    // 🆕 CLEAR OLD DATE STATE - this is the key fix
+    setStreamingSearchParams(null);
     
     // 🆕 SET LOADING STATE FOR SEARCH PARAMS
     setSearchParamsLoading(true);
