@@ -508,11 +508,11 @@ const HotelChatOverlay: React.FC<HotelChatOverlayProps> = ({
                       onChangeText={handleInputChange}
                       placeholder={contextReady ? 'Ask about this hotel…' : 'Please wait…'}
                       placeholderTextColor="#9CA3AF"
-                      multiline
                       maxLength={500}
                       editable={contextReady && !isTyping}
                       returnKeyType="send"
                       blurOnSubmit={false}
+                      onSubmitEditing={handleSend}
                       selectionColor={TURQUOISE}
                     />
                   </View>

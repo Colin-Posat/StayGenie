@@ -337,25 +337,35 @@ const FavoritesHeader: React.FC<{
           )}
         </View>
         
-        {totalCount > 0 && (
+         {totalCount > 0 && (
           <TouchableOpacity
             style={[
-              tw`py-2.5 px-4 rounded-xl flex-row items-center`,
-              { 
-                backgroundColor: 'rgba(29, 249, 255, 0.08)',
-                borderWidth: 1,
-                borderColor: 'rgba(29, 249, 255, 0.2)',
+              tw`px-2.4 py-2.5 rounded-xl flex-row items-center bg-white border border-gray-200`,
+              {
+                shadowColor: '#000',
+                shadowOffset: {
+                  width: 0,
+                  height: 1,
+                },
+                shadowOpacity: 0.1,
+                shadowRadius: 2,
+                elevation: 3,
               }
             ]}
             onPress={hasExpandedFolders ? onCollapseAll : onExpandAll}
             activeOpacity={0.8}
           >
-            <Ionicons 
-              name={hasExpandedFolders ? "contract-outline" : "expand-outline"} 
-              size={16} 
-              color={TURQUOISE} 
-            />
-            <Text style={[tw`ml-2 font-medium text-sm`, { color: TURQUOISE_DARK }]}>
+            <View style={[
+              tw`w-6 h-6 rounded-full items-center justify-center mr-2`,
+              { backgroundColor: 'rgba(29, 249, 255, 0.15)' }
+            ]}>
+              <Ionicons 
+                name={hasExpandedFolders ? "contract-outline" : "expand-outline"} 
+                size={14} 
+                color={TURQUOISE_DARK} 
+              />
+            </View>
+            <Text style={tw`text-sm font-medium text-gray-800`}>
               {hasExpandedFolders ? 'Collapse' : 'Expand'}
             </Text>
           </TouchableOpacity>

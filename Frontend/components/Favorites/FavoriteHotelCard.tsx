@@ -248,36 +248,37 @@ const FavoriteHotelCard: React.FC<FavoriteHotelCardProps> = ({
   }, []);
 
   const images = React.useMemo(() => {
-    const collected: string[] = [];
-    const MAX_IMAGES = 10;
+  const collected: string[] = [];
+  const MAX_IMAGES = 10;
 
-    if (hotel.photoGalleryImages?.length) {
-      collected.push(...hotel.photoGalleryImages.slice(0, MAX_IMAGES));
+  if (hotel.photoGalleryImages?.length) {
+    collected.push(...hotel.photoGalleryImages.slice(0, MAX_IMAGES));
+  }
+  if (collected.length < MAX_IMAGES && hotel.images?.length) {
+    for (const img of hotel.images) {
+      if (collected.length >= MAX_IMAGES) break;
+      if (img && !collected.includes(img)) collected.push(img);
     }
-    if (collected.length < MAX_IMAGES && hotel.images?.length) {
-      for (const img of hotel.images) {
-        if (collected.length >= MAX_IMAGES) break;
-        if (img && !collected.includes(img)) collected.push(img);
-      }
-    }
-    if (collected.length < MAX_IMAGES && hotel.firstRoomImage && !collected.includes(hotel.firstRoomImage)) {
-      collected.push(hotel.firstRoomImage);
-    }
-    if (collected.length < MAX_IMAGES && hotel.secondRoomImage && !collected.includes(hotel.secondRoomImage)) {
-      collected.push(hotel.secondRoomImage);
-    }
-    if (collected.length < MAX_IMAGES && hotel.thirdImageHd && !collected.includes(hotel.thirdImageHd)) {
-      collected.push(hotel.thirdImageHd);
-    }
-    if (collected.length === 0 && hotel.image) {
-      collected.push(hotel.image);
-    }
+  }
+  if (collected.length < MAX_IMAGES && hotel.firstRoomImage && !collected.includes(hotel.firstRoomImage)) {
+    collected.push(hotel.firstRoomImage);
+  }
+  if (collected.length < MAX_IMAGES && hotel.secondRoomImage && !collected.includes(hotel.secondRoomImage)) {
+    collected.push(hotel.secondRoomImage);
+  }
+  // THIS WAS THE ISSUE - Add thirdImageHd check
+  if (collected.length < MAX_IMAGES && hotel.thirdImageHd && !collected.includes(hotel.thirdImageHd)) {
+    collected.push(hotel.thirdImageHd);
+  }
+  if (collected.length === 0 && hotel.image) {
+    collected.push(hotel.image);
+  }
 
-    return collected.filter(img => 
-      img && img.trim() !== '' && 
-      (img.startsWith('http://') || img.startsWith('https://') || img.startsWith('//'))
-    );
-  }, [hotel]);
+  return collected.filter(img => 
+    img && img.trim() !== '' && 
+    (img.startsWith('http://') || img.startsWith('https://') || img.startsWith('//'))
+  );
+}, [hotel]);
 
   // Create enhanced hotel object with all collected images for PhotoGallerySlide
   const enhancedHotel = React.useMemo(() => {
@@ -454,19 +455,6 @@ const FavoriteHotelCard: React.FC<FavoriteHotelCardProps> = ({
           </View>
         )}
 
-        {/* DELETE BUTTON - Top Right (always visible) */}
-        <View style={tw`absolute top-2.5 right-2.5 z-30`}>
-          <TouchableOpacity
-            onPress={handleRemove}
-            style={[
-              tw`w-9 h-9 rounded-full items-center justify-center`,
-              { backgroundColor: 'rgba(0, 0, 0, 0.6)' }
-            ]}
-            activeOpacity={0.7}
-          >
-            <Ionicons name="trash-outline" size={16} color="#EF4444" />
-          </TouchableOpacity>
-        </View>
 
         {/* Price and Rating - Bottom Left */}
         {!showMapView && (
