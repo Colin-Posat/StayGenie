@@ -787,7 +787,7 @@ Return JSON array with exactly ${hotels.length} objects:
     "whyItMatches": "${hasSpecificPreferences ? '25 words - why fits search, use **bold** for key matches' : '20 words - why great choice, use **bold** for standout features'}",
     "funFacts": ["fact1", "fact2"],
     "nearbyAttractions": ["name – desc – time", "name – desc – time"],
-    "locationHighlight":"Highlight location perks in ≤10 words; avoid 'in <city>'; make sure it ties to orginal search and is specific not vauge obvious stuff optionally note a relevant nearby attraction THAT IS RELEVANT TO THE SEARCH!."
+    "locationHighlight":"Highlight location perks in ≤10 words; avoid 'in <city>'; make sure it ties to orginal search and is specific not vauge obvious stuff optionally note a relevant nearby attraction THAT IS RELEVANT TO THE SEARCH!. ALSO SAY ITS OFFICIAL NAME SO MY PLACES API CAN PICK IT UP",
     "topAmenities": ["amenity1", "amenity2", "amenity3"],
     "safetyRating": number 1-10,
     "safetyJustification": "15-25 words about safety"
