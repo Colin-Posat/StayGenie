@@ -1,4 +1,4 @@
-// components/ForgotPasswordModal.tsx - Functional with Firebase Auth
+// components/ForgotPasswordModal.tsx - Functional with Firebase Auth via AuthContext
 import React, { useState, useRef, useEffect } from 'react';
 import {
   View,
@@ -18,8 +18,7 @@ import {
 import { Text } from '../../components/CustomText'; 
 import { Ionicons } from '@expo/vector-icons';
 import tw from 'twrnc';
-import { sendPasswordResetEmail } from 'firebase/auth';
-import { auth } from '../../config/firebaseConfig'; // Adjust path as needed
+import { useAuth } from '../../contexts/AuthContext';
 
 // Consistent color constants
 const TURQUOISE = '#1df9ff';
@@ -45,6 +44,8 @@ const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({
   const [email, setEmail] = useState('');
   const [isLoading, setIsLoading] = useState(false);
   const [emailSent, setEmailSent] = useState(false);
+
+  const { sendPasswordReset } = useAuth();
 
   // Center modal animation
   const scaleAnimation = useRef(new Animated.Value(0)).current;
@@ -115,8 +116,8 @@ const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({
 
     setIsLoading(true);
     try {
-      // Send password reset email using Firebase Auth
-      await sendPasswordResetEmail(auth, email.trim());
+      // Use AuthContext method which handles both web and native
+      await sendPasswordReset(email.trim());
       
       console.log('✅ Password reset email sent to:', email.trim());
       setEmailSent(true);
@@ -125,29 +126,8 @@ const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({
         onResetSent(email.trim());
       }
     } catch (error: any) {
-      console.log('❌ Password reset error:', error.code, error.message);
-      
-      // Handle specific Firebase Auth errors
-      let errorMessage = 'Failed to send reset email. Please try again.';
-      
-      switch (error.code) {
-        case 'auth/user-not-found':
-          errorMessage = 'No account found with this email address.';
-          break;
-        case 'auth/invalid-email':
-          errorMessage = 'Please enter a valid email address.';
-          break;
-        case 'auth/too-many-requests':
-          errorMessage = 'Too many attempts. Please try again later.';
-          break;
-        case 'auth/network-request-failed':
-          errorMessage = 'Network error. Please check your connection and try again.';
-          break;
-        default:
-          errorMessage = error.message || errorMessage;
-      }
-      
-      Alert.alert('Reset Failed', errorMessage);
+      console.log('❌ Password reset error:', error.message);
+      Alert.alert('Reset Failed', error.message || 'Failed to send reset email. Please try again.');
     } finally {
       setIsLoading(false);
     }
@@ -194,19 +174,19 @@ const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({
       <View style={tw`flex-1 justify-center items-center px-4`}>
         <Animated.View
           style={[
-            tw`bg-white rounded-3xl w-full max-w-sm`,
+            tw`bg-white rounded-xl w-full max-w-sm border border-gray-200`,
             {
               transform: [{ scale: scaleAnimation }],
               shadowColor: '#000',
-              shadowOffset: { width: 0, height: 10 },
-              shadowOpacity: 0.25,
-              shadowRadius: 20,
-              elevation: 20,
+              shadowOffset: { width: 0, height: 1 },
+              shadowOpacity: 0.1,
+              shadowRadius: 2,
+              elevation: 3,
             }
           ]}
         >
           {/* Header */}
-          <View style={tw`flex-row items-center justify-between px-6 pt-6 mb-4`}>
+          <View style={tw`flex-row items-center justify-between px-5 pt-5 mb-3`}>
             <View style={tw`flex-1 pr-4`}>
               <Text style={tw`text-2xl font-bold text-gray-900`}>
                 {emailSent ? 'Check Your Email' : 'Reset Password'}
@@ -220,7 +200,7 @@ const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({
             </View>
             <TouchableOpacity
               style={[
-                tw`w-10 h-10 rounded-full items-center justify-center`,
+                tw`w-9 h-9 rounded-full items-center justify-center`,
                 { backgroundColor: '#F3F4F6' }
               ]}
               onPress={handleClose}
@@ -231,29 +211,34 @@ const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({
           </View>
 
           {/* Form content */}
-          <View style={tw`px-6 pb-6`}>
+          <View style={tw`px-5 pb-5`}>
             {!emailSent ? (
               // Reset form
               <>
                 {/* Email Input */}
-                <View style={tw`mb-6`}>
-                  <Text style={tw`text-sm font-medium text-gray-700 mb-3`}>
+                <View style={tw`mb-5`}>
+                  <Text style={tw`text-sm font-medium text-gray-700 mb-2`}>
                     Email Address
                   </Text>
                   <View style={[
-                    tw`flex-row items-center border rounded-2xl px-4`,
+                    tw`flex-row items-center border rounded-xl px-4`,
                     { 
-                      height: 56,
+                      height: 52,
                       borderColor: email ? TURQUOISE_LIGHT : '#E5E7EB', 
                       backgroundColor: '#FAFAFA',
                       borderWidth: email ? 1.5 : 1,
                     }
                   ]}>
-                    <Ionicons 
-                      name="mail-outline" 
-                      size={20} 
-                      color={email ? TURQUOISE_DARK : "#9CA3AF"} 
-                    />
+                    <View style={[
+                      tw`w-6 h-6 rounded-full items-center justify-center`,
+                      { backgroundColor: email ? 'rgba(29, 249, 255, 0.15)' : '#F3F4F6' }
+                    ]}>
+                      <Ionicons 
+                        name="mail-outline" 
+                        size={14} 
+                        color={email ? TURQUOISE_DARK : "#9CA3AF"} 
+                      />
+                    </View>
                     <TextInput
                       style={[
                         tw`flex-1 ml-3 text-base text-gray-900`,
@@ -282,15 +267,15 @@ const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({
                 {/* Send Reset Email Button */}
                 <TouchableOpacity
                   style={[
-                    tw`p-4 rounded-2xl flex-row items-center justify-center mb-6`,
+                    tw`p-3.5 rounded-xl flex-row items-center justify-center mb-5 border border-gray-200`,
                     { 
                       backgroundColor: isLoading ? '#9CA3AF' : TURQUOISE,
                       opacity: isLoading ? 0.7 : 1,
-                      shadowColor: TURQUOISE,
-                      shadowOffset: { width: 0, height: 4 },
-                      shadowOpacity: 0.3,
-                      shadowRadius: 8,
-                      elevation: 8,
+                      shadowColor: '#000',
+                      shadowOffset: { width: 0, height: 1 },
+                      shadowOpacity: 0.1,
+                      shadowRadius: 2,
+                      elevation: 3,
                     }
                   ]}
                   onPress={handleSendResetEmail}
@@ -306,8 +291,13 @@ const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({
                     </>
                   ) : (
                     <>
-                      <Ionicons name="paper-plane-outline" size={20} color="white" />
-                      <Text style={tw`text-white font-semibold text-base ml-3`}>
+                      <View style={[
+                        tw`w-6 h-6 rounded-full items-center justify-center mr-2`,
+                        { backgroundColor: 'rgba(255, 255, 255, 0.2)' }
+                      ]}>
+                        <Ionicons name="paper-plane-outline" size={14} color="white" />
+                      </View>
+                      <Text style={tw`text-white font-semibold text-base`}>
                         Send Reset Link
                       </Text>
                     </>
@@ -318,24 +308,24 @@ const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({
               // Email sent confirmation
               <>
                 {/* Success Icon */}
-                <View style={tw`items-center mb-6`}>
+                <View style={tw`items-center mb-5`}>
                   <View style={[
-                    tw`w-20 h-20 rounded-full items-center justify-center mb-4`,
+                    tw`w-16 h-16 rounded-full items-center justify-center mb-3`,
                     { backgroundColor: `${TURQUOISE}20` }
                   ]}>
-                    <Ionicons name="checkmark-circle" size={40} color={TURQUOISE} />
+                    <Ionicons name="checkmark-circle" size={32} color={TURQUOISE} />
                   </View>
-                  <Text style={tw`text-center text-gray-600 text-base leading-6`}>
+                  <Text style={tw`text-center text-gray-600 text-sm leading-5`}>
                     We've sent a password reset link to
                   </Text>
-                  <Text style={[tw`text-center font-semibold text-base mt-1`, { color: TURQUOISE_DARK }]}>
+                  <Text style={[tw`text-center font-semibold text-sm mt-1`, { color: TURQUOISE_DARK }]}>
                     {email}
                   </Text>
                 </View>
 
                 {/* Instructions */}
-                <View style={[tw`p-4 rounded-2xl mb-6`, { backgroundColor: '#F9FAFB' }]}>
-                  <Text style={tw`text-sm text-gray-600 text-center leading-5`}>
+                <View style={[tw`p-3 rounded-xl mb-5`, { backgroundColor: '#F9FAFB' }]}>
+                  <Text style={tw`text-xs text-gray-600 text-center leading-4`}>
                     Click the link in the email to reset your password. 
                     If you don't see it, check your spam folder.
                   </Text>
@@ -344,21 +334,26 @@ const ForgotPasswordModal: React.FC<ForgotPasswordModalProps> = ({
                 {/* Resend Button */}
                 <TouchableOpacity
                   style={[
-                    tw`p-4 rounded-2xl flex-row items-center justify-center mb-4`,
+                    tw`p-3.5 rounded-xl flex-row items-center justify-center mb-4 border border-gray-200`,
                     { 
                       backgroundColor: TURQUOISE,
-                      shadowColor: TURQUOISE,
-                      shadowOffset: { width: 0, height: 4 },
-                      shadowOpacity: 0.3,
-                      shadowRadius: 8,
-                      elevation: 8,
+                      shadowColor: '#000',
+                      shadowOffset: { width: 0, height: 1 },
+                      shadowOpacity: 0.1,
+                      shadowRadius: 2,
+                      elevation: 3,
                     }
                   ]}
                   onPress={handleTryAgain}
                   activeOpacity={0.8}
                 >
-                  <Ionicons name="refresh-outline" size={20} color="white" />
-                  <Text style={tw`text-white font-semibold text-base ml-3`}>
+                  <View style={[
+                    tw`w-6 h-6 rounded-full items-center justify-center mr-2`,
+                    { backgroundColor: 'rgba(255, 255, 255, 0.2)' }
+                  ]}>
+                    <Ionicons name="refresh-outline" size={14} color="white" />
+                  </View>
+                  <Text style={tw`text-white font-semibold text-base`}>
                     Send Again
                   </Text>
                 </TouchableOpacity>

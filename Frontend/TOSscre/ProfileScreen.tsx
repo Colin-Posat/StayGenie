@@ -1,4 +1,4 @@
-// ProfileScreen.tsx - Updated with TOS/Privacy Policy viewer
+// ProfileScreen.tsx - Updated with password reset flow
 import React, { useState, useRef, useEffect } from 'react';
 import {
   View,
@@ -10,7 +10,6 @@ import {
   Animated,
   Platform,
   Alert,
-  Modal,
 } from 'react-native';
 import { Text } from '../components/CustomText'; 
 import { Ionicons } from '@expo/vector-icons';
@@ -132,7 +131,6 @@ const ProfileScreen = () => {
   const [showResetPasswordModal, setShowResetPasswordModal] = useState(false);
   const [resetToken, setResetToken] = useState<string | undefined>(undefined);
   const [showHelpFeedbackModal, setShowHelpFeedbackModal] = useState(false);
-  const [showLegalModal, setShowLegalModal] = useState(false);
 
   // Firebase auth
   const { user, isAuthenticated, signOut: firebaseSignOut, signInWithGoogle } = useAuth();
@@ -246,10 +244,6 @@ const ProfileScreen = () => {
 
   const handleHelpFeedback = () => {
     setShowHelpFeedbackModal(true);
-  };
-
-  const handleLegal = () => {
-    setShowLegalModal(true);
   };
 
   return (
@@ -448,7 +442,7 @@ const ProfileScreen = () => {
           )}
         </Animated.View>
 
-        {/* Menu Items - Available to everyone */}
+        {/* Menu Items - Help & Feedback available to everyone */}
         <Animated.View
           style={{
             opacity: fadeAnimation,
@@ -460,20 +454,12 @@ const ProfileScreen = () => {
             }],
           }}
         >
-          {/* Help & Feedback */}
+          {/* Help & Feedback - Available to everyone */}
           <MenuItem
             icon="help-circle-outline"
             title="Help & Feedback"
             subtitle="Booking support and personal assistance"
             onPress={handleHelpFeedback}
-          />
-
-          {/* Terms & Privacy */}
-          <MenuItem
-            icon="document-text-outline"
-            title="Terms & Privacy"
-            subtitle="View our legal policies"
-            onPress={handleLegal}
           />
           
           {/* Sign Out - Only for authenticated users */}
@@ -498,12 +484,6 @@ const ProfileScreen = () => {
         onClose={() => setShowHelpFeedbackModal(false)}
       />
 
-      {/* Legal Modal */}
-      <LegalModal
-        visible={showLegalModal}
-        onClose={() => setShowLegalModal(false)}
-      />
-
       {/* Email Sign Up Modal */}
       <EmailSignUpModal
         visible={showEmailSignUpModal}
@@ -516,7 +496,6 @@ const ProfileScreen = () => {
         visible={showEmailSignInModal}
         onClose={() => setShowEmailSignInModal(false)}
         onSwitchToSignUp={handleSwitchToSignUp}
-
       />
 
       {/* Forgot Password Modal */}
@@ -530,310 +509,5 @@ const ProfileScreen = () => {
     </SafeAreaView>
   );
 };
-
-// Legal Modal Component with Terms & Privacy combined
-const LegalModal: React.FC<{ visible: boolean; onClose: () => void }> = ({ visible, onClose }) => {
-  const scaleAnimation = useRef(new Animated.Value(0)).current;
-  const backgroundOpacity = useRef(new Animated.Value(0)).current;
-  const [activeTab, setActiveTab] = useState<'terms' | 'privacy'>('terms');
-
-  useEffect(() => {
-    if (visible) {
-      Animated.parallel([
-        Animated.spring(scaleAnimation, {
-          toValue: 1,
-          tension: 100,
-          friction: 8,
-          useNativeDriver: true,
-        }),
-        Animated.timing(backgroundOpacity, {
-          toValue: 1,
-          duration: 300,
-          useNativeDriver: true,
-        }),
-      ]).start();
-    } else {
-      Animated.parallel([
-        Animated.timing(scaleAnimation, {
-          toValue: 0,
-          duration: 200,
-          useNativeDriver: true,
-        }),
-        Animated.timing(backgroundOpacity, {
-          toValue: 0,
-          duration: 200,
-          useNativeDriver: true,
-        }),
-      ]).start();
-    }
-  }, [visible]);
-
-  return (
-    <Modal
-      visible={visible}
-      transparent={true}
-      animationType="none"
-      onRequestClose={onClose}
-      statusBarTranslucent={true}
-    >
-      <StatusBar backgroundColor="rgba(0, 0, 0, 0.5)" barStyle="light-content" />
-      
-      {/* Background overlay */}
-      <Animated.View
-        style={[
-          tw`absolute inset-0`,
-          {
-            backgroundColor: 'rgba(0, 0, 0, 0.5)',
-            opacity: backgroundOpacity,
-          }
-        ]}
-      >
-        <TouchableOpacity 
-          style={tw`flex-1`}
-          onPress={onClose}
-          activeOpacity={1}
-        />
-      </Animated.View>
-
-      {/* Modal content - Smaller and centered */}
-      <View style={tw`flex-1 justify-center items-center px-6`}>
-        <Animated.View
-          style={[
-            tw`bg-white rounded-3xl w-full`,
-            {
-              maxWidth: 400,
-              maxHeight: '60%',
-              transform: [{ scale: scaleAnimation }],
-              shadowColor: '#000',
-              shadowOffset: { width: 0, height: 10 },
-              shadowOpacity: 0.25,
-              shadowRadius: 20,
-              elevation: 20,
-            }
-          ]}
-        >
-          {/* Header - Compact */}
-          <View style={tw`px-5 pt-5 pb-3 border-b border-gray-200`}>
-            <View style={tw`flex-row items-center justify-between mb-3`}>
-              <Text style={tw`text-lg font-bold text-gray-900`}>
-                Legal
-              </Text>
-              <TouchableOpacity
-                style={[
-                  tw`w-8 h-8 rounded-full items-center justify-center`,
-                  { backgroundColor: '#F3F4F6' }
-                ]}
-                onPress={onClose}
-                activeOpacity={0.7}
-              >
-                <Ionicons name="close" size={16} color="#6B7280" />
-              </TouchableOpacity>
-            </View>
-
-            {/* Tabs - Compact */}
-            <View style={tw`flex-row`}>
-              <TouchableOpacity
-                style={[
-                  tw`flex-1 py-2 items-center border-b-2`,
-                  {
-                    borderBottomColor: activeTab === 'terms' ? TURQUOISE : 'transparent'
-                  }
-                ]}
-                onPress={() => setActiveTab('terms')}
-                activeOpacity={0.7}
-              >
-                <Text style={[
-                  tw`text-xs font-semibold`,
-                  { color: activeTab === 'terms' ? TURQUOISE_DARK : '#9CA3AF' }
-                ]}>
-                  Terms
-                </Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={[
-                  tw`flex-1 py-2 items-center border-b-2`,
-                  {
-                    borderBottomColor: activeTab === 'privacy' ? TURQUOISE : 'transparent'
-                  }
-                ]}
-                onPress={() => setActiveTab('privacy')}
-                activeOpacity={0.7}
-              >
-                <Text style={[
-                  tw`text-xs font-semibold`,
-                  { color: activeTab === 'privacy' ? TURQUOISE_DARK : '#9CA3AF' }
-                ]}>
-                  Privacy
-                </Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-
-          {/* Content */}
-          <ScrollView 
-            style={tw`px-5 py-3`}
-            showsVerticalScrollIndicator={true}
-          >
-            {activeTab === 'terms' ? (
-              <TermsContent />
-            ) : (
-              <PrivacyContent />
-            )}
-          </ScrollView>
-
-          {/* Footer - Compact */}
-          <View style={tw`px-5 py-3 border-t border-gray-200`}>
-            <TouchableOpacity
-              style={[
-                tw`p-3 rounded-2xl items-center justify-center`,
-                { 
-                  backgroundColor: TURQUOISE,
-                  shadowColor: TURQUOISE,
-                  shadowOffset: { width: 0, height: 4 },
-                  shadowOpacity: 0.3,
-                  shadowRadius: 8,
-                  elevation: 8,
-                }
-              ]}
-              onPress={onClose}
-              activeOpacity={0.8}
-            >
-              <Text style={tw`text-white font-semibold text-sm`}>
-                Close
-              </Text>
-            </TouchableOpacity>
-          </View>
-        </Animated.View>
-      </View>
-    </Modal>
-  );
-};
-
-// Terms Content Component
-const TermsContent = () => (
-  <Text style={tw`text-sm text-gray-700 leading-6`}>
-    <Text style={tw`text-xs text-gray-500`}>Last Updated: December 11, 2025{'\n\n'}</Text>
-
-    <Text style={tw`font-bold`}>1. Acceptance of Terms{'\n'}</Text>
-    By creating an account and using StayGenie, you agree to be bound by these Terms of Service. If you do not agree to these terms, please do not use our service.{'\n\n'}
-    
-    <Text style={tw`font-bold`}>2. Service Description{'\n'}</Text>
-    StayGenie is an AI-powered hotel search and booking platform that uses natural language processing to help you find and book accommodations. We aggregate hotel information from third-party providers and facilitate bookings through affiliate partnerships.{'\n\n'}
-    
-    <Text style={tw`font-bold`}>3. User Accounts{'\n'}</Text>
-    You are responsible for maintaining the confidentiality of your account credentials and for all activities that occur under your account. You must provide accurate, current, and complete information during registration and keep your account information updated.{'\n\n'}
-    
-    <Text style={tw`font-bold`}>4. Bookings and Payments{'\n'}</Text>
-    All hotel bookings are subject to availability and confirmation by the hotel or booking provider. StayGenie acts as an intermediary and is not responsible for hotel services, policies, or cancellations. Payment processing is handled by third-party providers. Cancellation and refund policies are determined by the individual hotels and booking platforms.{'\n\n'}
-    
-    <Text style={tw`font-bold`}>5. AI-Generated Content{'\n'}</Text>
-    StayGenie uses artificial intelligence to provide search results, recommendations, and conversational assistance. While we strive for accuracy, AI-generated content may contain errors or inaccuracies. Always verify critical information before making booking decisions.{'\n\n'}
-    
-    <Text style={tw`font-bold`}>6. User Content and Searches{'\n'}</Text>
-    By using our service, you grant us the right to collect, store, and analyze your search queries, preferences, and interactions to improve our AI models and provide personalized recommendations. You retain ownership of your personal information.{'\n\n'}
-    
-    <Text style={tw`font-bold`}>7. Prohibited Uses{'\n'}</Text>
-    You may not use StayGenie to: (a) violate any laws or regulations; (b) infringe on intellectual property rights; (c) transmit malicious code or spam; (d) attempt to gain unauthorized access to our systems; or (e) interfere with other users' use of the service.{'\n\n'}
-    
-    <Text style={tw`font-bold`}>8. Limitation of Liability{'\n'}</Text>
-    StayGenie is provided "as is" without warranties of any kind. We are not liable for any indirect, incidental, special, or consequential damages arising from your use of the service, including but not limited to booking errors, hotel service issues, or travel disruptions.{'\n\n'}
-    
-    <Text style={tw`font-bold`}>9. Affiliate Relationships{'\n'}</Text>
-    StayGenie participates in affiliate programs and may earn commissions from hotel bookings made through our platform. This does not affect the price you pay or our commitment to providing unbiased recommendations.{'\n\n'}
-    
-    <Text style={tw`font-bold`}>10. Modifications to Service{'\n'}</Text>
-    We reserve the right to modify, suspend, or discontinue any aspect of StayGenie at any time without prior notice.{'\n\n'}
-    
-    <Text style={tw`font-bold`}>11. Governing Law{'\n'}</Text>
-    These terms are governed by the laws of the United States and the State of California, without regard to conflict of law principles.{'\n\n'}
-    
-    <Text style={tw`font-bold`}>12. Contact Us{'\n'}</Text>
-    For questions about these Terms, contact us at:{'\n'}
-    Email: support@staygenie.com{'\n'}
-    Response time: Within 48 hours
-  </Text>
-);
-
-// Privacy Content Component
-const PrivacyContent = () => (
-  <Text style={tw`text-sm text-gray-700 leading-6`}>
-    <Text style={tw`text-xs text-gray-500`}>Last Updated: December 11, 2025{'\n\n'}</Text>
-
-    <Text style={tw`font-bold`}>Introduction{'\n'}</Text>
-    StayGenie ("we," "our," or "us") is committed to protecting your privacy. This Privacy Policy explains how we collect, use, disclose, and safeguard your information when you use our AI-powered hotel search and booking application.{'\n\n'}
-
-    <Text style={tw`font-bold`}>1. Information We Collect{'\n\n'}</Text>
-    
-    <Text style={tw`font-semibold`}>Account Information:{'\n'}</Text>
-    Email address, password (encrypted), display name, and profile preferences.{'\n\n'}
-    
-    <Text style={tw`font-semibold`}>Search and Booking Data:{'\n'}</Text>
-    Hotel search queries, destinations, dates, preferences, saved hotels, booking history, and price alerts.{'\n\n'}
-    
-    <Text style={tw`font-semibold`}>AI Interaction Data:{'\n'}</Text>
-    Conversational queries, natural language inputs, feedback, and personalization preferences.{'\n\n'}
-    
-    <Text style={tw`font-semibold`}>Usage and Analytics:{'\n'}</Text>
-    App interactions, navigation patterns, features used, time spent, error logs, and performance metrics.{'\n\n'}
-    
-    <Text style={tw`font-semibold`}>Device Information:{'\n'}</Text>
-    Device type, OS, unique identifiers, IP address, and network connection type.{'\n\n'}
-
-    <Text style={tw`font-bold`}>2. How We Use Your Information{'\n\n'}</Text>
-    • Provide hotel search and booking functionality{'\n'}
-    • Train and improve our AI models{'\n'}
-    • Generate personalized recommendations{'\n'}
-    • Process and manage reservations{'\n'}
-    • Analyze usage patterns{'\n'}
-    • Prevent fraud and ensure security{'\n'}
-    • Comply with legal obligations{'\n\n'}
-
-    <Text style={tw`font-bold`}>3. Information Sharing{'\n\n'}</Text>
-    
-    <Text style={tw`font-semibold`}>We do not sell your personal information.{'\n\n'}</Text>
-    
-    We share data with:{'\n'}
-    • Hotel and booking partners (necessary booking info){'\n'}
-    • Service providers (Firebase, analytics, payment processors){'\n'}
-    • Affiliate partners (anonymized data for commissions){'\n'}
-    • Legal authorities (when required by law){'\n\n'}
-
-    <Text style={tw`font-bold`}>4. AI and Machine Learning{'\n\n'}</Text>
-    Your search queries and interactions help improve our AI models. Data is anonymized and aggregated. You can opt out of AI training by contacting us, though this may limit personalization.{'\n\n'}
-
-    <Text style={tw`font-bold`}>5. Data Retention{'\n\n'}</Text>
-    Account information is retained while your account is active. Search history and usage data are kept for up to 2 years for analytics and AI training. You can request deletion at any time.{'\n\n'}
-
-    <Text style={tw`font-bold`}>6. Your Rights{'\n\n'}</Text>
-    • Access your personal data{'\n'}
-    • Request correction of inaccurate data{'\n'}
-    • Request account and data deletion{'\n'}
-    • Opt out of marketing communications{'\n'}
-    • Export your data in portable format{'\n'}
-    • Withdraw consent for processing{'\n\n'}
-
-    <Text style={tw`font-bold`}>7. Security{'\n\n'}</Text>
-    We implement encryption (TLS/SSL), secure authentication, regular security audits, and access controls. However, no system is 100% secure.{'\n\n'}
-
-    <Text style={tw`font-bold`}>8. Children's Privacy{'\n\n'}</Text>
-    StayGenie is not for users under 18. We don't knowingly collect children's data and will delete it if discovered.{'\n\n'}
-
-    <Text style={tw`font-bold`}>9. Cookies and Tracking{'\n\n'}</Text>
-    We use cookies for authentication, preferences, analytics, and performance. Manage preferences in device settings.{'\n\n'}
-
-    <Text style={tw`font-bold`}>10. International Transfers{'\n\n'}</Text>
-    Your information may be processed in the United States and other countries. By using StayGenie, you consent to these transfers.{'\n\n'}
-
-    <Text style={tw`font-bold`}>11. Changes to Policy{'\n\n'}</Text>
-    We may update this policy periodically. Significant changes will be notified through the app or email.{'\n\n'}
-
-    <Text style={tw`font-bold`}>12. Contact Us{'\n\n'}</Text>
-    Email: privacy@staygenie.com{'\n'}
-    Support: support@staygenie.com{'\n'}
-    DPO: dpo@staygenie.com{'\n'}
-    Response time: Within 48 hours
-  </Text>
-);
 
 export default ProfileScreen;

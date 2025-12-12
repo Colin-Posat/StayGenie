@@ -948,7 +948,6 @@ const handleExplore = useCallback(() => {
           visible={showEmailSignInModal}
           onClose={() => setShowEmailSignInModal(false)}
           onSwitchToSignUp={handleSwitchToSignUp}
-
         />
       </SafeAreaView>
     );
@@ -1041,8 +1040,6 @@ const handleExplore = useCallback(() => {
         visible={showEmailSignInModal}
         onClose={() => setShowEmailSignInModal(false)}
         onSwitchToSignUp={handleSwitchToSignUp}
-
-
       />
     </SafeAreaView>
   );
