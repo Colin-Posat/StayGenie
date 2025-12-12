@@ -53,8 +53,8 @@ interface SearchQueryWithHotels {
 // Custom hook for auto-typing placeholder text
 const useTypingPlaceholder = (
   words: string[],
-  typingSpeed = 60,
-  deletingSpeed = 30,
+  typingSpeed = 10,
+  deletingSpeed = 10,
   delayAfterWord = 1500
 ) => {
   const [displayText, setDisplayText] = useState('');
@@ -206,7 +206,9 @@ const InitialSearchScreen: React.FC<InitialSearchScreenProps> = ({
     Voice.onSpeechResults = onSpeechResults;
     Voice.onSpeechError = onSpeechError;
 
-    return () => Voice.destroy().then(Voice.removeAllListeners);
+    return () => {
+      Voice.destroy().catch(() => {}).then(() => Voice.removeAllListeners());
+    };
   }, []);
 
   const onSpeechStart = () => {

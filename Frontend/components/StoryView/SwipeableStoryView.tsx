@@ -12,6 +12,7 @@ import { Ionicons } from '@expo/vector-icons';
 import tw from 'twrnc';
 import SwipeableHotelStoryCard, { Hotel, EnhancedHotel } from './SwipeableHotelStoryCard';
 import SwipeableHotelStoryCardLoadingPreview from './SwipeableHotelStoryCardLoadingPreview';
+import { Platform } from 'react-native';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 const CARD_WIDTH = screenWidth - 40;
@@ -423,26 +424,29 @@ const enhanceHotel = (hotel: Hotel): EnhancedHotel => {
         </View>
       )}
 
-      <FlatList
-        data={dataToRender as (EnhancedHotel | { isPlaceholder: boolean; id: string })[]}
-        renderItem={({ item, index }) => 
-          showPlaceholders
-            ? renderPlaceholderCard(index)
-            : renderHotelCard({ item, index })
-        }
-        keyExtractor={(item, index) => 
-          showPlaceholders
-            ? `placeholder-${index}`
-            : `hotel-${item.id}`
-        }
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={tw`py-2 pb-2`}
-        maxToRenderPerBatch={3}
-        windowSize={5}
-        initialNumToRender={2}
-        scrollEventThrottle={16}
-        extraData={`${isInsightsLoading}-${stage1Complete}-${stage2Complete}-${insightsStats.complete}-${isStreaming}-${hotels.length}-${showPlaceholders}`}
-      />
+     <FlatList
+  data={dataToRender as (EnhancedHotel | { isPlaceholder: boolean; id: string })[]}
+  renderItem={({ item, index }) => 
+    showPlaceholders
+      ? renderPlaceholderCard(index)
+      : renderHotelCard({ item, index })
+  }
+  keyExtractor={(item, index) => 
+    showPlaceholders
+      ? `placeholder-${index}`
+      : `hotel-${item.id}`
+  }
+  showsVerticalScrollIndicator={false}
+  contentContainerStyle={{
+    paddingTop: 8,
+    paddingBottom: Platform.OS === 'ios' ? 70 : 70, // Add bottom padding to clear tab bar
+  }}
+  maxToRenderPerBatch={3}
+  windowSize={5}
+  initialNumToRender={2}
+  scrollEventThrottle={16}
+  extraData={`${isInsightsLoading}-${stage1Complete}-${stage2Complete}-${insightsStats.complete}-${isStreaming}-${hotels.length}-${showPlaceholders}`}
+/>
     </View>
   );
 };

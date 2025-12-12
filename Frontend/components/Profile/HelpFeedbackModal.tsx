@@ -1,4 +1,4 @@
-// HelpFeedbackModal.tsx — use Modal to guarantee full-window coverage
+// HelpFeedbackModal.tsx — styled consistent with SearchGuidePills
 import React, { useEffect, useRef } from 'react';
 import {
   View, Text, TouchableOpacity, Animated, Dimensions, StyleSheet,
@@ -10,8 +10,6 @@ import tw from 'twrnc';
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 const TURQUOISE = '#1df9ff';
 const TURQUOISE_DARK = '#00d4e6';
-const TURQUOISE_SUBTLE = '#f0feff';
-const TURQUOISE_BORDER = '#b3f7ff';
 
 interface HelpFeedbackModalProps {
   visible: boolean;
@@ -57,8 +55,8 @@ const HelpFeedbackModal: React.FC<HelpFeedbackModalProps> = ({ visible, onClose 
       visible={visible}
       transparent
       animationType="fade"
-      presentationStyle="overFullScreen"      // <- key to cover tab bar
-      statusBarTranslucent={Platform.OS === 'android'} // consistent backdrop under status bar
+      presentationStyle="overFullScreen"
+      statusBarTranslucent={Platform.OS === 'android'}
       onRequestClose={onClose}
     >
       <View style={[StyleSheet.absoluteFillObject, { backgroundColor: 'rgba(0,0,0,0.7)' }]}>
@@ -70,16 +68,22 @@ const HelpFeedbackModal: React.FC<HelpFeedbackModalProps> = ({ visible, onClose 
                 tw`bg-white rounded-2xl overflow-hidden`,
                 {
                   width: panelWidth, height: panelHeight,
-                  shadowColor: TURQUOISE, shadowOffset: { width: 0, height: 8 },
-                  shadowOpacity: 0.15, shadowRadius: 20,
+                  shadowColor: '#000',
+                  shadowOffset: { width: 0, height: 8 },
+                  shadowOpacity: 0.1,
+                  shadowRadius: 20,
+                  elevation: 10,
                 }
               ]}>
                 {/* Header */}
-                <View style={tw`px-4 pt-4 pb-2 border-b border-gray-100`}>
+                <View style={tw`px-4 pt-4 pb-3 border-b border-gray-200`}>
                   <View style={tw`flex-row items-center justify-between`}>
                     <Text style={tw`text-lg font-bold text-gray-900`}>Help & Support</Text>
                     <TouchableOpacity
-                      style={[tw`ml-3 w-8 h-8 rounded-full items-center justify-center`, { backgroundColor: TURQUOISE + '10' }]}
+                      style={[
+                        tw`ml-3 w-8 h-8 rounded-full items-center justify-center`,
+                        { backgroundColor: 'rgba(29, 249, 255, 0.15)' }
+                      ]}
                       onPress={onClose}
                       hitSlop={{ top: 6, bottom: 6, left: 6, right: 6 }}
                     >
@@ -106,8 +110,8 @@ const HelpFeedbackModal: React.FC<HelpFeedbackModalProps> = ({ visible, onClose 
                     <Row
                       icon="phone-portrait"
                       title="App Support"
-                      subtitle="staygenieapp@gmail.com"
-                      onPress={() => handleEmailPress('staygenieapp@gmail.com')}
+                      subtitle="support@staygenie.app"
+                      onPress={() => handleEmailPress('support@staygenie.app')}
                     />
                   </View>
                 </View>
@@ -125,18 +129,27 @@ const Row = ({ icon, title, subtitle, onPress }:{
 }) => (
   <TouchableOpacity
     style={[
-      tw`flex-row items-center py-3 px-4 rounded-xl mb-2`,
-      { backgroundColor: TURQUOISE_SUBTLE, borderColor: TURQUOISE_BORDER, borderWidth: 1 },
+      tw`flex-row items-center py-3 px-4 rounded-xl mb-2 bg-white border border-gray-200`,
+      {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.1,
+        shadowRadius: 2,
+        elevation: 3,
+      }
     ]}
     onPress={onPress}
-    activeOpacity={0.7}
+    activeOpacity={0.8}
   >
-    <View style={[tw`w-10 h-10 rounded-full items-center justify-center mr-3`, { backgroundColor: TURQUOISE + '15' }]}>
+    <View style={[
+      tw`w-10 h-10 rounded-full items-center justify-center mr-3`,
+      { backgroundColor: 'rgba(29, 249, 255, 0.15)' }
+    ]}>
       <Ionicons name={icon} size={20} color={TURQUOISE_DARK} />
     </View>
     <View style={tw`flex-1`}>
       <Text style={tw`text-sm font-bold text-gray-900`}>{title}</Text>
-      <Text style={[tw`text-xs`, { color: TURQUOISE_DARK }]}>{subtitle}</Text>
+      <Text style={tw`text-xs text-gray-600`}>{subtitle}</Text>
     </View>
     <Ionicons name="chevron-forward" size={16} color="#9CA3AF" />
   </TouchableOpacity>

@@ -14,7 +14,7 @@ import { Text } from '../components/CustomText';
 // Custom hook for auto-typing placeholder text
 const useTypingPlaceholder = (
   words: string[], 
-  typingSpeed = 100, 
+  typingSpeed = 0, 
   deletingSpeed = 50, 
   delayAfterWord = 2000
 ) => {
