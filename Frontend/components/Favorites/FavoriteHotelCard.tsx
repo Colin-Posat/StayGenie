@@ -397,12 +397,16 @@ const FavoriteHotelCard: React.FC<FavoriteHotelCardProps> = ({
             >
               <View>
                 <ScrollView
-                  horizontal
-                  pagingEnabled
-                  showsHorizontalScrollIndicator={false}
-                  onScroll={handleScroll}
-                  scrollEventThrottle={16}
-                >
+  horizontal
+  pagingEnabled
+  snapToInterval={CARD_WIDTH}
+  decelerationRate="fast"
+  snapToAlignment="start"
+  showsHorizontalScrollIndicator={false}
+  onScroll={handleScroll}
+  scrollEventThrottle={16}
+>
+
                   {images.map((img, idx) => (
                     <View key={idx} style={{ width: CARD_WIDTH, height: CARD_HEIGHT, overflow: 'hidden' }}>
                       <KenBurnsImage uri={img} isActive={idx === currentImageIndex} />

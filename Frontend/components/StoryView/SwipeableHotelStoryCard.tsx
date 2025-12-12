@@ -31,7 +31,8 @@ import { formatLocationDisplay, getCountryName } from '../../utils/countryMappin
 import { PanGestureHandler, TapGestureHandler } from 'react-native-gesture-handler';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
-const CARD_WIDTH = screenWidth - 37;
+const CARD_WIDTH = Math.round(screenWidth - 37);
+
 const CARD_HEIGHT = screenHeight * 0.35;
 
 const TURQUOISE = '#1df9ff';
@@ -600,18 +601,38 @@ const dotAnimations = useRef(
           >
             <View>
               <ScrollView
-                ref={scrollViewRef}
-                horizontal
-                pagingEnabled
-                showsHorizontalScrollIndicator={false}
-                onScroll={handleScroll}
-                scrollEventThrottle={16}
-                scrollEnabled={true}
-              >
+  horizontal
+  pagingEnabled
+  snapToInterval={CARD_WIDTH}
+  decelerationRate="fast"
+  snapToAlignment="start"
+  showsHorizontalScrollIndicator={false}
+  onScroll={handleScroll}
+  scrollEventThrottle={16}
+>
                 {images.map((img, idx) => (
-                  <View key={idx} style={{ width: CARD_WIDTH, height: CARD_HEIGHT, overflow: 'hidden' }}>
-                    <KenBurnsImage uri={img} isActive={idx === currentImageIndex} />
-                  </View>
+                  <View
+  key={idx}
+  style={{
+    width: CARD_WIDTH,
+    height: CARD_HEIGHT,
+    overflow: 'hidden', // PAGE CLIP
+  }}
+>
+  <View
+    style={{
+      width: CARD_WIDTH,
+      height: CARD_HEIGHT,
+      overflow: 'hidden', // INNER CLIP (important)
+    }}
+  >
+    <KenBurnsImage
+      uri={img}
+      isActive={idx === currentImageIndex}
+    />
+  </View>
+</View>
+
                 ))}
               </ScrollView>
             </View>
@@ -1215,7 +1236,6 @@ const dotAnimations = useRef(
           setShowEmailSignInModal(false);
           setTimeout(() => setShowEmailSignUpModal(true), 250);
         }}
-        onForgotPassword={() => { }}
       />
 
       <ReviewsModal

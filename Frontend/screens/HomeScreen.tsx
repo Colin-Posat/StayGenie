@@ -489,6 +489,22 @@ const saveRecentSearch = useCallback(async (searchQuery: string) => {
   }
 }, [addRecentSearch]);
 
+const replaceDateInSearch = (prev: string, newDate: string) => {
+  if (!prev.trim()) return newDate;
+
+  // Match date ranges like "Nov 28, 2025 - Dec 3, 2025"
+  const dateRegex = /\b([A-Z][a-z]{2}\s\d{1,2},\s\d{4})\s*-\s*([A-Z][a-z]{2}\s\d{1,2},\s\d{4})\b/;
+
+  let cleaned = prev.replace(dateRegex, '').trim();
+
+  // Cleanup leftover bullets or spacing
+  cleaned = cleaned.replace(/•\s*•/g, '•').trim();
+  cleaned = cleaned.replace(/^•\s*/, '').replace(/\s*•$/, '');
+
+  return cleaned.length > 0 ? `${cleaned} • ${newDate}` : newDate;
+};
+
+
 const debugHotelState = () => {
   console.log('🔍 HOTEL STATE DEBUG:', {
     displayHotelsCount: displayHotels.length,
@@ -1943,11 +1959,9 @@ const handleBackPress = useCallback(() => {
 
             <View style={tw`-mx-1 mb-3`}>
               <SearchGuidePills
-                onDateSelect={(dateText) => {
-                  setEditedSearchQuery(prev => 
-                    prev.trim() ? `${prev.trim()} • ${dateText}` : dateText
-                  );
-                }}
+  onDateSelect={(dateText) => {
+    setEditedSearchQuery(prev => replaceDateInSearch(prev, dateText));
+  }}
                 onBudgetSelect={(budgetText) => {
                   setEditedSearchQuery(prev => 
                     prev.trim() ? `${prev.trim()} • ${budgetText}` : budgetText
