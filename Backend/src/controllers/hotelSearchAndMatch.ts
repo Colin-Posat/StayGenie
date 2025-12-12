@@ -393,7 +393,7 @@ const processHotelWithImmediateInsights = async (
     const basicHotelData = {
       ...enrichedHotelSummary,
       aiMatchPercent: hotel.aiMatchPercent,
-      whyItMatches: "Analyzing perfect match reasons...",
+      whyItMatches: "Loading AI insights...",
       funFacts: ["Generating interesting facts..."],
       nearbyAttractions: ["Finding nearby attractions..."],
       locationHighlight: "Analyzing location advantages...",
