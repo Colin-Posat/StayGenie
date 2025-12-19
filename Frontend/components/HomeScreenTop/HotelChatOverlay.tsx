@@ -13,6 +13,7 @@ import {
   KeyboardAvoidingView,
   StyleSheet,
   Keyboard,
+  TouchableWithoutFeedback, 
 } from 'react-native';
 import { Text } from '../../components/CustomText'; 
 import { Ionicons } from '@expo/vector-icons';
@@ -411,19 +412,17 @@ const HotelChatOverlay: React.FC<HotelChatOverlayProps> = ({
   if (!visible) return null;
 
   return (
-    <View
-      style={[
-        StyleSheet.absoluteFillObject,
-        {
-          zIndex: 999999,
-          backgroundColor: 'rgba(0,0,0,0.7)', // FULLSCREEN BACKDROP (darkens top/bottom bars too)
-        },
-      ]}
-    >
-      {/* Fade container mirrors ConversationalRefineOverlay */}
-      <Animated.View style={[StyleSheet.absoluteFillObject, { opacity: opacityAnim }]} pointerEvents="auto">
-        {/* Click-anywhere backdrop to close */}
-        <TouchableOpacity style={StyleSheet.absoluteFillObject} onPress={onClose} activeOpacity={1} />
+<View
+  style={[
+    StyleSheet.absoluteFillObject,
+    {
+      zIndex: 999999,
+      backgroundColor: 'rgba(0,0,0,0.7)',
+    },
+  ]}
+>
+  <Animated.View style={[StyleSheet.absoluteFillObject, { opacity: opacityAnim }]} pointerEvents="box-none">
+    <TouchableOpacity style={StyleSheet.absoluteFillObject} onPress={onClose} activeOpacity={1} />
 
         {/* Centered panel with keyboard avoidance */}
         <KeyboardAvoidingView
@@ -484,58 +483,66 @@ const HotelChatOverlay: React.FC<HotelChatOverlayProps> = ({
               </View>
 
               {/* Input area */}
-              <View style={[tw`px-4 py-3 border-t border-gray-100`]}>
-                {contextReady && !isLoading && <SuggestionPills />}
+             <View 
+  style={[tw`px-4 py-3 border-t border-gray-100`]}
+  pointerEvents="box-none"
+>
+  {contextReady && !isLoading && <SuggestionPills />}
 
-                <View style={tw`flex-row items-end`}>
-                  <View
-                    style={[
-                      tw`flex-1 rounded-xl border mr-2`,
-                      {
-                        backgroundColor: '#FAFAFA',
-                        borderColor: inputText ? TURQUOISE_LIGHT : '#E5E7EB',
-                        borderWidth: inputText ? 1.5 : 1,
-                        maxHeight: 100,
-                      },
-                    ]}
-                  >
-                    <TextInput
-                      style={[
-                        tw`px-3 py-2 text-base text-gray-900`,
-                        { lineHeight: Platform.OS === 'ios' ? 20 : 20, minHeight: 42 },
-                      ]}
-                      value={inputText}
-                      onChangeText={handleInputChange}
-                      placeholder={contextReady ? 'Ask about this hotel…' : 'Please wait…'}
-                      placeholderTextColor="#9CA3AF"
-                      maxLength={500}
-                      editable={contextReady && !isTyping}
-                      returnKeyType="send"
-                      blurOnSubmit={false}
-                      onSubmitEditing={handleSend}
-                      selectionColor={TURQUOISE}
-                    />
-                  </View>
+  <View style={tw`flex-row items-end`} pointerEvents="box-none">
+    <View
+      style={[
+        tw`flex-1 rounded-xl border mr-2`,
+        {
+          backgroundColor: '#FAFAFA',
+          borderColor: inputText ? TURQUOISE_LIGHT : '#E5E7EB',
+          borderWidth: inputText ? 1.5 : 1,
+          maxHeight: 100,
+        },
+      ]}
+    >
+      <TextInput
+        ref={inputRef}
+        style={[
+          tw`px-3 py-2 text-base text-gray-900`,
+          { lineHeight: Platform.OS === 'ios' ? 20 : 20, minHeight: 42 },
+        ]}
+        value={inputText}
+        onChangeText={handleInputChange}
+        placeholder={contextReady ? 'Ask about this hotel…' : 'Please wait…'}
+        placeholderTextColor="#9CA3AF"
+        maxLength={500}
+        editable={contextReady && !isTyping}
+        returnKeyType="send"
+        blurOnSubmit={false}
+        onSubmitEditing={handleSend}
+        selectionColor={TURQUOISE}
+        multiline={false}
+      />
+    </View>
 
-                  <TouchableOpacity
-                    style={[
-                      tw`w-11 h-11 rounded-xl items-center justify-center`,
-                      {
-                        backgroundColor: inputText.trim() && contextReady && !isTyping ? TURQUOISE : '#F3F4F6',
-                      },
-                    ]}
-                    onPress={handleSend}
-                    disabled={!inputText.trim() || !contextReady || isTyping}
-                    activeOpacity={0.7}
-                  >
-                    <Ionicons
-                      name="send"
-                      size={18}
-                      color={inputText.trim() && contextReady && !isTyping ? 'white' : '#9CA3AF'}
-                    />
-                  </TouchableOpacity>
-                </View>
-              </View>
+    <View
+      style={[
+        tw`w-11 h-11 rounded-xl items-center justify-center`,
+        {
+          backgroundColor: inputText.trim() && contextReady && !isTyping ? TURQUOISE : '#F3F4F6',
+        },
+      ]}
+      onTouchStart={(e) => {
+        e.stopPropagation();
+        if (inputText.trim() && contextReady && !isTyping) {
+          handleSend();
+        }
+      }}
+    >
+      <Ionicons
+        name="send"
+        size={18}
+        color={inputText.trim() && contextReady && !isTyping ? 'white' : '#9CA3AF'}
+      />
+    </View>
+  </View>
+</View>
             </View>
           </Animated.View>
         </KeyboardAvoidingView>

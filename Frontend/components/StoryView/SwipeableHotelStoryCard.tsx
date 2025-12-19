@@ -561,6 +561,8 @@ const handleViewDetailsPress = async () => {
 const dotAnimations = useRef(
   images.map(() => new Animated.Value(0))
 ).current;
+const isLoading = isInsightsLoading || insightsStatus === "loading" || insightsStatus === "partial";
+
   return (
   <View style={[tw`rounded-2xl`, {
     width: CARD_WIDTH,
@@ -570,22 +572,6 @@ const dotAnimations = useRef(
     shadowRadius: 8,
     elevation: 8,
   }]}>
-
-    {/* FULL INTERACTION LOCK */}
-    {(isInsightsLoading || insightsStatus === "loading" || insightsStatus === "partial") && (
-      <View
-        pointerEvents="auto"
-        style={{
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          zIndex: 99999,
-          backgroundColor: 'rgba(255,255,255,0)',
-        }}
-      />
-    )}
 
     
     <View style={[tw`border-2 border-gray-200 rounded-2xl overflow-hidden bg-white`]}>
@@ -598,6 +584,7 @@ const dotAnimations = useRef(
             ref={tapRef}
             waitFor={panRef}
             onHandlerStateChange={handleTap}
+            enabled={!isLoading}
           >
             <View>
               <ScrollView
@@ -770,9 +757,10 @@ const dotAnimations = useRef(
 
 
 {/* Show Map Button - Bottom Right */}
-<View style={tw`absolute bottom-2.5 right-2.5 z-40`}>
+<View style={tw`absolute bottom-2.5 right-2.5 z-40`} pointerEvents={isLoading ? 'none' : 'auto'}>
   <TouchableOpacity
     onPress={() => setShowFullMap(true)}
+    disabled={isLoading}
     style={[
       tw`py-2.8 px-3 rounded-xl flex-row items-center gap-1.5`,
       {
@@ -851,8 +839,10 @@ const dotAnimations = useRef(
 <TouchableOpacity
   onPress={toggleExpanded}
   activeOpacity={0.8}
+  disabled={isLoading}
   style={[
     tw`rounded-xl mb-2.5`,
+    { opacity: isLoading ? 0.6 : 1 },
     {
       backgroundColor: 'white',
       borderWidth: 1,
@@ -863,6 +853,7 @@ const dotAnimations = useRef(
       shadowRadius: 2,
       elevation: 3,
       overflow: 'hidden',
+      opacity: isLoading ? 0.6 : 1,
     }
   ]}
 >
