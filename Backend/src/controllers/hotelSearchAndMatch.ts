@@ -1855,7 +1855,11 @@ sendUpdate('progress', {
       }
     }
 
-    const hasPriceConstraint = !!(parsedQuery.minCost || parsedQuery.maxCost);
+    const hasPriceConstraint = !!(
+  parsedQuery.minCost || 
+  parsedQuery.maxCost || 
+  parsedQuery.cheap // ADD THIS
+);
 const hotelFetchLimit = hasPriceConstraint ? 1000 : SMART_HOTEL_LIMIT;
 
 
