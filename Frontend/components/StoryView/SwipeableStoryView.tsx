@@ -1,4 +1,4 @@
-// SwipeableStoryView.tsx - Updated with Enhanced Room Image Support, Loading Preview, and Safety Rating Support
+// SwipeableStoryView.tsx - Updated with Enhanced Room Image Support, Loading Preview, Safety Rating Support, and Analytics
 import React, { useState, useEffect } from 'react';
 import {
   View,
@@ -22,6 +22,8 @@ interface SwipeableStoryViewProps {
   onHotelPress?: (hotel: Hotel) => void;
   onViewDetails?: (hotel: Hotel) => void;
   onSave?: (hotel: Hotel) => void;
+  searchQuery: string; // ✅ ADDED FOR ANALYTICS
+  onScrollToPosition?: (position: number) => void; // ✅ ADDED FOR ANALYTICS
   checkInDate?: Date;
   checkOutDate?: Date;
   adults?: number;
@@ -41,7 +43,6 @@ interface SwipeableStoryViewProps {
   searchParams?: any;
   showSafetyRatings?: boolean;
   safetyRatingThreshold?: number;
-  
 }
 
 const SwipeableStoryView: React.FC<SwipeableStoryViewProps> = ({
@@ -49,6 +50,8 @@ const SwipeableStoryView: React.FC<SwipeableStoryViewProps> = ({
   onHotelPress,
   onViewDetails,
   onSave,
+  searchQuery, // ✅ ADDED FOR ANALYTICS
+  onScrollToPosition, // ✅ ADDED FOR ANALYTICS
   checkInDate,
   checkOutDate,
   adults = 2,
@@ -69,6 +72,14 @@ const SwipeableStoryView: React.FC<SwipeableStoryViewProps> = ({
   const [streamingHotelsCount, setStreamingHotelsCount] = useState(0);
   const [lastStreamedHotel, setLastStreamedHotel] = useState<Hotel | null>(null);
   const [showNewHotelAnimation, setShowNewHotelAnimation] = useState(false);
+  const [currentCardIndex, setCurrentCardIndex] = useState(0); // ✅ ADDED FOR ANALYTICS
+
+  // ✅ ADDED - Track scroll position and report to parent
+  useEffect(() => {
+    if (currentCardIndex >= 0) {
+      onScrollToPosition?.(currentCardIndex);
+    }
+  }, [currentCardIndex, onScrollToPosition]);
 
   // Track streaming hotels and trigger animations
   useEffect(() => {
@@ -205,7 +216,7 @@ const enhanceHotel = (hotel: Hotel): EnhancedHotel => {
     // Use our enhanced image generation that prioritizes photo gallery
     images: generateImages(hotel),
     // Preserve the full photo gallery for the PhotoGallerySlide
-    photoGalleryImages: hotel.photoGalleryImages || [], // ADD: Preserve full photo gallery
+    photoGalleryImages: hotel.photoGalleryImages || [],
     // Preserve the original room images for reference
     firstRoomImage: hotel.firstRoomImage,
     secondRoomImage: hotel.secondRoomImage,
@@ -348,6 +359,9 @@ const enhanceHotel = (hotel: Hotel): EnhancedHotel => {
             onViewDetails={() => handleViewDetails(hotel)}
             onHotelPress={() => handleHotelPress(hotel)}
             index={index}
+            position={index} // ✅ ADDED FOR ANALYTICS
+            searchQuery={searchQuery} // ✅ ADDED FOR ANALYTICS
+            isVisible={index === currentCardIndex} // ✅ ADDED FOR ANALYTICS
             totalCount={enhancedHotels.length}
             checkInDate={checkInDate}
             checkOutDate={checkOutDate}
@@ -436,10 +450,20 @@ const enhanceHotel = (hotel: Hotel): EnhancedHotel => {
       ? `placeholder-${index}`
       : `hotel-${item.id}`
   }
+  // ✅ ADDED - Track which card is visible for analytics
+  onViewableItemsChanged={({ viewableItems }) => {
+    if (viewableItems.length > 0) {
+      const index = viewableItems[0].index || 0;
+      setCurrentCardIndex(index);
+    }
+  }}
+  viewabilityConfig={{
+    itemVisiblePercentThreshold: 50, // Card is "visible" when 50% shown
+  }}
   showsVerticalScrollIndicator={false}
   contentContainerStyle={{
     paddingTop: 8,
-    paddingBottom: Platform.OS === 'ios' ? 70 : 70, // Add bottom padding to clear tab bar
+    paddingBottom: Platform.OS === 'ios' ? 70 : 70,
   }}
   maxToRenderPerBatch={3}
   windowSize={5}

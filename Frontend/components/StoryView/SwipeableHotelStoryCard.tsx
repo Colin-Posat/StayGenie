@@ -135,6 +135,9 @@ interface SwipeableHotelStoryCardProps {
   onViewDetails: () => void;
   onHotelPress: () => void;
   index: number;
+  position: number; // ✅ ADD THIS
+  searchQuery: string; // ✅ ADD THIS
+  isVisible: boolean; // ✅ ADD THIS
   totalCount: number;
   checkInDate?: Date;
   checkOutDate?: Date;
@@ -147,7 +150,6 @@ interface SwipeableHotelStoryCardProps {
   occupancies?: any[];
   searchParams?: any;
   topAmenities?: string[];
-
   safetyRating?: number;
   safetyJustification?: string;
   safetySource?: string;
@@ -271,6 +273,9 @@ const SwipeableHotelStoryCard: React.FC<SwipeableHotelStoryCardProps> = ({
   onHotelPress,
   onFavoriteSuccess,
   onShowSignUpModal,
+  position, // ✅ ADD THIS
+  searchQuery, // ✅ ADD THIS
+  isVisible,
   index,
   totalCount,
   checkInDate,

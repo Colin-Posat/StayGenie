@@ -26,6 +26,7 @@ import { useFocusEffect } from '@react-navigation/native';
 import { useAuth } from '../contexts/AuthContext';
 import { initAnalytics, logEvent } from '../config/firebaseConfig';
 import Voice from '@react-native-voice/voice';
+import { AnalyticsService } from '../services/analytics';
 
 const { width, height } = Dimensions.get('window');
 
@@ -543,6 +544,10 @@ const InitialSearchScreen: React.FC<InitialSearchScreenProps> = ({
     console.log('Hotel style selected from pills:', styleText);
 
     if (searchQuery.trim()) {
+      AnalyticsService.trackSearchInitiated(
+      searchQuery.trim(),
+      isListening ? 'voice' : 'text'
+    );
       setSearchQuery(prev => `${prev.trim()} • ${styleText}`);
     } else {
       setSearchQuery(styleText);
@@ -652,6 +657,7 @@ const InitialSearchScreen: React.FC<InitialSearchScreenProps> = ({
 
   // Handle recent search selection
   const handleRecentSearchPress = async (search: string) => {
+    await AnalyticsService.trackSearchInitiated(search, 'recent_search');
     if (!isTransitioning) {
       console.log('Starting recent search transition for:', search);
 
@@ -698,6 +704,8 @@ const InitialSearchScreen: React.FC<InitialSearchScreenProps> = ({
 
   // Handle search query carousel press
   const handleSearchQueryPress = async (query: string) => {
+     await AnalyticsService.trackSearchInitiated(query, 'carousel');
+  
     if (!isTransitioning) {
       console.log('Starting search query carousel transition for:', query);
 

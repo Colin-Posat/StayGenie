@@ -33,7 +33,7 @@ import SearchErrorScreen from '../components/HomeScreenTop/NoHotelsFoundScreen';
 const OVERLAY_BACKDROP = 'rgba(0,0,0,0.7)';
 import dotenv from 'dotenv';
 import { useFonts } from 'expo-font';
-
+import { AnalyticsService } from '../services/analytics';
 import { useAuth } from '../contexts/AuthContext';
 
 import { RecentSearch } from '../contexts/AuthContext';
@@ -766,6 +766,7 @@ case 'progress':
       break;
 
     case 'complete':
+      
       searchCompleted.current = true; 
       console.log('🎉 All hotels found and AI-enhanced!');
       setSearchParamsLoading(false);
@@ -1064,6 +1065,14 @@ const executeStreamingSearch = async (userInput: string) => {
             break;
             
           case 'complete':
+            const realHotelsCount = displayHotels.filter(h => !h.isPlaceholder).length;
+  
+  // ✅ ADD THIS
+  await AnalyticsService.trackSearchSuccess(
+    searchQuery,
+    realHotelsCount
+  );
+
             searchCompleted.current = true; 
             handleStreamingUpdate({ type: 'complete', ...data }, userInput);
             
@@ -1084,6 +1093,10 @@ const executeStreamingSearch = async (userInput: string) => {
             break;
             
           case 'error':
+             await AnalyticsService.trackSearchFailed(
+    searchQuery,
+    'api_error'
+  );
             console.error('❌ Server error:', data.message);
             if (eventSource) {
               eventSource.close();
@@ -1121,6 +1134,8 @@ const executeStreamingSearch = async (userInput: string) => {
 
     // Set timeout for safety (30 seconds)
     timeoutId = setTimeout(() => {
+       AnalyticsService.trackSearchFailed(searchQuery, 'timeout');
+  
   console.warn('⏰ SSE search timeout after 30 seconds');
   
   if (eventSource) {
@@ -2096,6 +2111,11 @@ const handleBackPress = useCallback(() => {
       hotels={displayHotels}
       onHotelPress={handleHotelPress}
       onViewDetails={handleViewDetails}
+      searchQuery={searchQuery}
+      onScrollToPosition={(pos) => {
+    // ✅ ADD THIS
+    AnalyticsService.trackScrollDepth(pos, displayHotels.length);
+  }}
       checkInDate={confirmedCheckInDate}
       checkOutDate={confirmedCheckOutDate}
       adults={adults}
