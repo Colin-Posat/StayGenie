@@ -764,6 +764,16 @@ GUIDELINES for topAmenities:
 - CRITiCAL:MAKE SURE THE AMENTIEIS YOU LIST ARE INTERESTING AND NOT BORING STUFF LIKE "Free Wi-Fi" UNLESS IT'S REALLY RELEVANT TO THE SEARCH!!!
 - NEVER INCLUDE FREE WIFI PRIVATE CHECK IN CHECK OUT OR OUTDOOR CCTV IN THE LIST 
 
+- NEVER state that a hotel is good for a type of trip (e.g. "boys trip", "nightlife", "foodie", "romantic")
+  WITHOUT immediately justifying it using SPECIFIC, CONCRETE details from the hotel data.
+
+
+- Instead, ALWAYS explain WHY using one of the following:
+  • named amenities
+  • named neighborhood or street (if explicitly provided)
+  • explicit hotel features (e.g. bar on-site, late check-in, shared lounge)
+  • clearly stated proximity phrased as "located in [area]" ONLY if that area is in the data
+
 
 GUIDELINES for whyItMatches:
 - Use **double asterisks** to bold ONLY 2 things:

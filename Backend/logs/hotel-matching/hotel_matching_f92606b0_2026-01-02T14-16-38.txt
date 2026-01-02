@@ -1,0 +1,72 @@
+
+=== HOTEL MATCHING PROMPT LOG ===
+Search ID: f92606b0-b9ed-4e09-bee2-3901ae5fb42b
+Timestamp: 2026-01-02T14:16:38.610Z
+User Query: Beachfront hotels in Maldives with infinity pools
+Destination: Maafushi, MV
+Hotel Count: 11
+Character Count: 6172
+Estimated Tokens: ~1543
+
+=== PROMPT CONTENT ===
+USER REQUEST: "Beachfront hotels in Maldives with infinity pools"
+STAY: 3 nights
+
+🎯 RANKING PRIORITY ORDER:
+1. USER PREFERENCES MATCH (Most Important)
+2. Location convenience
+3. Star rating and quality
+4. Value for money
+
+🎯 YOUR PRIMARY TASK: Analyze each hotel's description and amenities to find the BEST matches for: "Beachfront hotels in Maldives with infinity pools"
+
+📋 STEP-BY-STEP MATCHING PROCESS:
+1. READ each hotel's description carefully for keywords matching user request
+2. CHECK amenities list for relevant features 
+3. PRIORITIZE hotels that mention specific user requirements in their text
+4. RANK by relevance to user request, NOT by list position
+
+🔍 KEYWORD MATCHING EXAMPLES:
+- User wants "Central Park" → Look for "Central Park", "near park", "park views" in descriptions
+- User wants "free breakfast" → Look for "breakfast", "complimentary breakfast", "free breakfast" 
+- User wants "spa" → Look for "spa", "wellness", "massage", "treatments"
+- User wants "business hotel" → Look for "business", "conference", "meeting rooms"
+- User wants "budget" → Prioritize lower prices and "value" mentions
+- User wants "luxury" → Look for "luxury", "premium", "upscale", higher star ratings
+
+⚠️ CRITICAL RULES:
+- IGNORE the order hotels appear in the list - analyze content only
+- You MUST select exactly 15 hotels using their exact names from the list
+- Base rankings on how well each hotel matches "Beachfront hotels in Maldives with infinity pools", not on price or list position
+- If a hotel explicitly mentions user requirements, rank it higher
+- If no perfect matches exist, select the 15 closest matches available
+
+📝 REQUIRED OUTPUT FORMAT:
+1. [exact hotel name from list] | [match percentage 1-100]%
+2. [exact hotel name from list] | [match percentage 1-100]%
+3. [exact hotel name from list] | [match percentage 1-100]%
+...continue through 15
+
+Format (exact numbering required):
+1. [exact hotel name from list] | [match percentage]%
+2. [exact hotel name from list] | [match percentage]%
+3. [exact hotel name from list] | [match percentage]%
+...continue through...
+15. [exact hotel name from list] | [match percentage]%
+
+HOTELS AVAILABLE:
+1: Triton Beach Hotel & Spa | $117/night | | Spa Wellness FacilitiesIndulge rejuvenating massages, facials, indoor pool, sauna, gym.Gourmet Dining quality servicesSavor delectable meals on-site restaurant opt 24-hour room svc. Benefit from concierges, complimentary Wi-Fi, gift shops.Comfortable Rooms Convenient LocationStay one of 22 elegant|  
+2: KUE Hotel Maafushi | $162/night | | Welcome to KUE Hotel Maafushi, serene escape paradise!Prime LocationNestled near Maafushi Harbor, hotel easy access to breathtaking sites like Maafushi Reef stunning beaches. yourself vibrant local culture attractions short stroll away.Relaxation & WellnessUnwind full-service spa, revitalizing| Beach towels 
+3: iCom Blue Sea View | $442/night | | paradise iCom Blue Sea View, sun-kissed shores meet luxury.Stunning LocationJust steps away from Water Sports Beach Maafushi Harbor, yourself vibrant local culture easy access to historical sites breathtaking reefs.Comfort & ConnectivityOur 50 well-appointed guestrooms feature private balconies| Beach towels 
+4: Paradise Retreat | $75/night | | Oceanfront EscapeImmerse yourself stunning views from terrace garden Paradise Retreat. the convenience of complimentary wireless internet access throughout property.Dining DelightsIndulge delicious meals on-site restaurant grab quick bite cozy coffee shop/cafe. Start day right complimentary English| Beach towels 
+5: Maamadi Boutique | $157/night | | Spa ServicesIndulge massages, body treatments, facials exquisite spa to rejuvenate body mind.Convenient AmenitiesEnjoy complimentary Wi-Fi, concierges, on-site shopping hassle-free stay.Exquisite Dining delicious meals Blue Bandiya grab quick bite coffee shop, daily breakfast options await from|  
+6: Kaani Palm Beach | $151/night | | Spa ServicesIndulge massages, body treatments, facials full-service spa relaxing rejuvenation.Recreational AmenitiesUnwind outdoor pool stay active gym day hotel's private beach perfect blend of leisure activity.Fine Dining ViewEnjoy delectable meals Palm Beach Restaurant stunning ocean view| Private beach, Beach loungers, Beach towels, Beach yoga 
+7: iCom Marina Sea View | $382/night | | Scenic Views Convenient AmenitiesTake views from garden make use of amenities such complimentary wireless internet access concierges. This hotel arcade/game room, gift shops/newsstands, wedding services.Dining Options Socializing SpacesGrab bite Outside hut, one of hotel's 2 restaurants, stay take|  
+8: Zinnia Villa | $147/night | | serene beauty of Zinnia Villa Maafushi, ocean meets comfort.Recreation RelaxationWith inviting indoor pool lush gardens, unwind soaking breathtaking views from terrace. the tranquil atmosphere complimentary recreational opportunities.Dining DelightSavor delicious meals on-site restaurant grab snack| Beach towels 
+9: Rosemary Boutique | $180/night | | rooms MaafushiExquisite Dining culinary journey on-site restaurant offering delectable dishes memorable dining.Unwind RelaxEnjoy serene ambiance of garden terrace, perfect unwinding day of exploration adventure. with Easelocated, hotel bike hire guests to beautiful surroundings of Maafushi| Hot tub, Pool loungers, Beach toys 
+10: Velana Beach Hotel Maldives | $313/night | | paradise Velana Beach Hotel Maldives, sun, sand, stunning views await you!Private Beach AccessRelax private beach, steps from rooms. a day of sunbathing partake exciting water activities, ensuring beach nothing short of spectacular.Culinary DelightsSavor delectable meals Kaalamaa Restaurant,| Private beach nearby 
+11: Kaani Grand Seaview | $208/night | | Spa, gym, Conference Room - relaxation spa, stay active gym, host successful events conference room Kaani Grand Seaview.Ocean View Rooms Private Balcony - of ocean views from private balcony air-conditioned room equipped modern amenities like flat-screen TV, minibar, personal safe.Beachfront Dining| Pool loungers, Beach club nearby (paid), Beach toys 
+
+REMEMBER: Always select 15 hotels using exact names from the list above.
+
+=== END LOG ===

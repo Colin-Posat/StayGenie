@@ -19,7 +19,7 @@ interface ArticleQuery {
 }
 
 interface HotelArticle {
-  id: string; // ADD: Hotel system ID for deep linking
+  id: string;
   name: string;
   image: string;
   description: string;
@@ -32,6 +32,11 @@ interface HotelArticle {
   placeId?: string;
 }
 
+interface FAQItem {
+  question: string;
+  answer: string;
+}
+
 interface ArticleOutput {
   city: string;
   query: string;
@@ -39,6 +44,7 @@ interface ArticleOutput {
   excerpt: string;
   intro: string;
   hotels: HotelArticle[];
+  faqs: FAQItem[];
 }
 
 function getThreeMonthsFromNow(): { checkIn: string; checkOut: string } {
@@ -248,6 +254,55 @@ Return as JSON: { "excerpt": "...", "intro": "..." }`
   };
 }
 
+async function generateFAQs(
+  title: string,
+  city: string,
+  query: string
+): Promise<FAQItem[]> {
+  console.log(`Generating FAQs for "${title}"...`);
+  
+  const completion = await openai.chat.completions.create({
+    model: 'gpt-4o-mini',
+    messages: [
+      {
+        role: 'system',
+        content: `DO NOT USE EM DASHES AND BE PASSABLE TO AI DETECTORS. You are a travel expert creating helpful FAQs for hotel articles. Generate 5 practical, specific questions and detailed answers that travelers would actually want to know. Focus on practical concerns like pricing, policies, amenities, location tips, and booking advice. Make answers informative and specific to the city and hotel type. Each answer should be 2-4 sentences.`
+      },
+      {
+        role: 'user',
+        content: `Article title: "${title}"
+City: ${city}
+Search query: "${query}"
+
+Generate 5 FAQ items that would be genuinely helpful for someone searching for these hotels. Return as JSON in this exact format:
+{
+  "faqs": [
+    {
+      "question": "...",
+      "answer": "..."
+    }
+  ]
+}
+
+Make questions specific and practical. Include local insights, pricing guidance, and actionable tips. Avoid generic questions.`
+      }
+    ],
+    temperature: 0.8,
+    max_tokens: 1000,
+    response_format: { type: "json_object" }
+  });
+  
+  const content = completion.choices[0]?.message?.content?.trim() || '{"faqs": []}';
+  const result = JSON.parse(content);
+  
+  // Handle both array and object responses
+  const faqs = Array.isArray(result) ? result : (result.faqs || []);
+  
+  console.log(`Generated ${faqs.length} FAQs`);
+  
+  return faqs;
+}
+
 function extractPrice(priceData: any): string {
   if (!priceData) return "Price unavailable";
   
@@ -293,6 +348,13 @@ async function generateSingleArticle(articleQuery: ArticleQuery): Promise<Articl
   
   // Step 3: Generate excerpt and intro
   const { excerpt, intro } = await generateExcerptAndIntro(articleQuery.query, articleQuery.title);
+  
+  // Step 3.5: Generate FAQs
+  const faqs = await generateFAQs(
+    articleQuery.title,
+    articleQuery.city,
+    articleQuery.query
+  );
   
   // Step 4: Process each hotel
   const hotelArticles: HotelArticle[] = [];
@@ -345,7 +407,7 @@ async function generateSingleArticle(articleQuery: ArticleQuery): Promise<Articl
     
     // Build hotel article with ALL necessary data
     hotelArticles.push({
-      id: hotelId, // CRITICAL: Include hotel system ID
+      id: hotelId,
       name: hotel.name,
       image: image,
       description: summarizedDescription,
@@ -354,7 +416,7 @@ async function generateSingleArticle(articleQuery: ArticleQuery): Promise<Articl
       location: location,
       tags: hotel.tags || [],
       isRefundable: hotel.isRefundable || false,
-      placeId: hotel.placeId // For destination searches
+      placeId: hotel.placeId
     });
     
     console.log(`Completed processing ${hotel.name} (ID: ${hotelId})`);
@@ -378,10 +440,11 @@ async function generateSingleArticle(articleQuery: ArticleQuery): Promise<Articl
     title: articleQuery.title,
     excerpt: excerpt,
     intro: intro,
-    hotels: hotelArticles
+    hotels: hotelArticles,
+    faqs: faqs
   };
   
-  console.log(`Article generation complete for "${articleQuery.title}"`);
+  console.log(`Article generation complete with ${faqs.length} FAQs for "${articleQuery.title}"`);
   
   return output;
 }

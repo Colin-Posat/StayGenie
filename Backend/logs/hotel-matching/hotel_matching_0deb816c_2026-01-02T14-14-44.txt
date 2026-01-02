@@ -1,0 +1,106 @@
+
+=== HOTEL MATCHING PROMPT LOG ===
+Search ID: 0deb816c-f32b-4aec-8b2a-ca8113406e8d
+Timestamp: 2026-01-02T14:14:44.283Z
+User Query: hotels for me and my girlfriend in switzerland we want to be close to a lot of hikes bu tdont wanna break teh bank
+Destination: Zermatt, CH
+Hotel Count: 46
+Character Count: 18210
+Estimated Tokens: ~4553
+
+=== PROMPT CONTENT ===
+USER REQUEST: "hotels for me and my girlfriend in switzerland we want to be close to a lot of hikes bu tdont wanna break teh bank"
+STAY: 3 nights
+
+🎯 RANKING PRIORITY ORDER:
+1. LOWEST PRICES (Most Important - user wants cheapest)
+2. USER PREFERENCES MATCH
+3. Basic quality standards
+
+🎯 YOUR PRIMARY TASK: Find the CHEAPEST hotels that match: "hotels for me and my girlfriend in switzerland we want to be close to a lot of hikes bu tdont wanna break teh bank" - ignore factors not specified in the user request
+
+📋 STEP-BY-STEP MATCHING PROCESS:
+1. READ each hotel's description carefully for keywords matching user request
+2. CHECK amenities list for relevant features 
+3. PRIORITIZE hotels that mention specific user requirements in their text
+4. RANK by relevance to user request, NOT by list position
+
+🔍 KEYWORD MATCHING EXAMPLES:
+- User wants "Central Park" → Look for "Central Park", "near park", "park views" in descriptions
+- User wants "free breakfast" → Look for "breakfast", "complimentary breakfast", "free breakfast" 
+- User wants "spa" → Look for "spa", "wellness", "massage", "treatments"
+- User wants "business hotel" → Look for "business", "conference", "meeting rooms"
+- User wants "budget" → Prioritize lower prices and "value" mentions
+- User wants "luxury" → Look for "luxury", "premium", "upscale", higher star ratings
+
+⚠️ CRITICAL RULES:
+- IGNORE the order hotels appear in the list - analyze content only
+- You MUST select exactly 15 hotels using their exact names from the list
+- Base rankings on how well each hotel matches "hotels for me and my girlfriend in switzerland we want to be close to a lot of hikes bu tdont wanna break teh bank", not on price or list position
+- If a hotel explicitly mentions user requirements, rank it higher
+- If no perfect matches exist, select the 15 closest matches available
+
+📝 REQUIRED OUTPUT FORMAT:
+1. [exact hotel name from list] | [match percentage 1-100]%
+2. [exact hotel name from list] | [match percentage 1-100]%
+3. [exact hotel name from list] | [match percentage 1-100]%
+...continue through 15
+
+Format (exact numbering required):
+1. [exact hotel name from list] | [match percentage]%
+2. [exact hotel name from list] | [match percentage]%
+3. [exact hotel name from list] | [match percentage]%
+...continue through...
+15. [exact hotel name from list] | [match percentage]%
+
+HOTELS AVAILABLE:
+1: Hotel Adonis | $326/night | | Rustic Charm Modern ComfortLocated near Klein Matterhorn Cable Car, Hotel Adonis cozy chalet-style stay free WiFi gym access. Convenient Shuttle ServiceFor added convenience, hotel shuttle service to Zermatt train station (additional cost subject to availability). Relaxation ConvenienceIndulge|  
+2: Mountain Paradise | $656/night | | Mountain Getaway Stunning ViewsScenic Relaxation: sauna steam room taking tranquil surroundings breathtaking Matterhorn Mountain views.Cozy Rustic Charm: Each room balcony, seating area, ensuite. Some rooms boast unobstructed views of Winkelmatten Mount Matterhorn, all furnished wood-paneled|  
+3: Charming Alpin Violett | $491/night | | Mountain Views Ski-to-Door AccessRelax stunning mountain views from terrace, direct access to slopes seamless skiing.Modern AmenitiesStay connected free WiFi, unwind fitness room, convenience of fully equipped kitchen this non-smoking apartment.Ski Storage Private Entrance hassle-free skiing ski|  
+4: Matthiol Appartements | $2197/night | | Flats Breathtaking ViewsSpectacular Views: stunning view Zermatt, some rooms offering picturesque sight of Matterhorn.Well-Equipped Apartments: Each self-contained apartment balcony terrace, equipped kitchen, dining area, modern bathrooms bath shower. Free WiFi available convenience.Relaxation &|  
+5: Schweizerhof Zermatt | $1125/night | | Welcome to Schweizerhof Zermatt, retreat heart of breathtaking Zermatt mountains.Relax UnwindIndulge full-service spa, offering rejuvenating massages body treatments to help escape hustle bustle of everyday life. After pampering session, take dip indoor pool unwind sauna.Dining NightlifeSavor|  
+6: Chalet Monte Cristo | $1203/night | | Convenient AmenitiesEnjoy complimentary wireless internet access, concierges, ski storage convenience.Featured AmenitiesTake advantage of luggage storage, laundry facilities, elevator during stay.Individually Decorated RoomsRelax one of 4 uniquely designed guestrooms fireplaces, flat-screen TVs,|  
+7: Matterhorn Lodge Boutique Hotel & Apartments | $741/night | | Classic Alpine Style Decor:Hotel Matterhorn Lodge, opened 2012, charming Alpine ambiance heart of Zermatt. The classic Alpine decor creates cozy inviting atmosphere guests to relax unwind.Wellness Area Saunas: relaxation hotel's wellness area, boasting three different saunas. After day of skiing|  
+8: Alpenlodge | $466/night | | Ski-in Alpenlodge Superior ZermattPanoramic Views Wellness: breathtaking views of Matterhorn from sunny slope location. Free access to modern Zen spa sauna steam bath, relaxation room overlooking mountains.Elegant Alpine Rooms: Relax stylish rooms free Wi-Fi, flat-screen TVs, DVD players. in|  
+9: BEAUSiTE Zermatt | $1086/night | | ultimate mountain retreat BEAUSiTE Zermatt, 4-star hotel heart of Swiss Alps.Indulgent Spa Services Relax rejuvenate exquisite spa, offering range of massages wellness treatments leave feeling pampered revitalized.Recreation & Relaxation Unwind top-notch recreational amenities, including two|  
+10: Hotel Jägerhof | $540/night | | Mountain Views Alpine CharmSpectacular Views: Some of rooms offer breathtaking views of iconic Matterhorn, allowing to yourself beauty of Swiss Alps.Culinary Delights: culinary journey Alpine-style restaurant, Swiss international cuisine, including game specialties, served to tantalize taste|  
+11: Grand Hotel Zermatterhof | $1394/night | | Heritage Hotel ZermattExquisite Dining s: award-winning cuisine Alpine Gourmet Prato Borni, Brasserie Lusi, saycheese! Restaurant. daily afternoon tea live piano music Stars Bar.relaxing: Unwind Vita Borni spa pool sauna. Rooms offer stunning mountain views, some overlooking iconic Matterhorn.|  
+12: Cervino | $1789/night | | Ski-in/Ski-out AccessEnjoy easy access to slopes day full of skiing adventures.Fully Equipped Kitchen BalconyRelax apartment full kitchen private balcony patio stunning mountain views.Convenient LocationLocated steps away from Zermatt-Matterhorn Ski Paradise, this apartment perfect choice mountain|  
+13: Hotel Hemizeus & Iremia Spa | $549/night | | Panoramic Matterhorn Views Ski-in/Ski-out ConvenienceHotel Hemizeus & Iremia Spa Zermatt breathtaking views of Matterhorn convenience of skiing right to from doorstep.Culinary Delights Charming Dining SettingsIndulge Swiss international cuisine traditional restaurant cozy wine cellar truly|  
+14: Riffelhaus 1853 | $863/night | | pinnacle of relaxation adventure Riffelhaus 1853, stunning Swiss Alps meet hospitality.Unwind SpaIndulge yourself full-service spa, perfect retreat thrilling day of skiing hiking. Rejuvenate senses specialized treatments designed relaxing.Ski-in/Ski-out AccessWith convenient ski-in/ski-out access,|  
+15: Appartements Zermatt Paradies | $995/night | | Central LocationLocated 5-minute walk from Zermatt's town centre 200 metres from Matterhorn Glacier Paradise Ski Lift, Appartements Zermatt Paradies convenience best.Wellness FacilitiesIndulge relaxation access to sauna, steam bath, hot tub, solarium on-site. After day of skiing exploring, unwind|  
+16: Hotel Ambassador Zermatt | $657/night | | Central Location Stunning ViewsThe Hotel Ambassador Zermatt located 100 meters from Zermatt train station breathtaking panoramic views of Matterhorn from every balcony.luxuryGuests unwind large heated indoor pool, relax whirlpool, rejuvenate sauna. The free high-speed WiFi ensures stay connected|  
+17: Resort La Ginabelle | $885/night | | rooms Convenient Location:La Ginabelle, stone's throw away from Zermatt Train Station cable cars, perfect blend of comfort accessibility. in Culinary Delights Relaxation: renowned gourmet cuisine unwind expansive spa area outdoor pool soothing 34°C. complimentary afternoon coffee tea delicious|  
+18: Hotel Daniela | $953/night | | Rooms AmenitiesThe Hotel Daniela Zermatt renovated rooms equipped modern amenities such TV, minibar, safe. Pamper yourself well-appointed bathrooms featuring complimentary toiletries cozy bathrobes.Relaxation WellnessIndulge relaxing stay complimentary access to Gädi SPA Julen SPA. Unwind day of|  
+19: Hotel Phoenix | $615/night | | Hotel Phoenix ZermattLocated serene Wiesti quarter, Hotel Phoenix blend of rustic charm modern comfort. Cozy Rooms Modern Amenities include flat-screen TVs, safes, complimentary Wi-Fi public areas. The use of wood, stone, glass creates unique ambiance peaceful night's sleep. Scenic Views Relaxing|  
+20: Apartment Jua | $903/night | | ultimate alpine getaway charming ski apartment heart of Zermatt.Prime LocationNestled near Zermatt-Furi Gondola, property access to Zermatt-Matterhorn Ski Paradise, ensuring steps away from exhilarating slopes stunning mountain views.Comfort & ConnectivityUnwind cozy apartment featuring|  
+21: Relais & Chateaux Schönegg | $789/night | | adventure Relais & Chateaux Schönegg, ideal getaway Zermatt.Spa IndulgencePamper yourself serene spa, offering rejuvenating massages, body treatments, revitalizing facials, ensuring stay nothing short of indulgent.Ski-In/Ski-Out ConvenienceEnjoy seamless access to slopes ski-in/ski-out feature,|  
+22: Aristella Swissflair Hotel & Apartements | $1080/night | | stay Aristella Swissflair Hotel & Apartements, gateway to alpine relaxation adventure.Relaxation AwaitsTreat yourself to refreshing visit to full-service spa, unwind hot tub sauna exhilarating day slopes.Comfort Redefined true comfort one of 28 well-appointed guestrooms featuring heated floors,|  
+23: Hotel Continental | $444/night | | Central Location ConvenienceHotel Continental heart of Zermatt, 150 meters from train station Gornergratbahn ski lift, offering convenience guests looking to city.luxuryEnjoy modern comforts every room, including flat-screen TV, ensuite, some rooms boast cozy seating area relaxation. Additionally,|  
+24: La Perle Apartments | $534/night | | Apartments Spectacular ViewsCentral Location: Zermatt, near railway station golf club, La Perle Apartments offer convenience easy access to nearby attractions like Matterhorn Museum Gorner Ridge.Modern Amenities: Each apartment equipped fully stocked kitchenette, flat-screen TV, ensuite. the|  
+25: Hotel Alphubel | $415/night | | Prime Location ZermattLocated 200 meters from Gornergrat Mountain Railway Zermatt Train Station, Hotel Alphubel convenient central base stay Zermatt.Comfortable Alpine-style RoomsRelax cozy Alpine-style rooms equipped flat-screen cable TV ensuite. a comfortable peaceful retreat day of exploring|  
+26: Tradition Julen Hotel | $1510/night | | Spa AmenitiesHotel Julen 3-storey spa area indoor pool, steam baths, solarium, sauna, fitness room equipped Technogym products. Guests wide variety of spa treatments relaxing.Gastronomic DelightsIndulge culinary journey elegant restaurant offering blend of local traditional dishes international|  
+27: Hotel Simi | $574/night | | Spa Area Relaxation: Hotel Simi's spa area, featuring sauna, steam bath, whirlpool, solarium relaxing.Convenient Location:Located 300 meters from Zermatt train station, hotel easy access to cable cars, lifts, shops, restaurants, ensuring make most of stay any hassle.Culinary Delights Mountain|  
+28: National Zermatt – Matterhorn Views, Sunnegga Gateway & SPA | $1023/night | | Spa Recreational OpportunitiesIndulge relaxing massage spa take dip indoor pool. a sauna session workout gym rejuvenating.Dining EntertainmentSavor delicious dinner on-site restaurant opt room svc. Unwind drink bar/lounge day of exploration.Convenience ComfortBenefit from complimentary Wi-Fi,|  
+29: Wellness Hotel Alpenhof | $1189/night | | roomsThe family-run 4-star superior Wellness Hotel Alpenhof elegant rooms modern amenities including free WiFi, minibar, cable TV. Most rooms feature balcony stunning views of Zermatt.Gourmet Dining variety of gourmet menus hotel's restaurant local international wines stylish lobby. Treat yourself|  
+30: Mont Cervin Palace | $1148/night | | 5-Star Mont Cervin Palace ZermattRelaxation Indulgence: pool, 1,700 m² spa, beauty treatments.Breathtaking Views Comfort: Most rooms face south Matterhorn views, some hot tubs fireplaces.Fine Dining Entertainment: From rich breakfast buffets to gala dinners, Grill Le Cervin, stylish bars.Book stay|  
+31: Chesa Valese by Sisters Zermatt | $959/night | | Chesa Valese - Tranquil Retreat ZermattTraditional Charm: Step into Valais-style hotel yourself cozy ambiance of furnished rooms, complemented welcoming lounge area crackling fireplace stylish bar enjoyment.Wellness Haven: relaxation wellness area, unwind sauna steam bath day of exploring|  
+32: Backstage Boutique SPA Hotel | $836/night | | roomss SpaBackstage Boutique SPA Hotel, centrally located Zermatt, uniquely furnished rooms fireplaces free WiFi. Each room private balcony, CD/DVD player, bathrobes. The majority of rooms feature sofa freestanding bathtub stunning views of Swiss Alps.Relaxing Spa FacilitiesIndulge spa area hot|  
+33: Hotel Albatros | $596/night | | roomsHotel Albatros, serene location short stroll from Zermatt's center, range of elegant rooms suites. From spacious deluxe rooms to charming attic suites boasting stunning Matterhorn views, each rooms comes balcony plush bathrobes ultimate comfort.Relaxation & WellnessUnwind hotel's inviting bar|  
+34: Apartment in Chalet Pizzo Fiamma | $837/night | | Chalet Living ultimate mountain getaway Apartment Chalet Pizzo Fiamma. Revel comfort of fully equipped kitchen, cozy seating area, stunning mountain views from private terrace.Ski-to-Door AccessWith ski-to-door access, hit slopes effortlessly retreat back to chalet warm relaxing evening. the|  
+35: Dent Blanche | $809/night | | rooms ZermattSpectacular Views Modern AmenitiesEnjoy stunning garden city views from Dent Blanche, equipped free WiFi, lift, free shuttle service. in comfort balcony, mountain views, fully equipped kitchen each apartment.Family-Friendly Adventure ReadyWith outdoor play equipment children proximity|  
+36: 3100 Kulmhotel Gornergrat | $764/night | | enchanting 3100 Kulmhotel Gornergrat, breathtaking alpine views meet ultimate comfort.Ski-In/Ski-Out Access: thrill of skiing right from doorstep direct access to Zermatt-Matterhorn Ski Paradise. Unwind exhilarating day slopes cozy ambiance of welcoming hotel.Inviting roomss: Choose from 22|  
+37: Haus Matten, Studio Findeln | $482/night | | Stunning Balcony ViewsEnjoy breathtaking scenery from balcony Haus Matten, Studio Findeln.Convenient AmenitiesBenefit from lift, private check-in/check-out, free WiFi throughout property.Prime LocationLocated 500 meters from Zermatt Railway Station, Haus Matten perfect base exploring area.To book|  
+38: Backstage Hotel Serviced Apartments | $2145/night | | Apartments Stunning ViewsArchitectural Masterpiece: Designed architect Heinz Julen, apartments offer unique blend of style. breathtaking views of Matterhorn from private balcony terrace. Amenities: Each unit cozy fireplace, exquisite art pieces, special color theme. Stay connected free WiFi, cook|  
+39: Monte Rosa Boutique Hotel | $999/night | | Historic Charm Modern LuxuryThe Monte Rosa, first hotel Zermatt, unique blend of historic charm modern luxury. central village, 150 years-old building houses tastefully furnished rooms suites equipped cable TV minibars.Spa Access Scottish-style BarGuests complimentary access to spa pools 5-star|  
+40: Legendär Zermatt | $788/night | | Ski-in, Ski-out roomsLegendär Zermatt perfect mountain getaway, offering ski-to-door access stunning mountain views. The property terrace, ideal soaking panoramic scenery.Modern Amenities ComfortEach unit Legendär Zermatt equipped top-notch amenities including hot tub, flat-screen TV, well-fitted|  
+41: Swiss Alpine Hotel Allalin | $741/night | | roomss Amenities charm of newly renovated room heart of Zermatt. the stunning views of Matterhorn village from balcony. in comfort of box spring beds, high-speed WiFi, relaxing bathrobe. HospitalitySavor welcome drink daily refreshments, along rich breakfast buffet. Delight evening turn-down|  
+42: Luxury Residence Colosseo Zermatt | $1555/night | | Sustainable ZermattPool View Soundproof Rooms: relaxing stay Residence Colosseo Zermatt, 800 meters from Zermatt Railway Station. Unwind pool stunning views rest peacefully soundproof rooms free WiFi.Wellness Fitness Facilities: spa treatments, wellness packages, mountain views. Stay active gym,|  
+43: Matthiol Boutique Hotel | $834/night | | Wellness FacilitiesEnjoy rejuvenating Matthiol Boutique Hotel's wellness area, featuring herbal sauna, steam bath, Finnish sauna - all complimentary guests. Stay fit free access to fitness room unwind style. Rooms Stunning ViewsIndulge comfort style hotel's rooms equipped free WiFi, life TV|  
+44: Alpenhotel Fleurs de Zermatt | $576/night | | Alpine RetreatLocated Zermatt, Alpenhotel Fleurs de Zermatt haven of tranquility. The hotel, renovated 2013, wellness area hot tub sauna, perfect relaxation.Elegant Rooms Stunning ViewsThe bright Alpine-style rooms furnished modern amenities like cable TV Nespresso machines. Guests breathtaking|  
+45: Hotel ZERMAMA Zermatt | $743/night | | Central Location ZermattDiscover charm of newly renovated hotel central Zermatt, stone's throw away from Zermatt Train Station situated across from valley station of Sunnegga Express.Modern Amenities comfort convenience every room Hotel Mama, each equipped LCD TV ensuite, ensuring relaxing stay day|  
+46: Chalet Binna | $3545/night | | luxuryIndulge sauna hot tub Chalet Binna, complemented free WiFi throughout property.Mountain ParadiseAdmire stunning mountain views from balcony of this well-equipped unit full kitchen multiple bathrooms.Adventure Awaitslocated near Ski Lift Zermatt – Furi Matterhorn, skiing, cycling, more staying|  
+
+REMEMBER: Always select 15 hotels using exact names from the list above.
+
+=== END LOG ===

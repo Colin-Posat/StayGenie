@@ -1,9 +1,0 @@
-BASIC INFORMATION:
-Name: Casa Pueblo Tulum
-Address: undefined
-City: Tulum
-Country: MX
-Star Rating: 3.5 stars
-Guest Rating: 0/10 (0 reviews)
-Check-in: 11:00 PM
-Check-out: 12:00 PM

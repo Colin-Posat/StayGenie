@@ -1,9 +1,0 @@
-BASIC INFORMATION:
-Name: Hotel 54 Barceloneta
-Address: undefined
-City: Barcelona
-Country: ES
-Star Rating: 3 stars
-Guest Rating: 0/10 (0 reviews)
-Check-in: 3 PM
-Check-out: noon

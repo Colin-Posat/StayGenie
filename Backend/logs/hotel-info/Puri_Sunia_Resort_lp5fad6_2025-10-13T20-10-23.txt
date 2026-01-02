@@ -1,9 +1,0 @@
-BASIC INFORMATION:
-Name: Puri Sunia Resort
-Address: undefined
-City: Ubud
-Country: ID
-Star Rating: 4 stars
-Guest Rating: 0/10 (0 reviews)
-Check-in: 2 PM
-Check-out: noon
