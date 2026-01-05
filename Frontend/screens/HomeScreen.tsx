@@ -343,8 +343,8 @@ interface Hotel {
     roomQuality: number;
   };
 }
-const BASE_URL = __DEV__ ? 'http://localhost:3003' : "https://staygenie-wwpa.onrender.com";
-//const BASE_URL ="https://staygenie-wwpa.onrender.com"
+//const BASE_URL = __DEV__ ? 'http://localhost:3003' : "https://staygenie-wwpa.onrender.com";
+const BASE_URL ="https://staygenie-wwpa.onrender.com"
 
 
 import { Dimensions } from 'react-native';
