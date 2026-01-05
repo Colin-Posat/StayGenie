@@ -17,7 +17,15 @@ const TEST_EMAILS = [
 
 export type SearchMethod = 'text' | 'voice' | 'recent_search' | 'carousel' | 'pill';
 export type SearchFailureReason = 'no_results' | 'timeout' | 'api_error';
-export type FirstAction = 'ask_ai' | 'book_now' | 'map_view' | 'favorite' | 'share' | 'photo_gallery' | 'review_modal' | 'expand_details';
+type FirstAction = 
+  | 'photo_gallery'
+  | 'review_modal'
+  | 'map_view'
+  | 'ask_ai'
+  | 'book_now'
+  | 'share'
+  | 'favorite'
+  | 'google_maps'; 
 
 // ============================================================================
 // ANALYTICS SERVICE - ONLY ESSENTIALS
@@ -31,10 +39,10 @@ export class AnalyticsService {
   // Check if we should track this user
   private static async shouldTrack(): Promise<boolean> {
     // Never track in dev mode
-    if (__DEV__) {
-      console.log('🧪 DEV MODE - Analytics disabled');
-      return false;
-    }
+    //if (__DEV__) {
+      //console.log('🧪 DEV MODE - Analytics disabled');
+      //return false;
+    //}
     
     // Never track test users
     try {
@@ -63,23 +71,34 @@ export class AnalyticsService {
   // ========================================================================
 
   static async trackSearchInitiated(query: string, method: SearchMethod) {
-    await this.initialize();
-    if (!(await this.shouldTrack())) return;
-
-    try {
-      this.searchStartTime = Date.now();
-      this.firstActionTracked = false; // Reset for new search
-
-      await firebaseLogEvent('search', {
-        search_term: query,
-        method: method,
-      });
-
-      console.log(`📊 Search: "${query}" via ${method}`);
-    } catch (error) {
-      console.error('Analytics error:', error);
-    }
+  console.log('🟦 trackSearchInitiated CALLED', { query, method }); // ✅ ADD THIS
+  
+  await this.initialize();
+  
+  const canTrack = await this.shouldTrack();
+  console.log('🟦 shouldTrack result:', canTrack); // ✅ ADD THIS
+  
+  if (!canTrack) {
+    console.log('🟦 Not tracking - shouldTrack returned false'); // ✅ ADD THIS
+    return;
   }
+
+  try {
+    this.searchStartTime = Date.now();
+    this.firstActionTracked = false;
+
+    console.log('🟦 About to call firebaseLogEvent'); // ✅ ADD THIS
+    
+    await firebaseLogEvent('search', {
+      search_term: query,
+      method: method,
+    });
+
+    console.log(`📊 Search: "${query}" via ${method}`);
+  } catch (error) {
+    console.error('❌ Analytics error:', error); // ✅ Make sure this is visible
+  }
+}
 
   static async trackSearchSuccess(query: string, resultCount: number) {
     if (!(await this.shouldTrack())) return;
@@ -144,6 +163,11 @@ export class AnalyticsService {
         index: position,
         action: action,
       });
+      await firebaseLogEvent('hotel_action', {
+  action: action,          // map_view, share, book_now, etc
+  hotel_id: hotelId,
+  position: position,
+});
 
       console.log(`🖱️ Hotel click: ${hotelName} - ${action}`);
     } catch (error) {
@@ -151,6 +175,7 @@ export class AnalyticsService {
     }
   }
 
+  
   // ========================================================================
   // 3. AFFILIATE CLICKS (REVENUE)
   // ========================================================================

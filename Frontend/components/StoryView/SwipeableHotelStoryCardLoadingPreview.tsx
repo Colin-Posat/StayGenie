@@ -1,67 +1,63 @@
-// SwipeableHotelStoryCardLoadingPreview.tsx - Updated to match latest design
-import React, { useEffect, useRef } from 'react';
+// SwipeableHotelStoryCardLoadingPreview.tsx
+// Jitter-free premium loading state
+
+import React, { useEffect, useRef, useState } from 'react';
 import {
   View,
   Text,
   Dimensions,
   Animated,
   StyleSheet,
-  Platform,
 } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
+import { useFonts } from 'expo-font';
+import tw from 'twrnc';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
-const CARD_WIDTH = screenWidth - 37;
-const CARD_HEIGHT = screenHeight * 0.35;
+const CARD_WIDTH = Math.round(screenWidth - 37);
+const CARD_HEIGHT = screenHeight * 0.45;
 
-interface LoadingPreviewProps {
-  index?: number;
-  totalCount?: number;
-}
+const TURQUOISE = '#1df9ff';
+const TURQUOISE_DARK = '#00d4e6';
 
-interface ShimmerEffectProps {
+const LOADING_MESSAGES = [
+  'Finding your best matches',
+  'Understanding your preferences',
+  'Finalizing recommendations',
+];
+
+/* ---------- SHIMMER ---------- */
+
+const ShimmerEffect = ({
+  width,
+  height,
+  style,
+  borderRadius = 8,
+}: {
   width: string | number;
   height: number;
   style?: any;
   borderRadius?: number;
-}
-
-const ShimmerEffect: React.FC<ShimmerEffectProps> = ({ 
-  width, 
-  height, 
-  style, 
-  borderRadius = 8 
 }) => {
-  const shimmerAnimation = useRef(new Animated.Value(0)).current;
+  const shimmer = useRef(new Animated.Value(0)).current;
 
   useEffect(() => {
-    const shimmer = Animated.loop(
+    Animated.loop(
       Animated.sequence([
-        Animated.timing(shimmerAnimation, {
+        Animated.timing(shimmer, {
           toValue: 1,
           duration: 1200,
           useNativeDriver: true,
         }),
-        Animated.timing(shimmerAnimation, {
+        Animated.timing(shimmer, {
           toValue: 0,
           duration: 1200,
           useNativeDriver: true,
         }),
       ])
-    );
-    shimmer.start();
-
-    return () => shimmer.stop();
-  }, [shimmerAnimation]);
-
-  const translateX = shimmerAnimation.interpolate({
-    inputRange: [0, 1],
-    outputRange: [-200, 200],
-  });
-
-  const opacity = shimmerAnimation.interpolate({
-    inputRange: [0, 0.5, 1],
-    outputRange: [0.3, 0.6, 0.3],
-  });
+    ).start();
+  }, []);
 
   return (
     <View
@@ -81,8 +77,18 @@ const ShimmerEffect: React.FC<ShimmerEffectProps> = ({
           StyleSheet.absoluteFillObject,
           {
             backgroundColor: '#F3F4F6',
-            opacity,
-            transform: [{ translateX }],
+            opacity: shimmer.interpolate({
+              inputRange: [0, 0.5, 1],
+              outputRange: [0.25, 0.5, 0.25],
+            }),
+            transform: [
+              {
+                translateX: shimmer.interpolate({
+                  inputRange: [0, 1],
+                  outputRange: [-200, 200],
+                }),
+              },
+            ],
           },
         ]}
       />
@@ -90,289 +96,235 @@ const ShimmerEffect: React.FC<ShimmerEffectProps> = ({
   );
 };
 
-const SwipeableHotelStoryCardLoadingPreview: React.FC<LoadingPreviewProps> = ({ 
-  index = 0, 
-  totalCount = 1 
-}) => {
+/* ---------- MAIN ---------- */
+
+const SwipeableHotelStoryCardLoadingPreview = () => {
+  const [currentMessageIndex, setCurrentMessageIndex] = useState(0);
+
+  const messageOpacity = useRef(new Animated.Value(1)).current;
+  const sparkleRotate = useRef(new Animated.Value(0)).current;
+  const sparkleScale = useRef(new Animated.Value(1)).current;
+
+  const [fontsLoaded] = useFonts({
+    'Merriweather-Regular': require('../../assets/fonts/Merriweather_36pt-Regular.ttf'),
+  });
+
+  /* Sparkle: soft + slow */
+  useEffect(() => {
+    Animated.loop(
+      Animated.parallel([
+        Animated.sequence([
+          Animated.timing(sparkleRotate, {
+            toValue: 1,
+            duration: 2800,
+            useNativeDriver: true,
+          }),
+          Animated.timing(sparkleRotate, {
+            toValue: 0,
+            duration: 0,
+            useNativeDriver: true,
+          }),
+        ]),
+        Animated.sequence([
+          Animated.timing(sparkleScale, {
+            toValue: 1.12,
+            duration: 1400,
+            useNativeDriver: true,
+          }),
+          Animated.timing(sparkleScale, {
+            toValue: 1,
+            duration: 1400,
+            useNativeDriver: true,
+          }),
+        ]),
+      ])
+    ).start();
+  }, []);
+
+  /* 🔒 JITTER-FREE TEXT CYCLE */
+  useEffect(() => {
+    let mounted = true;
+    let timeout: NodeJS.Timeout;
+
+    const cycle = () => {
+      Animated.timing(messageOpacity, {
+        toValue: 0,
+        duration: 220,
+        useNativeDriver: true,
+      }).start(() => {
+        if (!mounted) return;
+
+        // 🔒 SWITCH TEXT ONLY WHILE INVISIBLE
+        setCurrentMessageIndex((prev) =>
+          (prev + 1) % LOADING_MESSAGES.length
+        );
+
+        requestAnimationFrame(() => {
+          Animated.timing(messageOpacity, {
+            toValue: 1,
+            duration: 260,
+            useNativeDriver: true,
+          }).start(() => {
+            if (!mounted) return;
+            timeout = setTimeout(cycle, 2200);
+          });
+        });
+      });
+    };
+
+    timeout = setTimeout(cycle, 2200);
+
+    return () => {
+      mounted = false;
+      clearTimeout(timeout);
+    };
+  }, []);
+
+  if (!fontsLoaded) return null;
+
+  const rotation = sparkleRotate.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['0deg', '360deg'],
+  });
+
   return (
     <View style={[styles.cardContainer, { width: CARD_WIDTH }]}>
       <View style={styles.borderWrapper}>
-        {/* Image Area */}
-        <View style={{ height: CARD_HEIGHT, position: 'relative' }}>
-          <ShimmerEffect
-            width="100%"
-            height={CARD_HEIGHT}
-            borderRadius={0}
-          />
+        <View style={{ height: CARD_HEIGHT }}>
+          <ShimmerEffect width="100%" height={CARD_HEIGHT} borderRadius={0} />
 
-          {/* Hotel Name - Top Left */}
-          <View style={{ position: 'absolute', top: 10, left: 10, right: 100, zIndex: 30 }}>
-            <ShimmerEffect width="80%" height={16} borderRadius={4} style={{ marginBottom: 4 }} />
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-              <ShimmerEffect width={11} height={11} borderRadius={6} />
-              <ShimmerEffect width="50%" height={12} borderRadius={4} />
-            </View>
-          </View>
+          {/* LOADING OVERLAY */}
+          <View style={styles.overlay}>
+            <View style={styles.loadingCard}>
+              <Animated.View
+                style={{
+                  marginBottom: 14,
+                  transform: [{ rotate: rotation }, { scale: sparkleScale }],
+                }}
+              >
+                <LinearGradient
+                  colors={[TURQUOISE, TURQUOISE_DARK]}
+                  style={styles.sparkle}
+                >
+                  <Ionicons name="sparkles" size={22} color="white" />
+                </LinearGradient>
+              </Animated.View>
 
-          {/* Availability Bar - Bottom Left Above Price */}
-          <View style={{ position: 'absolute', bottom: 56, left: 10, zIndex: 40 }}>
-            <View style={{
-              backgroundColor: 'rgba(229, 231, 235, 0.8)',
-              borderRadius: 10,
-              paddingHorizontal: 10,
-              paddingVertical: 5,
-              flexDirection: 'row',
-              alignItems: 'center',
-              gap: 4
-            }}>
-              <ShimmerEffect width={10} height={10} borderRadius={6} />
-              <ShimmerEffect width={120} height={10} borderRadius={4} />
-            </View>
-          </View>
+              <Animated.View style={{ opacity: messageOpacity }}>
+                <Text style={styles.loadingText}>
+                  {LOADING_MESSAGES[currentMessageIndex]}
+                </Text>
+              </Animated.View>
 
-          {/* Price and Rating - Bottom Left */}
-          <View style={{ position: 'absolute', bottom: 10, left: 10, zIndex: 30 }}>
-            <View style={{ 
-              backgroundColor: 'rgba(229, 231, 235, 0.9)',
-              borderRadius: 12,
-              flexDirection: 'row',
-              alignItems: 'center',
-              overflow: 'hidden'
-            }}>
-              {/* Price Section */}
-              <View style={{ paddingHorizontal: 12, paddingVertical: 8 }}>
-                <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 2 }}>
-                  <ShimmerEffect width={45} height={16} borderRadius={4} />
-                  <ShimmerEffect width={35} height={10} borderRadius={4} />
-                </View>
-              </View>
-              
-              {/* Divider */}
-              <View style={{ width: 1, height: '70%', backgroundColor: '#D1D5DB' }} />
-              
-              {/* Rating Section */}
-              <View style={{ paddingHorizontal: 12, paddingVertical: 8, flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-                <ShimmerEffect width={11} height={11} borderRadius={6} />
-                <ShimmerEffect width={28} height={14} borderRadius={4} />
-                <ShimmerEffect width={10} height={10} borderRadius={6} />
-              </View>
-            </View>
-          </View>
-
-          {/* Show Map Button - Bottom Right */}
-          <View style={{ position: 'absolute', bottom: 10, right: 10, zIndex: 40 }}>
-            <View style={{
-              backgroundColor: 'rgba(229, 231, 235, 0.9)',
-              borderRadius: 12,
-              paddingVertical: 11,
-              paddingHorizontal: 12,
-              flexDirection: 'row',
-              alignItems: 'center',
-              gap: 6
-            }}>
-              <ShimmerEffect width={12} height={12} borderRadius={6} />
-              <ShimmerEffect width={65} height={12} borderRadius={4} />
-            </View>
-          </View>
-
-          {/* Image Indicators - Top Right */}
-          <View style={{ position: 'absolute', top: 14, right: 10, zIndex: 30 }}>
-            <View style={{
-              backgroundColor: 'rgba(229, 231, 235, 0.8)',
-              borderRadius: 999,
-              paddingHorizontal: 10,
-              paddingVertical: 6
-            }}>
-              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-                {[0, 1, 2, 3].map((idx) => (
-                  <View
-                    key={idx}
-                    style={{
-                      width: idx === 0 ? 6 : idx === 1 ? 4 : 3,
-                      height: idx === 0 ? 6 : idx === 1 ? 4 : 3,
-                      borderRadius: 999,
-                      backgroundColor: idx === 0 ? '#FFFFFF' : idx === 1 ? 'rgba(255,255,255,0.5)' : 'rgba(255,255,255,0.3)',
-                    }}
-                  />
+              <View style={styles.dots}>
+                {[0, 1, 2].map((i) => (
+                  <LoadingDot key={i} delay={i * 160} />
                 ))}
               </View>
             </View>
           </View>
         </View>
 
-        {/* Bottom Content Section */}
-        <View style={{ marginHorizontal: 12, marginVertical: 12 }}>
-          {/* Expandable Info Section */}
-          <View
-            style={{
-              backgroundColor: 'white',
-              borderWidth: 1,
-              borderColor: '#E5E7EB',
-              borderRadius: 12,
-              marginBottom: 10,
-              overflow: 'hidden',
-            }}
-          >
-            <View style={{ paddingHorizontal: 12, paddingVertical: 10 }}>
-              {/* Genie Badge */}
-              <View style={{ marginBottom: 6 }}>
-                <View style={{
-                  backgroundColor: '#E5E7EB',
-                  borderRadius: 999,
-                  paddingHorizontal: 8,
-                  paddingVertical: 4,
-                  alignSelf: 'flex-start',
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  gap: 4
-                }}>
-                  <ShimmerEffect width={10} height={10} borderRadius={6} />
-                  <ShimmerEffect width={60} height={10} borderRadius={4} />
-                </View>
-              </View>
-
-              {/* Match Text Lines */}
-              <View style={{ marginBottom: 4, gap: 4 }}>
-                <ShimmerEffect width="100%" height={13} borderRadius={4} />
-
-              </View>
-
-              {/* Expand/Collapse Indicator */}
-              <View style={{ 
-                flexDirection: 'row', 
-                alignItems: 'center', 
-                justifyContent: 'center', 
-                paddingTop: 6,
-                borderTopWidth: 1,
-                borderTopColor: '#F3F4F6'
-              }}>
-                <ShimmerEffect width={60} height={11} borderRadius={4} style={{ marginRight: 2 }} />
-                <ShimmerEffect width={12} height={12} borderRadius={6} />
-              </View>
-            </View>
-          </View>
-
-         {/* Action Buttons Row */}
-<View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-  {/* Ask AI Button */}
-  <View
-    style={{
-      flex: 1,
-      paddingVertical: 10,
-      paddingHorizontal: 12,
-      borderRadius: 12,
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'center',
-      backgroundColor: '#fff',
-      borderWidth: 1,
-      borderColor: '#E5E7EB',
-      gap: 6,
-    }}
-  >
-    <View
-      style={{
-        width: 20,
-        height: 20,
-        borderRadius: 10,
-        backgroundColor: 'rgba(29, 249, 255, 0.15)',
-        alignItems: 'center',
-        justifyContent: 'center',
-      }}
-    >
-      <ShimmerEffect width={11} height={11} borderRadius={6} />
-    </View>
-    <ShimmerEffect width={40} height={13} borderRadius={4} />
-  </View>
-
-  {/* Book Button */}
-  <View
-    style={{
-      flex: 1,
-      paddingVertical: 10,
-      paddingHorizontal: 12,
-      borderRadius: 12,
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'center',
-      backgroundColor: '#fff',
-      borderWidth: 1,
-      borderColor: '#E5E7EB',
-      gap: 6,
-    }}
-  >
-    <View
-      style={{
-        width: 20,
-        height: 20,
-        borderRadius: 10,
-        backgroundColor: 'rgba(29, 249, 255, 0.15)',
-        alignItems: 'center',
-        justifyContent: 'center',
-      }}
-    >
-      <ShimmerEffect width={11} height={11} borderRadius={6} />
-    </View>
-    <ShimmerEffect width={30} height={13} borderRadius={4} />
-  </View>
-
-  {/* Share Button */}
-  <View
-    style={{
-      width: 44,
-      height: 44,
-      borderRadius: 12,
-      alignItems: 'center',
-      justifyContent: 'center',
-      backgroundColor: '#fff',
-      borderWidth: 1,
-      borderColor: '#E5E7EB',
-    }}
-  >
-    <ShimmerEffect width={19} height={19} borderRadius={10} />
-  </View>
-
-  {/* Favorite Button */}
-  <View
-    style={{
-      width: 44,
-      height: 44,
-      borderRadius: 12,
-      alignItems: 'center',
-      justifyContent: 'center',
-      backgroundColor: '#fff',
-      borderWidth: 1,
-      borderColor: '#E5E7EB',
-    }}
-  >
-    <ShimmerEffect width={19} height={19} borderRadius={10} />
-  </View>
-</View>
+        {/* BODY SHIMMER */}
+        <View style={tw`mx-3 my-3 gap-2`}>
+          <ShimmerEffect width="100%" height={14} />
+          <ShimmerEffect width="92%" height={14} />
+          <ShimmerEffect width="80%" height={14} />
         </View>
       </View>
     </View>
   );
 };
 
+/* ---------- DOTS ---------- */
+
+const LoadingDot = ({ delay }: { delay: number }) => {
+  const anim = useRef(new Animated.Value(0)).current;
+
+  useEffect(() => {
+    Animated.loop(
+      Animated.sequence([
+        Animated.delay(delay),
+        Animated.timing(anim, {
+          toValue: 1,
+          duration: 400,
+          useNativeDriver: true,
+        }),
+        Animated.timing(anim, {
+          toValue: 0,
+          duration: 400,
+          useNativeDriver: true,
+        }),
+      ])
+    ).start();
+  }, []);
+
+  return (
+    <Animated.View
+      style={{
+        width: 6,
+        height: 6,
+        borderRadius: 3,
+        backgroundColor: 'rgba(0,212,230,0.7)',
+        transform: [
+          {
+            translateY: anim.interpolate({
+              inputRange: [0, 1],
+              outputRange: [0, -3],
+            }),
+          },
+        ],
+      }}
+    />
+  );
+};
+
+/* ---------- STYLES ---------- */
+
 const styles = StyleSheet.create({
   cardContainer: {
     borderRadius: 16,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 8,
-    ...Platform.select({
-      android: {
-        elevation: 8,
-      },
-    }),
+    elevation: 8,
   },
   borderWrapper: {
+    borderRadius: 16,
     borderWidth: 2,
     borderColor: '#E5E7EB',
-    borderRadius: 16,
     overflow: 'hidden',
     backgroundColor: '#fff',
+  },
+  overlay: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: 'rgba(0,0,0,0.35)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  loadingCard: {
+    backgroundColor: 'rgba(255,255,255,0.95)',
+    paddingVertical: 20,
+    paddingHorizontal: 24,
+    borderRadius: 20,
+    alignItems: 'center',
+    width: CARD_WIDTH * 0.82,
+  },
+  sparkle: {
+    width: 46,
+    height: 46,
+    borderRadius: 23,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  loadingText: {
+    fontSize: 14,
+    fontFamily: 'Merriweather-Regular',
+    color: '#1F2937',
+    letterSpacing: 0.2,
+    textAlign: 'center',
+  },
+  dots: {
+    flexDirection: 'row',
+    gap: 6,
+    marginTop: 12,
   },
 });
 

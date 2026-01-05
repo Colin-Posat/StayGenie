@@ -1,5 +1,5 @@
 // SwipeableStoryView.tsx - Updated with Enhanced Room Image Support, Loading Preview, Safety Rating Support, and Analytics
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
   Text as RNText,
@@ -73,6 +73,18 @@ const SwipeableStoryView: React.FC<SwipeableStoryViewProps> = ({
   const [lastStreamedHotel, setLastStreamedHotel] = useState<Hotel | null>(null);
   const [showNewHotelAnimation, setShowNewHotelAnimation] = useState(false);
   const [currentCardIndex, setCurrentCardIndex] = useState(0); // ✅ ADDED FOR ANALYTICS
+
+  // ✅ FIXED - Stable refs for FlatList callbacks
+  const onViewableItemsChangedRef = useRef(({ viewableItems }: any) => {
+    if (viewableItems.length > 0) {
+      const index = viewableItems[0].index || 0;
+      setCurrentCardIndex(index);
+    }
+  });
+
+  const viewabilityConfigRef = useRef({
+    itemVisiblePercentThreshold: 50,
+  });
 
   // ✅ ADDED - Track scroll position and report to parent
   useEffect(() => {
@@ -317,10 +329,7 @@ const enhanceHotel = (hotel: Hotel): EnhancedHotel => {
   const renderPlaceholderCard = (index: number) => {
     return (
       <View style={tw`px-5 mb-6`}>
-        <SwipeableHotelStoryCardLoadingPreview 
-          index={index}
-          totalCount={10}
-        />
+        <SwipeableHotelStoryCardLoadingPreview />
       </View>
     );
   };
@@ -438,39 +447,32 @@ const enhanceHotel = (hotel: Hotel): EnhancedHotel => {
         </View>
       )}
 
-     <FlatList
-  data={dataToRender as (EnhancedHotel | { isPlaceholder: boolean; id: string })[]}
-  renderItem={({ item, index }) => 
-    showPlaceholders
-      ? renderPlaceholderCard(index)
-      : renderHotelCard({ item, index })
-  }
-  keyExtractor={(item, index) => 
-    showPlaceholders
-      ? `placeholder-${index}`
-      : `hotel-${item.id}`
-  }
-  // ✅ ADDED - Track which card is visible for analytics
-  onViewableItemsChanged={({ viewableItems }) => {
-    if (viewableItems.length > 0) {
-      const index = viewableItems[0].index || 0;
-      setCurrentCardIndex(index);
-    }
-  }}
-  viewabilityConfig={{
-    itemVisiblePercentThreshold: 50, // Card is "visible" when 50% shown
-  }}
-  showsVerticalScrollIndicator={false}
-  contentContainerStyle={{
-    paddingTop: 8,
-    paddingBottom: Platform.OS === 'ios' ? 70 : 70,
-  }}
-  maxToRenderPerBatch={3}
-  windowSize={5}
-  initialNumToRender={2}
-  scrollEventThrottle={16}
-  extraData={`${isInsightsLoading}-${stage1Complete}-${stage2Complete}-${insightsStats.complete}-${isStreaming}-${hotels.length}-${showPlaceholders}`}
-/>
+      <FlatList
+        data={dataToRender as (EnhancedHotel | { isPlaceholder: boolean; id: string })[]}
+        renderItem={({ item, index }) => 
+          showPlaceholders
+            ? renderPlaceholderCard(index)
+            : renderHotelCard({ item, index })
+        }
+        keyExtractor={(item, index) => 
+          showPlaceholders
+            ? `placeholder-${index}`
+            : `hotel-${item.id}`
+        }
+        // ✅ FIXED - Use stable refs instead of inline functions
+        onViewableItemsChanged={onViewableItemsChangedRef.current}
+        viewabilityConfig={viewabilityConfigRef.current}
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={{
+          paddingTop: 8,
+          paddingBottom: Platform.OS === 'ios' ? 70 : 70,
+        }}
+        maxToRenderPerBatch={3}
+        windowSize={5}
+        initialNumToRender={2}
+        scrollEventThrottle={16}
+        extraData={`${isInsightsLoading}-${stage1Complete}-${stage2Complete}-${insightsStats.complete}-${isStreaming}-${hotels.length}-${showPlaceholders}`}
+      />
     </View>
   );
 };

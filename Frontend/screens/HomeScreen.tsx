@@ -1908,26 +1908,7 @@ const handleBackPress = useCallback(() => {
     </Text>
   </View>
   
-  {(isBusy || displayHotels.filter(h => !h.isPlaceholder).length > 0) && (
-    <>
-      <View style={[tw`rounded-full mx-2`, { width: 3, height: 3, backgroundColor: '#D1D5DB' }]} />
-      <View style={tw`flex-row items-center`}>
-        <Ionicons 
-          name={isBusy ? "home-outline" : "home"} 
-          size={11} 
-          color="#6B7280" 
-        />
-        <Text style={{
-          fontFamily: 'Merriweather-Regular',
-          fontSize: 11,
-          color: '#6B7280',
-          marginLeft: 4,
-        }}>
-          {displayHotels.filter(h => !h.isPlaceholder).length}
-        </Text>
-      </View>
-    </>
-  )}
+
 </View>
                 </View>
               </View>

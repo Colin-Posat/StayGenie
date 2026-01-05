@@ -111,7 +111,7 @@ const calculateDistance = (
 };
 
 // Function to geocode attraction using Mapbox Geocoding API
-const LOCATIONIQ_KEY = process.env.EXPO_PUBLIC_LOCATIONIQ_KEY;
+const LOCATIONIQ_KEY = 'pk.79c544ae745ee83f91a7523c99939210';
 
 const geocodeAttraction = async (
   attractionName: string,

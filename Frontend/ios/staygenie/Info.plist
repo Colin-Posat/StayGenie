@@ -26,6 +26,10 @@
     <key>GIDClientID</key>
     <string>962898883484-q94pa2l7olvh9c8jj4iee3fvni9rnedm.apps.googleusercontent.com</string>
 
+    <!-- 🔧 LOCATIONIQ KEY (MANUAL ADD) -->
+    <key>EXPO_PUBLIC_LOCATIONIQ_KEY</key>
+    <string>pk.79c544ae745ee83f91a7523c99939210</string>
+
     <key>CFBundleURLTypes</key>
     <array>
       <dict>
@@ -66,6 +70,13 @@
 
     <key>NSCameraUsageDescription</key>
     <string>This app may use your camera to capture photos if needed.</string>
+
+    <!-- REQUIRED BECAUSE MAPBOX LINKS CORELOCATION -->
+    <key>NSLocationWhenInUseUsageDescription</key>
+    <string>Required by map services to display maps correctly.</string>
+
+    <key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
+    <string>Required by map services to support map functionality.</string>
 
     <!-- NETWORK / SECURITY -->
     <key>NSAppTransportSecurity</key>

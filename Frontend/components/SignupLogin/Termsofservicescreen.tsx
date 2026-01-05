@@ -158,6 +158,11 @@ const TermsOfServiceScreen: React.FC<TermsOfServiceScreenProps> = ({ onClose }) 
             These Terms shall be governed by and construed in accordance with the laws of the jurisdiction in which StayGenie operates, without regard to its conflict of law provisions.
           </Text>
         </Section>
+        <Section title="">
+          <Text style={tw`text-gray-700 leading-6`}>
+            StayGenie is a product of KayKay Tech LLC
+          </Text>
+        </Section>
 
         <Section title="14. Contact Information">
           <Text style={tw`text-gray-700 leading-6`}>

@@ -8,13 +8,15 @@ interface EnhancedHeartButtonProps {
   size?: number;
   onShowSignUpModal?: () => void;
   onFavoriteSuccess?: (hotelName: string) => void;
+  onFavoriteClick?: () => void | Promise<void>; // ✅ NEW: Analytics callback
 }
 
 const EnhancedHeartButton: React.FC<EnhancedHeartButtonProps> = ({
   hotel,
   size = 24,
   onShowSignUpModal,
-  onFavoriteSuccess
+  onFavoriteSuccess,
+  onFavoriteClick, // ✅ NEW: Analytics callback
 }) => {
   const [isLoading, setIsLoading] = useState(false);
   const [optimisticLiked, setOptimisticLiked] = useState(false);
@@ -138,7 +140,7 @@ const EnhancedHeartButton: React.FC<EnhancedHeartButtonProps> = ({
         location: hotelData.location,
         image: hotelData.image || hotelData.images?.[0],
         images: hotelData.images,
-        // ADD ALL IMAGE FIELDS - This is what was missing!
+        // ADD ALL IMAGE FIELDS
         photoGalleryImages: hotelData.photoGalleryImages,
         firstRoomImage: hotelData.firstRoomImage,
         secondRoomImage: hotelData.secondRoomImage,
@@ -193,6 +195,16 @@ const EnhancedHeartButton: React.FC<EnhancedHeartButtonProps> = ({
 
   const handlePress = async () => {
     if (isLoading) return;
+
+    // ✅ NEW: Track analytics BEFORE anything else
+    if (onFavoriteClick) {
+      try {
+        await onFavoriteClick();
+      } catch (error) {
+        console.error('Analytics tracking error:', error);
+        // Continue even if analytics fails
+      }
+    }
 
     requireAuth(
       async () => {

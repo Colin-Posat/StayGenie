@@ -29,6 +29,7 @@ import PhotoGallerySlide from './PhotoGallerySlide';
 import { Animated } from 'react-native';
 import { formatLocationDisplay, getCountryName } from '../../utils/countryMapping';
 import { PanGestureHandler, TapGestureHandler } from 'react-native-gesture-handler';
+import { AnalyticsService } from '../../services/analytics';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 const CARD_WIDTH = Math.round(screenWidth - 37);
@@ -332,12 +333,17 @@ const SwipeableHotelStoryCard: React.FC<SwipeableHotelStoryCardProps> = ({
 
   }, []);
 
-  const handleTap = ({ nativeEvent }: any) => {
-    // 5 === State.END
-    if (nativeEvent.state === 5) {
-      setShowPhotoGallery(true);
-    }
-  };
+  const handleTap = async ({ nativeEvent }: any) => {
+  // 5 === State.END
+  if (nativeEvent.state === 5) {
+    // ✅ Track photo gallery opens
+    console.log('🟦 Tracking photo gallery open');
+    await AnalyticsService.trackFirstAction('photo_gallery', position);
+    await AnalyticsService.trackHotelClick(hotel.id, hotel.name, position, 'photo_gallery');
+    
+    setShowPhotoGallery(true);
+  }
+};
 
   const parseBoldText = (text: string, boldStyle: any, normalStyle: any) => {
   const parts = text.split(/(\*\*.*?\*\*)/g);
@@ -440,6 +446,13 @@ const getTotalPrice = (hotel: Hotel, checkInDate?: Date, checkOutDate?: Date) =>
     const index = Math.round(contentOffsetX / CARD_WIDTH);
     setCurrentImageIndex(index);
   };
+  const handleShowReviews = async () => {
+  console.log('🟦 Tracking reviews modal');
+  await AnalyticsService.trackFirstAction('review_modal', position);
+  await AnalyticsService.trackHotelClick(hotel.id, hotel.name, position, 'review_modal');
+  
+  setShowReviewsModal(true);
+};
 
   const formatShortDateRange = (checkIn: Date, checkOut: Date) => {
   const opts: Intl.DateTimeFormatOptions = { month: 'short', day: 'numeric' };
@@ -496,6 +509,14 @@ function formatDate(d?: Date): string | undefined {
   return d.toISOString().split("T")[0]; // YYYY-MM-DD
 }
 
+const handleShowMap = async () => {
+  console.log('🟦 Tracking map view');
+  await AnalyticsService.trackFirstAction('map_view', position);
+  await AnalyticsService.trackHotelClick(hotel.id, hotel.name, position, 'map_view');
+  
+  setShowFullMap(true);
+};
+
 const generateHotelDeepLink = (
   hotel: Hotel,
   checkInDate?: Date,
@@ -526,13 +547,29 @@ const generateHotelDeepLink = (
 };
 
 
-  const handleAskAI = () => {
-    setShowHotelChat(true);
-    onHotelPress?.();
-  };
+const handleAskAI = async () => {
+  console.log('🟦 Tracking Ask AI click');
+  await AnalyticsService.trackFirstAction('ask_ai', position);
+  await AnalyticsService.trackHotelClick(hotel.id, hotel.name, position, 'ask_ai');
+  
+  setShowHotelChat(true);
+  onHotelPress?.();
+};
 
 const handleViewDetailsPress = async () => {
   try {
+     // ✅ Track the book click BEFORE opening the URL
+    console.log('🟦 Tracking book click');
+    await AnalyticsService.trackBookClick(
+      hotel.id,
+      hotel.name,
+      position, // Already passed as prop
+      hotel.pricePerNight?.amount || hotel.price
+    );
+    console.log('🟦 Book click tracked');
+
+    // ✅ Track first action if this is the first interaction
+    await AnalyticsService.trackFirstAction('book_now', position);
     const url = generateHotelDeepLink(
       hotel,
       checkInDate,
@@ -742,7 +779,7 @@ const isLoading = isInsightsLoading || insightsStatus === "loading" || insightsS
 
     {/* RIGHT SIDE — RATING */}
     <TouchableOpacity
-      onPress={() => setShowReviewsModal(true)}
+      onPress={handleShowReviews} 
       activeOpacity={0.7}
       style={tw`px-3 py-2 flex-row items-center gap-1`}
     >
@@ -764,7 +801,7 @@ const isLoading = isInsightsLoading || insightsStatus === "loading" || insightsS
 {/* Show Map Button - Bottom Right */}
 <View style={tw`absolute bottom-2.5 right-2.5 z-40`} pointerEvents={isLoading ? 'none' : 'auto'}>
   <TouchableOpacity
-    onPress={() => setShowFullMap(true)}
+    onPress={handleShowMap}
     disabled={isLoading}
     style={[
       tw`py-2.8 px-3 rounded-xl flex-row items-center gap-1.5`,
@@ -796,37 +833,32 @@ const isLoading = isInsightsLoading || insightsStatus === "loading" || insightsS
 
 
 
-      {/* Image Indicators - Top Right (Sleek & Responsive) */}
+{/* Image Indicators - Top Right (Simple & Visible) */}
 {images && images.length > 1 && (
   <View style={tw`absolute top-3.5 right-2.5 z-30`}>
     <View
       style={[
-        tw`px-2.5 py-1.5 rounded-full`,
+        tw`px-2 py-1 rounded-full`,
         {
-          backgroundColor: 'rgba(0, 0, 0, 0.5)',
-          backdropFilter: 'blur(10px)',
+          backgroundColor: 'rgba(0, 0, 0, 0.6)',
         }
       ]}
     >
       <View style={tw`flex-row items-center gap-1`}>
         {images.map((_, idx) => {
           const isActive = idx === currentImageIndex;
-          const distance = Math.abs(idx - currentImageIndex);
           
           return (
             <View
               key={idx}
               style={[
-                tw`rounded-full transition-all`,
+                tw`rounded-full`,
                 {
-                  width: isActive ? 6 : distance === 1 ? 4 : 3,
-                  height: isActive ? 6 : distance === 1 ? 4 : 3,
+                  width: isActive ? 5 : 4,
+                  height: isActive ? 5 : 4,
                   backgroundColor: isActive 
                     ? '#FFFFFF' 
-                    : distance === 1 
-                      ? 'rgba(255,255,255,0.5)' 
-                      : 'rgba(255,255,255,0.3)',
-                  opacity: distance > 2 ? 0.4 : 1,
+                    : 'rgba(255,255,255,0.4)',
                 }
               ]}
             />
@@ -1069,137 +1101,196 @@ const isLoading = isInsightsLoading || insightsStatus === "loading" || insightsS
   )}
 </TouchableOpacity>
 
-  {/* Always Visible Action Buttons - Consistent with top overlays */}
-{/* Always Visible Action Buttons - Consistent with top overlays */}
-<View style={tw`flex-row items-center gap-2`}>
-
-
-  
-
-  {/* Ask AI Button */}
+  {/* Minimalist Circular Action Buttons */}
+<View style={tw`flex-row items-center justify-between px-1`}>
+  {/* Ask AI */}
   <TouchableOpacity
-    style={[
-      tw`py-2.5 px-3 rounded-xl flex-1 bg-white border border-gray-200`,
-      {
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.15,
-        shadowRadius: 3,
-        elevation: 3,
-      }
-    ]}
+    style={tw`items-center flex-1`}
     onPress={handleAskAI}
-    activeOpacity={0.8}
+    activeOpacity={0.7}
   >
-    <View style={tw`flex-row items-center justify-center`}>
-      <View style={[
-        tw`w-5 h-5 rounded-full items-center justify-center mr-1.5`,
-        { backgroundColor: 'rgba(29, 249, 255, 0.15)' }
-      ]}>
-        <Ionicons name="sparkles" size={11} color={TURQUOISE_DARK} />
-      </View>
-      <Text style={[
-        tw`text-[13px] text-gray-800`,
-        { fontFamily: 'Merriweather-Regular' }
-      ]}>
-        Ask AI
-      </Text>
+    <View
+      style={[
+        tw`w-12 h-12 rounded-full items-center justify-center bg-white border border-gray-200`,
+        {
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 2 },
+          shadowOpacity: 0.1,
+          shadowRadius: 3,
+          elevation: 3,
+        }
+      ]}
+    >
+      <Ionicons name="sparkles" size={18} color={TURQUOISE_DARK} />
     </View>
+    <Text style={[
+      tw`text-[9px] text-gray-600 mt-1`,
+      { fontFamily: 'Merriweather-Regular' }
+    ]}>
+      Ask AI
+    </Text>
   </TouchableOpacity>
 
-  {/* Book Now Button */}
+  {/* Book */}
   <TouchableOpacity
-    style={[
-      tw`py-2.5 px-3 rounded-xl flex-1 bg-white border border-gray-200`,
-      {
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.15,
-        shadowRadius: 3,
-        elevation: 3,
-      }
-    ]}
+    style={tw`items-center flex-1`}
     onPress={handleViewDetailsPress}
-    activeOpacity={0.8}
+    activeOpacity={0.7}
   >
-    <View style={tw`flex-row items-center justify-center`}>
-      <View style={[
-        tw`w-5 h-5 rounded-full items-center justify-center mr-1.5`,
-        { backgroundColor: 'rgba(29, 249, 255, 0.15)' }
-      ]}>
-        <Ionicons name="eye-outline" size={11} color={TURQUOISE_DARK} />
-      </View>
-      <Text style={[
-        tw`text-[13px] text-gray-800`,
-        { fontFamily: 'Merriweather-Regular' }
-      ]}>
-        Book
-      </Text>
+    <View
+      style={[
+        tw`w-12 h-12 rounded-full items-center justify-center bg-white border border-gray-200`,
+        {
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 2 },
+          shadowOpacity: 0.1,
+          shadowRadius: 3,
+          elevation: 3,
+        }
+      ]}
+    >
+      <Ionicons name="eye-outline" size={18} color={TURQUOISE_DARK} />
     </View>
-  </TouchableOpacity>
-    {/* Share Button */}
-  <TouchableOpacity
-    style={[
-      tw`w-11 h-11 items-center justify-center rounded-xl bg-white border border-gray-200`,
-      {
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.15,
-        shadowRadius: 3,
-        elevation: 3,
-      }
-    ]}
-    onPress={async () => {
-  try {
-    const shareUrl = generateHotelDeepLink(
-      hotel,
-      checkInDate,
-      checkOutDate,
-      adults,
-      children,
-      placeId,
-      occupancies
-    );
-
-    const shareMessage =
-      `Check out ${hotel.name}!\n\n` +
-      `${shareUrl}`;
-
-    await Share.share({
-      message: shareMessage,
-    });
-  } catch (error) {
-    console.log('Error sharing:', error);
-  }
-}}
-
-    activeOpacity={0.8}
-  >
-    <Ionicons name="share-outline" size={19} color="#374151" />
+    <Text style={[
+      tw`text-[9px] text-gray-600 mt-1`,
+      { fontFamily: 'Merriweather-Regular' }
+    ]}>
+      Book
+    </Text>
   </TouchableOpacity>
 
-    {/* Favorite Button */}
+{/* Google Maps */}
+<TouchableOpacity
+  style={tw`items-center flex-1`}
+  onPress={async () => {
+    try {
+      console.log('🟦 Tracking Google Maps click');
+      await AnalyticsService.trackFirstAction('google_maps', position);
+      await AnalyticsService.trackHotelClick(hotel.id, hotel.name, position, 'google_maps');
+      
+      const searchQuery = hotel.fullAddress 
+        ? encodeURIComponent(`${hotel.name} ${hotel.fullAddress}`)
+        : encodeURIComponent(`${hotel.name} ${displayLocation}`);
+      
+      const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${searchQuery}`;
+      await Linking.openURL(mapsUrl);
+      console.log('✅ Google Maps opened');
+    } catch (error) {
+      console.log('Error opening Google Maps:', error);
+      Alert.alert('Error', 'Could not open Google Maps');
+    }
+  }}
+  activeOpacity={0.7}
+>
   <View
     style={[
-      tw`w-11 h-11 items-center justify-center rounded-xl bg-white border border-gray-200`,
+      tw`w-12 h-12 rounded-full items-center justify-center bg-white border border-gray-200`,
       {
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.15,
+        shadowOpacity: 0.1,
         shadowRadius: 3,
         elevation: 3,
       }
     ]}
   >
-    <AnimatedHeartButton
-      hotel={hotel}
-      size={19}
-      onShowSignUpModal={openSignUp}
-      onFavoriteSuccess={onFavoriteSuccess}
-    />
+    {/* Grey Google "G" - using text representation */}
+    <Text style={{
+      fontSize: 20,
+      fontWeight: '700',
+      color: '#374151',
+      fontFamily: 'Product Sans, Arial, sans-serif'
+    }}>
+      G
+    </Text>
   </View>
-  
+  <Text style={[
+    tw`text-[9px] text-gray-600 mt-1`,
+    { fontFamily: 'Merriweather-Regular' }
+  ]}>
+    Google
+  </Text>
+</TouchableOpacity>
+ {/* Share */}
+<TouchableOpacity
+  style={tw`items-center flex-1`}
+  onPress={async () => {
+    try {
+      console.log('🟦 Tracking share click');
+      await AnalyticsService.trackFirstAction('share', position);
+      await AnalyticsService.trackHotelClick(hotel.id, hotel.name, position, 'share');
+      
+      // Generate Google Maps link instead of booking link
+      const searchQuery = hotel.fullAddress 
+        ? encodeURIComponent(`${hotel.name} ${hotel.fullAddress}`)
+        : encodeURIComponent(`${hotel.name} ${displayLocation}`);
+      
+      const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${searchQuery}`;
+      const shareMessage = `Check out ${hotel.name}!\n\n${mapsUrl}`;
+      
+      await Share.share({ message: shareMessage });
+      console.log('✅ Share completed');
+    } catch (error) {
+      console.log('Error sharing:', error);
+    }
+  }}
+  activeOpacity={0.7}
+>
+  <View
+    style={[
+      tw`w-12 h-12 rounded-full items-center justify-center bg-white border border-gray-200`,
+      {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 3,
+        elevation: 3,
+      }
+    ]}
+  >
+    <Ionicons name="share-outline" size={18} color="#374151" />
+  </View>
+  <Text style={[
+    tw`text-[9px] text-gray-600 mt-1`,
+    { fontFamily: 'Merriweather-Regular' }
+  ]}>
+    Share
+  </Text>
+</TouchableOpacity>
 
+  {/* Favorite */}
+  <View style={tw`items-center flex-1`}>
+    <View
+      style={[
+        tw`w-12 h-12 rounded-full items-center justify-center bg-white border border-gray-200`,
+        {
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 2 },
+          shadowOpacity: 0.1,
+          shadowRadius: 3,
+          elevation: 3,
+        }
+      ]}
+    >
+      <AnimatedHeartButton
+        hotel={hotel}
+        size={18}
+        onShowSignUpModal={openSignUp}
+        onFavoriteSuccess={onFavoriteSuccess}
+        onFavoriteClick={async () => {
+          console.log('🟦 Tracking favorite click');
+          await AnalyticsService.trackFirstAction('favorite', position);
+          await AnalyticsService.trackHotelClick(hotel.id, hotel.name, position, 'favorite');
+        }}
+      />
+    </View>
+    <Text style={[
+      tw`text-[9px] text-gray-600 mt-1`,
+      { fontFamily: 'Merriweather-Regular' }
+    ]}>
+      Save
+    </Text>
+  </View>
 </View>
 </View>
 

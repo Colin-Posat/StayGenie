@@ -622,10 +622,28 @@ const InitialSearchScreen: React.FC<InitialSearchScreenProps> = ({
     if (isListening) await stopListening();
     setIsListening(false);
 
+    
+
     if (searchQuery.trim() && !isTransitioning) {
       const trimmedQuery = searchQuery.trim();
       console.log('Starting search transition for:', trimmedQuery);
 
+       try {
+      console.log('🟦 Starting analytics tracking...');
+      await AnalyticsService.trackSearchInitiated(
+        trimmedQuery,
+        isListening ? 'voice' : 'text'
+      );
+      console.log('🟦 Analytics tracking completed');
+      
+      // ✅ Add a small delay to ensure Firebase batches the event
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+    } catch (error) {
+      console.error('Failed to log search event:', error);
+    }
+
+    
       try {
         await logEvent('hotel_search', {
           search_term: trimmedQuery,
