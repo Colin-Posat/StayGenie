@@ -119,6 +119,12 @@ interface Stage1Hotel {
   starRating: number;
   images: string[];
   photoGalleryImages?: string[]; // ADD: Photo gallery from stage 1
+  categoryRatings?: {  // ✅ ADD THIS
+    cleanliness: number;
+    service: number;
+    location: number;
+    roomQuality: number;
+  };
   pricePerNight: {
     amount: number;
     totalAmount: number;
@@ -329,10 +335,16 @@ interface Hotel {
   allHotelInfo?: string;
 
   aiSafetyRating?: number;
-  safetyJustification?: string; 
+  safetyJustification?: string;
+  categoryRatings?: {
+    cleanliness: number;
+    service: number;
+    location: number;
+    roomQuality: number;
+  };
 }
-//const BASE_URL = __DEV__ ? 'http://localhost:3003' : "https://staygenie-wwpa.onrender.com";
-const BASE_URL ="https://staygenie-wwpa.onrender.com"
+const BASE_URL = __DEV__ ? 'http://localhost:3003' : "https://staygenie-wwpa.onrender.com";
+//const BASE_URL ="https://staygenie-wwpa.onrender.com"
 
 
 import { Dimensions } from 'react-native';
@@ -725,6 +737,7 @@ case 'progress':
         console.log(`✨ Received AI-enhanced hotel: ${data.hotel.name}`);
         console.log('🏨 Enhanced topAmenities:', data.hotel.topAmenities);
         console.log('📸 Photo gallery images:', data.hotel.photoGalleryImages?.length || 0); // ADD: Log photo gallery
+        console.log('📊 Category ratings:', data.hotel.categoryRatings); 
         
         const enhancedHotel = convertStreamedHotelToDisplay(data.hotel, data.hotelIndex - 1);
         
@@ -751,10 +764,12 @@ case 'progress':
               safetyRating: enhancedHotel.aiSafetyRating || enhancedHotel.safetyRating || updatedHotels[existingIndex].safetyRating,
               aiSafetyRating: enhancedHotel.aiSafetyRating,
               safetyJustification: enhancedHotel.safetyJustification || "AI-enhanced safety assessment",
-              photoGalleryImages: enhancedHotel.photoGalleryImages || [] // ADD: Update photo gallery
+              photoGalleryImages: enhancedHotel.photoGalleryImages || [], // ADD: Update photo gallery
+              categoryRatings: data.hotel.categoryRatings
             };
             
             console.log(`🎨 Successfully enhanced hotel: ${data.hotel.name} with ${enhancedHotel.photoGalleryImages?.length || 0} gallery images`);
+            console.log(`📊 Category ratings applied:`, data.hotel.categoryRatings);
           } else {
             console.warn(`⚠️ Could not find hotel ${data.hotelId} to enhance in current hotels list of ${updatedHotels.length}`);
             console.log(`Current hotel IDs:`, updatedHotels.map(h => h.id));

@@ -26,6 +26,12 @@ export interface AIRecommendation {
   safetyJustification: string; 
   topAmenities: string[];
   photoGalleryImages: string[];
+  categoryRatings?: {  // ✅ ADD THIS
+    cleanliness: number;
+    service: number;
+    location: number;
+    roomQuality: number;
+  };
 }
 
 // Load environment variables
@@ -638,6 +644,33 @@ const generateInsightsFromSentiment = async (hotelName: string, sentimentData: H
   }
 };
 
+// Add this function around line 480, right after generateInsightsFromSentiment
+const extractCategoryRatings = (sentimentData: HotelSentimentData | null): { cleanliness: number; service: number; location: number; roomQuality: number } | undefined => {
+  try {
+    if (!sentimentData?.data?.sentiment_analysis?.categories) {
+      return undefined;
+    }
+
+    const { categories } = sentimentData.data.sentiment_analysis;
+    
+    // Find each category by name
+    const cleanliness = categories.find((cat: any) => cat.name === 'Cleanliness')?.rating || 7.5;
+    const service = categories.find((cat: any) => cat.name === 'Service')?.rating || 7.5;
+    const location = categories.find((cat: any) => cat.name === 'Location')?.rating || 7.5;
+    const roomQuality = categories.find((cat: any) => cat.name === 'Room Quality')?.rating || 7.5;
+    
+    return {
+      cleanliness: Number(cleanliness),
+      service: Number(service),
+      location: Number(location),
+      roomQuality: Number(roomQuality)
+    };
+  } catch (error) {
+    console.warn('Error extracting category ratings:', error);
+    return undefined;
+  }
+};
+
 const getFallbackSafetyRating = (city: string, country: string): number => {
   const cityLower = city.toLowerCase();
   const countryLower = country.toLowerCase();
@@ -981,6 +1014,7 @@ const getDefaultAttractionsBySearch = (userQuery?: string, city?: string): strin
 };
 
 
+// Update the function around line 675
 const fetchHotelDetailsAndGenerateInsights = async (
   hotel: HotelSummaryForInsights,
   delayMs: number = 0
@@ -991,7 +1025,13 @@ const fetchHotelDetailsAndGenerateInsights = async (
   firstRoomImage: string | null;
   secondRoomImage: string | null;
   allHotelInfo: string;
-  photoGalleryImages: string[]; // NEW: Add photo gallery to return type
+  photoGalleryImages: string[];
+  categoryRatings?: {  // ✅ ADD THIS
+    cleanliness: number;
+    service: number;
+    location: number;
+    roomQuality: number;
+  };
 }> => {
 
   if (delayMs > 0) {
@@ -1005,10 +1045,12 @@ const fetchHotelDetailsAndGenerateInsights = async (
     const guestInsights = await generateInsightsFromSentiment(hotel.name, hotelDetailsData);
     const roomImages = getRoomOrHotelImages(hotelDetailsData);
     const allHotelInfo = consolidateAllHotelInfo(hotelDetailsData);
-    const photoGalleryImages = getPhotoGalleryImages(hotelDetailsData); // NEW: Extract photo gallery
+    const photoGalleryImages = getPhotoGalleryImages(hotelDetailsData);
+    const categoryRatings = extractCategoryRatings(hotelDetailsData); // ✅ ADD THIS
 
     console.log(`✅ Completed hotel details and insights for ${hotel.name}`);
     console.log(`🖼️  Images found: first=${!!roomImages.firstImage}, second=${!!roomImages.secondImage}, gallery=${photoGalleryImages.length}`);
+    console.log(`📊 Category ratings: ${categoryRatings ? 'found' : 'not available'}`); // ✅ ADD THIS
     
     return {
       hotelId: hotel.hotelId,
@@ -1017,7 +1059,8 @@ const fetchHotelDetailsAndGenerateInsights = async (
       firstRoomImage: roomImages.firstImage,
       secondRoomImage: roomImages.secondImage,
       allHotelInfo,
-      photoGalleryImages // NEW: Include photo gallery in return
+      photoGalleryImages,
+      categoryRatings // ✅ ADD THIS
     };
     
   } catch (error) {
@@ -1030,11 +1073,11 @@ const fetchHotelDetailsAndGenerateInsights = async (
       firstRoomImage: null,
       secondRoomImage: null,
       allHotelInfo: 'Detailed hotel information not available',
-      photoGalleryImages: [] // NEW: Empty array as fallback
+      photoGalleryImages: [],
+      categoryRatings: undefined // ✅ ADD THIS
     };
   }
 };
-
 
 // Main controller function for AI insights
 export const aiInsightsController = async (req: Request, res: Response) => {
@@ -1166,7 +1209,8 @@ const finalRecommendations: AIRecommendation[] = aiContentResults.map(aiContent 
     safetyRating: aiContent.safetyRating,
     safetyJustification: aiContent.safetyJustification,
     topAmenities: aiContent.topAmenities,
-    photoGalleryImages: hotelDetailsInsights?.photoGalleryImages || [] // NEW: Add photo gallery to final response
+    photoGalleryImages: hotelDetailsInsights?.photoGalleryImages || [],
+    categoryRatings: hotelDetailsInsights?.categoryRatings // ✅ ADD THIS
   };
 });
 

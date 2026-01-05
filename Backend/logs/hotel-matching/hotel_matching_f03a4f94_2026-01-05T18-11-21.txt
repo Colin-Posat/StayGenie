@@ -1,0 +1,124 @@
+
+=== HOTEL MATCHING PROMPT LOG ===
+Search ID: f03a4f94-b365-413f-8884-17471e2cd8fe
+Timestamp: 2026-01-05T18:11:21.204Z
+User Query: clean hotels in vancouver near downtown that are clean and have a gym
+Destination: Vancouver, CA
+Hotel Count: 63
+Character Count: 24465
+Estimated Tokens: ~6117
+
+=== PROMPT CONTENT ===
+USER REQUEST: "clean hotels in vancouver near downtown that are clean and have a gym"
+STAY: 3 nights
+
+🎯 RANKING PRIORITY ORDER:
+1. USER PREFERENCES MATCH (Most Important)
+2. Location convenience
+3. Star rating and quality
+4. Value for money
+
+🎯 YOUR PRIMARY TASK: Analyze each hotel's description and amenities to find the BEST matches for: "clean hotels in vancouver near downtown that are clean and have a gym"
+
+📋 STEP-BY-STEP MATCHING PROCESS:
+1. READ each hotel's description carefully for keywords matching user request
+2. CHECK amenities list for relevant features 
+3. PRIORITIZE hotels that mention specific user requirements in their text
+4. RANK by relevance to user request, NOT by list position
+
+🔍 KEYWORD MATCHING EXAMPLES:
+- User wants "Central Park" → Look for "Central Park", "near park", "park views" in descriptions
+- User wants "free breakfast" → Look for "breakfast", "complimentary breakfast", "free breakfast" 
+- User wants "spa" → Look for "spa", "wellness", "massage", "treatments"
+- User wants "business hotel" → Look for "business", "conference", "meeting rooms"
+- User wants "budget" → Prioritize lower prices and "value" mentions
+- User wants "luxury" → Look for "luxury", "premium", "upscale", higher star ratings
+
+⚠️ CRITICAL RULES:
+- IGNORE the order hotels appear in the list - analyze content only
+- You MUST select exactly 15 hotels using their exact names from the list
+- Base rankings on how well each hotel matches "clean hotels in vancouver near downtown that are clean and have a gym", not on price or list position
+- If a hotel explicitly mentions user requirements, rank it higher
+- If no perfect matches exist, select the 15 closest matches available
+
+📝 REQUIRED OUTPUT FORMAT:
+1. [exact hotel name from list] | [match percentage 1-100]%
+2. [exact hotel name from list] | [match percentage 1-100]%
+3. [exact hotel name from list] | [match percentage 1-100]%
+...continue through 15
+
+Format (exact numbering required):
+1. [exact hotel name from list] | [match percentage]%
+2. [exact hotel name from list] | [match percentage]%
+3. [exact hotel name from list] | [match percentage]%
+...continue through...
+15. [exact hotel name from list] | [match percentage]%
+
+HOTELS AVAILABLE:
+1: Sandman Hotel Vancouver Downtown | $146/night | | Convenient Central Locationcentral Vancouver, Sandman Hotel Vancouver City Centre perfect blend of comfort convenience travelers. Just short stroll from vibrant Robson Street shopping district, guests easily city's best attractions.Modern AmenitiesIndulge hotel's indoor pool, hot tub, well-equipped| Gym (paid) 
+2: Hotel at the Waldorf | $97/night | | Modern Amenities hasHotel Waldorf, located 5 minutes from BC Place, vibrant stay Vancouver. Each room tastefully decorated free WiFi, flat-screen TV, complimentary toiletries ensuring comfortable stay.Dining EntertainmentIndulge culinary delights on-site restaurant dance night away hotel's|  
+3: 2400 Motel | $80/night | | Convenient LocationLocated 10 near bustling Metropolis Metrotown Shopping Center, Vancouver motel easy access to downtown Vancouver, 8 km away.Comfortable roomssEach guest room 2400 Motel private entrance, cable TV, work desk, kitchenette most rooms. the convenience of private full bathrooms during|  
+4: Times Square Suites Hotel | $263/night | | Suites Stunning ViewsFully Equipped Kitchens Cozy FireplacesIndulge convenience of fully furnished suites gas fireplaces modern kitchens, perfect comfortable stay. the of in-suite laundry facilities spacious living areas home-away-from-home.Breathtaking Rooftop Patio Proximity to AttractionsTake|  
+5: Metropolitan Hotel Vancouver | $282/night | | Glass-Domed Pool finest Metropolitan Hotel Vancouver stunning glass-domed indoor pool, offering unique elegant setting relaxing swim soak.Gourmet Dining culinary journey Diva Met, hotel's on-site restaurant, contemporary international cuisine complemented full-service bar impressive wine| Gym (paid) 
+6: English Bay Hotel | $97/night | | Stunning Ocean Views Beachfront Location breathtaking views of ocean all-suite Vancouver hotel, steps away from English Bay Beach. Each suite convenient full kitchenette comfortable stay.Modern Amenities ComfortRelax front of 32-inch flat-screen TV cable channels room. Stay connected free wifi|  
+7: Sheraton Vancouver Wall Centre | $195/night | | City Centre Location Stunning Viewscentral Vancouver, Sheraton Wall Centre breathtaking views of city, English Bay, mountains from every room. the vibrant Robson Street shops Yaletown restaurants short walk away. Rooms Dining comfort modern amenities like flat screen TVs, electronic safes, bath| Gym (paid) 
+8: Paradox Vancouver | $220/night | | Paradox Hotel Vancouver, oasis heart of this vibrant city.Relaxation AwaitsIndulge exquisite spa, offering rejuvenating massages, body treatments, facials, ensuring relaxing.quality staysDive into indoor pool, unwind hot tub, dance night away lively nightclub, providing endless entertainment every| Gym 
+9: Hampton Inn & Suites, by Hilton - Vancouver Downtown | $165/night | | luxuryIndulge hot tub free WiFi throughout property. Each room equipped modern comforts like flat-screen TV, coffee maker, refrigerator.Convenient LocationLocated vibrant Robson Street, opposite BC Place Stadium, hotel near Rogers Arena Queen Elizabeth Theater. the best of Vancouver right| Gym (paid) 
+10: Samesun Vancouver - Hostel | $131/night | | vibrant pulse of Vancouver Samesun Vancouver - Hostel, situated near BC Place Stadium other iconic attractions.Prime Locationin heart of city, hostel grants easy access to BC Place, Canada Place, Granville Island Public Market, allowing to yourself local culture entertainment minutes.Comfort|  
+11: Embarc Vancouver | $203/night | | Stay Vancouver City CenterStunning Views from Every RoomEnjoy breathtaking scenic views of city from each studio suite, complemented modern amenities like flat-screen TV free toiletries ensuites.Relaxation ConvenienceUnwind on-site pool city ease, thanks to central location 24h desk. Paid private| Gym (paid) 
+12: The Westin Bayshore, Vancouver | $247/night | | Stunning Waterfront Property: Westin Bayshore, Vancouver harmonious blend of urban sophistication natural beauty, providing ideal retreat to best of Vancouver. roomss Dining: Newly renovated guestrooms panoramic views, along revamped dining venues like H2 Kitchen & Bar, H Tasting Lounge, T & Co| Gym (paid) 
+13: Pan Pacific Vancouver Pacific Club | $358/night | | No description available|  
+14: Moda Hotel | $138/night | | Central Location Modern AmenitiesLocated Vancouver, Moda Hotel convenient stay 2 restaurants, 2 bars, 24h desk. The rooms feature Free WiFi, long-distance calling, essential amenities like flat-screen TV, mini-bar, coffee machine.Dining s Every TasteIndulge Italian cuisine Cibo Trattoria, wood-oven|  
+15: The Burrard | $158/night | | Outdoor Lounge Coffee Shop vibrant city of Vancouver from comfort of hotel's outdoor lounge freshly brewed coffee from on-site coffee shop.Modern AmenitiesRelax style rooms equipped 42-inch flat-screen TV, Nespresso coffee machine, free wifi. Stay connected free calls keep beverages cool in-room|  
+16: Pinnacle Hotel Harbourfront | $212/night | | Stunning Views of Coal HarbourLocated Vancouver, Pinnacle Vancouver Harbourfront Hotel captivating views of Coal Harbour. With juliette balconies every room, guests scenery right from rooms.luxuryGuests unwind indoor pool, stay active gym, delicious dishes on-site P2B Bistro Bar. The hotel Keurig| Gym (paid) 
+17: the DOUGLAS, Autograph Collection | $508/night | | Boutique Hotel Vancouver's Entertainment DistrictThe DOUGLAS, Autograph Collection sophisticated stay modern décor, 30,000-square-foot rooftop park, Parq Casino, stylish D/6 Bar lounge.Elegant Rooms AmenitiesAll rooms feature AC, flat-screen TVs, Internet TV, illy coffee tea facilities. The| Gym (paid) 
+18: Wedgewood Hotel & Spa | $236/night | | epitome of relaxation Wedgewood Hotel & Spa, every detail curated ultimate comfort.Indulgent Spa TreatmentsPamper yourself serene spa, offering range of rejuvenating massages, body treatments, facials leave feeling refreshed revitalized.Exquisite Dining culinary delights Bacchus Restaurant, fine|  
+19: Georgian Court Hotel, WorldHotels Elite | $179/night | | Prime Location Vancouver City CentreLocated across from BC Place near Queen Elizabeth Theatre, Georgian Court Hotel central spot exploring Vancouver.luxuryIndulge comfort of 37-inch flat-screen TV, Beekman 1802 bath products, coffee maker each guest room. Unwind hot tub, sauna, stay active fully| Gym (paid) 
+20: AZUR Legacy Collection Hotel | $271/night | | rooms: top-notch AZUR Legacy Collection Hotel, located 1.9 km from Sunset Beach Vancouver. 5-star rooms free WiFi, room svc, 24h desk convenience. Amenities: Unwind hotel gym, private parking, terrace, restaurant offering delectable dishes. leisure business, everything need comfortable stay.Prime| Gym (paid) 
+21: The Parker Hotel and Rooftop | $193/night | | Downtown Stay Parker HotelModern Amenities: free WiFi, 42" LCD TVs, Keurig coffee machine every room. Stay connected high-speed internet unwind minibar fridge.La Vallee Restaurant: delicious breakfast elegant La Vallee restaurant 2nd floor, offering delightful start to day.Convenient Location:| Gym (paid) 
+22: The Sutton Place Hotel Vancouver | $249/night | | roomssIndulge elegant rooms adorned modern amenities like flat-screen TV, plush bathrobes, stocked minibar. The sophisticated decor vintage work desk create serene ambiance relaxing stay.Culinary DelightsSavor culinary journey Boulevard Kitchen & Oyster Bar, offering diverse wine selection from| Gym (paid) 
+23: Rosedale on Robson Suite Hotel | $200/night | | Rosedale Robson Suite HotelConvenient Location: Situated short stroll from BC Place Stadium, Rosedale Robson Suite Hotel easy access to Vancouver's top attractions.luxury: Unwind indoor pool hot tub, convenience of fully-equipped kitchenette every suite. Stay connected free WiFi entertainment cable| Gym (paid) 
+24: OPUS Vancouver | $218/night | | Hotel YaletownLocated vibrant Yaletown neighborhood, OPUS Vancouver stay steps away from Yaletown-Roundhouse Canada Line Station.Elegant Rooms DiningIndulge rooms vibrant decor, heated bathroom floors, Nespresso® machines. North Italian cuisine La Pentola restaurant cocktails Opus Bar.Unique| Gym (paid) 
+25: Auberge Vancouver Hotel | $235/night | | AmenitiesLocated Vancouver's city centre, Auberge Vancouver Hotel stay indoor pool, sauna, hot tub, Turkish bath, gym. Relax style comfort during visit.Stunning Views Modern ComfortEnjoy convenience of free WiFi, refrigerator, microwave all rooms, along flat-screen TV, iPod docking station, coffee| Gym (paid) 
+26: Best Western Premier Chateau Granville Hotel & Suites & Conference Centre | $145/night | | Convenient Locationin central Vancouver, short 5-minute stroll from bustling Robson Street shopping area, this hotel perfect blend of convenience comfort stay.Modern AmenitiesEach room Best Western Premier Chateau Granville Hotel & Suites & Conference Centre equipped digital HD TV, microwaves,| Gym (paid) 
+27: Holiday Inn & Suites Vancouver Downtown by IHG | $154/night | | Convenient LocationLocated 170 meters from vibrant Granville Street entertainment district, Holiday Inn Vancouver Downtown & Suites easy access to city's top attractions.Relaxation DiningIndulge relaxing Altum Spa & Wellness, all-day dining Unwind Restaurant cozy lounge area evening| Gym (paid) 
+28: La Grande Residence at the Sutton Place Hotel | $330/night | | Suites Stunning City ViewsSpa, Pool, Dining OptionsIndulge relaxation spa, take dip indoor pool, delicious meals Boulevard Kitchen + Oyster Bar Gerard Lounge. Amenities Ultimate ComfortUnwind outdoor patio, relax hot tub sauna, stay active gym, take care of business on-site business ctr. the| Gym (paid) 
+29: Delta Hotels by Marriott Vancouver Downtown Suites | $253/night | | All-Suite Hotel VancouverHigh-Speed WiFi Stunning Views of floor-to-ceiling windows high-speed WiFi Delta Hotels Marriott Vancouver Downtown Suites. Relax separate living room flat-screen TV, work desk, convenience of coffeemaker mini-refrigerator. Upgrade to room view truly unforgettable stay.gym| Gym (paid) 
+30: The St. Regis Hotel | $237/night | | roomssThe St. Regis Hotel modern rooms flat-screen TVs, complimentary coffee, free worldwide phone calls. The elegant decor comfortable amenities provide stay all guests.Gourmet Dining OptionsIndulge American cuisine Gotham Steakhouse Cocktail Bar, seafood vegetarian dishes St. Regis Bar & Grill.|  
+31: Vancouver Marriott Pinnacle Downtown Hotel | $468/night | | Breathtaking Viewsin downtown Vancouver, 31-story hotel stunning views of North Shore Mountains Vancouver Harbour.luxuryEnjoy 52-foot indoor pool, fully equipped gym, floor-to-ceiling windows rooms. Free WiFi, flat-screen TV, coffee-making facilities ensure comfortable stay.Delightful DiningIndulge| Gym (paid) 
+32: Coast Coal Harbour Vancouver Hotel by APA | $207/night | | Rooftop Deck Stunning Views relaxing hotel's rooftop deck featuring pool, hot tub, breathtaking views of North Shore Mountains.Modern Amenities Comfortable roomssIndulge bright rooms equipped 55" flat-screen TV, iPod dock, coffee maker. city views 20' floor-to-ceiling windows pamper yourself| Gym (paid) 
+33: Best Western Plus Sands | $140/night | | Central Locationcentral Vancouver, Best Western Plus Sands near English Bay beach, offering convenience easy access to popular attractions like Stanley Park Robson Street shopping area.Dining EntertainmentIndulge fresh seafood pasta Park restaurant, unwind drink enjoying views of English Bay| Gym (paid) 
+34: JW Marriott Parq Vancouver | $348/night | | roomssThe JW Marriott Parq Vancouver elegant large rooms modern amenities such Internet TV, Wi-Fi, 24/7 room svc. Some rooms provide stunning views of False Creek city stadium.Dining EntertainmentGuests culinary journey hotel's eight diverse restaurants lounges, including establishments led| Gym (paid) 
+35: Hilton Vancouver Downtown, BC, Canada | $264/night | | Convenient Location epitome of Hilton Vancouver Downtown, BC, Canada. in outdoor heated lap pool hot tub, offering relaxation view. in Yaletown Robson, hotel's prime location near Queen Elizabeth Theatre ensures easy access to city's attractions.Elegant Suites Stunning ViewsUnwind style| Gym (paid) 
+36: Holiday Inn Vancouver-Centre Broadway by IHG | $156/night | | Indoor Pool Sun Deck: relaxing swim indoor pool soak sun spacious sun deck Holiday Inn Vancouver-Centre Broadway.Convenient Location:Just 7 minutes from Vancouver city centre close to Vancouver International Airport, hotel perfect choice both leisure business travelers.Modern Amenities:Stay| Gym (paid) 
+37: Loden Hotel | $350/night | | sophisticated charm of Loden Hotel, retreat heart of Vancouver.Indulgent Spa ServicesUnwind full-service spa rejuvenating massages, refreshing body treatments, revitalizing facials. Relaxation awaits serene environment designed ultimate tranquility.Gourmet Dining OptionsSavor mouthwatering meals| Gym, 24hr fitness 
+38: Grand Park Hotel & Suites Downtown Vancouver, an Ascend Collection Hotel | $127/night | | Contemporary RoomsFeaturing flat-screen TV, seating area, safe, contemporary rooms Grand Park Downtown Vancouver provide comfortable modern stay. Light wood furnishings coffee maker add touch of warmth to space, select rooms go extra mile microwave, fridge, iPod docking station.Relaxation| Gym (paid) 
+39: Fairmont Pacific Rim | $485/night | | Rooftop Pool SpaIndulge Vancouver hotel rooftop pool, fire pits, hot tub, full-service spa. Relax unwind style.Gourmet Dining OptionsSavor exquisite culinary s on-site restaurants, from Italian cuisine Giovane cafe + eatery to botanically inspired dishes Botanist Restaurant.Prime Locationlocated| Gym (paid) 
+40: YWCA Hotel | $136/night | | perfect blend of comfort convenience YWCA Hotel, central Vancouver!Recreation FitnessMake most of stay comprehensive recreation options, including well-equipped gym complimentary access to nearby gym. With ski storage available, outdoor enthusiasts find themselves right home.Modern AmenitiesRelax| Gym 
+41: Fairmont Hotel Vancouver | $255/night | | roomsThe Fairmont Hotel Vancouver, heart of Vancouver city centre, furnished rooms flat-screen TVs, minibars, stunning city views. the convenience of tea coffee-making facilities every room, ensuring comfortable stay. Dining culinary journey Notch8 Restaurant & Bar, located lobby. Delight| Gym (paid) 
+42: Pan Pacific Vancouver | $240/night | | Waterfront Retreat ultimate Pan Pacific Vancouver Hotel, located right waterfront Canada Place cruise ship terminal.Wellness Spa Gourmet DiningIndulge relaxation wellness spa delectable Asian fusion cuisine Oceans 999 restaurant. Unwind Coal Harbour Bar's outdoor terrace refreshing cocktail.Outdoor| Gym (paid) 
+43: EXchange Hotel Vancouver | $283/night | | roomssEXchange Hotel Vancouver designed rooms AC flat-screen TVs, ensuring comfortable stay all guests.Culinary DelightsIndulge culinary Hydra Estiatorio Mediterranean & Bar, traditional Greek ingredients expertly prepared quality Mediterranean dishes. The vibrant atmosphere expansive seating| Gym (paid) 
+44: Century Plaza Hotel | $167/night | | Suites KitchenettesIndulge convenience of having own kitchen kitchenette every suite Century Plaza Hotel. the freedom to cook own meals store favorite snacks drinks.Dining Excellence CPrime culinary delight CPrime - Modern Italian Steak & Wine Restaurant right hotel. Delight taste buds exquisite| Gym (paid) 
+45: Hotel Belmont Vancouver - MGallery Collection | $225/night | | rooms Heart of VancouverTop-notch Amenities: Hotel Belmont Vancouver MGallery free bikes, restaurant, bar guests to during stay. The 4-star hotel 24h desk, ATM, free WiFi, ensuring convenience comfort all visitors.concierges Tours: business ctr, concierge, tour organization, guests easily plan|  
+46: Sandman Suites Vancouver on Davie | $225/night | | Central Location Suitescentral Vancouver, this all-suite hotel near English Bay beach fully equipped kitchens, free WiFi, rooftop pool relaxing stay.Home-like Comfort ConvenienceWith in-suite coffee, tea, laundry facilities, suites Sandman Davie provide all comforts of home, making stay enjoyable| Gym (paid) 
+47: Rosewood Hotel Georgia | $533/night | | ServicesIndulge indoor saltwater lap pool, spa facilities, 24-hour room svc truly pampering stay.Culinary DelightsSavor variety of dining options from baked goods Bel Cafe to contemporary Canadian cuisine Hawksworth Restaurant, ensuring culinary to remember.Convenient LocationExplore vibrant Robson| Gym (paid) 
+48: Days Inn by Wyndham Vancouver Downtown | $211/night | | Waterfront LocationLocated 300m from Vancouver's waterfront, Days Inn Wyndham Vancouver Downtown picturesque setting guests to enjoy. With Stanley Park less than 3 km away, hotel easy access to city's top attractions.On-Site Restaurant PubGuests delicious meals drinks having to leave hotel|  
+49: Residence Inn by Marriott Vancouver Downtown | $180/night | | LuxuryConvenient Amenities: daily free breakfast on-site restaurant stay connected free wifi all rooms.Fitness Business Facilities: Keep workout routine gym take care of business needs on-site business ctr.Prime Location: nearby attractions like Sunset Beach Vancouver Contemporary Art Gallery, all| Gym (paid) 
+50: Executive Hotel Le Soleil | $268/night | | perfect blend of convenience Executive Hotel Le Soleil, unforgettable Vancouver begins.Prime Locationin heart of city, you’re steps away from iconic attractions such Bill Reid Gallery Pacific Centre Shopping Mall, making breeze to vibrant downtown. AmenitiesStay active round-the-clock access to gym| 24hr fitness 
+51: Granville Island Hotel | $374/night | | roomsIndulge stay Granville Island Hotel, each individually decorated room 42" flat-screen TV stocked minibar. the comfort of ensuite free toiletries hair dryer.Convenient AmenitiesStay connected free WiFi throughout property take advantage of gym rejuvenating workout. Need to catch work? Head to| Gym (paid) 
+52: Victorian Hotel | $251/night | | Historic Charm Modern ComfortsThe Victorian Hotel, short stroll from Vancouver's vibrant Gastown district, seamlessly blends historic elegance modern amenities. Built 1898, this hotel high ceilings, hardwood floors, intricate moldings, offering guests glimpse into past. The use of environmentally|  
+53: Barclay Hotel | $111/night | | Heritage Hotel Vancouver City CentreOn-Site Bar Restaurant: full drink menu catch sports matches Den bar lounge.Convenient Amenities: Free WiFi, flat-screen cable TV, individual air-conditioning all rooms.Great Location: Located Robson Street, near Stanley Park, Canada Place cruise terminal,|  
+54: Smithe House | $214/night | | Convenient LocationSmithe House central Vancouver, making easy guests to city's attractions.Modern AmenitiesGuests free WiFi, gym, concierge during stay this 4-star hotel.Comfortable RoomsEach room Smithe House equipped essential amenities such AC, kitchen, flat-screen TV relaxing stay. the perfect| Gym (paid) 
+55: Carmana Hotel & Suites | $245/night | | Suites Full Kitchens City ViewsIndulge comfort convenience of Carmana Hotel & Suites, located near vibrant Robson Street. Each suite full kitchen, perfect preparing meals ingredients from nearby markets, stunning city views to enhance stay.Convenient Amenities Relaxing StayEnjoy on-site gym to keep| Gym (paid) 
+56: Best Western Plus Vancouver Airport Hotel | $127/night | | Convenient Airport Shuttle Service On-Site DiningThe Best Western Plus Vancouver Airport Hotel 24-hour on-call airport shuttle service on-site restaurants convenience. With Vancouver International Airport 3 km away, travel needs taken care of.Modern Amenities Comfortable roomssEnjoy air-conditioned| Gym (paid) 
+57: Divya Sutra Suites on Robson Downtown Vancouver | $126/night | | City Views from Private Balconies bustling city of Vancouver from comfort of private balcony Riviera Divya Sutra Hotel. The stunning city views surely elevate stay.Convenient AmenitiesFrom complimentary umbrellas to 24h desk, Riviera Divya Sutra Hotel ensures comfort convenience throughout stay.|  
+58: Fairmont Waterfront | $215/night | | roomssThe Fairmont Waterfront contemporary rooms top-notch amenities like flat-screen TVs, minibars, plush bathrobes. a comfortable stay stunning views of harbor mountains.Gourmet Dining fresh handcrafted cuisine ARC Food & Drink throughout day. From breakfast to dinner, delicious meals made from| Gym (paid) 
+59: Hyatt Vancouver Downtown Alberni | $357/night | | oasis of Shangri-La Vancouver, modern elegance meets comfort heart of city.Relaxation WellnessUnwind full-service spa, indulging rejuvenating massages, body treatments, facials. For fitness enthusiasts, modern health club, outdoor pool, inviting hot tub await enjoyment.Gourmet Dining exquisite| Health club, Gym 
+60: Hotel Blu Vancouver | $277/night | | Recreational AmenitiesEnjoy leisure time hotel indoor pool, spa tub, sauna to relax unwind.Dining OptionsSavor delicious meal Azure Breakfast Lounge opt convenient room svc. Don't miss daily cooked-to-order breakfasts.Convenient Locationcentral Vancouver, Hotel Blu Vancouver proximity to top|  
+61: Quality Inn & Suites | $135/night | | Prime Location Vancouver Entertainment DistrictLocated less than 1 km from Queen Elizabeth Theatre, Quality Inn & Suites Downtown Vancouver vibrant stay heart of city. nearby attractions like Yaletown Sunset Beach minutes.Dining Nightlife OptionsIndulge casual pub atmosphere of Morrissey’s Irish| Gym (paid) 
+62: Hyatt Regency Vancouver | $163/night | | luxuryThis Vancouver hotel heated outdoor pool, hot tub, 42" flat-screen TVs every room. free WiFi throughout property, iPod docking stations, floor-to-ceiling windows touch of luxury.Delicious Dining OptionsIndulge variety of dining s Hyatt Regency Vancouver, from Mosaic Bar Grill serving| Gym (paid) 
+63: Kingston Hotel | $144/night | | Prime Location Downtown Vancouvercentral downtown Vancouver, Kingston Hotel easy access to bustling Robson Street Shopping District City Center Skytrain Station.Charming Historic BuildingBuilt 1910, Kingston Hotel exudes historic charm. Some rooms feature ensuites, others offer shared facilities|  
+
+REMEMBER: Always select 15 hotels using exact names from the list above.
+
+=== END LOG ===

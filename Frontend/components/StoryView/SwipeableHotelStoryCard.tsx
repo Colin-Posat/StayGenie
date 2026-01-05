@@ -379,18 +379,19 @@ const getTotalPrice = (hotel: Hotel, checkInDate?: Date, checkOutDate?: Date) =>
 };
 
 
-  const toggleExpanded = () => {
-    const toValue = isExpanded ? 0 : 1;
-    setIsExpanded(!isExpanded);
+const toggleExpanded = () => {
+  console.log('🔵 toggleExpanded called, current isExpanded:', isExpanded);
+  const toValue = isExpanded ? 0 : 1;
+  setIsExpanded(!isExpanded);
 
-    Animated.spring(expandAnim, {
-      toValue,
-      useNativeDriver: false,
-      tension: 100,
-      friction: 10,
-      overshootClamping: false,
-    }).start();
-  };
+  Animated.spring(expandAnim, {
+    toValue,
+    useNativeDriver: false,
+    tension: 100,
+    friction: 10,
+    overshootClamping: false,
+  }).start();
+};
 
   const [fontsLoaded] = useFonts({
     'Merriweather-Bold': require('../../assets/fonts/Merriweather_36pt-Bold.ttf'),
@@ -874,7 +875,10 @@ const isLoading = isInsightsLoading || insightsStatus === "loading" || insightsS
      <View style={tw`mx-3 my-3`}>
   {/* Collapsible Info Section */}
 <TouchableOpacity
-  onPress={toggleExpanded}
+   onPress={() => {
+    console.log('🟢 TouchableOpacity pressed');
+    toggleExpanded();
+  }}
   activeOpacity={0.8}
   disabled={isLoading}
   style={[
@@ -1016,89 +1020,228 @@ const isLoading = isInsightsLoading || insightsStatus === "loading" || insightsS
     </View>
   </View>
 
-  {/* Expanded Content */}
-  {isExpanded && (
-    <Animated.View
-      style={{
-        opacity: expandAnim,
-        transform: [{
-          translateY: expandAnim.interpolate({
-            inputRange: [0, 1],
-            outputRange: [-10, 0]
-          })
-        }]
-      }}
-    >
-      <View style={tw`px-3 pb-2.5`}>
-        {/* Top Amenities */}
-        {hotel.topAmenities && hotel.topAmenities.length > 0 && (
-          <View style={tw`mb-2.5`}>
-            <Text style={[
-              tw`text-[10px] text-gray-500 mb-1.5 ml-.5`,
-              { fontFamily: 'Merriweather-Bold', letterSpacing: 0.5 }
-            ]}>
-              TOP AMENITIES
-            </Text>
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={tw`gap-1.5`}
-            >
-              {hotel.topAmenities.slice(0, 6).map((amenity: any, idx: any) => (
-                <View
-                  key={`${amenity}-${idx}`}
-                  style={[
-                    tw`px-2 py-1 rounded-lg border border-gray-200`,
-                    { backgroundColor: '#FFFFFF' }
-                  ]}
-                >
-                  <Text style={[
-                    tw`text-[11px] text-gray-700`,
-                    { fontFamily: 'Merriweather-Regular' }
-                  ]}>
-                    {amenity}
-                  </Text>
+{/* Expanded Content */}
+{isExpanded && (
+  <Animated.View
+    style={{
+      opacity: expandAnim,
+      transform: [{
+        translateY: expandAnim.interpolate({
+          inputRange: [0, 1],
+          outputRange: [-10, 0]
+        })
+      }]
+    }}
+  >
+    <View style={tw`px-3 pb-2.5`}>
+
+{/* Top Amenities */}
+      {hotel.topAmenities && hotel.topAmenities.length > 0 && (
+        <View style={tw`mb-5`}>
+          <Text style={[
+            tw`text-[10px] text-gray-500 mb-1.5 ml-.5`,
+            { fontFamily: 'Merriweather-Bold', letterSpacing: 0.5 }
+          ]}>
+            TOP AMENITIES
+          </Text>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={tw`gap-1.5`}
+          >
+            {hotel.topAmenities.slice(0, 6).map((amenity: any, idx: any) => (
+              <View
+                key={`${amenity}-${idx}`}
+                style={[
+                  tw`px-2 py-1 rounded-lg border border-gray-200`,
+                  { backgroundColor: '#FFFFFF' }
+                ]}
+              >
+                <Text style={[
+                  tw`text-[11px] text-gray-700`,
+                  { fontFamily: 'Merriweather-Regular' }
+                ]}>
+                  {amenity}
+                </Text>
+              </View>
+            ))}
+          </ScrollView>
+        </View>
+      )}
+
+      {/* Category Ratings */}
+      
+      {hotel.categoryRatings && (
+        <View style={tw`mb-5`}>
+          <Text style={[
+            tw`text-[10px] text-gray-500 mb-1.5 ml-.5`,
+            { fontFamily: 'Merriweather-Bold', letterSpacing: 0.5 }
+          ]}>
+            RATINGS BREAKDOWN
+          </Text>
+          <View style={tw`gap-1.5`}>
+            {/* Cleanliness */}
+            <View style={tw`flex-row items-center justify-between`}>
+              <Text style={[
+                tw`text-[11px] text-gray-700 flex-1`,
+                { fontFamily: 'Merriweather-Regular' }
+              ]}>
+                Cleanliness
+              </Text>
+              <View style={tw`flex-row items-center gap-1`}>
+                <View style={[tw`flex-row`, { width: 50 }]}>
+                  <View style={[
+                    tw`h-1.5 rounded-full`,
+                    { 
+                      width: `${(hotel.categoryRatings.cleanliness / 10) * 100}%`,
+                      backgroundColor: TURQUOISE 
+                    }
+                  ]} />
+                  <View style={[
+                    tw`h-1.5 rounded-full flex-1`,
+                    { backgroundColor: '#E5E7EB' }
+                  ]} />
                 </View>
-              ))}
-            </ScrollView>
-          </View>
-        )}
-
-
-        {/* Guest Reviews Summary */}
-        <TouchableOpacity
-          style={[
-            tw`py-2 px-2.5 rounded-xl flex-row items-center justify-between bg-white border border-gray-200`,
-            {
-              shadowColor: '#000',
-              shadowOffset: { width: 0, height: 1 },
-              shadowOpacity: 0.1,
-              shadowRadius: 2,
-              elevation: 3,
-            }
-          ]}
-          onPress={() => setShowReviewsModal(true)}
-          activeOpacity={0.7}
-        >
-          <View style={tw`flex-row items-center gap-1.5`}>
-            <View style={[
-              tw`w-5 h-5 rounded-full items-center justify-center`,
-              { backgroundColor: 'rgba(29, 249, 255, 0.15)' }
-            ]}>
-              <Ionicons name="chatbubbles-outline" size={11} color={TURQUOISE_DARK} />
+                <Text style={[
+                  tw`text-[11px] text-gray-600 w-6 text-right`,
+                  { fontFamily: 'Merriweather-Bold' }
+                ]}>
+                  {hotel.categoryRatings.cleanliness.toFixed(1)}
+                </Text>
+              </View>
             </View>
-            <Text style={[
-              tw`text-[13px] text-gray-800`,
-              { fontFamily: 'Merriweather-Regular' }
-            ]}>
-              Read guest reviews
-            </Text>
+
+            {/* Service */}
+            <View style={tw`flex-row items-center justify-between`}>
+              <Text style={[
+                tw`text-[11px] text-gray-700 flex-1`,
+                { fontFamily: 'Merriweather-Regular' }
+              ]}>
+                Service
+              </Text>
+              <View style={tw`flex-row items-center gap-1`}>
+                <View style={[tw`flex-row`, { width: 50 }]}>
+                  <View style={[
+                    tw`h-1.5 rounded-full`,
+                    { 
+                      width: `${(hotel.categoryRatings.service / 10) * 100}%`,
+                      backgroundColor: TURQUOISE 
+                    }
+                  ]} />
+                  <View style={[
+                    tw`h-1.5 rounded-full flex-1`,
+                    { backgroundColor: '#E5E7EB' }
+                  ]} />
+                </View>
+                <Text style={[
+                  tw`text-[11px] text-gray-600 w-6 text-right`,
+                  { fontFamily: 'Merriweather-Bold' }
+                ]}>
+                  {hotel.categoryRatings.service.toFixed(1)}
+                </Text>
+              </View>
+            </View>
+
+            {/* Location */}
+            <View style={tw`flex-row items-center justify-between`}>
+              <Text style={[
+                tw`text-[11px] text-gray-700 flex-1`,
+                { fontFamily: 'Merriweather-Regular' }
+              ]}>
+                Location
+              </Text>
+              <View style={tw`flex-row items-center gap-1`}>
+                <View style={[tw`flex-row`, { width: 50 }]}>
+                  <View style={[
+                    tw`h-1.5 rounded-full`,
+                    { 
+                      width: `${(hotel.categoryRatings.location / 10) * 100}%`,
+                      backgroundColor: TURQUOISE 
+                    }
+                  ]} />
+                  <View style={[
+                    tw`h-1.5 rounded-full flex-1`,
+                    { backgroundColor: '#E5E7EB' }
+                  ]} />
+                </View>
+                <Text style={[
+                  tw`text-[11px] text-gray-600 w-6 text-right`,
+                  { fontFamily: 'Merriweather-Bold' }
+                ]}>
+                  {hotel.categoryRatings.location.toFixed(1)}
+                </Text>
+              </View>
+            </View>
+
+            {/* Room Quality */}
+            <View style={tw`flex-row items-center justify-between`}>
+              <Text style={[
+                tw`text-[11px] text-gray-700 flex-1`,
+                { fontFamily: 'Merriweather-Regular' }
+              ]}>
+                Room Quality
+              </Text>
+              <View style={tw`flex-row items-center gap-1`}>
+                <View style={[tw`flex-row`, { width: 50 }]}>
+                  <View style={[
+                    tw`h-1.5 rounded-full`,
+                    { 
+                      width: `${(hotel.categoryRatings.roomQuality / 10) * 100}%`,
+                      backgroundColor: TURQUOISE 
+                    }
+                  ]} />
+                  <View style={[
+                    tw`h-1.5 rounded-full flex-1`,
+                    { backgroundColor: '#E5E7EB' }
+                  ]} />
+                </View>
+                <Text style={[
+                  tw`text-[11px] text-gray-600 w-6 text-right`,
+                  { fontFamily: 'Merriweather-Bold' }
+                ]}>
+                  {hotel.categoryRatings.roomQuality.toFixed(1)}
+                </Text>
+              </View>
+            </View>
           </View>
-          <Ionicons name="chevron-forward" size={12} color="#9CA3AF" />
-        </TouchableOpacity>
-      </View>
-    </Animated.View>
-  )}
+        </View>
+      )}
+
+      
+      {/* Guest Reviews Summary */}
+      <TouchableOpacity
+        style={[
+          tw`py-2 px-2.5 rounded-xl flex-row items-center justify-between bg-white border border-gray-200`,
+          {
+            shadowColor: '#000',
+            shadowOffset: { width: 0, height: 1 },
+            shadowOpacity: 0.1,
+            shadowRadius: 2,
+            elevation: 3,
+          }
+        ]}
+        onPress={() => setShowReviewsModal(true)}
+        activeOpacity={0.7}
+      >
+        <View style={tw`flex-row items-center gap-1.5`}>
+          <View style={[
+            tw`w-5 h-5 rounded-full items-center justify-center`,
+            { backgroundColor: 'rgba(29, 249, 255, 0.15)' }
+          ]}>
+            <Ionicons name="chatbubbles-outline" size={11} color={TURQUOISE_DARK} />
+          </View>
+          <Text style={[
+            tw`text-[13px] text-gray-800`,
+            { fontFamily: 'Merriweather-Regular' }
+          ]}>
+            Read guest reviews
+          </Text>
+        </View>
+        <Ionicons name="chevron-forward" size={12} color="#9CA3AF" />
+      </TouchableOpacity>
+    </View>
+  </Animated.View>
+)}
 </TouchableOpacity>
 
   {/* Minimalist Circular Action Buttons */}

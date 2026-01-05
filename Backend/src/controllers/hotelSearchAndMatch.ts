@@ -466,7 +466,8 @@ const processHotelWithImmediateInsights = async (
           safetyRating: aiRecommendation.safetyRating || 7,
           safetyJustification: aiRecommendation.safetyJustification || "Generally safe area with standard precautions recommended",
           topAmenities: aiRecommendation.topAmenities || enrichedHotelSummary.topAmenities || ["Wi-Fi", "AC", "Service"],
-          photoGalleryImages: aiRecommendation.photoGalleryImages || [] // ADD: Include photo gallery from AI insights
+          photoGalleryImages: aiRecommendation.photoGalleryImages || [] ,// ADD: Include photo gallery from AI insights
+          categoryRatings: aiRecommendation.categoryRatings
         };
 
         // Send enhanced hotel data with small delay to ensure proper order
