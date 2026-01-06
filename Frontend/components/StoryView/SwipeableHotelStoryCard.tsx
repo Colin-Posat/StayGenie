@@ -34,7 +34,7 @@ import { AnalyticsService } from '../../services/analytics';
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 const CARD_WIDTH = Math.round(screenWidth - 37);
 
-const CARD_HEIGHT = screenHeight * 0.35;
+const CARD_HEIGHT = screenHeight * 0.32;
 
 const TURQUOISE = '#1df9ff';
 const TURQUOISE_DARK = '#00d4e6';
@@ -123,7 +123,7 @@ interface Hotel {
 
 interface EnhancedHotel extends Hotel {
   images: string[];
-  mapImage: string;
+  mapImage?: string;
   photoGalleryImages: string[];
   firstRoomImage?: string | null;
   secondRoomImage?: string | null;
@@ -1315,9 +1315,11 @@ const isLoading = isInsightsLoading || insightsStatus === "loading" || insightsS
         ? encodeURIComponent(`${hotel.name} ${hotel.fullAddress}`)
         : encodeURIComponent(`${hotel.name} ${displayLocation}`);
       
+      // Opens directly in Google Maps app
       const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${searchQuery}`;
+      
       await Linking.openURL(mapsUrl);
-      console.log('✅ Google Maps opened');
+      console.log('✅ Google Maps app opened');
     } catch (error) {
       console.log('Error opening Google Maps:', error);
       Alert.alert('Error', 'Could not open Google Maps');
@@ -1337,7 +1339,6 @@ const isLoading = isInsightsLoading || insightsStatus === "loading" || insightsS
       }
     ]}
   >
-    {/* Grey Google "G" - using text representation */}
     <Text style={{
       fontSize: 20,
       fontWeight: '700',

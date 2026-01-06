@@ -1,4 +1,4 @@
-// SwipeableStoryView.tsx - Updated with Enhanced Room Image Support, Loading Preview, Safety Rating Support, and Analytics
+// SwipeableStoryView.tsx - Updated with Enhanced Room Image Support, Loading Preview, Safety Rating Support, Analytics, and Scroll-to-Hotel
 import React, { useState, useEffect, useRef } from 'react';
 import {
   View,
@@ -43,6 +43,8 @@ interface SwipeableStoryViewProps {
   searchParams?: any;
   showSafetyRatings?: boolean;
   safetyRatingThreshold?: number;
+  scrollToHotelId?: string | null; // ✅ NEW - For scroll-to-hotel functionality
+  onScrollComplete?: () => void; // ✅ NEW - Callback after scroll completes
 }
 
 const SwipeableStoryView: React.FC<SwipeableStoryViewProps> = ({
@@ -67,12 +69,18 @@ const SwipeableStoryView: React.FC<SwipeableStoryViewProps> = ({
   showSafetyRatings = true,
   safetyRatingThreshold = 6.0,
   onFavoriteSuccess,
+  scrollToHotelId, // ✅ NEW
+  onScrollComplete, // ✅ NEW
 }) => {
   // Streaming state
   const [streamingHotelsCount, setStreamingHotelsCount] = useState(0);
   const [lastStreamedHotel, setLastStreamedHotel] = useState<Hotel | null>(null);
   const [showNewHotelAnimation, setShowNewHotelAnimation] = useState(false);
   const [currentCardIndex, setCurrentCardIndex] = useState(0); // ✅ ADDED FOR ANALYTICS
+const [isAutoScrolling, setIsAutoScrolling] = useState(false);
+
+  // ✅ NEW - FlatList ref for programmatic scrolling
+  const flatListRef = useRef<FlatList>(null);
 
   // ✅ FIXED - Stable refs for FlatList callbacks
   const onViewableItemsChangedRef = useRef(({ viewableItems }: any) => {
@@ -84,6 +92,7 @@ const SwipeableStoryView: React.FC<SwipeableStoryViewProps> = ({
 
   const viewabilityConfigRef = useRef({
     itemVisiblePercentThreshold: 50,
+    viewOffset: -100,
   });
 
   // ✅ ADDED - Track scroll position and report to parent
@@ -92,6 +101,7 @@ const SwipeableStoryView: React.FC<SwipeableStoryViewProps> = ({
       onScrollToPosition?.(currentCardIndex);
     }
   }, [currentCardIndex, onScrollToPosition]);
+
 
   // Track streaming hotels and trigger animations
   useEffect(() => {
@@ -125,6 +135,7 @@ const SwipeableStoryView: React.FC<SwipeableStoryViewProps> = ({
     }
   }, [isStreaming, streamingHotelsCount, hotels.length]);
 
+  
 const enhanceHotel = (hotel: Hotel): EnhancedHotel => {
   const generateImages = (hotel: Hotel): string[] => {
     console.log(`🖼️ Processing images for ${hotel.name}:`);
@@ -284,10 +295,19 @@ const enhanceHotel = (hotel: Hotel): EnhancedHotel => {
 
   const insightsStats = getInsightsStats();
 
+  
   const handleSave = (hotel: Hotel) => {
     console.log(`💾 Save callback triggered for: ${hotel.name}`);
     onSave?.(hotel);
   };
+
+  const initialScrollIndex = React.useMemo(() => {
+  if (scrollToHotelId && hotels.length > 0) {
+    const index = hotels.findIndex(h => h.id === scrollToHotelId);
+    return index !== -1 ? index : undefined;
+  }
+  return undefined;
+}, [scrollToHotelId, hotels]);
 
   const handleViewDetails = (hotel: Hotel) => {
     console.log(`🗺️ View details for: ${hotel.name}`);
@@ -396,8 +416,8 @@ const enhanceHotel = (hotel: Hotel): EnhancedHotel => {
   };
 
   const getItemLayout = (_: any, index: number) => ({
-    length: screenHeight * 0.65 + 48,
-    offset: (screenHeight * 0.65 + 48) * index,
+    length: screenHeight * 0.61 - 50,
+    offset: (screenHeight * 0.65 - 10) * index,
     index,
   });
 
@@ -448,6 +468,7 @@ const enhanceHotel = (hotel: Hotel): EnhancedHotel => {
       )}
 
       <FlatList
+        ref={flatListRef} // ✅ NEW - Add ref for programmatic scrolling
         data={dataToRender as (EnhancedHotel | { isPlaceholder: boolean; id: string })[]}
         renderItem={({ item, index }) => 
           showPlaceholders
@@ -462,6 +483,10 @@ const enhanceHotel = (hotel: Hotel): EnhancedHotel => {
         // ✅ FIXED - Use stable refs instead of inline functions
         onViewableItemsChanged={onViewableItemsChangedRef.current}
         viewabilityConfig={viewabilityConfigRef.current}
+        initialScrollIndex={initialScrollIndex}  
+        getItemLayout={getItemLayout}
+
+        scrollEnabled={!isAutoScrolling}
         showsVerticalScrollIndicator={false}
         contentContainerStyle={{
           paddingTop: 8,
@@ -472,6 +497,21 @@ const enhanceHotel = (hotel: Hotel): EnhancedHotel => {
         initialNumToRender={2}
         scrollEventThrottle={16}
         extraData={`${isInsightsLoading}-${stage1Complete}-${stage2Complete}-${insightsStats.complete}-${isStreaming}-${hotels.length}-${showPlaceholders}`}
+        // ✅ NEW - Handle scroll failures gracefully
+onScrollToIndexFailed={(info) => {
+  console.warn('⚠️ Scroll failed, stopping retries. Index:', info.index);
+  // Scroll to nearest measured item instead
+  const nearestIndex = Math.min(info.index, info.highestMeasuredFrameIndex);
+  if (nearestIndex >= 0) {
+    setTimeout(() => {
+      flatListRef.current?.scrollToIndex({
+        index: nearestIndex,
+        animated: true,
+        viewPosition: 0.5,
+      });
+    }, 100);
+  }
+}}
       />
     </View>
   );

@@ -22,9 +22,9 @@ const TURQUOISE = '#1df9ff';
 const TURQUOISE_DARK = '#00d4e6';
 
 const LOADING_MESSAGES = [
-  'Finding your best matches',
-  'Understanding your preferences',
-  'Finalizing recommendations',
+  'Detecting what matters most to you',
+  'Finding places that feel just right',
+  'Putting in the final touches',
 ];
 
 /* ---------- SHIMMER ---------- */
@@ -141,12 +141,17 @@ const SwipeableHotelStoryCardLoadingPreview = () => {
     ).start();
   }, []);
 
-  /* 🔒 JITTER-FREE TEXT CYCLE */
+  /* 🔒 JITTER-FREE TEXT CYCLE - STOPS AT LAST MESSAGE */
   useEffect(() => {
     let mounted = true;
     let timeout: NodeJS.Timeout;
 
     const cycle = () => {
+      // Don't cycle if we're already at the last message
+      if (currentMessageIndex >= LOADING_MESSAGES.length - 1) {
+        return;
+      }
+
       Animated.timing(messageOpacity, {
         toValue: 0,
         duration: 220,
@@ -155,9 +160,11 @@ const SwipeableHotelStoryCardLoadingPreview = () => {
         if (!mounted) return;
 
         // 🔒 SWITCH TEXT ONLY WHILE INVISIBLE
-        setCurrentMessageIndex((prev) =>
-          (prev + 1) % LOADING_MESSAGES.length
-        );
+        setCurrentMessageIndex((prev) => {
+          const nextIndex = prev + 1;
+          // Stop at the last message
+          return Math.min(nextIndex, LOADING_MESSAGES.length - 1);
+        });
 
         requestAnimationFrame(() => {
           Animated.timing(messageOpacity, {
@@ -178,7 +185,7 @@ const SwipeableHotelStoryCardLoadingPreview = () => {
       mounted = false;
       clearTimeout(timeout);
     };
-  }, []);
+  }, [currentMessageIndex]);
 
   if (!fontsLoaded) return null;
 

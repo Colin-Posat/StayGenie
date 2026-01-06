@@ -35,7 +35,7 @@ import dotenv from 'dotenv';
 import { useFonts } from 'expo-font';
 import { AnalyticsService } from '../services/analytics';
 import { useAuth } from '../contexts/AuthContext';
-
+import MapViewScreen from '../screens/MapViewScreen';
 import { RecentSearch } from '../contexts/AuthContext';
 
 // Import test data
@@ -280,7 +280,7 @@ interface AISuggestion {
   priority?: string;
 }
 
-interface Hotel {
+export interface Hotel {
   id: string;
   name: string;
   image: string;
@@ -374,6 +374,8 @@ const [shouldShowChevron, setShouldShowChevron] = useState(false);
   const [isSearching, setIsSearching] = useState(false);
   const [isInsightsLoading, setIsInsightsLoading] = useState(false);
   const [searchParamsLoading, setSearchParamsLoading] = useState(false);
+  const [showMapView, setShowMapView] = useState(false);
+  const [scrollToHotelId, setScrollToHotelId] = useState<string | null>(null);
 
   // Add error handling state
 const [searchError, setSearchError] = useState<{
@@ -1391,49 +1393,7 @@ useEffect(() => {
     }
   }, [params?.searchQuery]);
 
- useEffect(() => {
-  const subscription = AppState.addEventListener('change', (state) => {
-    
-    // -----------------------------------------
-    // 1. APP GOES TO BACKGROUND
-    // -----------------------------------------
-if (state === 'background' || state === 'inactive') {
-  console.log("📱 App moved to background");
 
-  // Only restart if user left *mid-search*
-  if (searchHasStarted.current && !searchCompleted.current) {
-    console.log("⏸️ Search interrupted — will restart on resume");
-    searchWasActive.current = true;
-  } else {
-    console.log("⏹️ Search had finished — no restart needed");
-    searchWasActive.current = false;
-  }
-
-  if ((global as any).cleanupSSESearch) {
-    (global as any).cleanupSSESearch();
-  }
-
-  return;
-}
-
-
-    // -----------------------------------------
-    // 2. APP RETURNS TO FOREGROUND
-    // -----------------------------------------
-if (state === 'active') {
-  console.log("📱 App returned to foreground");
-
-  if (searchWasActive.current) {
-    console.log("🔄 Restarting interrupted search...");
-    searchWasActive.current = false;
-    searchHasStarted.current = false;
-    executeSearch(searchQuery);
-  }
-}
-  });
-
-  return () => subscription.remove();
-}, [isStreamingSearch, searchQuery]);
 
   useEffect(() => {
   return () => {
@@ -2086,8 +2046,48 @@ const handleBackPress = useCallback(() => {
   )}
 </View>
 
+{/* Map/List Toggle Button - Floating above content */}
+{displayHotels.length > 0 && !showPlaceholders && !showErrorScreen && (
+  <TouchableOpacity
+    style={[
+      tw`absolute bottom-19 right-4 z-50 w-16 h-16 rounded-full items-center justify-center`,
+      {
+        backgroundColor: isStreamingSearch ? 'rgba(156, 163, 175, 0.9)' : 'rgba(0, 212, 230, 0.9)', // ✅ Added transparency
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 4 },
+        shadowOpacity: 0.3,
+        shadowRadius: 8,
+        elevation: 10,
+        opacity: isStreamingSearch ? 0.6 : 1,
+      },
+    ]}
+    onPress={() => {
+      if (!isStreamingSearch) {
+        setShowMapView(!showMapView);
+      }
+    }}
+    activeOpacity={isStreamingSearch ? 1 : 0.8}
+    disabled={isStreamingSearch}
+  >
+    {isStreamingSearch ? (
+      <View style={tw`items-center justify-center`}>
+        <Ionicons
+          name="hourglass-outline"
+          size={26}
+          color="white"
+        />
+      </View>
+    ) : (
+      <Ionicons
+        name={showMapView ? "list" : "map"}
+        size={24}
+        color="white"
+      />
+    )}
+  </TouchableOpacity>
+)}
 
-      {/* CONTENT VIEW - Story View */}
+   {/* CONTENT VIEW - Story View OR Map View */}
 <View style={tw`flex-1 bg-gray-50`}>
   {showErrorScreen ? (
     <SearchErrorScreen
@@ -2099,19 +2099,29 @@ const handleBackPress = useCallback(() => {
       }}
       onBackToSearch={() => {
         setShowErrorScreen(false);
-        handleBackPress(); // This takes them back to InitialSearchScreen
+        handleBackPress();
       }}
+    />
+  ) : showMapView ? (
+    <MapViewScreen
+      hotels={displayHotels.filter(h => h.latitude && h.longitude && !h.isPlaceholder)}
+      onClose={() => setShowMapView(false)}
+      onHotelSelect={(hotel) => {
+  console.log('🎯 Selected hotel from map:', hotel.name, hotel.id);
+  setShowMapView(false);
+  setScrollToHotelId(hotel.id);
+}}
     />
   ) : (
     <SwipeableStoryView
+    key={scrollToHotelId || 'default'}
       hotels={displayHotels}
       onHotelPress={handleHotelPress}
       onViewDetails={handleViewDetails}
       searchQuery={searchQuery}
       onScrollToPosition={(pos) => {
-    // ✅ ADD THIS
-    AnalyticsService.trackScrollDepth(pos, displayHotels.length);
-  }}
+        AnalyticsService.trackScrollDepth(pos, displayHotels.length);
+      }}
       checkInDate={confirmedCheckInDate}
       checkOutDate={confirmedCheckOutDate}
       adults={adults}
@@ -2123,10 +2133,12 @@ const handleBackPress = useCallback(() => {
       searchMode={TEST_MODE ? 'test' : stage1Results ? 'two-stage' : 'legacy'}
       searchParams={streamingSearchParams || searchResults?.searchParams}
       onFavoriteSuccess={handleFavoriteSuccess}
+
+
+
     />
   )}
 </View>
-
 
 
       <Modal

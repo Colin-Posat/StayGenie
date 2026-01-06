@@ -18,7 +18,7 @@ import {
 import { Text } from '../../components/CustomText'; 
 import { Ionicons } from '@expo/vector-icons';
 import tw from 'twrnc';
-import type { EnhancedHotel } from '../StoryView/SwipeableHotelStoryCard';
+import { Hotel } from '../../screens/HomeScreen';
 
 const { width: screenWidth, height: screenHeight } = Dimensions.get('window');
 
@@ -53,7 +53,7 @@ interface ChatMessage {
 interface HotelChatOverlayProps {
   visible: boolean;
   onClose: () => void;
-  hotel: EnhancedHotel;
+  hotel: Hotel;
 }
 
 //const BASE_URL = __DEV__ ? 'http://localhost:3003' : "https://staygenie-wwpa.onrender.com";
@@ -68,7 +68,7 @@ const HotelChatOverlay: React.FC<HotelChatOverlayProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [isTyping, setIsTyping] = useState(false);
   const [contextReady, setContextReady] = useState(false);
-  const [enrichedHotel, setEnrichedHotel] = useState<EnhancedHotel>(hotel);
+  const [enrichedHotel, setEnrichedHotel] = useState<Hotel>(hotel);
   const [conversationId] = useState(() => `chat_${Date.now()}`);
 
   const scrollRef = useRef<ScrollView>(null);
@@ -246,13 +246,13 @@ const HotelChatOverlay: React.FC<HotelChatOverlayProps> = ({
             whyItMatches: enrichedHotel.whyItMatches,
             funFacts: enrichedHotel.funFacts,
             guestInsights: enrichedHotel.guestInsights,
-            sentimentPros: enrichedHotel.sentimentPros,
-            sentimentCons: enrichedHotel.sentimentCons,
+ 
             locationHighlight: enrichedHotel.locationHighlight,
             isRefundable: enrichedHotel.isRefundable,
             refundableInfo: enrichedHotel.refundableInfo,
             categoryRatings: enrichedHotel.categoryRatings,
             roomTypes: enrichedHotel.roomTypes,
+            images: enrichedHotel.images || [],
           },
           chatHistory: messages.slice(-8),
         }),
