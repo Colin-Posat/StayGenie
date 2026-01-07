@@ -1,4 +1,4 @@
-// Hotel search types and interfaces - UPDATED WITH REFUNDABLE POLICY
+// Hotel search types and interfaces - UPDATED WITH COORDINATE-BASED SEARCH
 export interface SentimentCategory {
   name: string;
   rating: number;
@@ -18,22 +18,47 @@ export interface HotelSentimentData {
   total?: number;
 }
 
+// UPDATED: ParsedSearchQuery with coordinate-based search
 export interface ParsedSearchQuery {
+  // Date fields
   checkin: string;
   checkout: string;
-  countryCode: string;
-  cityName: string;
-  language?: string;
-  adults: number;
-  children: number;
-  aiSearch: string;
-  minCost?: number | null;  
-  maxCost?: number | null; 
-  cheap?: boolean;
-  findCheapestOnes?: boolean;
-  highlyRated?: boolean;
-  starRating?: number | null;
-  facilityCategories?: string[]; // ADDED: Array of facility category names from parser
+  
+  // NEW: Location fields (coordinate-based search)
+  specificPlace: string;           // e.g., "Central Park, New York, New York, United States"
+  fullPlaceName: string;            // Full geocoded place name from MapBox
+  latitude: number;                 // Latitude coordinate
+  longitude: number;                // Longitude coordinate
+  searchRadius: number;             // Search radius in meters (minimum 10000)
+  
+  // DEPRECATED: Old location fields (kept for backward compatibility, but not used in search)
+  countryCode?: string;             // ISO-2 country code (deprecated)
+  cityName?: string;                // City name (deprecated)
+  
+  // Guest information
+  language?: string;                // ISO 639-1 language code, default 'en'
+  adults: number;                   // Number of adults, default 2
+  children: number;                 // Number of children, default 0
+  
+  // AI Search context string - combines price preferences + specific requirements
+  aiSearch: string;                 // Examples:
+                                    // - "cheap hotels with rooftop bar"
+                                    // - "luxury hotels over $400 per night with spa"
+                                    // - "romantic hotels with infinity pool"
+                                    // - "hotels under $200 per night"
+  
+  // Price fields (optional - now primarily used in aiSearch string)
+  minCost?: number | null;          // Minimum cost per night in USD
+  maxCost?: number | null;          // Maximum cost per night in USD
+  cheap?: boolean;                  // True if user wants budget/cheap options
+  findCheapestOnes?: boolean;       // True if purely price-focused search
+  
+  // Rating fields
+  highlyRated?: boolean;            // True if user wants highly rated hotels
+  starRating?: number | null;       // Specific star rating 1-5 if mentioned
+  
+  // Facility/amenity filtering
+  facilityCategories?: string[];    // Array of facility category names from parser
 }
 
 // UPDATED: Extended HotelInfo interface to match actual API response
@@ -215,6 +240,7 @@ export interface HotelSummaryForAI {
   isRefundable: boolean;
   refundableTag: string | null;
   refundableInfo: string;
+  distanceFromSearch: any;
 }
 
 export interface AIRecommendation {
@@ -227,7 +253,7 @@ export interface AIRecommendation {
   locationHighlight: string;
   guestInsights: string;
   sentimentData: any;
-  thirdImageHd: string | null; // ADD THIS
+  thirdImageHd: string | null;
 }
 
 // UPDATED: HotelRecommendation with refundable policy

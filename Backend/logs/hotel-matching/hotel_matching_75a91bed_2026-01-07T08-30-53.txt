@@ -1,0 +1,55 @@
+
+=== HOTEL MATCHING PROMPT LOG ===
+Search ID: 75a91bed-3e78-4249-9b4a-dd143e99a595
+Timestamp: 2026-01-07T08:30:53.372Z
+User Query: hotels near with lake louise views
+Destination: Lake Louise, Alberta, Canada
+Hotel Count: 5
+Character Count: 3374
+Estimated Tokens: ~844
+
+=== PROMPT CONTENT ===
+USER REQUEST: "hotels near with lake louise views"
+AI SEARCH CONTEXT: "hotels near Lake Louise with views"
+STAY: 3 nights
+
+🎯 RANKING PRIORITY ORDER:
+1. MATCH USER REQUEST: "hotels near Lake Louise with views" (Most Important)
+2. Location quality and convenience
+3. Star rating and overall quality
+4. Value for money
+
+📋 STEP-BY-STEP MATCHING PROCESS:
+1. READ AI SEARCH CONTEXT carefully: "hotels near Lake Louise with views"
+3. Match specific amenities mentioned (rooftop bar, infinity pool, spa, gym, etc.)
+4. Match vibe/style (romantic, family-friendly, business, boutique, modern, etc.)
+5. RANK by relevance to the complete AI search context, NOT by list position
+
+🔍 KEYWORD MATCHING EXAMPLES:
+- Context: "hotels under $200 per night with rooftop bar" → Price < $200 AND rooftop bar
+- Context: "luxury hotels over $400 per night" → Price > $400 AND luxury features
+- Context: "romantic hotels with infinity pool" → Romantic amenities AND infinity pool
+- Context: "cool boutique hotels" → Boutique style, unique character
+
+⚠️ CRITICAL RULES:
+- IGNORE the order hotels appear in the list - analyze content only
+- You MUST select exactly 15 hotels using their exact names from the list
+- Base rankings on how well each hotel matches "hotels near Lake Louise with views"
+- If specific amenities mentioned, hotels MUST have those amenities to rank high
+
+📝 REQUIRED OUTPUT FORMAT:
+1. [exact hotel name from list] | [match percentage 1-100]%
+2. [exact hotel name from list] | [match percentage 1-100]%
+3. [exact hotel name from list] | [match percentage 1-100]%
+...continue through 15
+
+HOTELS AVAILABLE:
+1: Mountaineer Lodge | $230/night | Beauty of Banff National Park Mountaineer LodgeIndulge Relaxation Indoor Hot TubUnwind day of exploring indoor hot tub, perfect rejuvenating body mind.Convenient Location Adventure SeekersLocated near Lake Louise Gondola Lake Louise Mountain Resort, lodge ideal base outdoor enthusiasts.Comfortable | 
+2: Post Hotel & Spa | $343/night | roomssIndulge stay Post Hotel & Spa, each room furnished wardrobe, safety deposit box, some boasting private balcony. the comfort of free toiletries bed linen every guest room.Top-Notch AmenitiesRelax unwind access to gym, indoor pool, hot tub. Take advantage of 24h desk, shuttle service, room svc, | 
+3: Paradise Lodge and Bungalows | $243/night | rooms OptionsJust 1 km from Lake Louise, Paradise Lodge Bungalows spacious lodge rooms fully equipped cabins. A satellite TV seating area provided Paradise’s suites wooden bungalows. All units equipped coffee maker bar refrigerator. Select rooms offer kitchen facilities balconies mountain | 
+4: Fairmont Château Lake Louise | $788/night | Spectacular Views luxuryPanoramic Views: breathtaking views of Lake Louise Victoria Glacier from 4-star resort Banff National Park.Top-Notch Facilities: Dive into relaxation health club heated indoor pool modern gym. in skiing, unwind full-service spa, pamper yourself on-site hair salon.Culinary | 
+5: Lake Louise Inn | $126/night | Heated Indoor Pool Hot Tubs: relaxing stay Lake Louise hotel heated indoor pool hot tubs, perfect unwinding day of adventure mountains.On-Site Dining Options: delicious meals two on-site restaurants - Legends Restaurant all-day dining Timberwolf Pizza Pasta Café cozy family. Don't forget to visit | 
+
+REMEMBER: Always select 15 hotels using exact names from the list above.
+
+=== END LOG ===

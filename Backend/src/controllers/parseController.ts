@@ -1,6 +1,7 @@
 import { Request, Response } from 'express';
 import OpenAI from 'openai';
 import dotenv from 'dotenv';
+import axios from 'axios';
 
 dotenv.config();
 
@@ -8,7 +9,7 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY
 });
 
-// City validation and correction mapping
+const MAPBOX_ACCESS_TOKEN = 'pk.eyJ1IjoiY29saW5wb3NhdCIsImEiOiJjbWN3bzN2azEwMnQxMmxwdmloZ2tjbHJlIn0.F9z35Dybj12dAsSpBnMZJA';
 
 // --- Helpers for future-proofing dates ---
 const addYears = (d: Date, years: number) => {
@@ -59,84 +60,6 @@ const ensureFutureDates = (parsed: any) => {
   return parsed;
 };
 
-const validateAndCorrectCity = (parsed: any) => {
-  const cityCorrections: { [key: string]: { city: string, country?: string } } = {
-    // National Parks → Gateway Cities
-    "Yosemite": { city: "Oakhurst", country: "US" },
-    "Yosemite National Park": { city: "Mariposa", country: "US" }, 
-    "Grand Canyon": { city: "Flagstaff", country: "US" },
-    "Yellowstone": { city: "West Yellowstone", country: "US" },
-    "Zion": { city: "Springdale", country: "US" },
-    "Bryce Canyon": { city: "Bryce", country: "US" },
-    "Joshua Tree": { city: "Palm Springs", country: "US" },
-    "Death Valley": { city: "Las Vegas", country: "US" },
-    "Glacier National Park": { city: "Kalispell", country: "US" },
-    "Arches": { city: "Moab", country: "US" },
-    "Sequoia": { city: "Visalia", country: "US" },
-    
-    // Regions → Major Cities
-    "Swiss Alps": { city: "Zermatt", country: "CH" },
-    "French Alps": { city: "Chamonix", country: "FR" },
-    "Austrian Alps": { city: "Innsbruck", country: "AT" },
-    "French Riviera": { city: "Nice", country: "FR" },
-    "Tuscany": { city: "Florence", country: "IT" },
-    "Napa Valley": { city: "Napa", country: "US" },
-    "Scottish Highlands": { city: "Inverness", country: "GB" },
-    "Cotswolds": { city: "Bath", country: "GB" },
-    "Provence": { city: "Avignon", country: "FR" },
-    "Andalusia": { city: "Seville", country: "ES" },
-    "Catalonia": { city: "Barcelona", country: "ES" },
-    
-    // Fix common city name issues
-    "New York City": { city: "New York" },
-    "NYC": { city: "New York", country: "US" },
-    "LA": { city: "Los Angeles", country: "US" },
-    "SF": { city: "San Francisco", country: "US" },
-    "Vegas": { city: "Las Vegas", country: "US" },
-    "Miami Beach": { city: "Miami", country: "US" },
-    "South Beach": { city: "Miami", country: "US" },
-    
-    // Ski destinations
-    "Alps": { city: "Chamonix", country: "FR" },
-    "Japanese Alps": { city: "Takayama", country: "JP" },
-    "Rocky Mountains": { city: "Denver", country: "US" },
-    "Rockies": { city: "Denver", country: "US" },
-    "Andes": { city: "Cusco", country: "PE" },
-    
-    // Beach regions
-    "Hawaiian Islands": { city: "Honolulu", country: "US" },
-    "Greek Islands": { city: "Santorini", country: "GR" },
-    "Caribbean": { city: "Nassau", country: "BS" },
-    "Maldives": { city: "Male", country: "MV" },
-    "Seychelles": { city: "Victoria", country: "SC" },
-    
-    // Desert regions
-    "Sahara": { city: "Marrakech", country: "MA" },
-    "Atacama": { city: "San Pedro de Atacama", country: "CL" },
-    "Gobi": { city: "Ulaanbaatar", country: "MN" },
-    
-    // Wine regions
-    "Bordeaux Region": { city: "Bordeaux", country: "FR" },
-    "Champagne Region": { city: "Reims", country: "FR" },
-    "Rioja": { city: "Logroño", country: "ES" },
-    "Douro Valley": { city: "Porto", country: "PT" }
-  };
-  
-  // Check if city needs correction
-  const correction = cityCorrections[parsed.cityName];
-  if (correction) {
-    console.log(`🔄 Correcting city: ${parsed.cityName} → ${correction.city}`);
-    parsed.cityName = correction.city;
-    
-    // Update country code if provided in correction
-    if (correction.country) {
-      parsed.countryCode = correction.country;
-    }
-  }
-  
-  return parsed;
-};
-
 const validateParsedData = (parsed: any) => {
   // Parse to dates
   let checkinDate = new Date(parsed.checkin);
@@ -184,6 +107,70 @@ const validateParsedData = (parsed: any) => {
   return parsed;
 };
 
+const LOCATIONIQ_KEY = 'pk.79c544ae745ee83f91a7523c99939210';
+
+const geocodePlace = async (
+  placeName: string
+): Promise<{ latitude: number; longitude: number; fullPlaceName: string } | null> => {
+  try {
+    console.log(`🗺️ LocationIQ geocoding: ${placeName}`);
+
+    const response = await axios.get(
+      'https://us1.locationiq.com/v1/search.php',
+      {
+        params: {
+          key: LOCATIONIQ_KEY,
+          q: placeName,
+          format: 'json',
+          limit: 1,
+          addressdetails: 1,
+        },
+        timeout: 3000,
+      }
+    );
+
+    const results = response.data;
+
+    if (!Array.isArray(results) || results.length === 0) {
+      console.warn(`⚠️ No LocationIQ results for: ${placeName}`);
+      return null;
+    }
+
+    const best = results[0];
+
+    const latitude = Number(best.lat);
+    const longitude = Number(best.lon);
+
+    if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
+      console.warn(`⚠️ Invalid coordinates returned for: ${placeName}`);
+      return null;
+    }
+
+    // display_name is usually excellent (full human-readable place)
+    const fullPlaceName =
+      best.display_name ||
+      `${best.name || placeName}`;
+
+    console.log(`✅ LocationIQ resolved: ${fullPlaceName} (${latitude}, ${longitude})`);
+
+    return {
+      latitude,
+      longitude,
+      fullPlaceName,
+    };
+  } catch (error: any) {
+    if (axios.isAxiosError(error)) {
+      console.error(
+        `❌ LocationIQ request failed (${error.response?.status}):`,
+        error.response?.data
+      );
+    } else {
+      console.error(`❌ LocationIQ unexpected error:`, error);
+    }
+    return null;
+  }
+};
+
 
 export const parseSearchQuery = async (req: Request, res: Response) => {
   try {
@@ -222,20 +209,156 @@ You are a travel assistant converting user hotel search requests into structured
 {
   "checkin": "YYYY-MM-DD",            // Default: ${formattedCheckin}
   "checkout": "YYYY-MM-DD",           // Default: ${formattedCheckout}
-  "countryCode": "ISO-2 country code",
-  "cityName": "Full city name",
+  "specificPlace": "Full specific place name with city and country for geocoding",
+  "searchRadius": number (in meters, minimum 5000),
   "language": "ISO 639-1 code, default 'en'",
   "adults": number (default 2),
   "children": number (default 0),
-  "minCost": number or null (USD/night),
-  "maxCost": number or null (USD/night),
-  "cheap": boolean (true if user wants budget/cheap options, false otherwise),
-  "findCheapestOnes": boolean (true ONLY if query is purely about finding cheapest options with no other criteria),
-  "facilityCategories": ["CATEGORY_NAME"] (array of detected facility categories from list below, empty array if none mentioned),
-
-  "starRating": number or null (specific star rating 1-5 if mentioned),
-  "aiSearch": "All other preferences, descriptors, trip purpose, vibe, hotel style, etc."
+  "aiSearch": "Complete search context string combining price preferences and specific requirements"
 }
+
+**CRITICAL PLACE EXTRACTION RULES:**
+
+**ALWAYS PRIORITIZE THE MOST SPECIFIC LOCATION MENTIONED!**
+
+1. **Specific Landmark/POI (HIGHEST PRIORITY):**
+   - "hotels near Eiffel Tower" → specificPlace: "Eiffel Tower, Paris, France"
+   - "hotels with Central Park views" → specificPlace: "Central Park, New York, New York, United States"
+   - "hotels near Times Square" → specificPlace: "Times Square, New York, New York, United States"
+   - "hotels by Sagrada Familia" → specificPlace: "Sagrada Familia, Barcelona, Catalonia, Spain"
+   - "hotels near Golden Gate Bridge" → specificPlace: "Golden Gate Bridge, San Francisco, California, United States"
+   - "hotels with view of Burj Khalifa" → specificPlace: "Burj Khalifa, Dubai, United Arab Emirates"
+   - ALWAYS use the landmark name first, then city/country
+
+2. **Specific Neighborhood/District:**
+   - "hotels in South Beach Miami" → specificPlace: "South Beach, Miami, Florida, United States"
+   - "hotels in La Rambla Barcelona" → specificPlace: "La Rambla, Barcelona, Catalonia, Spain"
+   - "hotels in Shibuya Tokyo" → specificPlace: "Shibuya, Tokyo, Japan"
+   - "hotels in SoHo New York" → specificPlace: "SoHo, Manhattan, New York, United States"
+   - "hotels in Montmartre" → specificPlace: "Montmartre, Paris, France"
+
+3. **Specific Street/Area:**
+   - "hotels on Fifth Avenue" → specificPlace: "Fifth Avenue, New York, New York, United States"
+   - "hotels on Las Vegas Strip" → specificPlace: "Las Vegas Strip, Las Vegas, Nevada, United States"
+   - "hotels on Ocean Drive Miami" → specificPlace: "Ocean Drive, Miami Beach, Florida, United States"
+
+4. **City Only (ONLY if no specific area mentioned):**
+   - "hotels in Paris" → specificPlace: "Paris, Île-de-France, France"
+   - "hotels in New York" → specificPlace: "New York, New York, United States"
+   - "hotels in Tokyo" → specificPlace: "Tokyo, Japan"
+
+5. **Country/Vague (LAST RESORT):**
+   - "cool hotels in USA" → specificPlace: "Manhattan, New York, New York, United States" (pick iconic place)
+   - "hotels in Japan" → specificPlace: "Shibuya, Tokyo, Japan" (pick popular district)
+   - "beach hotels" → specificPlace: "Miami Beach, Florida, United States" (pick popular beach)
+
+**CRITICAL RULES:**
+- NEVER default to just city name when a specific landmark is mentioned!
+- The MapBox geocoding API is excellent - trust it to find specific places
+- Format: [Most Specific Place], [City], [State/Region if applicable], [Country]
+- If the specific place is truly unknown/random, THEN fall back to next most specific level
+
+**EXAMPLES OF CORRECT BEHAVIOR:**
+✅ "Eiffel Tower views" → "Eiffel Tower, Paris, France" (NOT just "Paris, France")
+✅ "near Central Park" → "Central Park, New York, New York, United States" (NOT just "New York")
+✅ "La Rambla Barcelona" → "La Rambla, Barcelona, Catalonia, Spain" (NOT just "Barcelona")
+✅ "Times Square hotels" → "Times Square, New York, New York, United States"
+✅ "South Beach" → "South Beach, Miami, Florida, United States"
+
+**WRONG BEHAVIOR TO AVOID:**
+❌ "Eiffel Tower" → "Paris, France" (TOO GENERIC!)
+❌ "Central Park" → "New York, United States" (TOO GENERIC!)
+❌ "La Rambla" → "Barcelona, Spain" (TOO GENERIC!)
+
+**SEARCH RADIUS RULES (in meters, MINIMUM 5000):**
+
+1. **Specific Landmark/POI:** 5000-12000 meters
+   - "near Central Park" → 8000
+   - "near Eiffel Tower" → 6000
+   - "by Times Square" → 8000
+   - "near Sagrada Familia" → 6000
+   - "by Golden Gate Bridge" → 8000
+
+2. **Specific Neighborhood/Beach:** 10000-15000 meters
+   - "in South Beach" → 12000
+   - "in Shibuya" → 12000
+   - "La Rambla Barcelona" → 10000
+   - "in SoHo" → 10000
+
+3. **City District:** 15000-25000 meters
+   - "Manhattan hotels" → 20000
+   - "hotels in Brooklyn" → 18000
+   - "downtown Miami" → 15000
+
+4. **Entire City:** 25000-40000 meters
+   - "hotels in New York" → 35000
+   - "hotels in Paris" → 30000
+   - "hotels in Tokyo" → 40000
+   - "hotels in Barcelona" → 30000
+
+5. **Large Metro Area:** 40000-60000 meters
+   - "hotels in Los Angeles area" → 50000
+   - "hotels in greater London" → 55000
+   - "hotels in Bay Area" → 60000
+
+6. **Vague/Country-level:** 30000-50000 meters (use popular area)
+   - "cool hotels in USA" → 30000 (around picked location)
+   - "beach hotels" → 25000
+   - "hotels in Europe" → 30000
+
+**AI SEARCH STRING CONSTRUCTION:**
+
+Build a single comprehensive string that includes ALL user requirements:
+
+1. **Price Context (if mentioned):**
+   - User says "cheap" → Include "cheap hotels"
+   - User says "under $200" → Include "hotels under $200 per night"
+   - User says "luxury" or "over $400" → Include "luxury hotels over $400 per night"
+   - User says "budget" → Include "budget-friendly hotels"
+
+2. **Location Context (ALWAYS INCLUDE if specific location mentioned):**
+   - User says "near Central Park" → Include "near Central Park"
+   - User says "by Times Square" → Include "by Times Square"
+   - User says "in South Beach" → Include "in South Beach"
+   - User says "La Rambla Barcelona" → Include "on La Rambla"
+   - If only city mentioned, don't add location to aiSearch
+
+3. **Specific Requirements (if mentioned):**
+   - Add ANY specific features: "rooftop bar", "infinity pool", "spa", "gym", "ocean view"
+   - Add vibes: "romantic", "family-friendly", "business", "party", "quiet"
+   - Add styles: "modern", "boutique", "historic", "minimalist", "luxury"
+
+4. **Combine Everything Naturally:**
+   - Merge all elements into one natural sentence
+   - Keep it concise but include all key requirements
+   
+**EXAMPLES:**
+
+Input: "cheap hotels near Times Square with rooftop bar"
+→ aiSearch: "cheap hotels near Times Square with rooftop bar"
+
+Input: "hotels by central park under 200"
+→ aiSearch: "hotels near Central Park under $200 per night"
+
+Input: "luxury hotel in Paris under $500 with spa"
+→ aiSearch: "luxury hotels under $500 per night with spa"
+(Note: "in Paris" is just the city, so not included since it's already in specificPlace)
+
+Input: "romantic hotels in Santorini with infinity pool"
+→ aiSearch: "romantic hotels with infinity pool"
+(Note: "in Santorini" is just the city)
+
+Input: "find me hotels near Eiffel Tower"
+→ aiSearch: "hotels near Eiffel Tower"
+
+Input: "cool boutique hotel in Tokyo near Shibuya Crossing"
+→ aiSearch: "cool boutique hotels near Shibuya Crossing"
+
+Input: "beach hotels with pool"
+→ aiSearch: "beach hotels with pool"
+
+Input: "hotels over $300 with gym and business center near Wall Street"
+→ aiSearch: "hotels over $300 per night with gym and business center near Wall Street"
 
 **COMPREHENSIVE DATE PARSING RULES:**
 
@@ -258,14 +381,14 @@ You are a travel assistant converting user hotel search requests into structured
 - "Christmas" → 2025-12-25
 - "New Year's" → 2025-12-31 (or 2026-01-01 if after December)
 - "Valentine's Day" → 2026-02-14 (if current date is after Feb 14, 2025)
-- "Easter" → 2025-04-20 (calculate based on year)
-- "Thanksgiving" → 2025-11-27 (4th Thursday of November)
+- "Easter" → 2025-04-20
+- "Thanksgiving" → 2025-11-27
 - "Memorial Day weekend" → 2025-05-24
 - "Labor Day weekend" → 2025-09-01
 - "4th of July" → 2025-07-04
 
 **4. Month/Season References:**
-- "in March" → First reasonable date in March (if current date < March 1, use current year, else next year)
+- "in March" → First reasonable date in March
 - "spring" → March 20 of appropriate year
 - "summer" → June 21 of appropriate year
 - "fall/autumn" → September 22 of appropriate year
@@ -284,153 +407,11 @@ You are a travel assistant converting user hotel search requests into structured
   - "long weekend" → checkout = checkin + 3 days
   - No duration specified → checkout = checkin + 3 days (default)
 
-**7. Range Parsing:**
-- "March 15-18" → checkin: 2025-03-15, checkout: 2025-03-18
-- "March 15 to March 20" → checkin: 2025-03-15, checkout: 2025-03-20
-- "weekend of March 15" → checkin: 2025-03-15, checkout: 2025-03-17
-
-**8. Special Cases:**
-- "ASAP" or "as soon as possible" → tomorrow
-- "flexible dates" → use defaults but note flexibility in aiSearch
-- "end of month" → last day of current/next month
-- "beginning of month" → 1st-3rd of current/next month
-
 **CRITICAL DATE VALIDATION:**
 - ALL dates must be in the future (>= tomorrow: ${new Date(today.getTime() + 86400000).toISOString().split('T')[0]})
 - Checkout MUST be after checkin
 - If parsed dates are invalid/in past, fall back to defaults
-- Maximum reasonable stay: 30 days (adjust if longer)
-
- **City Selection Rules**
-1. Use user-provided city if available.
-2. If only a country/region is mentioned, infer a city that best fits the user's theme (e.g., mountains, food, beaches).
-   - Example: "ski in Japan" → Niseko, not Tokyo.
-3. Avoid regions (e.g., "Swiss Alps") — pick a bookable city/town (e.g., Zermatt).
-4. Capital/largest cities only if no preference/hint is given.
-5. assume san josse california, not costa rica
-
-**CRITICAL CITY SELECTION RULES:**
-1. ALWAYS choose cities with established hotel infrastructure - major cities, tourist destinations, or significant towns.
-2. NEVER choose: National parks, wilderness areas, small villages, or regions without hotels.
-3. For tourist destinations, choose the nearest major gateway city with hotels:
-   - Mountain/nature trips → nearest resort town or gateway city
-   - Beach destinations → major coastal city
-   - Cultural trips → major tourist city
-   - Business trips → major business center
-4. NEVER use "New York City" - always use "New York"
-5. Choose bookable cities that hotel booking sites would recognize
-
-**INTELLIGENT CITY SELECTION BASED ON SEARCH REQUIREMENTS:**
-
-When user mentions only a country/region without a specific city, analyze their aiSearch requirements and choose the city that best matches their needs:
-
-**General Matching Rules:**
-1. **Beach/Ocean/Resort/Tropical** keywords → Choose the country's premier beach destination, NOT the capital
-2. **Mountain/Ski/Alpine/Hiking** keywords → Choose mountain resort towns over major cities  
-3. **Cultural/Historic/Art/Museums** keywords → Choose cultural capitals or historic cities
-4. **Business/Conference/Work** keywords → Choose major business centers
-5. **Party/Nightlife/Entertainment** keywords → Choose entertainment districts
-6. **Budget/Backpacker/Cheap** keywords → Choose budget-friendly tourist hubs
-7. **Luxury/Romantic/Honeymoon** keywords → Choose upscale resort destinations
-8. **Adventure/Outdoor/Nature** keywords → Choose adventure sports centers
-
-**Priority Order for City Selection:**
-1. If aiSearch contains specific activity keywords, match to that activity's best city
-2. If multiple activities mentioned, prioritize the most specific/unique one
-3. If no clear activity, choose the country's main tourist destination (often NOT the capital)
-4. Only choose capital cities for business travel or when no tourist context exists
-
-**Examples of Smart Selection:**
-- "Maldives + beach/resort/romantic" → "Maafushi" (premier tourist island, NOT Male)
-- "Switzerland + ski/mountain" → "Zermatt" (NOT Bern)
-- "Japan + cultural/temples" → "Kyoto" (NOT Tokyo for cultural trips)
-- "Thailand + beach" → "Phuket" (NOT Bangkok)
-- "France + wine" → "Bordeaux" (NOT Paris)
-- "Nepal + trekking" → "Pokhara" (NOT Kathmandu)
-- "Costa Rica + adventure" → "Manuel Antonio" (NOT San Jose)
-
-
-**HOTEL-FRIENDLY CITY EXAMPLES:**
-- Mountain: Zermatt, Aspen, Banff, Chamonix, Interlaken
-- Beach: Miami, Barcelona, Nice, Cancun, Santorini  
-- Cultural: Paris, Rome, Kyoto, Istanbul, Florence
-- Adventure: Queenstown, Reykjavik, Cusco, Cape Town
-- Business: London, Singapore, Dubai, Frankfurt, Tokyo
-
-**SPECIAL CITY ROUTING RULES:**
-- "Bali" → Use "Ubud" (cultural/wellness hub with best hotel options)
-- "Monaco" → Use "Monte Carlo" (main hotel district)
-- Always prefer the specific district/area with the best hotel infrastructure over the general region/country name
-
-**BUDGET/CHEAP DETECTION:**
-Set "cheap": true if the user mentions any of these budget-related terms:
-- "cheap", "cheapest", "budget", "affordable", "inexpensive", "low cost", "save money", "tight budget", "on a dime", "bargain", "economical", "frugal"
-
-**Star Rating Detection:**
-Set "starRating" to the specific number (1-5) if user mentions:
-- "5 star hotel", "five star", "5-star"
-- "4 star", "four star", "4-star"  
-- "3 star", "three star", "3-star"
-- "2 star", "two star", "2-star"
-- "1 star", "one star", "1-star"
-- Written numbers: "five-star luxury" → 5
-- If user says "at least 4 star" → set starRating: 4 and add "minimum 4 stars" to aiSearch
-
-**PRICING RULES:**
-- Only set explicit minCost/maxCost if user gives specific dollar amounts
-- Examples:
-  - "under $100" → maxCost: 100
-  - "$50 to $150" → minCost: 50, maxCost: 150  
-  - "around $200" → minCost: 180, maxCost: 220
-  - "cheap hotels" → cheap: true, but leave minCost/maxCost as null
-
-**FindCheapestOnes Rules:**
-Set to true ONLY if:
-- Query contains "cheapest" AND
-- No other specific requirements (amenities, style, location preferences beyond city)
-- Pure price-focused search
-
-{
-"categories": {
-"ACCESSIBILITY": "wheelchair/handrails/roll-in/visual/braille/single-level, etc.",
-"INTERNET_TECH": "WiFi, wired internet, business center, computer station",
-"PARKING_TRANSPORT": "parking, garage, shuttles (airport/train/theme/cruise), transfers, EV",
-"FOOD_DRINK": "restaurant(s), breakfast, bar(s), coffee shop, snack bar, room breakfast, wine/champagne",
-"WELLNESS_SPA": "spa, massage, sauna, hammam, steam room, beauty, salon, yoga/fitness classes",
-"POOL_WATER_AREAS": "pools, hot tubs, pool bars, cabanas, slides, infinity/saltwater/rooftop pools",
-"BEACH_WATERFRONT": "beachfront, private beach, beach clubs, loungers/umbrellas, snorkeling/diving, beach shuttles",
-"GYM_HEALTH_CLUB": "gym/fitness/health club (the room/area; not classes)",
-"FAMILY_KIDS": "kids club/buffet/meals/pool, playground, toys, baby gates, childcare",
-"PETS": "pets allowed, bowls, baskets, grooming, litter box",
-"ADVENTURE_OUTDOOR_SPORTS": "hiking/cycling/horse riding/climbing/rafting/sailing/kayak, zipline, safari, game drives, golf, tennis, squash, basketball, table tennis, bowling, billiards, darts, archery, aerobics (as activities, not classes branding)",
-"WINTER_SPORTS": "ski/snowboard/snowmobile/snowshoe/sledding, ski-in/out, passes, storage, lessons, lift access",
-"WATER_SPORTS": "scuba, snorkel, windsurf, water ski, paddleboard/boats/marina/parasail, lazy river",
-"ENTERTAINMENT_NIGHTLIFE": "nightclub/DJ, live music, comedy, bingo, pub crawls, movie nights, casino/gaming/pachinko/sportsbook",
-"MEETINGS_EVENTS": "meeting rooms, conference space/center, banquet hall, ballroom, reception hall, wedding services",
-"HOUSE_SERVICES_FRONT_DESK": "24h front desk, concierge, express check-in/out, luggage, housekeeping, laundry, dry cleaning, valet",
-"SUSTAINABILITY_ECO": "composting, recycling, no plastic, renewable power, carbon offsets, local food/education, eco toiletries",
-"SAFETY_SECURITY": "CCTV, smoke alarms, extinguishers, 24h security, first aid, health/COVID protocols",
-"INROOM_PROPERTY_FEATURES": "garden/terrace/grills/fireplace/fire pit, rooms soundproof/allergy-free, heating/AC, room divider, floors (tile/hardwood/cobblestone), ATMs, shops, mini market, libraries, game room, clubhouse",
-"TOURS_CULTURE": "guided tours (walking/bike/culture), art galleries, tastings, vineyard, winery, local expert"
-},
-"detectionExamples": {
-"hotel with pool and gym": ["POOL_WATER_AREAS", "GYM_HEALTH_CLUB"],
-"spa resort with great restaurants": ["WELLNESS_SPA", "FOOD_DRINK"],
-"family hotel with kids activities and rooftop views": ["FAMILY_KIDS", "INROOM_PROPERTY_FEATURES"],
-"business hotel with meeting rooms": ["MEETINGS_EVENTS"],
-"eco-friendly place with good breakfast": ["SUSTAINABILITY_ECO", "FOOD_DRINK"],
-"just need a clean place to sleep": [],
-"cheap hotel downtown": [],
-"hotel with view of eiffel tower": [],
-"wheelchair accessible with parking": ["ACCESSIBILITY", "PARKING_TRANSPORT"]
-},
-"rules": [
-"Only include categories if user specifically mentions related amenities/facilities OR !something that implies the need for them!",
-"Don't assume categories from location or trip type alone",
-"Use exact category names from the list above",
-"Return empty array if only location/price/rating mentioned without amenities"
-]
-}
+- Maximum reasonable stay: 30 days
 
 Output ONLY the JSON object - no explanations or extra text.
 
@@ -451,22 +432,43 @@ User input: "${userInput}"
     // Parse the returned JSON
     let parsed = JSON.parse(content);
     
-    // Validate that minCost/maxCost are numbers or null
-    if (parsed.minCost !== null && typeof parsed.minCost !== 'number') {
-      parsed.minCost = null;
-    }
-    if (parsed.maxCost !== null && typeof parsed.maxCost !== 'number') {
-      parsed.maxCost = null;
-    }
-
-    // Ensure cheap is boolean
-    if (typeof parsed.cheap !== 'boolean') {
-      parsed.cheap = false;
-    }
-
-    // Apply city corrections and validation
-    parsed = validateAndCorrectCity(parsed);
+    // Validate parsed data
     parsed = validateParsedData(parsed);
+
+    // Geocode the specific place ONLY if we have one
+    if (parsed.specificPlace && typeof parsed.specificPlace === 'string' && parsed.specificPlace.trim()) {
+      const geocodeResult = await geocodePlace(parsed.specificPlace);
+      
+      if (geocodeResult) {
+        parsed.latitude = geocodeResult.latitude;
+        parsed.longitude = geocodeResult.longitude;
+        parsed.fullPlaceName = geocodeResult.fullPlaceName;
+      } else {
+        console.warn('⚠️ Geocoding failed, falling back to defaults');
+        // Fallback to New York City coordinates
+        parsed.latitude = 40.7128;
+        parsed.longitude = -74.0060;
+        parsed.fullPlaceName = parsed.specificPlace || "New York, New York, United States";
+      }
+    } else {
+      // No specific place provided, use defaults
+      console.warn('⚠️ No specificPlace provided, using default location');
+      parsed.specificPlace = "New York, New York, United States";
+      parsed.latitude = 40.7128;
+      parsed.longitude = -74.0060;
+      parsed.fullPlaceName = "New York, New York, United States";
+    }
+
+    // Ensure searchRadius has minimum of 5000 meters
+    if (!parsed.searchRadius || parsed.searchRadius < 5000) {
+      parsed.searchRadius = 5000;
+      console.log('⚠️ Search radius below minimum, set to 5000 meters');
+    }
+
+    // Ensure aiSearch exists
+    if (!parsed.aiSearch || typeof parsed.aiSearch !== 'string') {
+      parsed.aiSearch = 'hotels';
+    }
 
     const parseTime = Date.now() - parseStartTime;
     console.log(`✅ Query parsed and validated in ${parseTime}ms:`, parsed);
@@ -488,18 +490,15 @@ User input: "${userInput}"
       return res.json({
         checkin: checkin.toISOString().split('T')[0],
         checkout: checkout.toISOString().split('T')[0],
-        countryCode: "US",
-        cityName: "New York",
+        specificPlace: "Manhattan, New York, New York, United States",
+        latitude: 40.7589,
+        longitude: -73.9851,
+        fullPlaceName: "Manhattan, New York, United States",
+        searchRadius: 20000,
         language: "en",
         adults: 2,
         children: 0,
-        minCost: null,
-        maxCost: null,
-        cheap: false,
-        findCheapestOnes: false,
-        highlyRated: false,
-        starRating: null,
-        aiSearch: "well-reviewed, good-value hotels",
+        aiSearch: "hotels",
         note: "Fallback response due to parsing error"
       });
     }

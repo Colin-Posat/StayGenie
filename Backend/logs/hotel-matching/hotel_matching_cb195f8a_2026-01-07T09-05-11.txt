@@ -1,0 +1,84 @@
+
+=== HOTEL MATCHING PROMPT LOG ===
+Search ID: cb195f8a-c12b-47e5-81fa-f82451307319
+Timestamp: 2026-01-07T09:05:11.212Z
+User Query: hotels in maldives
+Destination: Maldives
+Hotel Count: 34
+Character Count: 12831
+Estimated Tokens: ~3208
+
+=== PROMPT CONTENT ===
+USER REQUEST: "hotels in maldives"
+AI SEARCH CONTEXT: "hotels in Maldives"
+STAY: 3 nights
+
+🎯 RANKING PRIORITY ORDER:
+1. MATCH USER REQUEST: "hotels in Maldives" (Most Important)
+2. Location quality and convenience
+3. Star rating and overall quality
+4. Value for money
+
+📋 STEP-BY-STEP MATCHING PROCESS:
+1. READ AI SEARCH CONTEXT carefully: "hotels in Maldives"
+3. Match specific amenities mentioned (rooftop bar, infinity pool, spa, gym, etc.)
+4. Match vibe/style (romantic, family-friendly, business, boutique, modern, etc.)
+5. RANK by relevance to the complete AI search context, NOT by list position
+
+🔍 KEYWORD MATCHING EXAMPLES:
+- Context: "hotels under $200 per night with rooftop bar" → Price < $200 AND rooftop bar
+- Context: "luxury hotels over $400 per night" → Price > $400 AND luxury features
+- Context: "romantic hotels with infinity pool" → Romantic amenities AND infinity pool
+- Context: "cool boutique hotels" → Boutique style, unique character
+
+⚠️ CRITICAL RULES:
+- IGNORE the order hotels appear in the list - analyze content only
+- You MUST select exactly 15 hotels using their exact names from the list
+- Base rankings on how well each hotel matches "hotels in Maldives"
+- If specific amenities mentioned, hotels MUST have those amenities to rank high
+
+📝 REQUIRED OUTPUT FORMAT:
+1. [exact hotel name from list] | [match percentage 1-100]%
+2. [exact hotel name from list] | [match percentage 1-100]%
+3. [exact hotel name from list] | [match percentage 1-100]%
+...continue through 15
+
+HOTELS AVAILABLE:
+1: Rosy Villa Hotel | $130/night | rooms epitome of comfort Rosy Villa Hotel Guraidhoo. in air-conditioned rooms equipped modern amenities like flat-screen TV, minibar, ensuite. Unwind indoor pool evening entertainment during stay.Gourmet DiningStart day delicious breakfast spread featuring continental, American, Asian options. | 
+2: Paradise Retreat | $75/night | Oceanfront EscapeImmerse yourself stunning views from terrace garden Paradise Retreat. the convenience of complimentary wireless internet access throughout property.Dining DelightsIndulge delicious meals on-site restaurant grab quick bite cozy coffee shop/cafe. Start day right complimentary English | 
+3: Noovilu Suites Maldives | $54/night | Rooftop Terrace Garden ViewsMarvel stunning panoramic views from rooftop terrace garden, perfect relaxing retreat away from hustle bustle.In-house Dining Buffet BreakfastIndulge culinary journey in-house restaurant, offering exquisite international cuisine, delightful meal comfort of room. Start | 
+4: Velana Beach Hotel Maldives | $288/night | roomssIndulge comfort Velana Blu Maldives air-conditioned rooms featuring flat-screen TVs ensuites, ensuring relaxing stay.Relaxing AmenitiesUnwind tranquil garden island complimentary bikes provided hotel. The 24h desk terrace offer convenience stunning views guests.Culinary DelightsSavor taste of | 
+5: Banyan Villa Maldives | $83/night | Recreational Activities AmenitiesEnjoy terrace, garden, bicycles rentDining OptionsIndulge meals Banyan Cafe', coffee shop, via room svcConvenience ComfortFeaturing express check-in/out, complimentary Wi-Fi, individually decorated guestroomsFor beachside retreat quality services, book stay Banyan | 
+6: Arora Inn | $110/night | Beachfront Paradise Culinary DelightsLuxurious roomss: Arora Inn air-conditioned rooms minibars modern en suite bathrooms, ensuring comfortable stay all guests.Gastronomic : culinary journey Arora Café, fusion of Western Maldivian cuisines awaits to tantalize taste buds.Exciting Activities: having | 
+7: NOOE Maldives Kunaavashi | $502/night | Spa massages, body treatments, facials spa. Relax private beach, unwind health club, take dip outdoor pool.All-Inclusive Dining LeisureEnjoy complimentary buffet breakfast inclusive meals/beverages resort's 4 restaurants beach bar. Take advantage of activities like babysitting services, concierge | 
+8: Paradise Retreat, Maafushi | $72/night | roomsParadise Retreat, Maafushi air-conditioned rooms modern amenities ensuite comfortable stay.Culinary DelightsIndulge variety of cuisines on-site restaurant, from Chinese to Indian to Italian, special vegetarian halal options available upon request.Convenience FingertipsEnjoy free WiFi, | 
+9: Raalhu Fonu Maldives | $78/night | Rooftop Terrace Stunning ViewsUnwind rooftop terrace taking breathtaking views of surroundings.Complimentary AmenitiesEnjoy free wireless internet access, daily continental breakfast, convenience of self-parking during stay.Cozy Convenient roomsRelax one of individually furnished guestrooms | 
+10: Kaani Palm Beach | $310/night | Spa ServicesIndulge massages, body treatments, facials full-service spa relaxing rejuvenation.Recreational AmenitiesUnwind outdoor pool stay active gym day hotel's private beach perfect blend of leisure activity.Fine Dining ViewEnjoy delectable meals Palm Beach Restaurant stunning ocean view | 
+11: Sunrise Beach and Spa | $128/night | Breathtaking Views Convenient AmenitiesTake stunning views from rooftop terrace garden enjoying complimentary wireless internet access. The hotel babysitting services tour/ticket assistance, along cozy picnic area outdoor relaxation.Delightful Dining OptionsSavor delicious meal onsite restaurant | 
+12: Ithaa Seaview | $182/night | Prime LocationLocated steps away from Guraidhoo Beach Kandooma Beach, Ithaa Seaview comfortable rooms modern amenities.Family-Friendly roomsFeaturing family rooms children's playground, this property perfect families looking to unwind create lasting memories together.Exciting ActivitiesGuests | 
+13: COMO Cocoa Island | $1894/night | Escape to COMO Cocoa Island, serene meets beachfront bliss.Indulgent Spa TreatmentsPamper yourself exquisite spa, offering range of massages, body treatments, rejuvenating facials designed to soothe soul.Recreational ParadiseDive into relaxation outdoor pool energize yourself 24-hour gym. Unwind | 
+14: Rehendhi Villa | $98/night | perfect getaway Rehendhi Villa, comfort meets convenience.Recreation OpportunitiesDive into relaxation inviting indoor pool, perfect unwinding day of exploring simply enjoying quality leisure time.Dining ExcellenceSavor every bite on-site restaurant, offering complimentary buffet breakfast daily | 
+15: Galaxy Sunrise Guesthouse | $180/night | Beachfront relaxation culinary delightsEscape to tranquil oasis Galaxy Sunrise Guesthouse, unwind private beach revel stunning garden views. in delectable Italian cuisine AYA Cafe & Restaurant picturesque ocean backdrop, complimentary local breakfast each morning. roomss attentive service | 
+16: h78 Guraidhoo | $166/night | breathtaking serenity of Maldives h78 Guraidhoo, perfect getaway awaits steps from stunning Kandooma Beach. ComfortUnwind one of 72 appointed air-conditioned rooms, equipped minibars Smart televisions. Stay connected complimentary Wi-Fi convenience of ensuites featuring lush amenities.Culinary | 
+17: Beach Hotel Guraidhoo | $147/night | Convenient LocationComfortable roomsDining OptionsTo relaxing stay steps away from Guraidhoo Beach, book stay Beach Hotel Guraidhoo. | 
+18: Adroit Beach Inn | $209/night | Recreation Amenities: various recreational activities such renting bicycles enjoying serene garden view. Benefit from complimentary Wi-Fi, concierges, babysitting options guesthouse.Dining Socializing: delicious meals on-site restaurant, grab snacks cafe, opt 24-hour room svc. Join fellow guests | 
+19: Salt Beach Hotel | $125/night | luxuryIndulge complimentary wireless internet access, concierges, free babysitting. The rooftop terrace garden offer stunning views, barbecue grills perfect cozy evening.Gourmet DiningSavor delicious meals on-site restaurant grab quick bite coffee shop/cafe. 24-hour room svc ensures satisfy | 
+20: iCom Marina Sea View | $329/night | rooms Sea ViewsSustainable 3-star iCom Marina Sea View Maafushi serene escape garden, shared lounge, private parking. sea views from air-conditioned units equipped modern amenities like flat-screen TV ensuite. in delicious meals on-site restaurant unwind spa facilities yoga classes.Family-Friendly | 
+21: Crystal Sands Villa | $166/night | Designated Smoking AreasDining OptionsConvenient ServicesEnjoy convenience of designated smoking areas, dining restaurant, room svc during limited hours. The hotel 24h desk service complimentary coffee/tea common area. With individually furnished guestrooms featuring complimentary Wi-Fi cable | 
+22: Rosemary Boutique | $180/night | rooms MaafushiExquisite Dining culinary journey on-site restaurant offering delectable dishes memorable dining.Unwind RelaxEnjoy serene ambiance of garden terrace, perfect unwinding day of exploration adventure. with Easelocated, hotel bike hire guests to beautiful surroundings of Maafushi | 
+23: VIVA Beach Maldives | $1152/night | Sustainable Beachfront roomsVIVA Beach Maldives guests sustainable stay breathtaking sea views. The property 24h desk charming picnic area relaxation.Family-Friendly AmenitiesIdeal families, guest house spacious family rooms, sun terrace, welcoming restaurant serving delicious American cuisine all | 
+24: Ari Grand Hotel & Spa | $108/night | Spa TreatmentsUnwind rejuvenate spa soothing massages private indoor spa tubs. Make most of relaxation time during stay.Endless Recreational ActivitiesFrom private beach to outdoor pool available bicycles, there plenty of activities to keep entertained throughout vacation.Exquisite Dining | 
+25: iCom Marina Sea View | $283/night | tropical haven iCom Marina Sea View, beachfront relaxation meets modern comfort.Serene roomssUnwind 36 individually furnished guestrooms, featuring private balconies, minibars, Smart televisions. complimentary wireless internet access take breathtaking ocean views.Culinary DelightsIndulge delicious | 
+26: Ocean Retreat & Spa | $147/night | Rooftop Terrace Scenic ViewsDining Options room svcConvenient Amenities ServicesBook stay Ocean Retreat & Spa now to these fantastic more! | 
+27: WhiteShell Island Hotel & Spa | $146/night | Spa ServicesIndulge soothing massages spa treatments during stay hotel.Dining Entertainment OptionsSavor delicious meals restaurant, grab snacks cafes, drinks bar/lounge.Convenient Amenities ServicesBenefit from complimentary shuttle service, concierge assistance, free valet parking | 
+28: Triton Beach Hotel & Spa | $162/night | Escape to Triton Beach Hotel & Spa, Art Deco oasis nestled pristine shores of Maafushi, relaxation meets luxury.Wellness RetreatIndulge rejuvenating massages, soothing body treatments, revitalizing facials serene spa, ensuring leave feeling refreshed radiant.Exquisite DiningSavor culinary delights | 
+29: OZEN LIFE MAADHOO - Luxury All Inclusive with Free Transfers | $1893/night | All Inclusive OZEN LIFE MAADHOO - All Inclusive private beach area, year-round outdoor pool, children's playground. The INDULGENCE Plan includes fine dining, top-shelf spirits, water sports, spa dive s.Unique Dining OptionsIndulge specialty fine dining underwater restaurant, M6m, offering modern | 
+30: Velana Beach Hotel Maldives | $260/night | paradise Velana Beach Hotel Maldives, sun, sand, stunning views await you!Private Beach AccessRelax private beach, steps from rooms. a day of sunbathing partake exciting water activities, ensuring beach nothing short of spectacular.Culinary DelightsSavor delectable meals Kaalamaa Restaurant, | 
+31: Triton Prestige Seaview and Spa | $209/night | Seaview roomsTriton Prestige Seaview Spa Maafushi 4-star beachfront retreat top-notch amenities.Spa gymIndulge relaxation on-site spa stay active well-equipped gym.Culinary DelightsSavor variety of cuisines restaurant, catering to all dietary preferences.Book stay Triton Prestige Seaview Spa | 
+32: Holiday Inn Resort Kandooma Maldives by IHG | $527/night | Spa Services Recreational Amenities: rejuvenating spa treatments unwind various recreational activities such outdoor pool waterslide.All-Inclusive Dining : delectable meals Kitchen complimentary snacks café. Don't miss daily complimentary reception refreshing drinks beach bar.Elegant roomss Event | 
+33: Goby Lodge Guest House | $61/night | luxuryIndulge convenience of 24-hour room svc top-notch concierges.Comfortable roomsRelax one of 54 air-conditioned rooms fireplaces flat-screen TVs, offering cozy stay.Prime LocationLocated 5-minute walk of Bunbaru Public Beach, guesthouse easy access to nearby attractions.Book stay Goby Lodge | 
+34: iCom Blue Sea View | $442/night | paradise iCom Blue Sea View, sun-kissed shores meet luxury.Stunning LocationJust steps away from Water Sports Beach Maafushi Harbor, yourself vibrant local culture easy access to historical sites breathtaking reefs.Comfort & ConnectivityOur 50 well-appointed guestrooms feature private balconies | 
+
+REMEMBER: Always select 15 hotels using exact names from the list above.
+
+=== END LOG ===

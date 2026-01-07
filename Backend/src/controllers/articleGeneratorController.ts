@@ -30,6 +30,8 @@ interface HotelArticle {
   tags?: string[];
   isRefundable?: boolean;
   placeId?: string;
+  lat?: number;
+  lng?: number;
 }
 
 interface FAQItem {
@@ -332,6 +334,50 @@ function extractImage(hotel: any): string {
   return `https://images.unsplash.com/photo-1566073771259-6a8506099945?w=800&h=600&fit=crop`;
 }
 
+function extractLatLng(hotel: any): { lat?: number; lng?: number } {
+  // Try multiple possible locations for lat/lng data
+  
+  // Direct lat/lng or latitude/longitude
+  if (hotel.lat !== undefined && hotel.lng !== undefined) {
+    return { lat: hotel.lat, lng: hotel.lng };
+  }
+  
+  if (hotel.latitude !== undefined && hotel.longitude !== undefined) {
+    return { lat: hotel.latitude, lng: hotel.longitude };
+  }
+  
+  // Nested in location object
+  if (hotel.location) {
+    if (hotel.location.lat !== undefined && hotel.location.lng !== undefined) {
+      return { lat: hotel.location.lat, lng: hotel.location.lng };
+    }
+    
+    if (hotel.location.latitude !== undefined && hotel.location.longitude !== undefined) {
+      return { lat: hotel.location.latitude, lng: hotel.location.longitude };
+    }
+  }
+  
+  // Nested in coordinates object
+  if (hotel.coordinates) {
+    if (hotel.coordinates.lat !== undefined && hotel.coordinates.lng !== undefined) {
+      return { lat: hotel.coordinates.lat, lng: hotel.coordinates.lng };
+    }
+    
+    if (hotel.coordinates.latitude !== undefined && hotel.coordinates.longitude !== undefined) {
+      return { lat: hotel.coordinates.latitude, lng: hotel.coordinates.longitude };
+    }
+  }
+  
+  // Nested in geoCode object (common in hotel APIs)
+  if (hotel.geoCode) {
+    if (hotel.geoCode.latitude !== undefined && hotel.geoCode.longitude !== undefined) {
+      return { lat: hotel.geoCode.latitude, lng: hotel.geoCode.longitude };
+    }
+  }
+  
+  return {};
+}
+
 async function generateSingleArticle(articleQuery: ArticleQuery): Promise<ArticleOutput> {
   console.log(`\nGenerating article: "${articleQuery.title}"`);
   
@@ -372,6 +418,15 @@ async function generateSingleArticle(articleQuery: ArticleQuery): Promise<Articl
       console.log(`Hotel ID: ${hotelId}`);
     }
     
+    // Extract lat/lng
+    const { lat, lng } = extractLatLng(hotel);
+    
+    if (lat && lng) {
+      console.log(`Coordinates: ${lat}, ${lng}`);
+    } else {
+      console.warn(`WARNING: Missing coordinates for ${hotel.name}`);
+    }
+    
     // Get description
     let description = hotel.description || 
                      hotel.summarizedInfo?.description || 
@@ -405,7 +460,7 @@ async function generateSingleArticle(articleQuery: ArticleQuery): Promise<Articl
                     hotel.address ||
                     (hotel.city && hotel.country ? `${hotel.city}, ${hotel.country}` : undefined);
     
-    // Build hotel article with ALL necessary data
+    // Build hotel article with ALL necessary data including lat/lng
     hotelArticles.push({
       id: hotelId,
       name: hotel.name,
@@ -416,7 +471,9 @@ async function generateSingleArticle(articleQuery: ArticleQuery): Promise<Articl
       location: location,
       tags: hotel.tags || [],
       isRefundable: hotel.isRefundable || false,
-      placeId: hotel.placeId
+      placeId: hotel.placeId,
+      lat: lat,
+      lng: lng
     });
     
     console.log(`Completed processing ${hotel.name} (ID: ${hotelId})`);
@@ -431,6 +488,14 @@ async function generateSingleArticle(articleQuery: ArticleQuery): Promise<Articl
     console.warn(`WARNING: ${missingIds} hotels are missing IDs!`);
   } else {
     console.log(`SUCCESS: All ${hotelArticles.length} hotels have valid IDs`);
+  }
+  
+  // Validate coordinates
+  const missingCoordinates = hotelArticles.filter(h => !h.lat || !h.lng).length;
+  if (missingCoordinates > 0) {
+    console.warn(`WARNING: ${missingCoordinates} hotels are missing coordinates!`);
+  } else {
+    console.log(`SUCCESS: All ${hotelArticles.length} hotels have coordinates`);
   }
   
   // Build final output
