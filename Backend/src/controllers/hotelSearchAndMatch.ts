@@ -639,6 +639,7 @@ STAY: ${nights} nights
 - You MUST select exactly 15 hotels using their exact names from the list
 - Base rankings on how well each hotel matches "${userInput}"
 - If specific amenities mentioned, hotels MUST have those amenities to rank high
+- PRIORITIZE HOTELS THAT HAVE LISTED FEATURES THAT SAY WHAT THE USER IS ASKING FOR (eg. prioritze hotels that have rooftop bar over rooftop pool if user explocitly asked for rooftop bar)
 
 📝 REQUIRED OUTPUT FORMAT:
 1. [exact hotel name from list] | [match percentage 1-100]%
@@ -1173,10 +1174,7 @@ if (latitude && longitude && parsedQuery.latitude && parsedQuery.longitude) {
       : undefined,  // ✅ ADD THIS
     showInUI: parsedQuery.locationMentioned || false  // ✅ ADD THIS
   };
-  console.log('🎯 DISTANCE OBJECT CREATED:', {
-    hotelName: name,
-    distance: distanceFromSearch
-  });
+
 }
 
   return {

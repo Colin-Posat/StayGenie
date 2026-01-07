@@ -802,10 +802,11 @@ GUIDELINES for topAmenities:
 
 
 - Instead, ALWAYS explain WHY using one of the following:
-  • named amenities
+  • named amenities OR SOMETHING STATED IN HOTEL DESCRIPTION!!!
   • named neighborhood or street (if explicitly provided)
-  • explicit hotel features (e.g. bar on-site, late check-in, shared lounge)
+  • explicit hotel features that tie into what the user asked
   • clearly stated proximity phrased as "located in [area]" ONLY if that area is in the data
+   CRITICAL: REALLY SELL THEM THE IDEA THAT THIS MATCHES THEIR SEARCH DONT JSUT SAY RANDOM BULLSHIT AMENITIES
 
 
 GUIDELINES for whyItMatches:

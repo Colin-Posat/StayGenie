@@ -520,6 +520,28 @@ User input: "${userInput}"
     
     // Validate parsed data
     parsed = validateParsedData(parsed);
+
+    // --- City normalization rules ---
+if (parsed.cityName?.toLowerCase() === 'miami') {
+  console.log('🌴 Normalizing cityName: Miami → Miami Beach');
+
+  parsed.cityName = 'Miami Beach';
+
+  // Optional: also normalize specificPlace if it only says Miami
+  if (
+    typeof parsed.specificPlace === 'string' &&
+    parsed.specificPlace.toLowerCase().includes('miami') &&
+    !parsed.specificPlace.toLowerCase().includes('miami beach')
+  ) {
+    parsed.specificPlace = parsed.specificPlace.replace(/miami/gi, 'Miami Beach');
+  }
+
+  // Optional: ensure aiSearch reflects Miami Beach
+  if (typeof parsed.aiSearch === 'string' && parsed.aiSearch.toLowerCase().includes('miami')) {
+    parsed.aiSearch = parsed.aiSearch.replace(/miami/gi, 'Miami Beach');
+  }
+}
+
     // Ensure price fields always exist
 if (typeof parsed.minCost !== 'number') parsed.minCost = null;
 if (typeof parsed.maxCost !== 'number') parsed.maxCost = null;
