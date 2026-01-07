@@ -210,12 +210,69 @@ You are a travel assistant converting user hotel search requests into structured
   "checkin": "YYYY-MM-DD",            // Default: ${formattedCheckin}
   "checkout": "YYYY-MM-DD",           // Default: ${formattedCheckout}
   "specificPlace": "Full specific place name with city and country for geocoding",
-  "searchRadius": number (in meters, minimum 5000),
+  "cityName": string | null,   
+  "searchOriginName": string | null ,  // NEW - What to show user
+  "locationMentioned": boolean,
+  "searchRadius": number (in meters, minimum 5000, max 15000 (unless national park)),
   "language": "ISO 639-1 code, default 'en'",
   "adults": number (default 2),
   "children": number (default 0),
+  "minCost": number | null,   // Minimum nightly price in USD if mentioned
+  "maxCost": number | null,   // Maximum nightly price in USD if mentioned
   "aiSearch": "Complete search context string combining price preferences and specific requirements"
 }
+
+**CITY NAME EXTRACTION RULES**
+
+- Only generate "cityName" if the user explicitly mentions a city
+  OR a landmark/neighborhood that clearly belongs to a well-known city.
+
+Examples where cityName SHOULD be generated:
+✅ "hotels in Paris" → cityName: "Paris"
+✅ "near Times Square" → cityName: "New York"
+✅ "near Eiffel Tower" → cityName: "Paris"
+✅ "in Shibuya" → cityName: "Tokyo"
+
+Examples where cityName MUST be null:
+❌ "cool beach hotels"
+❌ "random hotel"
+
+Rules:
+- cityName must be ONLY the city (no state, no country, no region).
+- Never guess or infer a city unless it is clearly implied by the user input.
+- If uncertain, set cityName = null.
+
+**SEARCH ORIGIN NAME & POI DETECTION:**
+
+Extract:
+1. searchOriginName - SHORT display name (2-4 words)
+2. locationMentioned - TRUE only for POIs (landmarks/attractions)
+
+**POI = Famous landmark, attraction, or iconic place**
+
+✅ POIs (locationMentioned: TRUE):
+- Landmarks: Eiffel Tower, Statue of Liberty, Big Ben
+- Parks: Central Park, Hyde Park
+- Monuments: Arc de Triomphe, Lincoln Memorial
+- Buildings: Burj Khalifa, Empire State Building, Sagrada Familia
+- Squares: Times Square, Trafalgar Square
+- Bridges: Golden Gate Bridge, Brooklyn Bridge
+- Museums: Louvre, British Museum
+- Attractions: Disneyland, Colosseum
+
+❌ NOT POIs (locationMentioned: FALSE):
+- Cities: Paris, Tokyo, New York
+- Neighborhoods: SoHo, Shibuya, Brooklyn
+- Districts: Downtown, Midtown
+- Generic areas: beach, city center, waterfront
+
+**Examples:**
+✅ "hotels near Eiffel Tower" → searchOriginName: "Eiffel Tower", locationMentioned: true
+✅ "near Central Park" → searchOriginName: "Central Park", locationMentioned: true
+❌ "hotels in Paris" → searchOriginName: "Paris", locationMentioned: false
+❌ "SoHo hotels" → searchOriginName: "SoHo", locationMentioned: false
+❌ "downtown Chicago" → searchOriginName: "Downtown Chicago", locationMentioned: false
+
 
 **CRITICAL PLACE EXTRACTION RULES:**
 
@@ -272,36 +329,48 @@ You are a travel assistant converting user hotel search requests into structured
 
 **SEARCH RADIUS RULES (in meters, MINIMUM 5000):**
 
-1. **Specific Landmark/POI:** 5000-12000 meters
+1. **National Parks & Remote Locations:** 30000 meters (SPECIAL CASE)
+   - "Yellowstone National Park" → 30000
+   - "Grand Canyon" → 30000
+   - "Yosemite" → 30000
+   - "Zion National Park" → 30000
+   - "Rocky Mountain National Park" → 30000
+   - "Banff National Park" → 30000
+   - "Joshua Tree" → 30000
+   - "Sedona" → 30000
+   - "Monument Valley" → 30000
+   - Any location clearly without hotels in immediate vicinity
+
+2. **Specific Landmark/POI:** 5000-12000 meters
    - "near Central Park" → 8000
    - "near Eiffel Tower" → 6000
    - "by Times Square" → 8000
    - "near Sagrada Familia" → 6000
    - "by Golden Gate Bridge" → 8000
 
-2. **Specific Neighborhood/Beach:** 10000-15000 meters
+3. **Specific Neighborhood/Beach:** 10000-15000 meters
    - "in South Beach" → 12000
    - "in Shibuya" → 12000
    - "La Rambla Barcelona" → 10000
    - "in SoHo" → 10000
 
-3. **City District:** 15000-25000 meters
-   - "Manhattan hotels" → 20000
-   - "hotels in Brooklyn" → 18000
+4. **City District:** 15000 meters
+   - "Manhattan hotels" → 15000
+   - "hotels in Brooklyn" → 15000
    - "downtown Miami" → 15000
 
-4. **Entire City:** 25000-40000 meters
-   - "hotels in New York" → 35000
-   - "hotels in Paris" → 30000
-   - "hotels in Tokyo" → 40000
-   - "hotels in Barcelona" → 30000
+5. **Entire City:** 15000 meters
+   - "hotels in New York" → 15000
+   - "hotels in Paris" → 15000
+   - "hotels in Tokyo" → 15000
+   - "hotels in Barcelona" → 15000
 
-5. **Large Metro Area:** 40000-60000 meters
-   - "hotels in Los Angeles area" → 50000
-   - "hotels in greater London" → 55000
-   - "hotels in Bay Area" → 60000
+6. **Large Metro Area:** 30000 meters
+   - "hotels in Los Angeles area" → 30000
+   - "hotels in greater London" → 30000
+   - "hotels in Bay Area" → 30000
 
-6. **Vague/Country-level:** 30000-50000 meters (use popular area)
+7. **Vague/Country-level:** 30000-50000 meters (use popular area)
    - "cool hotels in USA" → 30000 (around picked location)
    - "beach hotels" → 25000
    - "hotels in Europe" → 30000
@@ -413,6 +482,23 @@ Input: "hotels over $300 with gym and business center near Wall Street"
 - If parsed dates are invalid/in past, fall back to defaults
 - Maximum reasonable stay: 30 days
 
+IMPORTANT:
+If the user mentions a CITY (explicitly or implicitly via a landmark),
+you MUST include the city name in the aiSearch string — even if it already exists in specificPlace.
+
+Examples:
+- "hotels near Times Square" → "hotels near Times Square in New York"
+- "luxury hotel near Eiffel Tower" → "luxury hotels near Eiffel Tower in Paris"
+- "cheap hotels in Tokyo" → "cheap hotels in Tokyo"
+
+
+**OUTPUT VALIDATION RULES**
+
+- "cityName" must always exist in the JSON output.
+- If no city is clearly specified, output: "cityName": null
+- Do NOT omit the field.
+- Do NOT guess.
+
 Output ONLY the JSON object - no explanations or extra text.
 
 User input: "${userInput}"
@@ -434,6 +520,10 @@ User input: "${userInput}"
     
     // Validate parsed data
     parsed = validateParsedData(parsed);
+    // Ensure price fields always exist
+if (typeof parsed.minCost !== 'number') parsed.minCost = null;
+if (typeof parsed.maxCost !== 'number') parsed.maxCost = null;
+
 
     // Geocode the specific place ONLY if we have one
     if (parsed.specificPlace && typeof parsed.specificPlace === 'string' && parsed.specificPlace.trim()) {
@@ -460,10 +550,22 @@ User input: "${userInput}"
     }
 
     // Ensure searchRadius has minimum of 5000 meters
-    if (!parsed.searchRadius || parsed.searchRadius < 5000) {
-      parsed.searchRadius = 5000;
-      console.log('⚠️ Search radius below minimum, set to 5000 meters');
-    }
+    const MIN_RADIUS = 5000;
+const MAX_RADIUS = 30000;
+
+// Enforce radius bounds
+if (!parsed.searchRadius || parsed.searchRadius < MIN_RADIUS) {
+  parsed.searchRadius = MIN_RADIUS;
+  console.log(`⚠️ Search radius below minimum, set to ${MIN_RADIUS} meters`);
+}
+
+if (parsed.searchRadius > MAX_RADIUS) {
+  console.log(
+    `⚠️ Search radius ${parsed.searchRadius} exceeds max, clamping to ${MAX_RADIUS} meters`
+  );
+  parsed.searchRadius = MAX_RADIUS;
+}
+
 
     // Ensure aiSearch exists
     if (!parsed.aiSearch || typeof parsed.aiSearch !== 'string') {

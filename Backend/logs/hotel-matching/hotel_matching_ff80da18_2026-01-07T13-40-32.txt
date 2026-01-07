@@ -1,0 +1,56 @@
+
+=== HOTEL MATCHING PROMPT LOG ===
+Search ID: ff80da18-4c91-44d5-9752-c3e93ad83993
+Timestamp: 2026-01-07T13:40:32.002Z
+User Query: hotels near yosemite curry
+Destination: Yosemite Exploration Center, 9035, Village Drive, Yosemite Village, Mariposa County, California, 95389, USA
+Hotel Count: 6
+Character Count: 4397
+Estimated Tokens: ~1100
+
+=== PROMPT CONTENT ===
+USER REQUEST: "hotels near yosemite curry"
+STAY: 3 nights
+
+🎯 RANKING PRIORITY ORDER:
+1. MATCH USER REQUEST: "hotels near yosemite curry" (Most Important)
+2. Distance from Yosemite Curry Village, Yosemite National Park, California, United States (if relevant to search!) MAKE SURE THE HOTEL IS IN THE CITY/PLACE THE USER WANTS
+2. Location quality and convenience 
+3. Star rating and overall quality
+4. Value for money
+
+📋 STEP-BY-STEP MATCHING PROCESS:
+1. READ AI SEARCH CONTEXT carefully: "hotels near yosemite curry"
+3. Match specific amenities mentioned (rooftop bar, infinity pool, spa, gym, etc.)
+4. Match vibe/style (romantic, family-friendly, business, boutique, modern, etc.)
+5. RANK by relevance to the complete AI search context, NOT by list position
+
+🔍 KEYWORD MATCHING EXAMPLES:
+- Context: "hotels under $200 per night with rooftop bar" → Price < $200 AND rooftop bar
+- Context: "luxury hotels over $400 per night" → Price > $400 AND luxury features
+- Context: "romantic hotels with infinity pool" → Romantic amenities AND infinity pool
+- Context: "cool boutique hotels" → Boutique style, unique character
+
+⚠️ CRITICAL RULES:
+- IGNORE the order hotels appear in the list - analyze content only
+- You MUST select exactly 15 hotels using their exact names from the list
+- Base rankings on how well each hotel matches "hotels near yosemite curry"
+- If specific amenities mentioned, hotels MUST have those amenities to rank high
+
+📝 REQUIRED OUTPUT FORMAT:
+1. [exact hotel name from list] | [match percentage 1-100]%
+2. [exact hotel name from list] | [match percentage 1-100]%
+3. [exact hotel name from list] | [match percentage 1-100]%
+...continue through 15
+
+HOTELS AVAILABLE:
+1: Yosemite View Lodge (El Portal, us) | $249/night | 17.4km from Yosemite Curry Village, Yosemite National Park, California, United States | Riverside Oasis luxuryScenic Views Relaxation: Nestled along Merced River, Yosemite View Lodge stunning river views variety of pools hot tubs relaxing.Delicious Dining Options: classic American cuisine River Restaurant & Lounge, open year-round breakfast dinner, ensuring delightful dining.Abundant | 
+2: Cedar Lodge (El Portal, us) | $169/night | 25.3km from Yosemite Curry Village, Yosemite National Park, California, United States | Nature's BeautyNestled 5 minutes from Yosemite National Park, Cedar Lodge serene escape both indoor outdoor pools.Comfort ConvenienceEach room equipped AC, TV, refrigerator, coffee-making facilities. the rustic charm of period wood furnishings vibrant accents during stay.Delight Taste BudsSavor | 
+3: Rush Creek Lodge at Yosemite (Groveland, us) | $275/night | 26.7km from Yosemite Curry Village, Yosemite National Park, California, United States | Nature Retreat luxuryOutdoor Pool Hot Tubs: refreshing dip seasonal outdoor pool unwind one of two hot tubs surrounded serene forest landscape.Family-Friendly Adult-Only Hot Tubs: Relax style option to choose between hot tubs designed families exclusively adults, ensuring peaceful rejuvenating all | 
+4: AutoCamp Yosemite (Midpines, us) | $223/night | 37.4km from Yosemite Curry Village, Yosemite National Park, California, United States | Glamping AutoCamp YosemiteAt AutoCamp Yosemite, unique glamping 42 km from Yosemite Arch Rock Entrance. The 3-star hotel free bikes, private parking, inviting outdoor pool.Unwind ExploreEnjoy convenience of 24h desk free wifi, along concierge to enhance stay. Take advantage of on-site barbecue | 
+5: Red Bud Lodge (El Portal, US) | $234/night | 28.5km from Yosemite Curry Village, Yosemite National Park, California, United States | Convenient ParkingComfortable roomssScenic LocationWith stay Red Bud Lodge El Portal, you'll national park, 15-minute drive of Yosemite National Park Sierra National Forest. This motel 12.6 mi (20.2 km) from Yosemite Valley 22 mi (35.4 km) from Yosemite Visitor Center. Ideal visit to area. | 
+6: The Ahwahnee (Yosemite Village, us) | $772/night | 1.1km from Yosemite Curry Village, Yosemite National Park, California, United States | rooms Stunning ViewsThe Ahwahnee, Yosemite Village, 4-star rooms stone's throw away from El Capitan. in outdoor pool, delectable meals restaurant, unwind shared lounge.Modern Amenities quality servicesEnjoy convenience of free WiFi, room svc, 24h desk. The hotel ATM, concierge, luggage storage | 
+
+REMEMBER: Always select 15 hotels using exact names from the list above.
+
+=== END LOG ===

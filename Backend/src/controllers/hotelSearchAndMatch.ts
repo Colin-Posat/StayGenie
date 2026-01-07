@@ -12,6 +12,8 @@ import {
 } from '../types/hotel';
 import { searchCostTracker, extractTokens } from '../utils/searchCostTracker';
 import { FACILITIES_ID_TO_NAME } from '../utils/facilities-dict';
+import { CohereClient } from 'cohere-ai';
+
 
 // Load environment variables
 dotenv.config({ path: path.resolve(__dirname, '../../.env') });
@@ -115,6 +117,11 @@ const TARGET_HOTEL_COUNT = 15;
 const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY
 });
+const cohere = new CohereClient({
+  token: process.env.COHERE_API_KEY!
+});
+
+
 
 // Optimized axios instances
 const liteApiInstance = axios.create({
@@ -127,6 +134,8 @@ const liteApiInstance = axios.create({
   timeout: 30000,
   maxRedirects: 2,
 });
+
+
 
 const internalApiInstance = axios.create({
   baseURL: process.env.BASE_URL || 'http://localhost:3003',
@@ -182,6 +191,48 @@ ${prompt}
     console.error(`❌ Failed to log hotel matching prompt:`, error);
   }
 };
+
+const rerankHotelsWithCohere = async (
+  query: string,
+  hotels: HotelSummaryForAI[],
+  topN: number = 150
+): Promise<HotelSummaryForAI[]> => {
+  if (!process.env.COHERE_API_KEY) {
+    console.warn('⚠️ Cohere key missing — skipping rerank');
+    return hotels.slice(0, topN);
+  }
+
+  if (hotels.length <= topN) {
+    return hotels;
+  }
+
+  const documents = hotels.map(h => ({
+    text: `
+${h.name}
+${h.city}, ${h.country}
+${h.description}
+Amenities: ${h.topAmenities?.join(', ')}
+Price: ${h.pricePerNight}
+Distance: ${h.distanceFromSearch?.formatted || 'unknown'}
+    `.trim()
+  }));
+
+  try {
+    const response = await cohere.rerank({
+      model: 'rerank-english-v3.0',
+      query,
+      documents,
+      topN
+    });
+
+    return response.results.map(r => hotels[r.index]);
+
+  } catch (err) {
+    console.error('❌ Cohere rerank failed, falling back to first N hotels:', err);
+    return hotels.slice(0, topN);
+  }
+};
+
 
 const filterRelevantAmenities = (amenitiesText: string): string => {
   if (!amenitiesText || typeof amenitiesText !== 'string') {
@@ -380,6 +431,12 @@ const processHotelWithImmediateInsights = async (
     }
 
     const enrichedHotelSummary = createHotelSummaryForInsights(hotel, hotelMetadata, nights);
+
+    console.log('📦 ENRICHED HOTEL SUMMARY:', {
+  hotelName: enrichedHotelSummary.name,
+  hasDistance: !!enrichedHotelSummary.distanceFromSearch,
+  distanceObject: enrichedHotelSummary.distanceFromSearch
+});
     
     const basicHotelData = {
       ...enrichedHotelSummary,
@@ -844,6 +901,91 @@ REMEMBER: Always select 15 hotels using exact names from the list above.`;
   return orderedMatches.slice(0, 15);
 };
 
+const filterHotelsByPriceWithFallback = (
+  hotels: HotelSummaryForAI[],
+  minPrice: number | null | undefined,
+  maxPrice: number | null | undefined,
+  minPoolSize: number = 100
+): HotelSummaryForAI[] => {
+
+  if (
+    (minPrice == null || Number.isNaN(minPrice)) &&
+    (maxPrice == null || Number.isNaN(maxPrice))
+  ) {
+    return hotels;
+  }
+
+  const extractPrice = (h: HotelSummaryForAI): number | null => {
+    const match = h.pricePerNight?.match?.(/(\d+)/);
+    return match ? parseInt(match[1], 10) : null;
+  };
+
+  const hotelsWithPrice: { hotel: HotelSummaryForAI; price: number }[] = [];
+  const hotelsWithoutPrice: HotelSummaryForAI[] = [];
+
+  for (const hotel of hotels) {
+    const price = extractPrice(hotel);
+    if (price !== null) {
+      hotelsWithPrice.push({ hotel, price });
+    } else {
+      hotelsWithoutPrice.push(hotel);
+    }
+  }
+
+  // ✅ Apply BOTH min and max constraints
+  const inRange = hotelsWithPrice
+    .filter(h => {
+      if (minPrice != null && h.price < minPrice) return false;
+      if (maxPrice != null && h.price > maxPrice) return false;
+      return true;
+    })
+    .sort((a, b) => a.price - b.price)
+    .map(h => h.hotel);
+
+  if (inRange.length >= minPoolSize) {
+    console.log(
+      `💰 Price filter: ${inRange.length} hotels in range ` +
+      `[${minPrice ?? '-∞'} – ${maxPrice ?? '∞'}]`
+    );
+    return inRange;
+  }
+
+  // 🔁 Fallback: closest prices outside the range
+const outOfRange = hotelsWithPrice
+  .filter(h => !inRange.some(i => i.hotelId === h.hotel.hotelId))
+  .sort((a, b) => {
+    const da =
+      minPrice != null && a.price < minPrice ? minPrice - a.price :
+      maxPrice != null && a.price > maxPrice ? a.price - maxPrice : 0;
+
+    const db =
+      minPrice != null && b.price < minPrice ? minPrice - b.price :
+      maxPrice != null && b.price > maxPrice ? b.price - maxPrice : 0;
+
+    return da - db;
+  })
+  .map(h => h.hotel);
+
+  const needed = minPoolSize - inRange.length;
+
+  const finalPool: HotelSummaryForAI[] = [
+    ...inRange,
+    ...outOfRange.slice(0, needed),
+    ...hotelsWithoutPrice
+  ].slice(0, minPoolSize);
+
+  console.log(
+    `💰 Price filter: ${inRange.length} in range, ` +
+    `${Math.min(outOfRange.length, needed)} fallback, ` +
+    `${finalPool.length} total`
+  );
+
+  return finalPool;
+};
+
+
+
+
 function topRatedCap(hotels: HotelSummaryForAI[], limit = 250): HotelSummaryForAI[] {
   return hotels
     .slice()
@@ -1014,19 +1156,28 @@ const createOptimizedHotelSummaryForAI = (
   }
 
   // ADD DISTANCE CALCULATION
-  let distanceFromSearch = null;
-  if (latitude && longitude && parsedQuery.latitude && parsedQuery.longitude) {
-    const distanceKm = calculateDistance(
-      parsedQuery.latitude,
-      parsedQuery.longitude,
-      latitude,
-      longitude
-    );
-    distanceFromSearch = {
-      km: distanceKm,
-      formatted: formatDistance(distanceKm)
-    };
-  }
+ let distanceFromSearch = null;
+// ALWAYS calculate distance (AI needs it), but flag whether to show on card
+if (latitude && longitude && parsedQuery.latitude && parsedQuery.longitude) {
+  const distanceKm = calculateDistance(
+    parsedQuery.latitude,
+    parsedQuery.longitude,
+    latitude,
+    longitude
+  );
+  distanceFromSearch = {
+    km: distanceKm,
+    formatted: formatDistance(distanceKm),
+    fromLocation: parsedQuery.locationMentioned 
+      ? (parsedQuery.searchOriginName || parsedQuery.specificPlace)
+      : undefined,  // ✅ ADD THIS
+    showInUI: parsedQuery.locationMentioned || false  // ✅ ADD THIS
+  };
+  console.log('🎯 DISTANCE OBJECT CREATED:', {
+    hotelName: name,
+    distance: distanceFromSearch
+  });
+}
 
   return {
     index: index + 1,
@@ -1335,6 +1486,7 @@ const getCombinedAmenities = (hotelInfo: any, selectedCategories?: string[]): st
   return filteredAmenitiesText ? filteredAmenitiesText.split(', ').filter(Boolean) : [];
 };
 
+
 const createHotelSummaryForInsights = (
   hotel: HotelWithRates, 
   hotelMetadata: any, 
@@ -1382,10 +1534,15 @@ const createHotelSummaryForInsights = (
       hotelMetadata.longitude
     );
     distanceFromSearch = {
-      km: distanceKm,
-      formatted: formatDistance(distanceKm),
-      searchLocation: parsedQuery.specificPlace || parsedQuery.fullPlaceName
-    };
+  km: distanceKm,
+  formatted: formatDistance(distanceKm),
+  fromLocation: parsedQuery.locationMentioned 
+    ? parsedQuery.searchOriginName 
+    : undefined,  // Only add if POI
+  showInUI: parsedQuery.locationMentioned || false  // Flag for UI
+
+  
+};
   }
 
   return {
@@ -1489,6 +1646,60 @@ const extractPhotoGalleryFromMetadata = (hotelMetadata: any): string[] => {
   }
 };
 
+const generateCohereQuery = async (
+  userInput: string,
+  parsedQuery: ParsedSearchQuery
+): Promise<string> => {
+  try {
+    const prompt = `
+You are generating a compact semantic search query for a hotel ranking system.
+
+Rules:
+- Output a single short line (max 20 words).
+- Remove filler words and grammar.
+- Keep only intent-bearing keywords.
+- Include:
+  - hotel type / vibe (boutique, luxury, family, budget, etc.)
+  - important amenities (rooftop bar, pool, spa, parking, etc.)
+  - location (city / landmark)
+  - price constraints if present
+  - distance intent if present (near, walkable, beachfront, etc.)
+- Do NOT output punctuation or quotes.
+- Do NOT explain.
+
+User request:
+"${userInput}"
+
+Output only the optimized query line.
+`;
+
+    const response = await openai.chat.completions.create({
+      model: 'gpt-4o-mini',
+      temperature: 0.1,
+      max_tokens: 40,
+      messages: [
+        { role: 'system', content: 'You generate search queries only.' },
+        { role: 'user', content: prompt }
+      ]
+    });
+
+    const query = response.choices[0]?.message?.content?.trim();
+
+    if (!query) {
+      console.warn('⚠️ Empty Cohere query generated, falling back to userInput');
+      return userInput;
+    }
+
+    console.log('🧠 Cohere semantic query:', query);
+    return query;
+
+  } catch (err) {
+    console.error('❌ Failed to generate Cohere query, falling back to userInput:', err);
+    return userInput;
+  }
+};
+
+
 export const hotelSearchAndMatchController = async (req: Request, res: Response) => {
   const logger = new PerformanceLogger();
 
@@ -1564,6 +1775,22 @@ export const hotelSearchAndMatchController = async (req: Request, res: Response)
 
     const parseResponse = await internalApiInstance.post('/api/query/parse', { userInput });
     const parsedQuery: ParsedSearchQuery = parseResponse.data;
+    parsedQuery.minPrice = parsedQuery.minCost ?? null;
+parsedQuery.maxPrice = parsedQuery.maxCost ?? null;
+
+
+    sendUpdate('progress', { 
+  message: 'Optimizing search intent...', 
+  step: 1, 
+  totalSteps: 8
+});
+
+
+const cohereQuery = await generateCohereQuery(userInput, parsedQuery);
+
+console.log('🎯 Using Cohere query:', cohereQuery);
+
+
 
     if (checkInParam && checkOutParam) {
       parsedQuery.checkin = String(checkInParam);
@@ -1621,20 +1848,62 @@ export const hotelSearchAndMatchController = async (req: Request, res: Response)
       hotelTypeIds: HOTEL_TYPE_IDS
     });
     
-    // NEW: Use coordinate-based search with radius
-    const hotelsSearchResponse = await liteApiInstance.get('/data/hotels', {
-      params: {
-        latitude: parsedQuery.latitude,
-        longitude: parsedQuery.longitude,
-        radius: parsedQuery.searchRadius,
-        hotelTypeIds: HOTEL_TYPE_IDS.join(','),  // CORRECTED: use hotelTypeIds not hotelTypeCodes
-        language: 'en',
-        limit: 900
-      },
-      timeout: 30000
-    });
+   const hotelSearchParams: any = {
+  latitude: parsedQuery.latitude,
+  longitude: parsedQuery.longitude,
+  radius: parsedQuery.searchRadius,
+  hotelTypeIds: HOTEL_TYPE_IDS.join(','),
+  language: 'en',
+  limit: 900
+};
 
-    const hotels = hotelsSearchResponse.data?.data || hotelsSearchResponse.data;
+// ✅ Inject cityName ONLY if explicitly present (not Paris-only anymore)
+const hasExplicitCity =
+  typeof parsedQuery.cityName === 'string' &&
+  parsedQuery.cityName.trim().length > 0;
+
+if (hasExplicitCity) {
+  hotelSearchParams.cityName = parsedQuery.cityName;
+  console.log(`🏙️ Injecting cityName into LiteAPI query: ${parsedQuery.cityName}`);
+}
+
+// ---- helper ----
+const runHotelSearch = async (params: any) => {
+  const res = await liteApiInstance.get('/data/hotels', {
+    params,
+    timeout: 30000
+  });
+  return res.data?.data || res.data || [];
+};
+
+// ---- Primary search ----
+let hotels = await runHotelSearch(hotelSearchParams);
+
+console.log(
+  `🏨 LiteAPI primary search returned ${hotels.length} hotels` +
+  (hasExplicitCity ? ` (city=${parsedQuery.cityName})` : '')
+);
+
+// ---- Fallback ONLY if zero ----
+if (hasExplicitCity && hotels.length === 0) {
+  console.warn(
+    `⚠️ Zero hotels returned with city="${parsedQuery.cityName}". Retrying without city filter...`
+  );
+
+  const relaxedParams = { ...hotelSearchParams };
+  delete relaxedParams.cityName;
+
+  const fallbackHotels = await runHotelSearch(relaxedParams);
+
+  console.log(
+    `🔁 LiteAPI fallback search returned ${fallbackHotels.length} hotels (no city filter)`
+  );
+
+  hotels = fallbackHotels;
+}
+
+ 
+
 
     logger.endStep('2-FetchHotelsWithCoordinates', { hotelCount: hotels?.length || 0 });
 
@@ -1795,6 +2064,25 @@ export const hotelSearchAndMatchController = async (req: Request, res: Response)
     
     logger.endStep('5-BuildAISummaries', { summariesBuilt: hotelSummariesForAI.length });
 
+    // STEP 5.5 — Apply price filter with fallback
+logger.startStep('5.5-PriceFilter', {
+  maxPrice: parsedQuery.maxPrice || null,
+  originalCount: hotelSummariesForAI.length
+});
+
+const priceFilteredHotels = filterHotelsByPriceWithFallback(
+  hotelSummariesForAI,
+  parsedQuery.minPrice,
+  parsedQuery.maxPrice,
+  100
+);
+
+
+logger.endStep('5.5-PriceFilter', {
+  filteredCount: priceFilteredHotels.length
+});
+
+
     if (hotelSummariesForAI.length === 0) {
       if (isSSERequest) {
         sendUpdate('error', {
@@ -1819,15 +2107,27 @@ export const hotelSearchAndMatchController = async (req: Request, res: Response)
       totalSteps: 8
     });
 
-    logger.startStep('6-CapHotels', { 
-      originalCount: hotelSummariesForAI.length
-    });
+    // STEP 6: Cohere Semantic Rerank
+sendUpdate('progress', { 
+  message: 'Ranking best hotel matches...', 
+  step: 6, 
+  totalSteps: 8
+});
 
-    const cappedForLLM = topRatedCap(hotelSummariesForAI, 275);
+logger.startStep('6-CohereRerank', { 
+  originalCount: hotelSummariesForAI.length
+});
 
-    logger.endStep('6-CapHotels', { 
-      cappedCount: cappedForLLM.length
-    });
+const cappedForLLM = await rerankHotelsWithCohere(
+  cohereQuery,
+  priceFilteredHotels,   // ✅ correct
+  200
+);
+
+logger.endStep('6-CohereRerank', { 
+  rerankedCount: cappedForLLM.length
+});
+
 
     // STEP 7: GPT AI Matching
     sendUpdate('progress', { 

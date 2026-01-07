@@ -1,0 +1,90 @@
+
+=== HOTEL MATCHING PROMPT LOG ===
+Search ID: c0cd5cc1-6da0-4340-883f-a0d9bac9aead
+Timestamp: 2026-01-07T11:30:48.651Z
+User Query: hotels in maldives
+Destination: Maldives
+Hotel Count: 40
+Character Count: 16491
+Estimated Tokens: ~4123
+
+=== PROMPT CONTENT ===
+USER REQUEST: "hotels in maldives"
+STAY: 3 nights
+
+🎯 RANKING PRIORITY ORDER:
+1. MATCH USER REQUEST: "hotels in maldives" (Most Important)
+2. Distance from Maldives (if relevant to search!) MAKE SURE THE HOTEL IS IN THE CITY/PLACE THE USER WANTS
+2. Location quality and convenience 
+3. Star rating and overall quality
+4. Value for money
+
+📋 STEP-BY-STEP MATCHING PROCESS:
+1. READ AI SEARCH CONTEXT carefully: "hotels in maldives"
+3. Match specific amenities mentioned (rooftop bar, infinity pool, spa, gym, etc.)
+4. Match vibe/style (romantic, family-friendly, business, boutique, modern, etc.)
+5. RANK by relevance to the complete AI search context, NOT by list position
+
+🔍 KEYWORD MATCHING EXAMPLES:
+- Context: "hotels under $200 per night with rooftop bar" → Price < $200 AND rooftop bar
+- Context: "luxury hotels over $400 per night" → Price > $400 AND luxury features
+- Context: "romantic hotels with infinity pool" → Romantic amenities AND infinity pool
+- Context: "cool boutique hotels" → Boutique style, unique character
+
+⚠️ CRITICAL RULES:
+- IGNORE the order hotels appear in the list - analyze content only
+- You MUST select exactly 15 hotels using their exact names from the list
+- Base rankings on how well each hotel matches "hotels in maldives"
+- If specific amenities mentioned, hotels MUST have those amenities to rank high
+
+📝 REQUIRED OUTPUT FORMAT:
+1. [exact hotel name from list] | [match percentage 1-100]%
+2. [exact hotel name from list] | [match percentage 1-100]%
+3. [exact hotel name from list] | [match percentage 1-100]%
+...continue through 15
+
+HOTELS AVAILABLE:
+1: Rosy Villa Hotel (Guraidhoo, mv) | $130/night | 33.6km from Maldives | rooms epitome of comfort Rosy Villa Hotel Guraidhoo. in air-conditioned rooms equipped modern amenities like flat-screen TV, minibar, ensuite. Unwind indoor pool evening entertainment during stay.Gourmet DiningStart day delicious breakfast spread featuring continental, American, Asian options. | 
+2: Paradise Retreat, Maafushi (Maafushi, mv) | $72/night | 38.3km from Maldives | roomsParadise Retreat, Maafushi air-conditioned rooms modern amenities ensuite comfortable stay.Culinary DelightsIndulge variety of cuisines on-site restaurant, from Chinese to Indian to Italian, special vegetarian halal options available upon request.Convenience FingertipsEnjoy free WiFi, | 
+3: Raalhu Fonu Maldives (Mahibadhoo, MV) | $78/night | 28.9km from Maldives | Rooftop Terrace Stunning ViewsUnwind rooftop terrace taking breathtaking views of surroundings.Complimentary AmenitiesEnjoy free wireless internet access, daily continental breakfast, convenience of self-parking during stay.Cozy Convenient roomsRelax one of individually furnished guestrooms | 
+4: Banyan Villa Maldives (Dhangethi, MV) | $83/night | 32.5km from Maldives | Recreational Activities AmenitiesEnjoy terrace, garden, bicycles rentDining OptionsIndulge meals Banyan Cafe', coffee shop, via room svcConvenience ComfortFeaturing express check-in/out, complimentary Wi-Fi, individually decorated guestroomsFor beachside retreat quality services, book stay Banyan | 
+5: OZEN LIFE MAADHOO - Luxury All Inclusive with Free Transfers (South Male Atoll, mv) | $1893/night | 30.9km from Maldives | All Inclusive OZEN LIFE MAADHOO - All Inclusive private beach area, year-round outdoor pool, children's playground. The INDULGENCE Plan includes fine dining, top-shelf spirits, water sports, spa dive s.Unique Dining OptionsIndulge specialty fine dining underwater restaurant, M6m, offering modern | 
+6: Ithaa Seaview (Guraidhoo, mv) | $182/night | 34.0km from Maldives | Prime LocationLocated steps away from Guraidhoo Beach Kandooma Beach, Ithaa Seaview comfortable rooms modern amenities.Family-Friendly roomsFeaturing family rooms children's playground, this property perfect families looking to unwind create lasting memories together.Exciting ActivitiesGuests | 
+7: NOOE Maldives Kunaavashi (Fulidhoo, mv) | $654/night | 18.2km from Maldives | Beachfront Property ultimate NOOE Maldives Kunaavashi, 5-star resort nestled beachfront Fulidhoo. in serene getaway private beach area bar to unwind.Exciting AmenitiesEnjoy range of amenities including outdoor pool, gym, evening entertainment. Let kids blast on-site kids' club playground.Culinary | 
+8: Noovilu Suites Maldives (Mahibadhoo, MV) | $54/night | 28.9km from Maldives | Rooftop Terrace Garden ViewsMarvel stunning panoramic views from rooftop terrace garden, perfect relaxing retreat away from hustle bustle.In-house Dining Buffet BreakfastIndulge culinary journey in-house restaurant, offering exquisite international cuisine, delightful meal comfort of room. Start | 
+9: Salt Beach Hotel (Maafushi, mv) | $148/night | 38.6km from Maldives | Seafront Location Family-Friendly AtmosphereSalt Beach Hotel Maafushi picturesque 3-star rooms sea. With garden, shared lounge, 24h desk, guests cozy stay. The hotel caters to families large rooms, some offering sea views balconies.Convenient Amenities Dining OptionsEach unit equipped modern | 
+10: COMO Cocoa Island (Makunufushi, MV) | $2293/night | 35.0km from Maldives | Escape to COMO Cocoa Island, serene meets beachfront bliss.Indulgent Spa TreatmentsPamper yourself exquisite spa, offering range of massages, body treatments, rejuvenating facials designed to soothe soul.Recreational ParadiseDive into relaxation outdoor pool energize yourself 24-hour gym. Unwind | 
+11: WhiteShell Island Hotel & Spa (Maafushi, MV) | $146/night | 38.6km from Maldives | Spa ServicesIndulge soothing massages spa treatments during stay hotel.Dining Entertainment OptionsSavor delicious meals restaurant, grab snacks cafes, drinks bar/lounge.Convenient Amenities ServicesBenefit from complimentary shuttle service, concierge assistance, free valet parking | 
+12: Ocean Retreat & Spa (Guraidhoo, MV) | $147/night | 33.8km from Maldives | Rooftop Terrace Scenic ViewsDining Options room svcConvenient Amenities ServicesBook stay Ocean Retreat & Spa now to these fantastic more! | 
+13: Rosemary Boutique (Maafushi, mv) | $180/night | 38.7km from Maldives | rooms MaafushiExquisite Dining culinary journey on-site restaurant offering delectable dishes memorable dining.Unwind RelaxEnjoy serene ambiance of garden terrace, perfect unwinding day of exploration adventure. with Easelocated, hotel bike hire guests to beautiful surroundings of Maafushi | 
+14: Kaafu Inn Guraidhoo (Guraidhoo, mv) | $141/night | 33.6km from Maldives | Private Beach Area Garden ViewsKaafu Inn Guraidhoo tranquil escape private beach area serene garden views, perfect relaxation unwinding.Family-Friendly AmenitiesCatering to families, guest house indoor play area, outdoor play equipment, baby safety gate, ensuring fun safe stay guests of all | 
+15: VIVA Beach Maldives (Hangnaameedhoo, mv) | $1152/night | 32.9km from Maldives | Sustainable Beachfront roomsVIVA Beach Maldives guests sustainable stay breathtaking sea views. The property 24h desk charming picnic area relaxation.Family-Friendly AmenitiesIdeal families, guest house spacious family rooms, sun terrace, welcoming restaurant serving delicious American cuisine all | 
+16: iCom Blue Sea View (Maafushi, MV) | $442/night | 38.4km from Maldives | paradise iCom Blue Sea View, sun-kissed shores meet luxury.Stunning LocationJust steps away from Water Sports Beach Maafushi Harbor, yourself vibrant local culture easy access to historical sites breathtaking reefs.Comfort & ConnectivityOur 50 well-appointed guestrooms feature private balconies | 
+17: Velana Beach Hotel Maldives (Maafushi, MV) | $260/night | 38.7km from Maldives | paradise Velana Beach Hotel Maldives, sun, sand, stunning views await you!Private Beach AccessRelax private beach, steps from rooms. a day of sunbathing partake exciting water activities, ensuring beach nothing short of spectacular.Culinary DelightsSavor delectable meals Kaalamaa Restaurant, | 
+18: NOOE Maldives Kunaavashi (Kudhiboli, MV) | $502/night | 18.2km from Maldives | Spa massages, body treatments, facials spa. Relax private beach, unwind health club, take dip outdoor pool.All-Inclusive Dining LeisureEnjoy complimentary buffet breakfast inclusive meals/beverages resort's 4 restaurants beach bar. Take advantage of activities like babysitting services, concierge | 
+19: Kaani Palm Beach (Maafushi, MV) | $209/night | 38.8km from Maldives | Spa ServicesIndulge massages, body treatments, facials full-service spa relaxing rejuvenation.Recreational AmenitiesUnwind outdoor pool stay active gym day hotel's private beach perfect blend of leisure activity.Fine Dining ViewEnjoy delectable meals Palm Beach Restaurant stunning ocean view | 
+20: Adroit Beach Inn (Guraidhoo, MV) | $209/night | 34.0km from Maldives | Recreation Amenities: various recreational activities such renting bicycles enjoying serene garden view. Benefit from complimentary Wi-Fi, concierges, babysitting options guesthouse.Dining Socializing: delicious meals on-site restaurant, grab snacks cafe, opt 24-hour room svc. Join fellow guests | 
+21: Daisy Cottage Dhangethi (Dhangethi, mv) | $106/night | 32.5km from Maldives | Location:Nestled steps away from Dhangethi Beach, Daisy Cottage Dhangethi serene retreat heart of nature.luxury: range of amenities including private beach area, concierge, restaurant serving delectable dishes.Exciting Activities:Unwind fun activities like billiards, table tennis, cycling, relax | 
+22: Ari Grand Hotel & Spa (Dhangethi, MV) | $108/night | 32.5km from Maldives | Spa TreatmentsUnwind rejuvenate spa soothing massages private indoor spa tubs. Make most of relaxation time during stay.Endless Recreational ActivitiesFrom private beach to outdoor pool available bicycles, there plenty of activities to keep entertained throughout vacation.Exquisite Dining | 
+23: iCom Marina Sea View (Maafushi, mv) | $135/night | 38.3km from Maldives | rooms Sea ViewsSustainable 3-star iCom Marina Sea View Maafushi serene escape garden, shared lounge, private parking. sea views from air-conditioned units equipped modern amenities like flat-screen TV ensuite. in delicious meals on-site restaurant unwind spa facilities yoga classes.Family-Friendly | 
+24: Salt Beach Hotel (Maafushi, MV) | $125/night | 38.6km from Maldives | luxuryIndulge complimentary wireless internet access, concierges, free babysitting. The rooftop terrace garden offer stunning views, barbecue grills perfect cozy evening.Gourmet DiningSavor delicious meals on-site restaurant grab quick bite coffee shop/cafe. 24-hour room svc ensures satisfy | 
+25: Triton Beach Hotel & Spa (Maafushi, MV) | $162/night | 38.3km from Maldives | Escape to Triton Beach Hotel & Spa, Art Deco oasis nestled pristine shores of Maafushi, relaxation meets luxury.Wellness RetreatIndulge rejuvenating massages, soothing body treatments, revitalizing facials serene spa, ensuring leave feeling refreshed radiant.Exquisite DiningSavor culinary delights | 
+26: Rehendhi Villa (Maafushi, MV) | $98/night | 38.7km from Maldives | perfect getaway Rehendhi Villa, comfort meets convenience.Recreation OpportunitiesDive into relaxation inviting indoor pool, perfect unwinding day of exploring simply enjoying quality leisure time.Dining ExcellenceSavor every bite on-site restaurant, offering complimentary buffet breakfast daily | 
+27: Paradise Retreat (Maafushi, MV) | $75/night | 38.4km from Maldives | Oceanfront EscapeImmerse yourself stunning views from terrace garden Paradise Retreat. the convenience of complimentary wireless internet access throughout property.Dining DelightsIndulge delicious meals on-site restaurant grab quick bite cozy coffee shop/cafe. Start day right complimentary English | 
+28: Beach Hotel Guraidhoo (Guraidhoo, mv) | $147/night | 33.9km from Maldives | Convenient LocationComfortable roomsDining OptionsTo relaxing stay steps away from Guraidhoo Beach, book stay Beach Hotel Guraidhoo. | 
+29: Triton Prestige Seaview and Spa (Maafushi, mv) | $209/night | 38.8km from Maldives | Seaview roomsTriton Prestige Seaview Spa Maafushi 4-star beachfront retreat top-notch amenities.Spa gymIndulge relaxation on-site spa stay active well-equipped gym.Culinary DelightsSavor variety of cuisines restaurant, catering to all dietary preferences.Book stay Triton Prestige Seaview Spa | 
+30: Adaaran Club Rannalhi (Rannalhi, MV) | $1082/night | 25.2km from Maldives | Escape to paradise Adaaran Club Rannalhi, serene beachside oasis 45 minutes speedboat from Male.Indulgent Spa Retreat relaxing full-service spa, offering rejuvenating massages, body treatments, facials leave feeling revitalized pampered.Culinary Excellence delights of all-inclusive dining Main | 
+31: h78 Guraidhoo (Guraidhoo, MV) | $166/night | 34.0km from Maldives | breathtaking serenity of Maldives h78 Guraidhoo, perfect getaway awaits steps from stunning Kandooma Beach. ComfortUnwind one of 72 appointed air-conditioned rooms, equipped minibars Smart televisions. Stay connected complimentary Wi-Fi convenience of ensuites featuring lush amenities.Culinary | 
+32: Holiday Inn Resort Kandooma Maldives by IHG (Kandooma, MV) | $527/night | 34.4km from Maldives | Spa Services Recreational Amenities: rejuvenating spa treatments unwind various recreational activities such outdoor pool waterslide.All-Inclusive Dining : delectable meals Kitchen complimentary snacks café. Don't miss daily complimentary reception refreshing drinks beach bar.Elegant roomss Event | 
+33: Crystal Sands Villa (Maafushi, MV) | $166/night | 38.6km from Maldives | Designated Smoking AreasDining OptionsConvenient ServicesEnjoy convenience of designated smoking areas, dining restaurant, room svc during limited hours. The hotel 24h desk service complimentary coffee/tea common area. With individually furnished guestrooms featuring complimentary Wi-Fi cable | 
+34: Galaxy Sunrise Sea View (Fulidhoo, mv) | $173/night | 21.8km from Maldives | Breathtaking Sea ViewsDiscover beauty of Fulidhoo Galaxy Sunrise Sea View, private beach garden await. the convenience of private parking family rooms, along sun terrace relaxation.Comfortable roomssEach unit guest house desk, ensuite, safety deposit box, free WiFi. Some rooms include balcony | 
+35: Goby Lodge Guest House (Mahibadhoo, MV) | $61/night | 28.8km from Maldives | luxuryIndulge convenience of 24-hour room svc top-notch concierges.Comfortable roomsRelax one of 54 air-conditioned rooms fireplaces flat-screen TVs, offering cozy stay.Prime LocationLocated 5-minute walk of Bunbaru Public Beach, guesthouse easy access to nearby attractions.Book stay Goby Lodge | 
+36: Endheri Sunset (Dhangethi, MV) | $93/night | 32.6km from Maldives | Rooftop Terrace Garden ViewsTake picturesque surroundings from rooftop terrace garden, perfect relaxing unwinding.Fine Dining In-room svcSavor delicious meal on-site restaurant opt convenience of 24-hour room svc cozy night in.Convenient Amenities ServicesBenefit from services such wedding | 
+37: Galaxy Sunrise Guesthouse (Fulidhoo, MV) | $180/night | 21.9km from Maldives | Beachfront relaxation culinary delightsEscape to tranquil oasis Galaxy Sunrise Guesthouse, unwind private beach revel stunning garden views. in delectable Italian cuisine AYA Cafe & Restaurant picturesque ocean backdrop, complimentary local breakfast each morning. roomss attentive service | 
+38: Vilu Thari Inn Maldives (Mahibadhoo, mv) | $136/night | 28.9km from Maldives | Scenic Sea Views Sustainable roomsVilu Thari Inn Maldives Mahibadhoo unique beachfront breathtaking sea views. The property prides itself providing sustainable rooms environmentally-conscious travelers.Modern Amenities Comfortable StayGuests air-conditioned units flat-screen TV, free WiFi, ensuites | 
+39: iCom Marina Sea View (Maafushi, MV) | $283/night | 38.3km from Maldives | tropical haven iCom Marina Sea View, beachfront relaxation meets modern comfort.Serene roomssUnwind 36 individually furnished guestrooms, featuring private balconies, minibars, Smart televisions. complimentary wireless internet access take breathtaking ocean views.Culinary DelightsIndulge delicious | 
+40: Velana Beach Hotel Maldives (Maafushi, mv) | $288/night | 38.7km from Maldives | roomssIndulge comfort Velana Blu Maldives air-conditioned rooms featuring flat-screen TVs ensuites, ensuring relaxing stay.Relaxing AmenitiesUnwind tranquil garden island complimentary bikes provided hotel. The 24h desk terrace offer convenience stunning views guests.Culinary DelightsSavor taste of | 
+
+REMEMBER: Always select 15 hotels using exact names from the list above.
+
+=== END LOG ===

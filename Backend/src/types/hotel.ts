@@ -59,6 +59,10 @@ export interface ParsedSearchQuery {
   
   // Facility/amenity filtering
   facilityCategories?: string[];    // Array of facility category names from parser
+  maxPrice: any;
+  minPrice: any;
+  locationMentioned: any;
+  searchOriginName: any;
 }
 
 // UPDATED: Extended HotelInfo interface to match actual API response
