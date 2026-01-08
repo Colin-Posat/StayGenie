@@ -109,11 +109,95 @@ const validateParsedData = (parsed: any) => {
 
 const LOCATIONIQ_KEY = 'pk.79c544ae745ee83f91a7523c99939210';
 
+// NEW: Helper function to detect country code from place name
+const detectCountryCode = (placeName: string): string | undefined => {
+  const place = placeName.toLowerCase();
+  
+  const countryMap: { [key: string]: string } = {
+    'france': 'fr',
+    'united kingdom': 'gb',
+    'england': 'gb',
+    'scotland': 'gb',
+    'wales': 'gb',
+    'northern ireland': 'gb',
+    'spain': 'es',
+    'italy': 'it',
+    'germany': 'de',
+    'netherlands': 'nl',
+    'holland': 'nl',
+    'belgium': 'be',
+    'austria': 'at',
+    'switzerland': 'ch',
+    'portugal': 'pt',
+    'greece': 'gr',
+    'denmark': 'dk',
+    'sweden': 'se',
+    'norway': 'no',
+    'finland': 'fi',
+    'poland': 'pl',
+    'czech republic': 'cz',
+    'czechia': 'cz',
+    'hungary': 'hu',
+    'ireland': 'ie',
+    'japan': 'jp',
+    'china': 'cn',
+    'south korea': 'kr',
+    'korea': 'kr',
+    'thailand': 'th',
+    'vietnam': 'vn',
+    'singapore': 'sg',
+    'malaysia': 'my',
+    'indonesia': 'id',
+    'philippines': 'ph',
+    'india': 'in',
+    'united arab emirates': 'ae',
+    'dubai': 'ae',
+    'abu dhabi': 'ae',
+    'qatar': 'qa',
+    'saudi arabia': 'sa',
+    'turkey': 'tr',
+    'egypt': 'eg',
+    'morocco': 'ma',
+    'south africa': 'za',
+    'united states': 'us',
+    'usa': 'us',
+    'america': 'us',
+    'canada': 'ca',
+    'mexico': 'mx',
+    'brazil': 'br',
+    'argentina': 'ar',
+    'chile': 'cl',
+    'australia': 'au',
+    'new zealand': 'nz',
+  };
+  
+  // Check for exact matches first (longer strings first to avoid partial matches)
+  const sortedCountries = Object.keys(countryMap).sort((a, b) => b.length - a.length);
+  
+  for (const country of sortedCountries) {
+    if (place.includes(country)) {
+      console.log(`🌍 Detected country: ${country} → ${countryMap[country]}`);
+      return countryMap[country];
+    }
+  }
+  
+  return undefined;
+};
+
 const geocodePlace = async (
   placeName: string
 ): Promise<{ latitude: number; longitude: number; fullPlaceName: string } | null> => {
   try {
     console.log(`🗺️ LocationIQ geocoding: ${placeName}`);
+
+    // Detect country code from place name to bias geocoding results
+    const countrycodes = detectCountryCode(placeName);
+    
+    if (countrycodes) {
+      console.log(`✅ Using country bias: ${countrycodes.toUpperCase()}`);
+    } else {
+      console.log(`⚠️ No country detected, using default geocoding`);
+    }
 
     const response = await axios.get(
       'https://us1.locationiq.com/v1/search.php',
@@ -124,6 +208,7 @@ const geocodePlace = async (
           format: 'json',
           limit: 1,
           addressdetails: 1,
+          countrycodes: countrycodes, // Bias results to detected country
         },
         timeout: 3000,
       }
@@ -213,6 +298,7 @@ You are a travel assistant converting user hotel search requests into structured
   "cityName": string | null,   
   "searchOriginName": string | null ,  // NEW - What to show user
   "locationMentioned": boolean,
+  "specificPOI": string | null,        // NEW - clean POI name for display
   "searchRadius": number (in meters, minimum 5000, max 15000 (unless national park)),
   "language": "ISO 639-1 code, default 'en'",
   "adults": number (default 2),
@@ -247,6 +333,7 @@ Rules:
 Extract:
 1. searchOriginName - SHORT display name (2-4 words)
 2. locationMentioned - TRUE only for POIs (landmarks/attractions)
+3. specificPOI - CLEAN display name if POI mentioned, otherwise null  // NEW
 
 **POI = Famous landmark, attraction, or iconic place**
 
@@ -267,14 +354,43 @@ Extract:
 - Generic areas: beach, city center, waterfront
 
 **Examples:**
-✅ "hotels near Eiffel Tower" → searchOriginName: "Eiffel Tower", locationMentioned: true
-✅ "near Central Park" → searchOriginName: "Central Park", locationMentioned: true
-❌ "hotels in Paris" → searchOriginName: "Paris", locationMentioned: false
-❌ "SoHo hotels" → searchOriginName: "SoHo", locationMentioned: false
-❌ "downtown Chicago" → searchOriginName: "Downtown Chicago", locationMentioned: false
+✅ "hotels near Eiffel Tower" 
+   → searchOriginName: "Eiffel Tower"
+   → locationMentioned: true
+   → specificPOI: "Eiffel Tower"
 
+✅ "near Central Park" 
+   → searchOriginName: "Central Park"
+   → locationMentioned: true
+   → specificPOI: "Central Park"
+
+❌ "hotels in Paris" 
+   → searchOriginName: "Paris"
+   → locationMentioned: false
+   → specificPOI: null
+
+❌ "hotels in Barcelona"
+   → searchOriginName: "Barcelona"
+   → locationMentioned: false
+   → specificPOI: null
+
+❌ "paris city center"
+   → searchOriginName: "Paris City Center"
+   → locationMentioned: false
+   → specificPOI: null
 
 **CRITICAL PLACE EXTRACTION RULES:**
+
+**GEOGRAPHIC DISAMBIGUATION - ALWAYS INCLUDE COUNTRY FOR MAJOR CITIES:**
+- "Paris" → "Paris, Île-de-France, France" (NOT "Paris, Texas")
+- "London" → "London, Greater London, United Kingdom" (NOT "London, Ontario")
+- "Barcelona" → "Barcelona, Catalonia, Spain"
+- "Rome" → "Rome, Lazio, Italy"
+- "Tokyo" → "Tokyo, Japan"
+- "Dubai" → "Dubai, United Arab Emirates"
+- "Singapore" → "Singapore"
+- "city center" or "downtown" → Use the internationally famous city by default
+- Example: "Paris city center" → "Paris City Center, Paris, Île-de-France, France"
 
 **ALWAYS PRIORITIZE THE MOST SPECIFIC LOCATION MENTIONED!**
 
@@ -299,10 +415,23 @@ Extract:
    - "hotels on Las Vegas Strip" → specificPlace: "Las Vegas Strip, Las Vegas, Nevada, United States"
    - "hotels on Ocean Drive Miami" → specificPlace: "Ocean Drive, Miami Beach, Florida, United States"
 
-4. **City Only (ONLY if no specific area mentioned):**
+4. **City Only (ONLY if no specific area mentioned) - ALWAYS INCLUDE COUNTRY:**
    - "hotels in Paris" → specificPlace: "Paris, Île-de-France, France"
    - "hotels in New York" → specificPlace: "New York, New York, United States"
    - "hotels in Tokyo" → specificPlace: "Tokyo, Japan"
+   - "hotels in London" → specificPlace: "London, Greater London, United Kingdom"
+   - "hotels in Barcelona" → specificPlace: "Barcelona, Catalonia, Spain"
+   - "hotels in Rome" → specificPlace: "Rome, Lazio, Italy"
+   - "hotels in Dubai" → specificPlace: "Dubai, United Arab Emirates"
+   
+**SPECIAL RULE - Generic "City Center" / "Downtown":**
+   - "paris city center" → specificPlace: "Paris, Île-de-France, France" (NOT "Paris City Center")
+   - "london city centre" → specificPlace: "London, Greater London, United Kingdom"
+   - "downtown tokyo" → specificPlace: "Tokyo, Japan"
+   - "barcelona city center" → specificPlace: "Barcelona, Catalonia, Spain"
+   - "new york downtown" → specificPlace: "New York, New York, United States"
+   - When user says "[city] + city center/downtown", treat it as just the city
+   - Do NOT add "City Center" or "Downtown" to specificPlace
 
 5. **Country/Vague (LAST RESORT):**
    - "cool hotels in USA" → specificPlace: "Manhattan, New York, New York, United States" (pick iconic place)
@@ -311,7 +440,8 @@ Extract:
 
 **CRITICAL RULES:**
 - NEVER default to just city name when a specific landmark is mentioned!
-- The MapBox geocoding API is excellent - trust it to find specific places
+- ALWAYS include country name for international cities to avoid US geocoding errors
+- The geocoding API will use country name to bias results correctly
 - Format: [Most Specific Place], [City], [State/Region if applicable], [Country]
 - If the specific place is truly unknown/random, THEN fall back to next most specific level
 
@@ -321,11 +451,14 @@ Extract:
 ✅ "La Rambla Barcelona" → "La Rambla, Barcelona, Catalonia, Spain" (NOT just "Barcelona")
 ✅ "Times Square hotels" → "Times Square, New York, New York, United States"
 ✅ "South Beach" → "South Beach, Miami, Florida, United States"
+✅ "Paris city center" → "Paris City Center, Paris, Île-de-France, France"
+✅ "downtown London" → "London City Centre, London, Greater London, United Kingdom"
 
 **WRONG BEHAVIOR TO AVOID:**
 ❌ "Eiffel Tower" → "Paris, France" (TOO GENERIC!)
 ❌ "Central Park" → "New York, United States" (TOO GENERIC!)
 ❌ "La Rambla" → "Barcelona, Spain" (TOO GENERIC!)
+❌ "Paris" → "Paris, Texas" (WRONG COUNTRY!)
 
 **SEARCH RADIUS RULES (in meters, MINIMUM 5000):**
 
@@ -521,30 +654,35 @@ User input: "${userInput}"
     // Validate parsed data
     parsed = validateParsedData(parsed);
 
+    // Add after existing validations:
+    if (typeof parsed.specificPOI !== 'string' && parsed.specificPOI !== null) {
+      parsed.specificPOI = null;
+    }
+
     // --- City normalization rules ---
-if (parsed.cityName?.toLowerCase() === 'miami') {
-  console.log('🌴 Normalizing cityName: Miami → Miami Beach');
+    if (parsed.cityName?.toLowerCase() === 'miami') {
+      console.log('🌴 Normalizing cityName: Miami → Miami Beach');
 
-  parsed.cityName = 'Miami Beach';
+      parsed.cityName = 'Miami Beach';
 
-  // Optional: also normalize specificPlace if it only says Miami
-  if (
-    typeof parsed.specificPlace === 'string' &&
-    parsed.specificPlace.toLowerCase().includes('miami') &&
-    !parsed.specificPlace.toLowerCase().includes('miami beach')
-  ) {
-    parsed.specificPlace = parsed.specificPlace.replace(/miami/gi, 'Miami Beach');
-  }
+      // Optional: also normalize specificPlace if it only says Miami
+      if (
+        typeof parsed.specificPlace === 'string' &&
+        parsed.specificPlace.toLowerCase().includes('miami') &&
+        !parsed.specificPlace.toLowerCase().includes('miami beach')
+      ) {
+        parsed.specificPlace = parsed.specificPlace.replace(/miami/gi, 'Miami Beach');
+      }
 
-  // Optional: ensure aiSearch reflects Miami Beach
-  if (typeof parsed.aiSearch === 'string' && parsed.aiSearch.toLowerCase().includes('miami')) {
-    parsed.aiSearch = parsed.aiSearch.replace(/miami/gi, 'Miami Beach');
-  }
-}
+      // Optional: ensure aiSearch reflects Miami Beach
+      if (typeof parsed.aiSearch === 'string' && parsed.aiSearch.toLowerCase().includes('miami')) {
+        parsed.aiSearch = parsed.aiSearch.replace(/miami/gi, 'Miami Beach');
+      }
+    }
 
     // Ensure price fields always exist
-if (typeof parsed.minCost !== 'number') parsed.minCost = null;
-if (typeof parsed.maxCost !== 'number') parsed.maxCost = null;
+    if (typeof parsed.minCost !== 'number') parsed.minCost = null;
+    if (typeof parsed.maxCost !== 'number') parsed.maxCost = null;
 
 
     // Geocode the specific place ONLY if we have one
@@ -573,20 +711,20 @@ if (typeof parsed.maxCost !== 'number') parsed.maxCost = null;
 
     // Ensure searchRadius has minimum of 5000 meters
     const MIN_RADIUS = 5000;
-const MAX_RADIUS = 30000;
+    const MAX_RADIUS = 30000;
 
-// Enforce radius bounds
-if (!parsed.searchRadius || parsed.searchRadius < MIN_RADIUS) {
-  parsed.searchRadius = MIN_RADIUS;
-  console.log(`⚠️ Search radius below minimum, set to ${MIN_RADIUS} meters`);
-}
+    // Enforce radius bounds
+    if (!parsed.searchRadius || parsed.searchRadius < MIN_RADIUS) {
+      parsed.searchRadius = MIN_RADIUS;
+      console.log(`⚠️ Search radius below minimum, set to ${MIN_RADIUS} meters`);
+    }
 
-if (parsed.searchRadius > MAX_RADIUS) {
-  console.log(
-    `⚠️ Search radius ${parsed.searchRadius} exceeds max, clamping to ${MAX_RADIUS} meters`
-  );
-  parsed.searchRadius = MAX_RADIUS;
-}
+    if (parsed.searchRadius > MAX_RADIUS) {
+      console.log(
+        `⚠️ Search radius ${parsed.searchRadius} exceeds max, clamping to ${MAX_RADIUS} meters`
+      );
+      parsed.searchRadius = MAX_RADIUS;
+    }
 
 
     // Ensure aiSearch exists

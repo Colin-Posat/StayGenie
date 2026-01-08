@@ -1,0 +1,67 @@
+
+=== HOTEL MATCHING PROMPT LOG ===
+Search ID: 15354287-83fa-449f-a15b-a6d55cfd4e6e
+Timestamp: 2026-01-08T02:47:43.751Z
+User Query: hotels near paris city center.
+Destination: Trail de Paris - Love Civic Center Spur Trail, Paris, Lamar County, Texas, 75460, USA
+Hotel Count: 16
+Character Count: 8648
+Estimated Tokens: ~2162
+
+=== PROMPT CONTENT ===
+USER REQUEST: "hotels near paris city center."
+STAY: 3 nights
+
+🎯 RANKING PRIORITY ORDER:
+1. MATCH USER REQUEST: "hotels near paris city center." (Most Important)
+2. Distance from Paris City Center, Paris, Île-de-France, France (if relevant to search!) MAKE SURE THE HOTEL IS IN THE CITY/PLACE THE USER WANTS
+2. Location quality and convenience 
+3. Star rating and overall quality
+4. Value for money
+
+📋 STEP-BY-STEP MATCHING PROCESS:
+1. READ AI SEARCH CONTEXT carefully: "hotels near paris city center."
+3. Match specific amenities mentioned (rooftop bar, infinity pool, spa, gym, etc.)
+4. Match vibe/style (romantic, family-friendly, business, boutique, modern, etc.)
+5. RANK by relevance to the complete AI search context, NOT by list position
+
+🔍 KEYWORD MATCHING EXAMPLES:
+- Context: "hotels under $200 per night with rooftop bar" → Price < $200 AND rooftop bar
+- Context: "luxury hotels over $400 per night" → Price > $400 AND luxury features
+- Context: "romantic hotels with infinity pool" → Romantic amenities AND infinity pool
+- Context: "cool boutique hotels" → Boutique style, unique character
+
+⚠️ CRITICAL RULES:
+- IGNORE the order hotels appear in the list - analyze content only
+- You MUST select exactly 15 hotels using their exact names from the list
+- Base rankings on how well each hotel matches "hotels near paris city center."
+- If specific amenities mentioned, hotels MUST have those amenities to rank high
+- PRIORITIZE HOTELS THAT HAVE LISTED FEATURES THAT SAY WHAT THE USER IS ASKING FOR (eg. prioritze hotels that have rooftop bar over rooftop pool if user explocitly asked for rooftop bar)
+
+📝 REQUIRED OUTPUT FORMAT:
+1. [exact hotel name from list] | [match percentage 1-100]%
+2. [exact hotel name from list] | [match percentage 1-100]%
+3. [exact hotel name from list] | [match percentage 1-100]%
+...continue through 15
+
+HOTELS AVAILABLE:
+1: Holiday Inn Express Hotel & Suites Paris by IHG (Paris, us) | $152/night | 2.0mi from Paris City Center, Paris, Île-de-France, France | Comfort Convenienceluxury relaxation indoor pool hot tub, satisfy sweet tooth on-site Sweet Shop. Each room modern amenities including 32-inch flat-screen TV free Wi-Fi, ensuring comfortable stay.Fitness BusinessStay active gym floor-to-ceiling mirrors flat-screen TV, catch work hardwood desk room. | 
+2: Hampton Inn Paris (Paris, us) | $164/night | 1.6mi from Paris City Center, Paris, Île-de-France, France | Convenient LocationSituated 3.4 miles from Love Civic Center, Paris, Texas hotel easy access to local attractions events. The Sam Bell Maxey State Historical Structure Culbertson Fountain nearby guests to explore.Modern AmenitiesEach room Hampton Inn Paris equipped free Wi-Fi, 32-inch flat-screen | 
+3: La Quinta Inn & Suites by Wyndham Paris (Paris, US) | $109/night | 2.0mi from Paris City Center, Paris, Île-de-France, France | Recreational Amenities: outdoor pool, spa tub, gym during stay La Quinta Inn & Suites Wyndham Paris.Dining Options: complimentary continental breakfast grab bite snack bar/deli.Featured Amenities:Benefit from complimentary wired internet, business ctr, express check-in services hotel Paris.Don't | 
+4: Comfort Inn & Suites Paris (Paris, us) | $116/night | 2.1mi from Paris City Center, Paris, Île-de-France, France | Convenient Location Nearby AttractionsThe Comfort Inn & Suites hotel located near historic downtown area variety of local attractions Texas. the Santa Fe-Frisco Union Depot train station, Paris Junior College, Sam Bell Maxey House State Historic Site minutes away.Amenities Comfortable StayGuests | 
+5: Days Inn by Wyndham Paris (Paris, us) | $100/night | 3.5mi from Paris City Center, Paris, Île-de-France, France | roomssIndulge comfort Days Inn Paris flat-screen TVs, microwaves, refrigerators, coffee facilities every room.Relaxing Outdoor AmenitiesUnwind outdoor pool stay connected complimentary Wi-Fi throughout property.Convenient LocationLocated near Paris Golf Country Club Mountain, easy access to Walker | 
+6: Quality Inn Paris Texas (Paris, us) | $94/night | 1.7mi from Paris City Center, Paris, Île-de-France, France | Convenient Location Nearby AttractionsThe Quality Inn hotel Paris, Texas situated near historic downtown various attractions such Paris Rodeo & Horse Club, Sam Bell Maxey House, Eiffel Tower Replica.Comfortable roomssEach room Quality Sleeper Serta beds, along essential amenities like microwaves, | 
+7: Paris Inn & Suites (Paris, us) | $120/night | 2.1mi from Paris City Center, Paris, Île-de-France, France | Modern roomss: comfort convenience Paris Inn & Suites air-conditioned rooms featuring all essential amenities like flat-screen TVs, coffee machines, free WiFi. Some rooms boast kitchenettes added flexibility during stay.Delicious Dining Options:Start day right choice between hearty buffet light | 
+8: Americas Best Value Inn Paris (Paris, US) | $81/night | 1.5mi from Paris City Center, Paris, Île-de-France, France | Convenient Amenities: complimentary wireless internet wedding services during stay Americas Best Value Inn Paris.Dining Options: meals on-site restaurant grab snack from snack bar/deli. A complimentary continental breakfast awaits every morning.Event Spaces:Host events seamlessly motel's 1000 | 
+9: American Inn & Suites (Paris, us) | $75/night | 3.5mi from Paris City Center, Paris, Île-de-France, France | Welcome to American Inn & Suites Paris!Convenient Amenities: 24h desk room svc all needs. Stay connected free WiFi available throughout property.Relaxing Garden: Unwind garden oasis, perfect peaceful retreat day of exploring.Easy Parking: Take advantage of private parking options, ensuring | 
+10: Motel 6 Paris, TX (Paris, US) | $82/night | 1.5mi from Paris City Center, Paris, Île-de-France, France | Convenient Amenities: complimentary wireless internet access make use of on-site vending machine convenience.Featured Amenities: Benefit from complimentary wired internet access, express check-in, express check-out. Take advantage of free self-parking.Home-like Comfort: Relax one of 40 | 
+11: Paris Extended Stay Suites (Paris, us) | $71/night | 1.5mi from Paris City Center, Paris, Île-de-France, France | Welcome to Paris Extended Stay Suites!luxury: comfort AC, kitchen, patio offering stunning city views every room. Relax flat-screen TV, free WiFi, free toiletries ensuite.Convenient Services: room svc, 24h desk, complimentary bed linen towels during stay. Our staff dedicated to making visit | 
+12: Fairfield by Marriott Inn & Suites Paris (Paris, us) | $172/night | 3.9mi from Paris City Center, Paris, Île-de-France, France | Modern roomss comfort style modern rooms suites equipped all amenities need relaxing stay.Convenient LocationLocated short distance from Texarkana Regional Airport, hotel easy access to nearby attractions businesses.free breakfastStart day right delicious free breakfast served daily hotel.Book stay | 
+13: VIP INN AND SUITES (Paris, US) | $94/night | 1.6mi from Paris City Center, Paris, Île-de-France, France | delightful stay VIP Inn Suites, comfort meets convenience heart of Paris.Comfortable roomssWith 38 spacious guestrooms, unwind cozy environment feels like home. Each room equipped complimentary wireless internet access, ensuring stay connected throughout visit.Convenient AmenitiesOur dedicated 24h | 
+14: TownePlace Suites by Marriott Paris (Paris, us) | $175/night | 3.9mi from Paris City Center, Paris, Île-de-France, France | Modern Stylish roomssEnjoy comfortable stay modern stylish rooms equipped all essentials relaxing visit.free breakfast Wi-FiStart day right free breakfast stay connected free Wi-Fi throughout property.Convenient Airport AccessLocated 158 km from Texarkana Regional Airport, hotel easy access | 
+15: Home2 Suites By Hilton Paris (Paris, us) | $166/night | 2.1mi from Paris City Center, Paris, Île-de-France, France | Modern AmenitiesHome2 Suites Hilton Paris rooms flat-screen TVs AC, ensuring comfortable stay guests.Convenient ServicesGuests buffet continental breakfast hotel access to 24h desk any assistance need.Comfortable StayWith focus guest comfort convenience, Home2 Suites Hilton Paris pleasant welcoming | 
+16: Fairfield by Marriott Inn & Suites Paris (Paris, us) | $170/night | 3.9mi from Paris City Center, Paris, Île-de-France, France | Modern roomss comfort style modern rooms suites equipped all amenities need relaxing stay.Convenient LocationLocated short distance from Texarkana Regional Airport, hotel easy access to nearby attractions businesses.free breakfastStart day right delicious free breakfast served daily hotel.Book stay | 
+
+REMEMBER: Always select 15 hotels using exact names from the list above.
+
+=== END LOG ===

@@ -1,0 +1,61 @@
+
+=== HOTEL MATCHING PROMPT LOG ===
+Search ID: e85615eb-ff03-4ade-a09b-0a2283eac6bb
+Timestamp: 2026-01-07T23:44:22.983Z
+User Query: Ski hotels in Aspen with panoramic windows
+Destination: Aspen, Pitkin County, Colorado, USA
+Hotel Count: 10
+Character Count: 5801
+Estimated Tokens: ~1451
+
+=== PROMPT CONTENT ===
+USER REQUEST: "Ski hotels in Aspen with panoramic windows"
+STAY: 3 nights
+
+🎯 RANKING PRIORITY ORDER:
+1. MATCH USER REQUEST: "Ski hotels in Aspen with panoramic windows" (Most Important)
+2. Distance from Aspen, Colorado, United States (if relevant to search!) MAKE SURE THE HOTEL IS IN THE CITY/PLACE THE USER WANTS
+2. Location quality and convenience 
+3. Star rating and overall quality
+4. Value for money
+
+📋 STEP-BY-STEP MATCHING PROCESS:
+1. READ AI SEARCH CONTEXT carefully: "Ski hotels in Aspen with panoramic windows"
+3. Match specific amenities mentioned (rooftop bar, infinity pool, spa, gym, etc.)
+4. Match vibe/style (romantic, family-friendly, business, boutique, modern, etc.)
+5. RANK by relevance to the complete AI search context, NOT by list position
+
+🔍 KEYWORD MATCHING EXAMPLES:
+- Context: "hotels under $200 per night with rooftop bar" → Price < $200 AND rooftop bar
+- Context: "luxury hotels over $400 per night" → Price > $400 AND luxury features
+- Context: "romantic hotels with infinity pool" → Romantic amenities AND infinity pool
+- Context: "cool boutique hotels" → Boutique style, unique character
+
+⚠️ CRITICAL RULES:
+- IGNORE the order hotels appear in the list - analyze content only
+- You MUST select exactly 15 hotels using their exact names from the list
+- Base rankings on how well each hotel matches "Ski hotels in Aspen with panoramic windows"
+- If specific amenities mentioned, hotels MUST have those amenities to rank high
+- PRIORITIZE HOTELS THAT HAVE LISTED FEATURES THAT SAY WHAT THE USER IS ASKING FOR (eg. prioritze hotels that have rooftop bar over rooftop pool if user explocitly asked for rooftop bar)
+
+📝 REQUIRED OUTPUT FORMAT:
+1. [exact hotel name from list] | [match percentage 1-100]%
+2. [exact hotel name from list] | [match percentage 1-100]%
+3. [exact hotel name from list] | [match percentage 1-100]%
+...continue through 15
+
+HOTELS AVAILABLE:
+1: Hotel Jerome, Auberge Collection (Aspen, US) | $2257/night | 350m from Aspen, Colorado, United States | charm elegance of Hotel Jerome, Auberge Collection, true gem heart of Aspen. roomssEnjoy absolute comfort one of 93 exquisitely designed rooms pillowtop beds, comforters, Egyptian cotton sheets. Every detail, from designer toiletries to spacious ensuites, crafted indulgence.Gourmet Dining | 
+2: Limelight Hotel Aspen (Aspen, us) | $2072/night | 280m from Aspen, Colorado, United States | roomss ultimate comfort Limelight Hotel, each guest room equipped modern amenities like free Wi-Fi, flat-screen TVs, iPod docking stations. Relax seating area take dip outdoor pool hot tub.Convenient ServicesStart day delicious breakfast hitting slopes ski guide service. Stay productive business | 
+3: W Aspen (Aspen, us) | $1759/night | 770m from Aspen, Colorado, United States | rooms Exciting AmenitiesModern Comforts: W Aspen air-conditioned rooms free WiFi, desk, flat-screen TV, ensuites. Some rooms boast balconies city views touch of luxury.Leisure Facilities: Guests unwind outdoor pool, gym, hot tub. Adventure seekers hiking, skiing, fishing surrounding areas, ensuring | 
+4: Aspen Meadows Resort (Aspen, us) | $2147/night | 1.3km from Aspen, Colorado, United States | roomssThe Aspen Meadows Resort spacious all-suite roomss modern amenities like wireless internet access, mini-refrigerators, flat-screen TVs. The rooms feature sofa beds iPod docking stations ultimate comfort.Recreational Activitiesin Colorado Rocky Mountains, guests plethora of activities | 
+5: Aspen Mountain Lodge (Aspen, US) | $688/night | 190m from Aspen, Colorado, United States | perfect getaway Aspen Mountain Lodge, comfort meets convenience stunning heart of Aspen.Unwind LuxuryTake dip refreshing outdoor pool melt worries away hot tub. Our inviting amenities provide perfect setting relaxation rejuvenation.Stay ConnectedEnjoy complimentary wireless internet throughout | 
+6: The Gant (Aspen, US) | $999/night | 1.0km from Aspen, Colorado, United States | ServicesThe Gant 2 outdoor pools, complimentary Wi-Fi, concierges, babysitting. The complimentary ski shuttle great dining options enhance stay.Delicious Dining OptionsSavor American cuisine Pepperjacks Cafe pool view, grab drink bar. a cooked-to-order breakfast from 7:00 AM to 11:00 AM café coffee | 
+7: St Moritz Lodge and Condominiums (Aspen, us) | $530/night | 270m from Aspen, Colorado, United States | Year-Round Outdoor Heated Pool WhirlpoolIndulge relaxation St. Moritz Lodge & Condominiums year-round outdoor heated pool whirlpool. Unwind day of adventure Aspen's stunning surroundings.Cozy Rooms Modern Amenities comfort every corner rooms featuring flat-screen cable TVs, HBO, refrigerators. | 
+8: Independence Square Lodge by Frias (Aspen, US) | $820/night | 560m from Aspen, Colorado, United States | Recreation RelaxationComplimentary OfferingsConvenience ComfortEnjoy stay Independence Square Lodge Frias truly memorable Aspen. Book hotel now perfect blend of convenience. | 
+9: The Sky Residences at W Aspen (Aspen, us) | $4499/night | 780m from Aspen, Colorado, United States | luxuryThe Sky Residences W Aspen outdoor pool, gym, hot tub guests to unwind relax style.Gourmet DiningIndulge exquisite dining s hotel's restaurant bar, offering variety of culinary delights to tantalize taste buds.Prime LocationConveniently situated near popular attractions like John Denver | 
+10: The Inn at Aspen (Aspen, US) | $651/night | 3.5km from Aspen, Colorado, United States | Ski-in/Ski-out AccessEmbrace of direct access to slopes, alongside outdoor pool spa tub. Unwind HomeTeam BBQ drink bar/lounge day mountains.Modern AmenitiesBenefit from complimentary Wi-Fi, ski storage, picnic areas, cooked-to-order breakfast. Relax individually decorated guestrooms, equipped all | 
+
+REMEMBER: Always select 15 hotels using exact names from the list above.
+
+=== END LOG ===

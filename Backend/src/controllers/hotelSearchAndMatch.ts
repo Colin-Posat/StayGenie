@@ -413,7 +413,7 @@ const processHotelWithImmediateInsights = async (
   hotel: any,
   hotelIndex: number,
   userInput: string,
-  parsedQuery: ParsedSearchQuery,
+  parsedQuery: ParsedSearchQuery,  // ✅ Make sure this is here
   nights: number,
   hotelMetadataMap: Map<string, Record<string, unknown>>,
   sendUpdate: (type: string, data: any) => void,
@@ -430,7 +430,7 @@ const processHotelWithImmediateInsights = async (
       return;
     }
 
-    const enrichedHotelSummary = createHotelSummaryForInsights(hotel, hotelMetadata, nights);
+    const enrichedHotelSummary = createHotelSummaryForInsights(hotel, hotelMetadata, nights, parsedQuery);
 
     console.log('📦 ENRICHED HOTEL SUMMARY:', {
   hotelName: enrichedHotelSummary.name,
@@ -1156,9 +1156,7 @@ const createOptimizedHotelSummaryForAI = (
     displayPrice = `${pricePerNightInfo} (${priceProvider})`;
   }
 
-  // ADD DISTANCE CALCULATION
- let distanceFromSearch = null;
-// ALWAYS calculate distance (AI needs it), but flag whether to show on card
+let distanceFromSearch = null;
 if (latitude && longitude && parsedQuery.latitude && parsedQuery.longitude) {
   const distanceKm = calculateDistance(
     parsedQuery.latitude,
@@ -1166,15 +1164,16 @@ if (latitude && longitude && parsedQuery.latitude && parsedQuery.longitude) {
     latitude,
     longitude
   );
+  const distanceMiles = distanceKm * 0.621371; // Convert to miles
+  
   distanceFromSearch = {
     km: distanceKm,
-    formatted: formatDistance(distanceKm),
-    fromLocation: parsedQuery.locationMentioned 
-      ? (parsedQuery.searchOriginName || parsedQuery.specificPlace)
-      : undefined,  // ✅ ADD THIS
-    showInUI: parsedQuery.locationMentioned || false  // ✅ ADD THIS
+    miles: distanceMiles, // NEW: Store miles too
+    formatted: formatDistance(distanceKm), // Now returns miles format
+    fromLocation: parsedQuery.specificPOI || parsedQuery.searchOriginName,
+    showInUI: parsedQuery.locationMentioned || false,
+    searchLocation: parsedQuery.fullPlaceName
   };
-
 }
 
   return {
@@ -1437,10 +1436,16 @@ const calculateDistance = (
 };
 
 const formatDistance = (distanceKm: number): string => {
-  if (distanceKm < 1) {
-    return `${Math.round(distanceKm * 1000)}m`;
+  // Convert km to miles (1 km = 0.621371 miles)
+  const distanceMiles = distanceKm * 0.621371;
+  
+  if (distanceMiles < 0.1) {
+    // Show in feet if less than 0.1 miles (528 feet)
+    const distanceFeet = Math.round(distanceMiles * 5280);
+    return `${distanceFeet}ft`;
   }
-  return `${distanceKm.toFixed(1)}km`;
+  
+  return `${distanceMiles.toFixed(1)}mi`;
 };
 
 const getCombinedAmenities = (hotelInfo: any, selectedCategories?: string[]): string[] => {
@@ -1521,27 +1526,32 @@ const createHotelSummaryForInsights = (
 
   const fakeReviewCount = Math.floor(Math.random() * (1100 - 700 + 1)) + 700;
 
-  // CALCULATE DISTANCE FROM SEARCH LOCATION
-  let distanceFromSearch = null;
-  if (parsedQuery && hotelMetadata?.latitude && hotelMetadata?.longitude && 
-      parsedQuery.latitude && parsedQuery.longitude) {
-    const distanceKm = calculateDistance(
-      parsedQuery.latitude,
-      parsedQuery.longitude,
-      hotelMetadata.latitude,
-      hotelMetadata.longitude
-    );
-    distanceFromSearch = {
-  km: distanceKm,
-  formatted: formatDistance(distanceKm),
-  fromLocation: parsedQuery.locationMentioned 
-    ? parsedQuery.searchOriginName 
-    : undefined,  // Only add if POI
-  showInUI: parsedQuery.locationMentioned || false  // Flag for UI
-
+// CALCULATE DISTANCE FROM SEARCH LOCATION
+let distanceFromSearch = null;
+if (parsedQuery && hotelMetadata?.latitude && hotelMetadata?.longitude && 
+    parsedQuery.latitude && parsedQuery.longitude) {
+  const distanceKm = calculateDistance(
+    parsedQuery.latitude,
+    parsedQuery.longitude,
+    hotelMetadata.latitude,
+    hotelMetadata.longitude
+  );
+  const distanceMiles = distanceKm * 0.621371; // Convert to miles
   
-};
-  }
+  distanceFromSearch = {
+    km: distanceKm,
+    miles: distanceMiles, // NEW: Store miles too
+    formatted: formatDistance(distanceKm), // Now returns miles format
+    fromLocation: parsedQuery.specificPOI || parsedQuery.searchOriginName,
+    showInUI: parsedQuery.locationMentioned || false,
+    searchLocation: parsedQuery.fullPlaceName
+  };
+}
+console.log('🔵🔵🔵 RETURNING HOTEL WITH DISTANCE:', {
+    name: hotelMetadata?.name,
+    hasDistance: !!distanceFromSearch,
+    distanceData: distanceFromSearch
+  });
 
   return {
     hotelId: hotel.hotelId,
@@ -1573,6 +1583,7 @@ const createHotelSummaryForInsights = (
     refundableInfo: refundablePolicy.refundableInfo,
     photoGalleryImages: photoGalleryImages,
     distanceFromSearch: distanceFromSearch, // NEW FIELD
+    
     cancellationPolicies: hotel.roomTypes?.flatMap(room => 
       room.rates?.map(rate => ({
         refundableTag: rate.cancellationPolicies?.refundableTag,
@@ -1580,8 +1591,11 @@ const createHotelSummaryForInsights = (
         hotelRemarks: rate.cancellationPolicies?.hotelRemarks || []
       })) || []
     ) || []
+    
   };
+  
 };
+
 
 const extractPhotoGalleryFromMetadata = (hotelMetadata: any): string[] => {
   try {
