@@ -1,4 +1,4 @@
-// MapViewScreen.tsx - Fixed version
+// MapViewScreen.tsx - Fixed version with smooth search refinement
 import React, { useRef, useState, useEffect } from 'react';
 import { View, TouchableOpacity, Image, Animated, Dimensions, ScrollView, Linking, Alert, Share, Modal } from 'react-native';
 import { Text } from '../components/CustomText';
@@ -42,7 +42,7 @@ const DEEP_LINK_BASE_URL = 'https://staygenie.nuitee.link';
 
 // Ken Burns Image Component
 const KenBurnsImage: React.FC<{ uri: string; isActive: boolean }> = ({ uri, isActive }) => {
-  const scaleAnim = useRef(new Animated.Value(1.08)).current;
+  const scaleAnim = useRef(new Animated.Value(1)).current;
   const translateXAnim = useRef(new Animated.Value(0)).current;
   const translateYAnim = useRef(new Animated.Value(0)).current;
 
@@ -53,7 +53,7 @@ const KenBurnsImage: React.FC<{ uri: string; isActive: boolean }> = ({ uri, isAc
           Animated.sequence([
             Animated.parallel([
               Animated.timing(scaleAnim, {
-                toValue: 1.20,
+                toValue: 1.12,
                 duration: 12000,
                 useNativeDriver: true,
               }),
@@ -70,7 +70,7 @@ const KenBurnsImage: React.FC<{ uri: string; isActive: boolean }> = ({ uri, isAc
             ]),
             Animated.parallel([
               Animated.timing(scaleAnim, {
-                toValue: 1.08,
+                toValue: 1,
                 duration: 12000,
                 useNativeDriver: true,
               }),
@@ -105,7 +105,7 @@ const KenBurnsImage: React.FC<{ uri: string; isActive: boolean }> = ({ uri, isAc
   return (
     <Animated.View
       style={{
-        width: CARD_WIDTH - 8, // Match container width
+        width: CARD_WIDTH - 8,
         height: CARD_HEIGHT,
         transform: [
           { scale: scaleAnim },
@@ -145,6 +145,9 @@ const MapViewScreen: React.FC<MapViewScreenProps> = ({
   const genieShimmerAnim = useRef(new Animated.Value(0)).current;
   const [showHotelChat, setShowHotelChat] = useState(false);
   const [showReviewsModal, setShowReviewsModal] = useState(false);
+  
+  const isInitialMount = useRef(true);
+  const previousHotelsRef = useRef<Hotel[]>([]);
 
   // Filter hotels with valid coordinates
   const validHotels = hotels.filter((h): h is Hotel & { latitude: number; longitude: number } => 
@@ -154,7 +157,7 @@ const MapViewScreen: React.FC<MapViewScreenProps> = ({
     !isNaN(h.longitude)
   );
 
-  // Calculate center point
+  // Calculate center point from current hotels
   const centerCoordinate = React.useMemo(() => {
     if (validHotels.length === 0) return [-122.4194, 37.7749];
     
@@ -163,6 +166,45 @@ const MapViewScreen: React.FC<MapViewScreenProps> = ({
     
     return [avgLng, avgLat];
   }, [validHotels]);
+
+  // When hotels change (refinement), smoothly pan to first new hotel
+  useEffect(() => {
+    if (validHotels.length === 0) return;
+
+    const hotelsChanged = previousHotelsRef.current.length === 0 || 
+      validHotels.length !== previousHotelsRef.current.length ||
+      validHotels[0]?.id !== previousHotelsRef.current[0]?.id;
+    
+    if (hotelsChanged && !isInitialMount.current && previousHotelsRef.current.length > 0) {
+      // This is a search refinement - pan to first hotel
+      const firstHotel = validHotels[0];
+      if (firstHotel) {
+        setTimeout(() => {
+          cameraRef.current?.setCamera({
+            centerCoordinate: [firstHotel.longitude, firstHotel.latitude],
+            zoomLevel: 12,
+            animationDuration: 800,
+          });
+        }, 150);
+      }
+    }
+    
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+    }
+    
+    previousHotelsRef.current = validHotels;
+  }, [validHotels]);
+
+  // Calculate initial center point (only used on first mount)
+  const initialCenterCoordinate = React.useMemo(() => {
+    if (validHotels.length === 0) return [-122.4194, 37.7749];
+    
+    const avgLat = validHotels.reduce((sum, h) => sum + h.latitude, 0) / validHotels.length;
+    const avgLng = validHotels.reduce((sum, h) => sum + h.longitude, 0) / validHotels.length;
+    
+    return [avgLng, avgLat];
+  }, []);
 
   // Genie shimmer animation
   useEffect(() => {
@@ -300,7 +342,7 @@ const MapViewScreen: React.FC<MapViewScreenProps> = ({
 
   const handleScroll = (event: any) => {
     const contentOffsetX = event.nativeEvent.contentOffset.x;
-    const index = Math.round(contentOffsetX / (CARD_WIDTH - 8)); // Use same width as image
+    const index = Math.round(contentOffsetX / (CARD_WIDTH - 8));
     setCurrentImageIndex(index);
   };
 
@@ -534,43 +576,51 @@ const MapViewScreen: React.FC<MapViewScreenProps> = ({
               bounces={false}
               contentContainerStyle={{ paddingBottom: 120 }}
             >
-            {/* Image Carousel */}
-<View style={[tw`border-2 border-gray-200 rounded-2xl overflow-hidden mx-4 mb-3`, {
-  shadowColor: '#000',
-  shadowOffset: { width: 0, height: 4 },
-  shadowOpacity: 0.15,
-  shadowRadius: 8,
-  elevation: 8,
-}]}>
-  <View style={{ height: CARD_HEIGHT, overflow: 'hidden' }}> {/* Added overflow: 'hidden' */}
-    <ScrollView
-      ref={scrollViewRef}
-      horizontal
-      pagingEnabled
-      snapToInterval={CARD_WIDTH - 8}
-      decelerationRate="fast"
-      snapToAlignment="start"
-      showsHorizontalScrollIndicator={false}
-      onScroll={handleScroll}
-      scrollEventThrottle={16}
-      contentContainerStyle={{ width: (CARD_WIDTH - 8) * images.length }}
-    >
-      {images.map((img, idx) => (
-        <View
-          key={idx}
-          style={{
-            width: CARD_WIDTH - 7,
-            height: CARD_HEIGHT,
-            overflow: 'hidden',
-          }}
-        >
-          <KenBurnsImage
-            uri={img}
-            isActive={idx === currentImageIndex}
-          />
-        </View>
-      ))}
-    </ScrollView>
+              {/* Image Carousel */}
+              <View style={[tw`border-2 border-gray-200 rounded-2xl overflow-hidden mx-4 mb-3`, {
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 4 },
+                shadowOpacity: 0.15,
+                shadowRadius: 8,
+                elevation: 8,
+              }]}>
+                <View style={{ height: CARD_HEIGHT }}>
+                  <ScrollView
+                    ref={scrollViewRef}
+                    horizontal
+                    pagingEnabled
+                    snapToInterval={CARD_WIDTH - 8}
+                    decelerationRate="fast"
+                    snapToAlignment="start"
+                    showsHorizontalScrollIndicator={false}
+                    onScroll={handleScroll}
+                    scrollEventThrottle={16}
+                  >
+                    {images.map((img, idx) => (
+                      <View
+                        key={idx}
+                        style={{
+                          width: CARD_WIDTH - 8,
+                          height: CARD_HEIGHT,
+                          overflow: 'hidden',
+                        }}
+                      >
+                        <View
+                          style={{
+                            width: CARD_WIDTH - 8,
+                            height: CARD_HEIGHT,
+                            overflow: 'hidden',
+                          }}
+                        >
+                          <KenBurnsImage
+                            uri={img}
+                            isActive={idx === currentImageIndex}
+                          />
+                        </View>
+                      </View>
+                    ))}
+                  </ScrollView>
+
                   {/* Top Gradient */}
                   <LinearGradient
                     colors={['rgba(0,0,0,0.7)', 'transparent']}

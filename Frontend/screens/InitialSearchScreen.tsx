@@ -872,7 +872,7 @@ const InitialSearchScreen: React.FC<InitialSearchScreenProps> = ({
                       tw`text-4xl md:text-4xl font-bold text-gray-900 text-center leading-tight mt--10`,
                       Platform.OS === 'android' && { fontFamily: 'sans-serif-medium' }
                     ]}>
-                      Describe you
+                      Describe your
                     </Text>
                     <View style={tw`flex-row items-center justify-center`}>
                       <Text style={[

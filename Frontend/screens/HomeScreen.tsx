@@ -342,6 +342,13 @@ export interface Hotel {
     location: number;
     roomQuality: number;
   };
+  distanceFromSearch?: {
+    km: number;
+    formatted: string;
+    fromLocation?: string;
+    showInUI?: boolean;
+    searchLocation?: string;
+  } | null;
 }
 //const BASE_URL = __DEV__ ? 'http://localhost:3003' : "https://staygenie-wwpa.onrender.com";
 const BASE_URL ="https://staygenie-wwpa.onrender.com"
@@ -736,10 +743,14 @@ case 'progress':
 
     case 'hotel_enhanced':
       if (data.hotel && data.hotelId) {
-        console.log(`✨ Received AI-enhanced hotel: ${data.hotel.name}`);
-        console.log('🏨 Enhanced topAmenities:', data.hotel.topAmenities);
-        console.log('📸 Photo gallery images:', data.hotel.photoGalleryImages?.length || 0); // ADD: Log photo gallery
-        console.log('📊 Category ratings:', data.hotel.categoryRatings); 
+         console.log('✨✨✨✨✨✨✨ RECEIVED ENHANCED HOTEL:', {
+      name: data.hotel.name,
+      hasDistance: !!data.hotel.distanceFromSearch,
+      distanceObject: data.hotel.distanceFromSearch,
+      showInUI: data.hotel.distanceFromSearch?.showInUI,
+      fromLocation: data.hotel.distanceFromSearch?.fromLocation
+    });
+    console.log("poopdiescoop")
         
         const enhancedHotel = convertStreamedHotelToDisplay(data.hotel, data.hotelIndex - 1);
         
@@ -853,6 +864,13 @@ const confirmedCheckOutDate = hasFinalizedDates
   : undefined;
 
 const convertStreamedHotelToDisplay = (streamedHotel: any, index: number): Hotel => {
+  console.log('🔄 Converting streamed hotel:', streamedHotel.name);
+  console.log('🟢🟢🟢 DISTANCE FROM SEARCH:', {
+    hasDistance: !!streamedHotel.distanceFromSearch,
+    distanceData: streamedHotel.distanceFromSearch,
+    showInUI: streamedHotel.distanceFromSearch?.showInUI,
+    fromLocation: streamedHotel.distanceFromSearch?.fromLocation
+  });
   console.log('🔄 Converting streamed hotel:', streamedHotel.name);
   console.log(`   Hotel ID: ${streamedHotel.hotelId || streamedHotel.id || 'NO_ID'}`);
   console.log(`   Photo gallery images: ${streamedHotel.photoGalleryImages?.length || 0}`); // ADD: Log photo gallery
@@ -994,7 +1012,8 @@ const convertStreamedHotelToDisplay = (streamedHotel: any, index: number): Hotel
     
     // AI Safety fields
     aiSafetyRating: streamedHotel.safetyRating || streamedHotel.aiSafetyRating,
-    safetyJustification: streamedHotel.safetyJustification || "Safety assessment based on location and area knowledge"
+    safetyJustification: streamedHotel.safetyJustification || "Safety assessment based on location and area knowledge",
+    distanceFromSearch: streamedHotel.distanceFromSearch || null
   };
 };
 
@@ -1006,6 +1025,9 @@ const fmtDate = (iso: string) =>
 
 const executeStreamingSearch = async (userInput: string) => {
   if (!userInput.trim()) return;
+  if ((global as any).cleanupSSESearch) {
+    (global as any).cleanupSSESearch();
+  }
 
   let eventSource: any = null;
   let timeoutId: NodeJS.Timeout | null = null;

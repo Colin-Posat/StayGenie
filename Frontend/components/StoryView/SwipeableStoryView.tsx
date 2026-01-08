@@ -257,6 +257,8 @@ const enhanceHotel = (hotel: Hotel): EnhancedHotel => {
     safetyRating: hotel.safetyRating,
     aiSafetyRating: hotel.aiSafetyRating,
     safetyJustification: hotel.safetyJustification,
+    distanceFromSearch: hotel.distanceFromSearch || null 
+
   };
 
   return enhancedHotel;
@@ -409,6 +411,7 @@ const enhanceHotel = (hotel: Hotel): EnhancedHotel => {
             showSafetyRating={showSafetyRatings}
             safetyRatingThreshold={safetyRatingThreshold}
             onFavoriteSuccess={onFavoriteSuccess}
+            distanceFromSearch={hotel.distanceFromSearch} 
           />
         </View>
       </View>
@@ -484,7 +487,7 @@ const enhanceHotel = (hotel: Hotel): EnhancedHotel => {
         onViewableItemsChanged={onViewableItemsChangedRef.current}
         viewabilityConfig={viewabilityConfigRef.current}
         initialScrollIndex={initialScrollIndex}  
-        getItemLayout={getItemLayout}
+
 
         scrollEnabled={!isAutoScrolling}
         showsVerticalScrollIndicator={false}

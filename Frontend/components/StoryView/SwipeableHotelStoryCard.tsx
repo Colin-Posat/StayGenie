@@ -119,6 +119,15 @@ interface Hotel {
   placeId?: string;
 
   isPlaceholder?: boolean;
+
+  distanceFromSearch?: {
+    km: number;
+    formatted: string;
+    fromLocation?: string;
+    showInUI?: boolean;
+    searchLocation?: string;
+  } | null;
+  
 }
 
 interface EnhancedHotel extends Hotel {
@@ -136,9 +145,9 @@ interface SwipeableHotelStoryCardProps {
   onViewDetails: () => void;
   onHotelPress: () => void;
   index: number;
-  position: number; // ✅ ADD THIS
-  searchQuery: string; // ✅ ADD THIS
-  isVisible: boolean; // ✅ ADD THIS
+  position: number;
+  searchQuery: string;
+  isVisible: boolean;
   totalCount: number;
   checkInDate?: Date;
   checkOutDate?: Date;
@@ -158,6 +167,13 @@ interface SwipeableHotelStoryCardProps {
   showSafetyRating?: boolean;
   safetyRatingThreshold?: number;
   onFavoriteSuccess?: (hotelName: string) => void;
+  distanceFromSearch?: {  // ✅ ADD THIS
+    km: number;
+    formatted: string;
+    fromLocation?: string;
+    showInUI?: boolean;
+    searchLocation?: string;
+  } | null;
 }
 
 // Ken Burns Image Component
@@ -295,6 +311,13 @@ const SwipeableHotelStoryCard: React.FC<SwipeableHotelStoryCardProps> = ({
   showSafetyRating = true,
   safetyRatingThreshold = 6.0,
 }) => {
+  console.log('🎴🎴🎴 HOTEL CARD RECEIVED:', {
+    name: hotel.name,
+    hasDistance: !!hotel.distanceFromSearch,
+    distanceData: hotel.distanceFromSearch,
+    showInUI: hotel.distanceFromSearch?.showInUI,
+    fromLocation: hotel.distanceFromSearch?.fromLocation
+  });
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
   const [showReviewsModal, setShowReviewsModal] = useState(false);
   const [showFullMap, setShowFullMap] = useState(false);
@@ -952,14 +975,13 @@ const isLoading = isInsightsLoading || insightsStatus === "loading" || insightsS
     </Animated.View>
   </View>
 
-  {/* Match Text - Tighter Line Height */}
-  <Text 
+{/* Match Text - Tighter Line Height */}
+<Text 
   style={[
     tw`text-[13px] text-gray-800 mb-1`,
     { 
       fontFamily: 'Merriweather-Regular',
       lineHeight: 18,
-      
     }
   ]}
   numberOfLines={isExpanded ? undefined : 4}
@@ -970,6 +992,19 @@ const isLoading = isInsightsLoading || insightsStatus === "loading" || insightsS
     [tw`text-[13px] text-gray-800`, { fontFamily: 'Merriweather-Regular', lineHeight: 18 }]
   )}
 </Text>
+
+{/* NEW: Distance from POI - Shows right after Genie Says text */}
+{hotel.distanceFromSearch?.showInUI && hotel.distanceFromSearch?.fromLocation && (
+  <View style={tw`flex-row items-center mt-1.5 mb-1`}>
+    <Ionicons name="location" size={11} color="#6B7280" style={tw`mr-1`} />
+    <Text style={[
+      tw`text-[11px] text-gray-600`,
+      { fontFamily: 'Merriweather-Regular' }
+    ]}>
+      {hotel.distanceFromSearch.formatted} from {hotel.distanceFromSearch.fromLocation}
+    </Text>
+  </View>
+)}
 </View>
       </>
     ) : (
