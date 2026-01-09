@@ -923,91 +923,98 @@ const isLoading = isInsightsLoading || insightsStatus === "loading" || insightsS
 >
   {/* Collapsed State - Preview */}
   <View style={tw`px-3 py-2.5`}>
-    {hotel.whyItMatches ? (
-      <>
-        {/* Inline Genie Badge + Text */}
-<View style={tw`mb-1.5`}>
-  <View style={tw`flex-row items-center mb-1.5`}>
-    <Animated.View
-      style={{
-        opacity: genieShimmerAnim.interpolate({
-          inputRange: [0, 0.5, 1],
-          outputRange: [1, 0.7, 1]
-        }),
-        transform: [{
-          scale: genieShimmerAnim.interpolate({
-            inputRange: [0, 0.5, 1],
-            outputRange: [1, 1.02, 1]
-          })
-        }]
-      }}
-    >
-      <LinearGradient
-        colors={[TURQUOISE, TURQUOISE_DARK]}
-        start={{ x: 0, y: 0 }}
-        end={{ x: 1, y: 0 }}
-        style={[tw`px-2 py-1 rounded-full`, { alignSelf: 'flex-start' }]}
-      >
-        <View style={tw`flex-row items-center`}>
-          <Animated.View
-            style={{
-              transform: [{
-                rotate: genieShimmerAnim.interpolate({
-                  inputRange: [0, 0.5, 1],
-                  outputRange: ['0deg', '15deg', '0deg']
-                })
-              }]
-            }}
+ {hotel.whyItMatches ? (
+  <>
+    {/* Header Row: Genie Badge (left) + Distance (right) */}
+    <View style={tw`mb-1.5`}>
+      <View style={tw`flex-row items-center justify-between mb-1.5`}>
+        {/* Genie Badge - Left */}
+        <Animated.View
+          style={{
+            opacity: genieShimmerAnim.interpolate({
+              inputRange: [0, 0.5, 1],
+              outputRange: [1, 0.7, 1]
+            }),
+            transform: [{
+              scale: genieShimmerAnim.interpolate({
+                inputRange: [0, 0.5, 1],
+                outputRange: [1, 1.02, 1]
+              })
+            }]
+          }}
+        >
+          <LinearGradient
+            colors={[TURQUOISE, TURQUOISE_DARK]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+            style={[tw`px-2 py-1 rounded-full`]}
           >
-            <Ionicons name="sparkles" size={10} color="white" style={tw`mr-1`} />
-          </Animated.View>
-          <Text style={[
-            tw`text-[10px] text-white`,
-            { 
-              fontFamily: 'Merriweather-Bold',
-              letterSpacing: 0.5,
-            }
+            <View style={tw`flex-row items-center`}>
+              <Animated.View
+                style={{
+                  transform: [{
+                    rotate: genieShimmerAnim.interpolate({
+                      inputRange: [0, 0.5, 1],
+                      outputRange: ['0deg', '15deg', '0deg']
+                    })
+                  }]
+                }}
+              >
+                <Ionicons name="sparkles" size={10} color="white" style={tw`mr-1`} />
+              </Animated.View>
+              <Text style={[
+                tw`text-[10px] text-white`,
+                { 
+                  fontFamily: 'Merriweather-Bold',
+                  letterSpacing: 0.5,
+                }
+              ]}>
+                Genie Says
+              </Text>
+            </View>
+          </LinearGradient>
+        </Animated.View>
+
+        {/* Distance Badge - Right */}
+        {hotel.distanceFromSearch?.showInUI && hotel.distanceFromSearch?.fromLocation && (
+          <View style={[
+            tw`px-2 py-1 rounded-full bg-gray-100 flex-row items-center`,
+            { maxWidth: '60%' }
           ]}>
-            Genie Says
-          </Text>
-        </View>
-      </LinearGradient>
-    </Animated.View>
-  </View>
+            <Ionicons name="location" size={10} color="#6B7280" style={tw`mr-1`} />
+            <Text 
+              style={[
+                tw`text-[10px] text-gray-600`,
+                { fontFamily: 'Merriweather-Regular' }
+              ]}
+              numberOfLines={1}
+            >
+              {hotel.distanceFromSearch.formatted} from {hotel.distanceFromSearch.fromLocation}
+            </Text>
+          </View>
+        )}
+      </View>
 
-{/* Match Text - Tighter Line Height */}
-<Text 
-  style={[
-    tw`text-[13px] text-gray-800 mb-1`,
-    { 
-      fontFamily: 'Merriweather-Regular',
-      lineHeight: 18,
-    }
-  ]}
-  numberOfLines={isExpanded ? undefined : 4}
->
-  {parseBoldText(
-    hotel.whyItMatches,
-    [tw`text-[13px] text-gray-800`, { fontFamily: 'Merriweather-Bold', lineHeight: 18 }],
-    [tw`text-[13px] text-gray-800`, { fontFamily: 'Merriweather-Regular', lineHeight: 18 }]
-  )}
-</Text>
-
-{/* NEW: Distance from POI - Shows right after Genie Says text */}
-{hotel.distanceFromSearch?.showInUI && hotel.distanceFromSearch?.fromLocation && (
-  <View style={tw`flex-row items-center mt-1.5 mb-1`}>
-    <Ionicons name="location" size={11} color="#6B7280" style={tw`mr-1`} />
-    <Text style={[
-      tw`text-[11px] text-gray-600`,
-      { fontFamily: 'Merriweather-Regular' }
-    ]}>
-      {hotel.distanceFromSearch.formatted} from {hotel.distanceFromSearch.fromLocation}
-    </Text>
-  </View>
-)}
-</View>
-      </>
-    ) : (
+      {/* Match Text - Tighter Line Height */}
+      <Text 
+        style={[
+          tw`text-[13px] text-gray-800 mb-1`,
+          { 
+            fontFamily: 'Merriweather-Regular',
+            lineHeight: 18,
+          }
+        ]}
+        numberOfLines={isExpanded ? undefined : 4}
+      >
+        {parseBoldText(
+          hotel.whyItMatches,
+          [tw`text-[13px] text-gray-800`, { fontFamily: 'Merriweather-Bold', lineHeight: 18 }],
+          [tw`text-[13px] text-gray-800`, { fontFamily: 'Merriweather-Regular', lineHeight: 18 }]
+        )}
+      </Text>
+    </View>
+  </>
+) : (
       <>
         {/* Quick Stats when no match */}
         <View style={tw`flex-row items-center justify-between mb-1`}>
@@ -1067,8 +1074,9 @@ const isLoading = isInsightsLoading || insightsStatus === "loading" || insightsS
         })
       }]
     }}
+    pointerEvents="box-none"
   >
-    <View style={tw`px-3 pb-2.5`}>
+    <View style={tw`px-3 pb-2.5`} pointerEvents="box-none">
 
 {/* Top Amenities */}
       {hotel.topAmenities && hotel.topAmenities.length > 0 && (

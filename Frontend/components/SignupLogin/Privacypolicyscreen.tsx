@@ -232,7 +232,7 @@ const PrivacyPolicyScreen: React.FC<PrivacyPolicyScreenProps> = ({ onClose }) =>
             If you have questions about this Privacy Policy or want to exercise your rights, contact us at:
           </Text>
           <Text style={[tw`text-gray-700 leading-6`, { color: TURQUOISE_DARK }]}>
-            privacy@staygenie.com
+            privacy@staygenie.app
           </Text>
           <Text style={tw`text-gray-700 leading-6 mt-3`}>
             For data deletion requests or privacy concerns, please include "Privacy Request" in your email subject line.

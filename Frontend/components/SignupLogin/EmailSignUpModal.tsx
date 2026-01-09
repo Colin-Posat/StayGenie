@@ -295,7 +295,7 @@ const EmailSignUpModal: React.FC<EmailSignUpModalProps> = ({
                 
                 <Text style={tw`font-bold`}>12. Contact Us{'\n'}</Text>
                 For questions about these Terms or Privacy Policy, or to exercise your data rights, contact us at:{'\n'}
-                Email: support@staygenie.com{'\n'}
+                Email: support@staygenie.app{'\n'}
                 Response time: Within 48 hours{'\n\n'}
                 
                 <Text style={tw`text-xs text-gray-500 italic`}>

@@ -750,7 +750,7 @@ const TermsContent = () => (
     
     <Text style={tw`font-bold`}>12. Contact Us{'\n'}</Text>
     For questions about these Terms, contact us at:{'\n'}
-    Email: support@staygenie.com{'\n'}
+    Email: support@staygenie.app{'\n'}
     Response time: Within 48 hours
   </Text>
 );
@@ -829,9 +829,9 @@ const PrivacyContent = () => (
     We may update this policy periodically. Significant changes will be notified through the app or email.{'\n\n'}
 
     <Text style={tw`font-bold`}>12. Contact Us{'\n\n'}</Text>
-    Email: privacy@staygenie.com{'\n'}
-    Support: support@staygenie.com{'\n'}
-    DPO: dpo@staygenie.com{'\n'}
+    Email: privacy@staygenie.app{'\n'}
+    Support: support@staygenie.app{'\n'}
+    DPO: dpo@staygenie.app{'\n'}
     Response time: Within 48 hours
   </Text>
 );

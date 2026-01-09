@@ -169,7 +169,7 @@ const TermsOfServiceScreen: React.FC<TermsOfServiceScreenProps> = ({ onClose }) 
             For questions about these Terms of Service, please contact us at:
           </Text>
           <Text style={[tw`text-gray-700 leading-6 mt-2`, { color: TURQUOISE_DARK }]}>
-            support@staygenie.com
+            support@staygenie.app
           </Text>
         </Section>
 
