@@ -412,6 +412,7 @@ const enhanceHotel = (hotel: Hotel): EnhancedHotel => {
             safetyRatingThreshold={safetyRatingThreshold}
             onFavoriteSuccess={onFavoriteSuccess}
             distanceFromSearch={hotel.distanceFromSearch} 
+
           />
         </View>
       </View>

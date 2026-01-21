@@ -37,6 +37,8 @@ import { AnalyticsService } from '../services/analytics';
 import { useAuth } from '../contexts/AuthContext';
 import MapViewScreen from '../screens/MapViewScreen';
 import { RecentSearch } from '../contexts/AuthContext';
+import FeedbackSystem from '../components/Feedback/FeedbackSystem';
+import { feedbackTrigger } from '../services/feedbackTrigger';
 
 // Import test data
 import { testAISuggestions, generateTestSearchResponse } from '../components/HomeScreenTop/TestModeData';
@@ -383,6 +385,7 @@ const [shouldShowChevron, setShouldShowChevron] = useState(false);
   const [searchParamsLoading, setSearchParamsLoading] = useState(false);
   const [showMapView, setShowMapView] = useState(false);
   const [scrollToHotelId, setScrollToHotelId] = useState<string | null>(null);
+const [showFeedbackPopup, setShowFeedbackPopup] = useState(false);
 
   // Add error handling state
 const [searchError, setSearchError] = useState<{
@@ -447,6 +450,10 @@ const [favoritedHotelName, setFavoritedHotelName] = useState('');
   const [showAiOverlay, setShowAiOverlay] = useState(false);
 const editModeOpacity = useRef(new Animated.Value(0)).current;
 const searchWasActive = useRef(false);
+
+useEffect(() => {
+  feedbackTrigger.trackSession();
+}, []);
 
   // Cleanup polling on unmount
   useEffect(() => {
@@ -594,7 +601,7 @@ const handleCancelEdit = () => {
     setIsEditingSearch(false);
   });
 };
-
+const {submitFeedback } = useAuth(); // ✅ Add submitFeedback
 
 
 const handleSaveSearch = async () => {
@@ -650,6 +657,46 @@ const generatePlaceholderHotels = useCallback((count: number = 10): Hotel[] => {
     isPlaceholder: true, // This identifies it as a placeholder
   }));
 }, []);
+
+const handleFeedbackSubmitted = async (rating: number, feedback?: string) => {
+  console.log('📝 Feedback submitted:', { rating, feedback });
+  
+ if (rating > 0) {
+    // ✅ Store positive feedback too
+    try {
+      await submitFeedback({
+        isHappy: true,
+        rating: rating,
+        feedback: 'User enjoyed the app and left a review',
+        searchQuery: searchQuery,
+      });
+    } catch (error) {
+      console.error('Failed to send positive feedback:', error);
+    }
+    
+    await AnalyticsService.trackEvent('user_left_review', { 
+      rating,
+      source: 'feedback_popup'
+    });
+  } else {
+    await feedbackTrigger.markUserReviewed();
+    
+    // ✅ Use Firestore instead of fetch
+    try {
+      await submitFeedback({
+        isHappy: false,
+        rating: null,
+        feedback,
+        searchQuery: searchQuery,
+      });
+    } catch (error) {
+      console.error('Failed to send feedback:', error);
+    }
+  }
+  
+  setShowFeedbackPopup(false);
+};
+
 
 const handleStreamingUpdate = async (data: any, userInput?: string) => {
   console.log('📡 Streaming update received:', data.type);
@@ -798,6 +845,24 @@ case 'progress':
       searchCompleted.current = true; 
       console.log('🎉 All hotels found and AI-enhanced!');
       setSearchParamsLoading(false);
+
+      // Track search and check for feedback prompt
+      (async () => {
+        try {
+          await feedbackTrigger.trackSearch();
+          const shouldShow = await feedbackTrigger.shouldShowPrompt();
+          
+          if (shouldShow) {
+            setTimeout(() => {
+              setShowFeedbackPopup(true);
+              feedbackTrigger.markPromptShown();
+            }, 3000);
+          }
+        } catch (error) {
+          console.error('Feedback prompt error:', error);
+        }
+      })();
+
       setStreamingProgress({
         step: 8,
         totalSteps: 8,
@@ -2109,7 +2174,10 @@ const handleBackPress = useCallback(() => {
   </TouchableOpacity>
 )}
 
-   {/* CONTENT VIEW - Story View OR Map View */}
+
+
+
+{/* CONTENT VIEW - Story View OR Map View */}
 <View style={tw`flex-1 bg-gray-50`}>
   {showErrorScreen ? (
     <SearchErrorScreen
@@ -2129,14 +2197,14 @@ const handleBackPress = useCallback(() => {
       hotels={displayHotels.filter(h => h.latitude && h.longitude && !h.isPlaceholder)}
       onClose={() => setShowMapView(false)}
       onHotelSelect={(hotel) => {
-  console.log('🎯 Selected hotel from map:', hotel.name, hotel.id);
-  setShowMapView(false);
-  setScrollToHotelId(hotel.id);
-}}
+        console.log('🎯 Selected hotel from map:', hotel.name, hotel.id);
+        setShowMapView(false);
+        setScrollToHotelId(hotel.id);
+      }}
     />
   ) : (
     <SwipeableStoryView
-    key={scrollToHotelId || 'default'}
+      key={scrollToHotelId || 'default'}
       hotels={displayHotels}
       onHotelPress={handleHotelPress}
       onViewDetails={handleViewDetails}
@@ -2144,8 +2212,9 @@ const handleBackPress = useCallback(() => {
       onScrollToPosition={(pos) => {
         AnalyticsService.trackScrollDepth(pos, displayHotels.length);
       }}
-      checkInDate={confirmedCheckInDate}
-      checkOutDate={confirmedCheckOutDate}
+      // ✅ FIX: Use confirmed dates OR fall back to state
+      checkInDate={hasFinalizedDates && confirmedCheckInDate ? confirmedCheckInDate : checkInDate}  // ✅ SAME AS HEADER
+  checkOutDate={hasFinalizedDates && confirmedCheckOutDate ? confirmedCheckOutDate : checkOutDate} 
       adults={adults}
       children={children}
       showPlaceholders={showPlaceholders && displayHotels.length > 0 && displayHotels.every(h => h.isPlaceholder)}
@@ -2155,9 +2224,6 @@ const handleBackPress = useCallback(() => {
       searchMode={TEST_MODE ? 'test' : stage1Results ? 'two-stage' : 'legacy'}
       searchParams={streamingSearchParams || searchResults?.searchParams}
       onFavoriteSuccess={handleFavoriteSuccess}
-
-
-
     />
   )}
 </View>
@@ -2211,6 +2277,12 @@ const handleBackPress = useCallback(() => {
   onPress={handleNavigateToFavorites}
   onHide={() => setShowFavoritesPopup(false)}
 />
+<FeedbackSystem
+    visible={showFeedbackPopup}
+    onClose={() => setShowFeedbackPopup(false)}
+    onFeedbackSubmitted={handleFeedbackSubmitted}
+  />
+
 
 
       </Animated.View>

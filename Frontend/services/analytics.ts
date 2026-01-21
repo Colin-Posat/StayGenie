@@ -32,6 +32,16 @@ type FirstAction =
 // ============================================================================
 
 export class AnalyticsService {
+  static async trackEvent(eventName: string, params?: Record<string, any>) {
+  if (!(await this.shouldTrack())) return;
+
+  try {
+    await firebaseLogEvent(eventName, params || {});
+    console.log(`📊 Event: ${eventName}`, params);
+  } catch (error) {
+    console.error('Analytics error:', error);
+  }
+}
   private static isInitialized = false;
   private static searchStartTime: number | null = null;
   private static firstActionTracked = false;

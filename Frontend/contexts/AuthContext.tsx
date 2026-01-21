@@ -7,7 +7,7 @@ import type { FirebaseAuthTypes } from '@react-native-firebase/auth';
 
 // Expo Auth imports
 import { GoogleSignin } from '@react-native-google-signin/google-signin';
-import { appleAuth } from '@invertase/react-native-apple-authentication';
+import { appleAuth } from '../utils/appleAuth';
 
 // Web mode detection
 const IS_WEB = Platform.OS === 'web';
@@ -124,6 +124,7 @@ interface AuthContextType {
   
   // UI helpers
   requireAuth: (action: () => void, showSignUpModal: () => void) => void;
+  submitFeedback: (feedback: { isHappy: boolean; rating: number | null; feedback?: string; searchQuery?: string }) => Promise<void>;
 }
 
 // Create context
@@ -211,6 +212,39 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
 
     return unsubscribe;
   }, []);
+
+  const submitFeedback = async (feedbackData: { 
+  isHappy: boolean; 
+  rating: number | null; 
+  feedback?: string; 
+  searchQuery?: string 
+}): Promise<void> => {
+  try {
+    // WEB MODE
+    if (IS_WEB) {
+      console.log('[Web] Mock feedback submission:', feedbackData);
+      return;
+    }
+
+    // NATIVE MODE - Store in Firestore
+    const feedbackDoc = {
+      ...feedbackData,
+      userId: firebaseUser?.uid || 'anonymous',
+      userEmail: firebaseUser?.email || 'anonymous',
+      timestamp: new Date().toISOString(),
+      platform: Platform.OS,
+    };
+
+    await firestore()
+      .collection('feedback')
+      .add(feedbackDoc);
+
+    console.log('✅ Feedback submitted to Firestore');
+  } catch (error) {
+    console.error('Failed to submit feedback:', error);
+    throw new Error('Failed to submit feedback');
+  }
+};
 
   // ============================================================================
   // RECENT SEARCHES
@@ -965,6 +999,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     getRecentSearches,
     clearRecentSearches,
     requireAuth,
+    submitFeedback,
   };
 
   return (

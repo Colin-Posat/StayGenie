@@ -402,6 +402,32 @@ const getTotalPrice = (hotel: Hotel, checkInDate?: Date, checkOutDate?: Date) =>
 };
 
 
+const getPriceFromFirstRate = (
+  hotel: Hotel,
+  checkInDate?: Date,
+  checkOutDate?: Date
+) => {
+  try {
+    const firstRoom = hotel.roomTypes?.[0];
+    const firstRate = firstRoom?.rates?.[0];
+    const total = firstRate?.retailRate?.total?.[0]?.amount;
+
+    if (!total || !checkInDate || !checkOutDate) return null;
+
+    const nights = Math.max(
+      1,
+      Math.round(
+        (checkOutDate.getTime() - checkInDate.getTime()) / (1000 * 60 * 60 * 24)
+      )
+    );
+
+    return Math.round(total / nights);
+  } catch {
+    return null;
+  }
+};
+
+
 const toggleExpanded = () => {
   console.log('🔵 toggleExpanded called, current isExpanded:', isExpanded);
   const toValue = isExpanded ? 0 : 1;
@@ -489,11 +515,14 @@ const toggleExpanded = () => {
 
 
   const getDisplayPrice = () => {
-    if (hotel.pricePerNight) {
-      return `$${hotel.pricePerNight.amount}`;
-    }
-    return `$${hotel.price}`;
-  };
+  const ratePrice = getPriceFromFirstRate(hotel, checkInDate, checkOutDate);
+  if (ratePrice) return `$${ratePrice}`;
+
+  if (hotel.pricePerNight) return `$${hotel.pricePerNight.amount}`;
+
+  return `$${hotel.price}`;
+};
+
 
 const openInAppBrowser = async (url: string) => {
   try {
@@ -582,18 +611,30 @@ const handleAskAI = async () => {
 
 const handleViewDetailsPress = async () => {
   try {
-     // ✅ Track the book click BEFORE opening the URL
+    // ✅ Log the dates being used for debugging
+    console.log('🔵 Generating deep link with dates:', {
+      checkInDate: checkInDate?.toISOString(),
+      checkOutDate: checkOutDate?.toISOString(),
+      adults,
+      children
+    });
+
+    // ✅ Track the book click BEFORE opening the URL
     console.log('🟦 Tracking book click');
     await AnalyticsService.trackBookClick(
       hotel.id,
       hotel.name,
-      position, // Already passed as prop
-      hotel.pricePerNight?.amount || hotel.price
+      position,
+      getPriceFromFirstRate(hotel, checkInDate, checkOutDate)
+        || hotel.pricePerNight?.amount
+        || hotel.price
     );
     console.log('🟦 Book click tracked');
 
     // ✅ Track first action if this is the first interaction
     await AnalyticsService.trackFirstAction('book_now', position);
+    
+    // ✅ Generate URL with current prop values
     const url = generateHotelDeepLink(
       hotel,
       checkInDate,
@@ -603,8 +644,12 @@ const handleViewDetailsPress = async () => {
       placeId,
       occupancies
     );
+    
+    console.log('🔗 Generated deep link:', url);
+    
     await Linking.openURL(url);
-  } catch {
+  } catch (error) {
+    console.error('❌ Error opening hotel page:', error);
     Alert.alert('Error', 'Failed to open hotel page. Please try again.');
   }
 };
@@ -1322,6 +1367,7 @@ const isLoading = isInsightsLoading || insightsStatus === "loading" || insightsS
     style={tw`items-center flex-1`}
     onPress={handleViewDetailsPress}
     activeOpacity={0.7}
+    disabled={isLoading}
   >
     <View
       style={[
