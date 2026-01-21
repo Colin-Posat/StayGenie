@@ -1,0 +1,57 @@
+
+=== HOTEL MATCHING PROMPT LOG ===
+Search ID: f457f8cf-fbae-47a5-8d21-2ceed0f6b785
+Timestamp: 2026-01-21T09:22:36.279Z
+User Query: Hotels with over the water bungalows in Bora Bora
+Destination: Bora-Bora, Leeward Islands, French Polynesia, 98730, France
+Hotel Count: 6
+Character Count: 4433
+Estimated Tokens: ~1109
+
+=== PROMPT CONTENT ===
+USER REQUEST: "Hotels with over the water bungalows in Bora Bora"
+STAY: 3 nights
+
+🎯 RANKING PRIORITY ORDER:
+1. MATCH USER REQUEST: "Hotels with over the water bungalows in Bora Bora" (Most Important)
+2. Distance from Bora Bora, French Polynesia (if relevant to search!) MAKE SURE THE HOTEL IS IN THE CITY/PLACE THE USER WANTS
+2. Location quality and convenience 
+3. Star rating and overall quality
+4. Value for money
+
+📋 STEP-BY-STEP MATCHING PROCESS:
+1. READ AI SEARCH CONTEXT carefully: "Hotels with over the water bungalows in Bora Bora"
+3. Match specific amenities mentioned (rooftop bar, infinity pool, spa, gym, etc.)
+4. Match vibe/style (romantic, family-friendly, business, boutique, modern, etc.)
+5. RANK by relevance to the complete AI search context, NOT by list position
+
+🔍 KEYWORD MATCHING EXAMPLES:
+- Context: "hotels under $200 per night with rooftop bar" → Price < $200 AND rooftop bar
+- Context: "luxury hotels over $400 per night" → Price > $400 AND luxury features
+- Context: "romantic hotels with infinity pool" → Romantic amenities AND infinity pool
+- Context: "cool boutique hotels" → Boutique style, unique character
+
+⚠️ CRITICAL RULES:
+- IGNORE the order hotels appear in the list - analyze content only
+- You MUST select exactly 15 hotels using their exact names from the list
+- Base rankings on how well each hotel matches "Hotels with over the water bungalows in Bora Bora"
+- If specific amenities mentioned, hotels MUST have those amenities to rank high
+- PRIORITIZE HOTELS THAT HAVE LISTED FEATURES THAT SAY WHAT THE USER IS ASKING FOR (eg. prioritze hotels that have rooftop bar over rooftop pool if user explocitly asked for rooftop bar)
+
+📝 REQUIRED OUTPUT FORMAT:
+1. [exact hotel name from list] | [match percentage 1-100]%
+2. [exact hotel name from list] | [match percentage 1-100]%
+3. [exact hotel name from list] | [match percentage 1-100]%
+...continue through 15
+
+HOTELS AVAILABLE:
+1: Westin Bora Bora Resort & Spa (Bora Bora, pf) | $2391/night | 2.4mi from Bora Bora, French Polynesia | Overwater roomss: best of Bora Bora incredible overwater bungalows villas, offering stunning views ultimate comfort.Wellness Eco-Friendly variety of well-being spa offerings, supporting beloved Eco Center Turtle Sanctuary leaving resort.Spectacular Dining Sunset Views: diverse culinary options, | 
+2: Hotel Royal Bora Bora (Bora Bora, PF) | $318/night | 0.8mi from Bora Bora, French Polynesia | luxuryIndulge outdoor pool, complimentary wireless internet, wedding services. Mingle daily reception meal restaurant bars majestic views.Convenient FacilitiesTake advantage of laundry facilities, luggage storage, safe deposit box. a buffet breakfast each morning nearby attractions tour/ticket | 
+3: InterContinental Bora Bora Le Moana Resort by IHG (Bora Bora, PF) | $1249/night | 2.6mi from Bora Bora, French Polynesia | paradise InterContinental Bora Bora Le Moana Resort, meets serenity of nature.Wellness Oasis full-service spa, offering rejuvenating massages, body treatments, facials. After pampering yourself, soak sun pristine private beach dive into sparkling outdoor pool.Culinary Delights international cuisine | 
+4: Maitai Bora Bora (Bora Bora, pf) | $247/night | 2.2mi from Bora Bora, French Polynesia | rooms ChoicesLe Maitai Polynesia variety of rooms bungalows stunning garden lagoon views. The overwater bungalows provide unique glass table underwater viewing.Exquisite Dining culinary journey “Haere Mai” restaurant serving delectable French Polynesian dishes amidst tropical garden ambiance. | 
+5: The St. Regis Bora Bora Resort (Bora Bora, pf) | $2278/night | 2.8mi from Bora Bora, French Polynesia | roomsIndulge air-conditioned villas adorned Polynesian sculptures, Italian-marble bathrooms, private pools stunning views of lagoon.Culinary DelightsSavor fusion of Asian French cuisines Lagoon Restaurant, international dishes Aparima Bar, treat taste buds to sushi teppanyaki Bam Boo | 
+6: InterContinental Bora Bora & Thalasso Spa by IHG (Bora Bora, pf) | $1165/night | 2.2mi from Bora Bora, French Polynesia | Overwater Villas ultimate private villas perched crystal-clear waters of Bora Bora. breathtaking views from shaded terrace direct access to lagoon. Spa Leisure FacilitiesIndulge rejuvenating treatments Deep Ocean Spa, using mineral-rich ocean water. Stay active fitness room, Turkish bath, outdoor | 
+
+REMEMBER: Always select 15 hotels using exact names from the list above.
+
+=== END LOG ===

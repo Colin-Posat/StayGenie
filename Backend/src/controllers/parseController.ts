@@ -190,15 +190,48 @@ const geocodePlace = async (
   try {
     console.log(`🗺️ LocationIQ geocoding: ${placeName}`);
 
-    // Detect country code from place name to bias geocoding results
     const countrycodes = detectCountryCode(placeName);
-    
-    if (countrycodes) {
-      console.log(`✅ Using country bias: ${countrycodes.toUpperCase()}`);
-    } else {
-      console.log(`⚠️ No country detected, using default geocoding`);
+
+    // ===== STEP 1: Structured city search =====
+    if (placeName.includes(',')) {
+      const parts = placeName.split(',').map(p => p.trim());
+      const city = parts[0];
+      const country = parts[parts.length - 1];
+
+      console.log(`🏙️ Structured geocode attempt: city=${city}, country=${country}`);
+
+      const structured = await axios.get(
+        'https://us1.locationiq.com/v1/search.php',
+        {
+          params: {
+            key: LOCATIONIQ_KEY,
+            city,
+            country,
+            format: 'json',
+            limit: 3,
+            addressdetails: 1
+          },
+          timeout: 3000
+        }
+      );
+
+      const validCity = structured.data?.find((r: any) =>
+        r.address?.city || r.address?.town || r.address?.village
+      );
+
+      if (validCity) {
+        console.log(`✅ Structured city match: ${validCity.display_name}`);
+        return {
+          latitude: Number(validCity.lat),
+          longitude: Number(validCity.lon),
+          fullPlaceName: validCity.display_name
+        };
+      } else {
+        console.warn('⚠️ Structured search failed, falling back to text search');
+      }
     }
 
+    // ===== STEP 2: Text search fallback =====
     const response = await axios.get(
       'https://us1.locationiq.com/v1/search.php',
       {
@@ -206,11 +239,11 @@ const geocodePlace = async (
           key: LOCATIONIQ_KEY,
           q: placeName,
           format: 'json',
-          limit: 1,
+          limit: 5,
           addressdetails: 1,
-          countrycodes: countrycodes, // Bias results to detected country
+          countrycodes
         },
-        timeout: 3000,
+        timeout: 3000
       }
     );
 
@@ -221,40 +254,35 @@ const geocodePlace = async (
       return null;
     }
 
-    const best = results[0];
+    // ===== STEP 3: Reject country-level results =====
+    const best = results.find((r: any) =>
+      r.address?.city || r.address?.town || r.address?.village || r.address?.suburb
+    );
 
-    const latitude = Number(best.lat);
-    const longitude = Number(best.lon);
-
-    if (!Number.isFinite(latitude) || !Number.isFinite(longitude)) {
-      console.warn(`⚠️ Invalid coordinates returned for: ${placeName}`);
+    if (!best) {
+      console.error(`🚨 Only country-level results returned for: ${placeName}`);
+      console.error(results.map((r: any) => r.display_name));
       return null;
     }
 
-    // display_name is usually excellent (full human-readable place)
-    const fullPlaceName =
-      best.display_name ||
-      `${best.name || placeName}`;
-
-    console.log(`✅ LocationIQ resolved: ${fullPlaceName} (${latitude}, ${longitude})`);
+    console.log(`✅ LocationIQ resolved: ${best.display_name}`);
 
     return {
-      latitude,
-      longitude,
-      fullPlaceName,
+      latitude: Number(best.lat),
+      longitude: Number(best.lon),
+      fullPlaceName: best.display_name
     };
+
   } catch (error: any) {
     if (axios.isAxiosError(error)) {
-      console.error(
-        `❌ LocationIQ request failed (${error.response?.status}):`,
-        error.response?.data
-      );
+      console.error(`❌ LocationIQ request failed:`, error.response?.data);
     } else {
       console.error(`❌ LocationIQ unexpected error:`, error);
     }
     return null;
   }
 };
+
 
 
 export const parseSearchQuery = async (req: Request, res: Response) => {

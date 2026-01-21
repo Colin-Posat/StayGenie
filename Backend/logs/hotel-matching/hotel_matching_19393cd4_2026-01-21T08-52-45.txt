@@ -1,0 +1,60 @@
+
+=== HOTEL MATCHING PROMPT LOG ===
+Search ID: 19393cd4-e086-4902-a3ba-8883cb9bf790
+Timestamp: 2026-01-21T08:52:45.297Z
+User Query: Hotels in Los Angeles with rooftop pools
+Destination: Los Angeles, Los Angeles County, California, USA
+Hotel Count: 9
+Character Count: 5779
+Estimated Tokens: ~1445
+
+=== PROMPT CONTENT ===
+USER REQUEST: "Hotels in Los Angeles with rooftop pools"
+STAY: 3 nights
+
+🎯 RANKING PRIORITY ORDER:
+1. MATCH USER REQUEST: "Hotels in Los Angeles with rooftop pools" (Most Important)
+2. Distance from Los Angeles, California, United States (if relevant to search!) MAKE SURE THE HOTEL IS IN THE CITY/PLACE THE USER WANTS
+2. Location quality and convenience 
+3. Star rating and overall quality
+4. Value for money
+
+📋 STEP-BY-STEP MATCHING PROCESS:
+1. READ AI SEARCH CONTEXT carefully: "Hotels in Los Angeles with rooftop pools"
+3. Match specific amenities mentioned (rooftop bar, infinity pool, spa, gym, etc.)
+4. Match vibe/style (romantic, family-friendly, business, boutique, modern, etc.)
+5. RANK by relevance to the complete AI search context, NOT by list position
+
+🔍 KEYWORD MATCHING EXAMPLES:
+- Context: "hotels under $200 per night with rooftop bar" → Price < $200 AND rooftop bar
+- Context: "luxury hotels over $400 per night" → Price > $400 AND luxury features
+- Context: "romantic hotels with infinity pool" → Romantic amenities AND infinity pool
+- Context: "cool boutique hotels" → Boutique style, unique character
+
+⚠️ CRITICAL RULES:
+- IGNORE the order hotels appear in the list - analyze content only
+- You MUST select exactly 15 hotels using their exact names from the list
+- Base rankings on how well each hotel matches "Hotels in Los Angeles with rooftop pools"
+- If specific amenities mentioned, hotels MUST have those amenities to rank high
+- PRIORITIZE HOTELS THAT HAVE LISTED FEATURES THAT SAY WHAT THE USER IS ASKING FOR (eg. prioritze hotels that have rooftop bar over rooftop pool if user explocitly asked for rooftop bar)
+
+📝 REQUIRED OUTPUT FORMAT:
+1. [exact hotel name from list] | [match percentage 1-100]%
+2. [exact hotel name from list] | [match percentage 1-100]%
+3. [exact hotel name from list] | [match percentage 1-100]%
+...continue through 15
+
+HOTELS AVAILABLE:
+1: AC Hotel by Marriott Los Angeles South Bay (Los Angeles, us) | $300/night | 12.0mi from Los Angeles, California, United States | rooms City ViewsOutdoor Pool gymGuests relax unwind outdoor pool stay active gym. The terrace perfect spot to city views sipping refreshing drink.Dining Entertainment OptionsIndulge exquisite meals on-site restaurant grab drink bar. With city views backdrop, dining socializing hotel become | 
+2: Hyatt Regency Los Angeles International Airport (Los Angeles, us) | $179/night | 11.5mi from Los Angeles, California, United States | Modern Design Rooms Free 24-Hour Transfer Service comfort convenience Hyatt Regency Los Angeles International Airport. large rooms mid-century modern design, free WiFi, 24-hour transfer service to LAX.Diverse Dining Options unity laIndulge culinary journey unity la, hotel's onsite restaurant | 
+3: Hampton Inn Los Angeles Airport (Los Angeles, us) | $215/night | 10.6mi from Los Angeles, California, United States | Convenient LocationLocated Los Angeles, Wingate Wyndham LAX prime spot both leisure business travelers. With near airport key attractions, exploring city breeze.Modern AmenitiesEnjoy modern comforts every room, from flat-screen TVs to free wifi. Start day right free breakfast stay active gym. The | 
+4: Hilton Los Angeles Airport (Los Angeles, us) | $183/night | 10.9mi from Los Angeles, California, United States | Convenient Airport Shuttle ServiceBenefit from free 24-hour shuttle service to Los Angeles International Airport, ensuring stress-free start end to trip.Diverse Dining OptionsIndulge variety of culinary s 4 food venues to choose from, including American cuisine Café northern Italian dishes | 
+5: Sonesta Los Angeles Airport LAX (Los Angeles, US) | $138/night | 11.2mi from Los Angeles, California, United States | Welcome to Sonesta Los Angeles Airport LAX, comfort meets convenience moments from bustling heart of Los Angeles!Rejuvenating AmenitiesDive into sparkling outdoor pool stay active 24-hour gym. With complimentary Wi-Fi gift shop access, every need catered for.Culinary DelightsSavor American dishes | 
+6: The Westin Los Angeles Airport (Los Angeles, us) | $204/night | 10.7mi from Los Angeles, California, United States | Stay Convenient AmenitiesStylish roomss: Each guest room Westin Los Angeles Airport equipped flat-screen cable TV, oversized desk, free boutique toiletries comfortable stay.Delicious Dining Options: American cuisine Daily Grill restaurant located lobby, offering variety of dishes from Certified | 
+7: Hilton Garden Inn LAX Los Angeles Airport (Los Angeles, us) | $152/night | 10.5mi from Los Angeles, California, United States | Convenient LocationLocated Interstate 405 short drive from Los Angeles International Airport, hotel easy access to vibrant city of Los Angeles. AmenitiesEnjoy complimentary continental breakfast, dine on-site restaurant, unwind cocktail lounge, take advantage of other amenities during stay.Nearby | 
+8: Hampton Inn Los Angeles Int'l Airport/Hawthorne (Los Angeles, us) | $166/night | 10.6mi from Los Angeles, California, United States | Modern AmenitiesFeaturing indoor pool, gym, free WiFi, Hampton Inn Los Angeles Int'l Airport/Hawthorne comfortable stay. Each room includes LCD HD TV, microwave, refrigerator, coffee machine convenience.Relaxation ConvenienceGuests unwind hot tub make use of 24-hour reception. Meeting facilities, | 
+9: Sheraton Gateway Los Angeles Hotel (Los Angeles, us) | $212/night | 11.3mi from Los Angeles, California, United States | Modern Hotel Complimentary Shuttle ServiceConvenient Amenities Relaxing StayThis modern hotel free 24-hour shuttle service to Los Angeles International Airport, making travel breeze guests. After busy day of exploring city, unwind outdoor heated pool delicious meal on-site dining | 
+
+REMEMBER: Always select 15 hotels using exact names from the list above.
+
+=== END LOG ===

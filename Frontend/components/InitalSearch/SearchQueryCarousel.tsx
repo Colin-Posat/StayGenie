@@ -319,18 +319,19 @@ const HotelCard: React.FC<HotelCardProps> = ({ hotel, onPress, index }) => {
 
   // UPDATED: Now opens booking link instead of Google Maps
   const handlePress = async () => {
-    try {
-      const bookingLink = generateBookingDeepLink(hotel);
-      console.log(`🏨 Opening booking link in-app: ${bookingLink}`);
-      await openInAppBrowser(bookingLink);
-      onPress(); // Still call the original onPress for any additional functionality
-    } catch (error) {
-      console.error('Error opening booking link:', error);
-      Alert.alert('Unable to Open Booking', 'Please check your internet connection and try again.', [
-        { text: 'OK', onPress: () => onPress() },
-      ]);
-    }
-  };
+  try {
+    const bookingLink = generateBookingDeepLink(hotel);
+    console.log(`🏨 Opening booking link externally: ${bookingLink}`);
+    const { Linking } = require('react-native');
+    await Linking.openURL(bookingLink);
+    onPress(); // Still call the original onPress for any additional functionality
+  } catch (error) {
+    console.error('Error opening booking link:', error);
+    Alert.alert('Unable to Open Booking', 'Please check your internet connection and try again.', [
+      { text: 'OK', onPress: () => onPress() },
+    ]);
+  }
+};
 
   const handleImageLoadStart = () => {
     setImageLoading(true);

@@ -1,0 +1,53 @@
+
+=== HOTEL MATCHING PROMPT LOG ===
+Search ID: 1edae380-b59f-4bae-a2d9-db70e49f027e
+Timestamp: 2026-01-20T20:39:52.374Z
+User Query: Ski hotels in Aspen with panoramic windows
+Destination: Aspen, Pitkin County, Colorado, USA
+Hotel Count: 2
+Character Count: 2753
+Estimated Tokens: ~689
+
+=== PROMPT CONTENT ===
+USER REQUEST: "Ski hotels in Aspen with panoramic windows"
+STAY: 3 nights
+
+🎯 RANKING PRIORITY ORDER:
+1. MATCH USER REQUEST: "Ski hotels in Aspen with panoramic windows" (Most Important)
+2. Distance from Aspen, Colorado, United States (if relevant to search!) MAKE SURE THE HOTEL IS IN THE CITY/PLACE THE USER WANTS
+2. Location quality and convenience 
+3. Star rating and overall quality
+4. Value for money
+
+📋 STEP-BY-STEP MATCHING PROCESS:
+1. READ AI SEARCH CONTEXT carefully: "Ski hotels in Aspen with panoramic windows"
+3. Match specific amenities mentioned (rooftop bar, infinity pool, spa, gym, etc.)
+4. Match vibe/style (romantic, family-friendly, business, boutique, modern, etc.)
+5. RANK by relevance to the complete AI search context, NOT by list position
+
+🔍 KEYWORD MATCHING EXAMPLES:
+- Context: "hotels under $200 per night with rooftop bar" → Price < $200 AND rooftop bar
+- Context: "luxury hotels over $400 per night" → Price > $400 AND luxury features
+- Context: "romantic hotels with infinity pool" → Romantic amenities AND infinity pool
+- Context: "cool boutique hotels" → Boutique style, unique character
+
+⚠️ CRITICAL RULES:
+- IGNORE the order hotels appear in the list - analyze content only
+- You MUST select exactly 15 hotels using their exact names from the list
+- Base rankings on how well each hotel matches "Ski hotels in Aspen with panoramic windows"
+- If specific amenities mentioned, hotels MUST have those amenities to rank high
+- PRIORITIZE HOTELS THAT HAVE LISTED FEATURES THAT SAY WHAT THE USER IS ASKING FOR (eg. prioritze hotels that have rooftop bar over rooftop pool if user explocitly asked for rooftop bar)
+
+📝 REQUIRED OUTPUT FORMAT:
+1. [exact hotel name from list] | [match percentage 1-100]%
+2. [exact hotel name from list] | [match percentage 1-100]%
+3. [exact hotel name from list] | [match percentage 1-100]%
+...continue through 15
+
+HOTELS AVAILABLE:
+1: Aspen Meadows Resort (Aspen, us) | $1983/night | 0.8mi from Aspen, Colorado, United States | roomssThe Aspen Meadows Resort spacious all-suite roomss modern amenities like wireless internet access, mini-refrigerators, flat-screen TVs. The rooms feature sofa beds iPod docking stations ultimate comfort.Recreational Activitiesin Colorado Rocky Mountains, guests plethora of activities | 
+2: The Little Nell (Aspen, US) | $4885/night | 0.5mi from Aspen, Colorado, United States | ultimate alpine getaway Little Nell, meets adventure heart of Aspen.Unmatched RelaxationIndulge serenity full-service spa, offering rejuvenating massages tranquil atmosphere. After day slopes, unwind lavish outdoor pool, perfect après-ski relaxation.Culinary DelightsSavor exquisite American cuisine | 
+
+REMEMBER: Always select 15 hotels using exact names from the list above.
+
+=== END LOG ===

@@ -1,12 +1,13 @@
 // Frontend/src/contexts/AuthContext.tsx - Fully RN Firebase (Auth + Firestore) with Web Testing Mode
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
-import { Platform } from 'react-native';
+import { Platform, Alert } from 'react-native';
 import auth from '@react-native-firebase/auth';
 import firestore from '@react-native-firebase/firestore';
 import type { FirebaseAuthTypes } from '@react-native-firebase/auth';
 
 // Expo Auth imports
 import { GoogleSignin } from '@react-native-google-signin/google-signin';
+import { appleAuth } from '@invertase/react-native-apple-authentication';
 
 // Web mode detection
 const IS_WEB = Platform.OS === 'web';
@@ -104,8 +105,10 @@ interface AuthContextType {
   signIn: (email: string, password: string) => Promise<void>;
   signUp: (email: string, password: string) => Promise<void>;
   signInWithGoogle: () => Promise<void>;
+  signInWithApple: () => Promise<void>;
   signOut: () => Promise<void>;
   sendPasswordReset: (email: string) => Promise<void>;
+  deleteAccount: () => Promise<void>;
   
   // Favorites actions
   addFavoriteHotel: (hotel: FavoriteHotel) => Promise<void>;
@@ -542,6 +545,79 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }
   };
 
+  const signInWithApple = async (): Promise<void> => {
+    // WEB MODE - Mock success
+    if (IS_WEB) {
+      console.log('[Web] Mock Apple sign in');
+      return;
+    }
+
+    // iOS only - Android doesn't support Apple Sign-In natively
+    if (Platform.OS !== 'ios') {
+      throw new Error('Apple Sign-In is only available on iOS devices');
+    }
+
+    try {
+      setIsLoading(true);
+
+      // Start the sign-in request
+      const appleAuthRequestResponse = await appleAuth.performRequest({
+        requestedOperation: appleAuth.Operation.LOGIN,
+        requestedScopes: [appleAuth.Scope.EMAIL, appleAuth.Scope.FULL_NAME],
+      });
+
+      // Ensure Apple returned a user identityToken
+      if (!appleAuthRequestResponse.identityToken) {
+        throw new Error('Apple Sign-In failed - no identity token returned');
+      }
+
+      console.log('✅ Got credentials from Apple');
+
+      // Create a Firebase credential from the response
+      const { identityToken, nonce } = appleAuthRequestResponse;
+      const appleCredential = auth.AppleAuthProvider.credential(identityToken, nonce);
+
+      // Sign the user in with the credential
+      const userCredential = await auth().signInWithCredential(appleCredential);
+      
+      // Apple may not provide email on subsequent logins, so check if we need to update
+      if (appleAuthRequestResponse.email) {
+        console.log('✅ Apple provided email:', appleAuthRequestResponse.email);
+      }
+
+      // If Apple provided full name, update the Firebase profile
+      if (appleAuthRequestResponse.fullName) {
+        const { givenName, familyName } = appleAuthRequestResponse.fullName;
+        if (givenName || familyName) {
+          const displayName = [givenName, familyName].filter(Boolean).join(' ');
+          await userCredential.user.updateProfile({ displayName });
+          console.log('✅ Updated profile with Apple name:', displayName);
+        }
+      }
+
+      console.log('✅ Firebase sign in with Apple successful');
+
+    } catch (error: any) {
+      console.error('Apple sign in error:', error);
+      
+      if (error.code === appleAuth.Error.CANCELED) {
+        throw new Error('Apple Sign-In was cancelled');
+      } else if (error.code === appleAuth.Error.FAILED) {
+        throw new Error('Apple Sign-In failed. Please try again.');
+      } else if (error.code === appleAuth.Error.INVALID_RESPONSE) {
+        throw new Error('Invalid response from Apple Sign-In');
+      } else if (error.code === appleAuth.Error.NOT_HANDLED) {
+        throw new Error('Apple Sign-In could not be handled');
+      } else if (error.code === appleAuth.Error.UNKNOWN) {
+        throw new Error('An unknown error occurred with Apple Sign-In');
+      } else {
+        throw new Error(`Failed to sign in with Apple: ${error.message}`);
+      }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   // Sign out
   const signOutUser = async (): Promise<void> => {
     // WEB MODE - Mock success
@@ -583,6 +659,67 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         default:
           throw new Error('Failed to send password reset email');
       }
+    }
+  };
+
+  // Delete account
+  const deleteAccount = async (): Promise<void> => {
+    // WEB MODE - Mock success
+    if (IS_WEB) {
+      console.log('[Web] Mock account deletion');
+      webMockFavorites = [];
+      webMockRecentSearches = [];
+      setUser(null);
+      return;
+    }
+
+    // NATIVE MODE
+    if (!firebaseUser || !user) {
+      throw new Error('Must be signed in to delete account');
+    }
+
+    try {
+      setIsLoading(true);
+
+      // Delete all favorite hotels subcollection
+      const favoritesSnapshot = await firestore()
+        .collection('users')
+        .doc(firebaseUser.uid)
+        .collection('favoriteHotels')
+        .get();
+      
+      const batch = firestore().batch();
+      favoritesSnapshot.forEach((doc) => {
+        batch.delete(doc.ref);
+      });
+      await batch.commit();
+      console.log('✅ Deleted favorite hotels subcollection');
+
+      // Delete user document
+      await firestore()
+        .collection('users')
+        .doc(firebaseUser.uid)
+        .delete();
+      console.log('✅ Deleted user document');
+
+      // Delete Firebase Auth account
+      await firebaseUser.delete();
+      console.log('✅ Deleted Firebase Auth account');
+
+      // Clear local state
+      setUser(null);
+      setFirebaseUser(null);
+      
+    } catch (error: any) {
+      console.error('Delete account error:', error);
+      
+      if (error.code === 'auth/requires-recent-login') {
+        throw new Error('For security, please sign in again before deleting your account');
+      }
+      
+      throw new Error('Failed to delete account. Please try again.');
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -811,8 +948,10 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     signIn,
     signUp,
     signInWithGoogle,
+    signInWithApple,
     signOut: signOutUser,
     sendPasswordReset,
+    deleteAccount,
     addFavoriteHotel,
     removeFavoriteHotel,
     toggleFavoriteHotel,

@@ -1,0 +1,92 @@
+
+=== HOTEL MATCHING PROMPT LOG ===
+Search ID: 5cf13f66-cad8-4d30-a27f-84f7262f1bc4
+Timestamp: 2026-01-21T04:43:40.173Z
+User Query: Cliffside hotels in Santorini with infinity pools and sunset views
+Destination: Santorini, Thira Municipal Unit, Municipality of Thira, Thira Regional Unit, South Aegean, Aegean, Greece
+Hotel Count: 41
+Character Count: 17636
+Estimated Tokens: ~4409
+
+=== PROMPT CONTENT ===
+USER REQUEST: "Cliffside hotels in Santorini with infinity pools and sunset views"
+STAY: 3 nights
+
+🎯 RANKING PRIORITY ORDER:
+1. MATCH USER REQUEST: "Cliffside hotels in Santorini with infinity pools and sunset views" (Most Important)
+2. Distance from Santorini, Greece (if relevant to search!) MAKE SURE THE HOTEL IS IN THE CITY/PLACE THE USER WANTS
+2. Location quality and convenience 
+3. Star rating and overall quality
+4. Value for money
+
+📋 STEP-BY-STEP MATCHING PROCESS:
+1. READ AI SEARCH CONTEXT carefully: "Cliffside hotels in Santorini with infinity pools and sunset views"
+3. Match specific amenities mentioned (rooftop bar, infinity pool, spa, gym, etc.)
+4. Match vibe/style (romantic, family-friendly, business, boutique, modern, etc.)
+5. RANK by relevance to the complete AI search context, NOT by list position
+
+🔍 KEYWORD MATCHING EXAMPLES:
+- Context: "hotels under $200 per night with rooftop bar" → Price < $200 AND rooftop bar
+- Context: "luxury hotels over $400 per night" → Price > $400 AND luxury features
+- Context: "romantic hotels with infinity pool" → Romantic amenities AND infinity pool
+- Context: "cool boutique hotels" → Boutique style, unique character
+
+⚠️ CRITICAL RULES:
+- IGNORE the order hotels appear in the list - analyze content only
+- You MUST select exactly 15 hotels using their exact names from the list
+- Base rankings on how well each hotel matches "Cliffside hotels in Santorini with infinity pools and sunset views"
+- If specific amenities mentioned, hotels MUST have those amenities to rank high
+- PRIORITIZE HOTELS THAT HAVE LISTED FEATURES THAT SAY WHAT THE USER IS ASKING FOR (eg. prioritze hotels that have rooftop bar over rooftop pool if user explocitly asked for rooftop bar)
+
+📝 REQUIRED OUTPUT FORMAT:
+1. [exact hotel name from list] | [match percentage 1-100]%
+2. [exact hotel name from list] | [match percentage 1-100]%
+3. [exact hotel name from list] | [match percentage 1-100]%
+...continue through 15
+
+HOTELS AVAILABLE:
+1: Astro Palace Hotel & Spa (Santorini, GR) | $195/night | 1.2mi from Santorini, Greece | Welcome to Astro Palace Hotel & Spa, sanctuary heart of Santorini.Spa RetreatIndulge rejuvenating treatments full-service spa. Unwind soothing massages, uplifting body treatments, refreshing facials designed to melt stress away.Culinary DelightsSavor authentic Greek cuisine Pleiades, one of two | 
+2: Amerisa Suites & Villa (Santorini, GR) | $151/night | 1.8mi from Santorini, Greece | perfect blend of comfort convenience Amerisa Suites & Villa picturesque Santorini.Rejuvenate RelaxationUnwind tranquil hot tub seasonal outdoor pool, offering serene escape day of exploration.Elegant roomssOur 14 uniquely decorated guestrooms provide cozy haven minibars espresso makers, ensuring | 
+3: Galatia Villas (Santorini, GR) | $40/night | 1.7mi from Santorini, Greece | Relaxation RecreationTake advantage of recreation opportunities including spa tub seasonal outdoor pool. This hotel complimentary wireless internet access, television common area, tour/ticket assistance.Convenient ServicesTake advantage of hotel's room svc (during limited hours). Buffet breakfasts | 
+4: Porto Fira Suites (Fira, gr) | $448/night | 1.6mi from Santorini, Greece | Panoramic Views Unique Suites breathtaking panoramic views of Fira Bay volcano from traditional suites perched cliff's edge. Each suite uniquely shaped king size beds furnished balcony terrace enjoying Santorini's famous sunsets.Convenient Amenities ServicesEnjoy modern conveniences such wireless | 
+5: Hotel Thireas (Fira, gr) | $251/night | 1.6mi from Santorini, Greece | Breathtaking Caldera ViewsHotel Thireas modern rooms facility traditional touch, situated edge of caldera. stunning views of volcano sea from room's balcony.luxuryRelax outdoor pool stay connected free wireless internet. Each room equipped air-conditioning, satellite TV, mini bar, direct phone | 
+6: Suites of the Gods Cave Spa Hotel (Megalokhori, gr) | $183/night | 2.2mi from Santorini, Greece | Breathtaking Views rooms stunning views of caldera, volcano, Santorini from boutique hotel. Individually decorated suites offer comfort pleasure, option to breakfast in-room terrace. Spa Facilities Gastronomic DelightsIndulge complimentary à la carte breakfast access to spa facilities. With bar | 
+7: Ancient Thera Apartments (Santorini, GR) | $155/night | 2.8mi from Santorini, Greece | Relax Pool - Take dip seasonal outdoor pool refreshing break.free breakfast - Start day right daily continental breakfast served on-site.Convenient Amenities - Feel home one of air-conditioned rooms kitchenettes private balconies.Book now to best of Santorini Ancient Thera Apartments! | 
+8: Emmanouela Studios (Santorini, GR) | $62/night | 0.6mi from Santorini, Greece | Spectacular Views from TerraceRelish stunning views from terrace Emmanouela Studios Santorini, soak beauty of island enjoying stay.Convenient Amenities ServicesBenefit from complimentary wireless internet access, tour/ticket assistance, room svc, continental breakfasts.Comfortable Guestrooms Modern | 
+9: De Sol Spa Hotel (Santorini, GR) | $159/night | 1.3mi from Santorini, Greece | Spa ServicesIndulge massages, body treatments, facials full-service spa, ensuring relaxing stay.Gourmet Dining Mediterranean cuisine ocean view Restaurant De Sol Hotel 24-hour room svc convenience. AmenitiesTake advantage of outdoor pool, sauna, complimentary buffet breakfast, concierges truly | 
+10: Dilino (Kamari, gr) | $457/night | 2.6mi from Santorini, Greece | Prime Location Near BeachesDilino hotel Kamari 2-star rooms 90 meters from Kamari Beach. easy access to Agia Paraskevi Beach other nearby attractions like Ancient Thera Santorini Port.Comfortable Rooms ViewsRelax rooms balconies offering stunning sea views. Each room modern amenities including | 
+11: Hill Suites (Fira, gr) | $143/night | 1.7mi from Santorini, Greece | Cave House Suitescentral Fira, Hill Suites unique rooms terrace overlooking stunning surroundings. Each suite designed cave house, providing cozy intimate atmosphere guests to enjoy.Modern AmenitiesEquipped AC, satellite flat-screen TV, fridge, kettle, suites ensure comfortable stay all necessary | 
+12: Pelican Hotel (Fira, gr) | $111/night | 1.5mi from Santorini, Greece | Prime Location Fira SquarePelican Hotel, heart of Santorini's vibrant Fira square, unrivaled convenience proximity to iconic caldera, shops, transportation hubs.Modern Amenities DiningIndulge comfort rooms equipped free Wi-Fi, LED/LCD TV, AC. The garden bar-restaurant serves delectable meals | 
+13: Ampelos Executive Houses (Santorini, GR) | $106/night | 1.4mi from Santorini, Greece | luxuryTake views from terrace garden make use of complimentary wireless internet access. Additional include hair salon, tour/ticket assistance, barbecue grills.Convenient ServicesEnjoy to-go breakfasts daily make use of express check-out, dry cleaning/laundry services, luggage storage. A roundtrip | 
+14: Trieris Villa & Suites (Santorini, GR) | $608/night | 1.6mi from Santorini, Greece | luxuryIndulge onsite massages relax outdoor pool. complimentary wireless internet access tour assistance.Delicious Breakfast OptionsStart day cooked-to-order breakfast served daily noon.Convenient Locationcentral Santorini, minute drive from Santorini Caldera near various attractions museums.Book | 
+15: Aelia Luxury Suites Thalassa (Santorini, GR) | $90/night | 0.3mi from Santorini, Greece | Aelia Suites Thalassa, ocean views meet exquisite comfort.Relaxation WellnessUnwind full-service spa, offering soothing massages promise to rejuvenate spirit body day of exploration.Culinary DelightsSavor delectable dishes on-site restaurant, grab snack from café, unwind favorite drink bar/lounge, | 
+16: Pancratium villas & suites (Santorini, GR) | $119/night | 4.8mi from Santorini, Greece | Amazing ViewsTake breathtaking views from terrace garden of Pancratium villas & suites, offering serene picturesque.Complimentary AmenitiesEnjoy complimentary wireless internet access throughout stay start day delicious cooked-to-order breakfast served daily.Convenient FacilitiesBenefit from | 
+17: White Element (Karterados, gr) | $56/night | 0.8mi from Santorini, Greece | Infinity Pool Stunning Sea ViewsModern Amenities Comfortable roomsThe White Element aparthotel air-conditioned units flat-screen TVs, ensuites, free WiFi. Some rooms feature terrace guests to picturesque surroundings. Bed linen towels provided utmost comfort during stay.Convenient Location Nearby | 
+18: The Best (Perissa, gr) | $54/night | 3.8mi from Santorini, Greece | roomsThe Best range of fully equipped rooms studios, ensuring comfortable stay tailored to needs.Relaxation RefreshmentUnwind during summer season pool refreshing cocktail from pool bar, perfect leisurely day sun.Convenient LocationWith bus stop mere 100 meters away easy access to Perissa's shops | 
+19: DELION VIEW HOTEL (Fira, gr) | $229/night | 1.6mi from Santorini, Greece | Stunning Sea Views roomssDELION VIEW HOTEL Fira stay breathtaking sea views from every room. the convenience of terrace, free WiFi, bar, perfect unwinding day of exploring Santorini. in RelaxationTake dip indoor pool relax comfortable seating area room. The hotel's concierge room svc ensure | 
+20: Platia (Fira, gr) | $86/night | 1.5mi from Santorini, Greece | roomssPlatia modern, air-conditioned rooms balconies boasting town views. Each room equipped smart TV, coffee machine, kettle, fridge. The spacious bathrooms feature walk-in showers, hairdryers, slippers, bathrobes, toiletries.Breathtaking ViewsGuests stunning panoramic views from roof terrace, | 
+21: Suites of the Gods Cave Spa (Santorini, GR) | $156/night | 2.6mi from Santorini, Greece | Spa ServicesIndulge massages, body treatments, facials spa truly relaxing.Recreational AmenitiesTake dip seasonal outdoor pool surroundings bicycles available rent.Fine Dining Entertainment OptionsSavor delicious meals restaurant, relax drink bar poolside bar, complimentary buffet breakfast | 
+22: The Noverian Bios Santorini (Santorini, GR) | $94/night | 1.4mi from Santorini, Greece | Spa ServicesIndulge rejuvenating massages spa treatments full-service spa.Gourmet Dining delectable meals hotel's restaurant convenience of in-room dining options.Modern Comfort EntertainmentRelax stylish rooms equipped Smart televisions, complimentary Wi-Fi, private balconies. and tranquility | 
+23: Astro Palace Hotel & Suites (Fira, gr) | $151/night | 1.3mi from Santorini, Greece | rooms Spectacular ViewsAstro Palace Hotel & Suites designed rooms modern amenities breathtaking views of Aegean Sea. Each room large balcony terrace, satellite LCD TV, free Wi-Fi, providing guests comfortable stay.Wellness RelaxationGuests unwind hotel's wellness centre, complete gym, hot tub, | 
+24: Nefeles Luxury Suites (Fira, gr) | $434/night | 1.7mi from Santorini, Greece | Boutique Hotel Breathtaking ViewsStunning Views: mesmerizing vistas of volcano Aegean Sea from Caldera cliff location Fanari. Suites: yourself natural beauty experiencing traditional living well-equipped suites amenities like DVD/CD players, cable TV, mini bars, private balconies.Relaxation | 
+25: Tataki Family Hotel (Santorini, GR) | $62/night | 1.6mi from Santorini, Greece | luxuryIndulge body treatments facials, complimentary Wi-Fi concierges.Convenient ServicesTake advantage of dry cleaning/laundry services luggage storage during stay.Comfortable roomssUnwind one of 13 air-conditioned rooms minibars Smart televisions, along free Wi-Fi cable TV. | 
+26: Delion View Hotel (Santorini, GR) | $200/night | 1.6mi from Santorini, Greece | Recreational Amenities: indoor pool rent bicycles delightful.free breakfast: Start day full breakfast served daily.Convenient Location: Stay close to various attractions like Santorini Caldera museums.To book stay Delion View Hotel Santorini's charm, visit website now! | 
+27: Paradise Resort (Santorini, GR) | $274/night | 4.7mi from Santorini, Greece | Spa Services Outdoor ActivitiesPamper yourself visit to spa massages facials. the seasonal outdoor pool rent bicycles leisure activities.Delectable Dining Options EntertainmentSavor Greek cuisine Paradise restaurant view. Unwind drink bar/lounge poolside bar. the arcade/game room | 
+28: Villa Manos (Santorini, GR) | $53/night | 0.5mi from Santorini, Greece | Recreational AmenitiesIndulge relaxing spa tub, take refreshing dip outdoor pool, area rented bicycles.Dining Drinking OptionsSavor delicious meals hotel's restaurant room svc. Unwind drink bar/lounge poolside bar.Convenient Facilities ServicesBenefit from helpful amenities like multilingual staff, | 
+29: On the Cliff (Santorini, GR) | $188/night | 1.6mi from Santorini, Greece | Gorgeous Terrace ViewsImmerse yourself private spa tubs, plasma televisions, terrace offering breathtaking views. Dining ServicesIndulge delicious meals on-site restaurant, room svc, unwind bar/lounge. Take advantage of limo service, express check-in/out, free breakfast.Central Location Nearby | 
+30: Ethos Vegan Suites (Santorini, GR) | $133/night | 1.6mi from Santorini, Greece | Unique Amenities: complimentary wireless internet access concierges during stay. Rent bicycle to area ease.Well-Appointed Rooms:Relax one of individually decorated guestrooms bedding Smart televisions. Unwind private furnished balcony.Convenient Location:Centrally located Santorini, near popular | 
+31: Nemesis (Santorini, GR) | $106/night | 1.3mi from Santorini, Greece | luxuryEnjoy access to complimentary wireless internet, concierges, room svc during limited hours.Convenient LocationLocated 1-minute drive from Santorini Caldera near popular attractions such Museum of Prehistoric Thira.Comfortable roomssRelax one of 8 air-conditioned rooms private balconies, LED | 
+32: Ira Hotel & Spa - Adults Only (Santorini, GR) | $130/night | 2.1mi from Santorini, Greece | Spa massages, body treatments, facials on-site spa.Recreational AmenitiesEnjoy outdoor pool, steam room, complimentary bicycle rentals.Convenient ServicesBenefit from free Wi-Fi, room svc, daily continental breakfast.Pamper yourself Ira Hotel & Spa - Adults located centrally Santorini. With range | 
+33: Amerisa Suites & Villa (Fira, gr) | $125/night | 1.8mi from Santorini, Greece | Breathtaking Views of Aegean SeaLocated hill east side of Fira, Amerisa Suites & Villa stunning panoramic views of Aegean Sea. The property's recent total renovation ensures modern comfortable stay guests.luxuryGuests Amerisa free wireless internet, satellite TV, AC all units. Some roomss offer | 
+34: Aqua Luxury Suites (Santorini, GR) | $286/night | 2.5mi from Santorini, Greece | Spa AmenitiesIndulge massages, body treatments, facials on-site spa. complimentary Wi-Fi, concierges, wedding facilities. The shuttle service take to nearby beach shopping center.Exquisite Dining room svcDine Mediterranean cuisine Aqua Suites restaurant ocean view. room svc available during limited | 
+35: Aelia Luxury Suites (Santorini, GR) | $88/night | 0.3mi from Santorini, Greece | Body Treatments FacialsIndulge rejuvenating body treatments facials during stay. Dining Relaxation OptionsRelish Greek cuisine AELIA RESTO garden view, room svc, unwind bar/lounge, lounge poolside bar.Convenient Amenities ServicesBenefit from free breakfast, 24h desk, airport shuttle, parking.To | 
+36: Hotel Santorini (Santorini, GR) | $64/night | 1.5mi from Santorini, Greece | At Hotel Santorini, delight prime location heart of Santorini. Unwind one of 24 air-conditioned rooms, each private balcony. Recharge satisfying meal on-site restaurant nearby attractions such Museum of Prehistoric Thira. Guests complimentary Wi-Fi, concierges, bicycle rentals. Convenience key | 
+37: Irigeneia Hotel (Perissa, gr) | $94/night | 3.6mi from Santorini, Greece | Charming Cycladic Style rooms: charm of Cycladic architecture Irigeneia Hotel heart of Perissa Village. The air-conditioned rooms suites traditional decor offer cozy retreat, each private balcony terrace.Convenient Amenities:Relax unwind modern amenities such flat-screen TV, minibar, ensuite every | 
+38: Sunny Days (Fira, GR) | $77/night | 1.7mi from Santorini, Greece | luxurySunny Days range of to enhance stay. From seasonal outdoor pool to shared lounge terrace, relaxation comfort throughout visit.Modern ComfortsEach unit Sunny Days designed modern comforts mind. AC, flat-screen TV, free WiFi, more every room. Some units boast balconies stunning sea views truly | 
+39: Anna Pension (Santorini, GR) | $63/night | 0.6mi from Santorini, Greece | Recreation Amenities Terrace: relaxation outdoor pool take scenic view from terrace.Complimentary Services Room complimentary wireless internet on-demand room svc during limited hours. Each of 16 air-conditioned rooms includes refrigerator, ensuite toiletries, daily housekeeping.Convenient | 
+40: Dreams Luxury Suites (Santorini, GR) | $209/night | 2.3mi from Santorini, Greece | luxuryPamper yourself onsite massages, body treatments, facials. in complimentary cooked-to-order breakfast take advantage of room svc.Convenient ServicesEnjoy express check-in, express check-out, 24h desk. Complimentary wireless internet access free self-parking convenience.Elegant | 
+41: Thera Villas (Santorini, GR) | $451/night | 1.6mi from Santorini, Greece | Welcome to Thera Villas, serene sanctuary heart of Santorini.Recreational ParadiseImmerse yourself relaxing both outdoor indoor pools, providing perfect escape any time of year.Comfort Meets LuxuryEach of uniquely decorated apartments cozy fireplace, plush pillowtop beds, private furnished | 
+
+REMEMBER: Always select 15 hotels using exact names from the list above.
+
+=== END LOG ===

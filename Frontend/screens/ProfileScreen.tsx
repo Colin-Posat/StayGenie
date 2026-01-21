@@ -1,5 +1,5 @@
-// ProfileScreen.tsx - Updated with TOS/Privacy Policy viewer
-import React, { useState, useRef, useEffect } from 'react';
+// ProfileScreen.tsx - Updated with equal weight sign-up buttons
+import React, { useState, useRef, useEffect, useCallback } from 'react';
 import {
   View,
   Text as RNText,
@@ -21,6 +21,7 @@ import EmailSignInModal from '../components/SignupLogin/EmailSignInModal';
 import ForgotPasswordModal from '../components/SignupLogin/ForgotPasswordModal';
 import HelpFeedbackModal from '../components/Profile/HelpFeedbackModal';
 import { Svg, Path } from 'react-native-svg';
+import { appleAuth } from '@invertase/react-native-apple-authentication';
 
 // Consistent color constants
 const TURQUOISE = '#1df9ff';
@@ -135,7 +136,7 @@ const ProfileScreen = () => {
   const [showLegalModal, setShowLegalModal] = useState(false);
 
   // Firebase auth
-  const { user, isAuthenticated, signOut: firebaseSignOut, signInWithGoogle } = useAuth();
+  const { user, isAuthenticated, signOut: firebaseSignOut, signInWithGoogle, signInWithApple, deleteAccount } = useAuth();
 
   const fadeAnimation = useRef(new Animated.Value(0)).current;
   const slideAnimation = useRef(new Animated.Value(30)).current;
@@ -186,6 +187,62 @@ const ProfileScreen = () => {
     }
   };
 
+  const handleDeleteAccount = async () => {
+    try {
+      if (Platform.OS === 'web') {
+        const ok = window.confirm(
+          'Are you sure you want to delete your account? This action cannot be undone. All your data including favorites and search history will be permanently deleted.'
+        );
+        if (!ok) return;
+        
+        await deleteAccount();
+        console.log('✅ Successfully deleted account (web)');
+        Alert.alert('Account Deleted', 'Your account has been permanently deleted.');
+        return;
+      }
+
+      Alert.alert(
+        'Delete Account',
+        'Are you sure you want to delete your account? This action cannot be undone.\n\nAll your data will be permanently deleted including:\n• Favorite hotels\n• Search history\n• Account information',
+        [
+          { text: 'Cancel', style: 'cancel' },
+          { 
+            text: 'Delete Account',
+            style: 'destructive',
+            onPress: async () => {
+              try {
+                await deleteAccount();
+                console.log('✅ Successfully deleted account');
+                Alert.alert('Account Deleted', 'Your account has been permanently deleted.');
+              } catch (error: any) {
+                console.error('❌ Delete account error:', error);
+                Alert.alert('Error', error.message || 'Failed to delete account');
+              }
+            }
+          }
+        ]
+      );
+    } catch (err) {
+      console.log('❌ Delete account error:', (err as any)?.message);
+      Alert.alert('Error', (err as any)?.message || 'Failed to delete account');
+    }
+  };
+
+
+
+const handleAppleSignIn = async () => {
+  try {
+    await signInWithApple();
+  } catch (e: any) {
+    Alert.alert(
+      'Sign In Failed',
+      e?.message || 'Unable to sign in with Apple. Please try again.'
+    );
+  }
+};
+
+
+  
   const handleGoogleSignUp = async () => {
     try {
       await signInWithGoogle();
@@ -195,6 +252,7 @@ const ProfileScreen = () => {
       Alert.alert('Sign Up Failed', 'Failed to sign up with Google. Please try again.');
     }
   };
+  
 
   const handleSwitchToSignUp = () => {
     setShowEmailSignInModal(false);
@@ -247,6 +305,19 @@ const ProfileScreen = () => {
   const handleHelpFeedback = () => {
     setShowHelpFeedbackModal(true);
   };
+
+  const handleAppleSignUp = useCallback(async () => {
+    try {
+      await signInWithApple();
+      console.log('✅ Apple sign up successful');
+    } catch (error: any) {
+      console.log('❌ Apple sign up error:', error.message);
+      // Don't show alert if user cancelled
+      if (!error.message.includes('cancelled')) {
+        Alert.alert('Sign Up Failed', 'Failed to sign up with Apple. Please try again.');
+      }
+    }
+  }, [signInWithApple]);
 
   const handleLegal = () => {
     setShowLegalModal(true);
@@ -365,74 +436,104 @@ const ProfileScreen = () => {
                 </View>
               </View>
 
-              {/* Buttons row */}
-              <View style={tw`flex-row gap-2`}>
-                {/* Sign Up with Email Button */}
-                <TouchableOpacity
-                  style={[
-                    tw`flex-1 px-3 py-3 rounded-xl flex-row items-center justify-center bg-white border border-gray-200`,
-                    {
-                      shadowColor: '#000',
-                      shadowOffset: {
-                        width: 0,
-                        height: 1,
-                      },
-                      shadowOpacity: 0.1,
-                      shadowRadius: 2,
-                      elevation: 3,
-                    }
-                  ]}
-                  onPress={() => setShowEmailSignUpModal(true)}
-                  activeOpacity={0.8}
-                >
-                  <View style={[
-                    tw`w-5 h-5 rounded-full items-center justify-center mr-2`,
-                    { backgroundColor: 'rgba(29, 249, 255, 0.15)' }
-                  ]}>
-                    <Ionicons
-                      name="mail-outline"
-                      size={12}
-                      color={TURQUOISE_DARK}
-                    />
-                  </View>
-                  <Text style={tw`text-sm font-medium text-gray-800`}>
-                    Sign Up
-                  </Text>
-                </TouchableOpacity>
+              {/* Sign Up Buttons - All equal weight */}
+              
+              {/* Sign Up with Email Button */}
+              <TouchableOpacity
+                style={[
+                  tw`px-3 py-3 rounded-xl flex-row items-center justify-center mb-2 bg-white border border-gray-200`,
+                  {
+                    shadowColor: '#000',
+                    shadowOffset: {
+                      width: 0,
+                      height: 1,
+                    },
+                    shadowOpacity: 0.1,
+                    shadowRadius: 2,
+                    elevation: 3,
+                  }
+                ]}
+                onPress={() => setShowEmailSignUpModal(true)}
+                activeOpacity={0.8}
+              >
+                <View style={[
+                  tw`w-5 h-5 rounded-full items-center justify-center mr-2`,
+                  { backgroundColor: 'rgba(29, 249, 255, 0.15)' }
+                ]}>
+                  <Ionicons
+                    name="mail-outline"
+                    size={12}
+                    color={TURQUOISE_DARK}
+                  />
+                </View>
+                <Text style={tw`text-sm font-medium text-gray-800`}>
+                  Sign Up with Email
+                </Text>
+              </TouchableOpacity>
 
-                {/* Sign Up with Google Button */}
-                <TouchableOpacity
-                  style={[
-                    tw`flex-1 px-3 py-3 rounded-xl flex-row items-center justify-center bg-white border border-gray-200`,
-                    {
-                      shadowColor: '#000',
-                      shadowOffset: {
-                        width: 0,
-                        height: 1,
-                      },
-                      shadowOpacity: 0.1,
-                      shadowRadius: 2,
-                      elevation: 3,
-                    }
-                  ]}
-                  onPress={handleGoogleSignUp}
-                  activeOpacity={0.8}
-                >
-                  <View style={[
-                    tw`w-5 h-5 rounded-full items-center justify-center mr-2`,
-                    { backgroundColor: 'rgba(66, 133, 244, 0.15)' }
-                  ]}>
-                    <Ionicons
-                      name="logo-google"
-                      size={12}
-                      color="#4285F4"
-                    />
-                  </View>
-                  <Text style={tw`text-sm font-medium text-gray-800`}>
-                    Google
-                  </Text>
-                </TouchableOpacity>
-              </View>
+              {/* Sign Up with Google Button */}
+              <TouchableOpacity
+                style={[
+                  tw`px-3 py-3 rounded-xl flex-row items-center justify-center mb-2 bg-white border border-gray-200`,
+                  {
+                    shadowColor: '#000',
+                    shadowOffset: {
+                      width: 0,
+                      height: 1,
+                    },
+                    shadowOpacity: 0.1,
+                    shadowRadius: 2,
+                    elevation: 3,
+                  }
+                ]}
+                onPress={handleGoogleSignUp}
+                activeOpacity={0.8}
+              >
+                <View style={[
+                  tw`w-5 h-5 rounded-full items-center justify-center mr-2`,
+                  { backgroundColor: 'rgba(66, 133, 244, 0.15)' }
+                ]}>
+                  <Ionicons
+                    name="logo-google"
+                    size={12}
+                    color="#4285F4"
+                  />
+                </View>
+                <Text style={tw`text-sm font-medium text-gray-800`}>
+                  Sign Up with Google
+                </Text>
+              </TouchableOpacity>
+
+           {Platform.OS === 'ios' && appleAuth.isSupported && (
+  <TouchableOpacity
+    style={[
+      tw`px-3 py-3 rounded-xl flex-row items-center justify-center mb-2 bg-white border border-gray-200`,
+      {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.1,
+        shadowRadius: 2,
+        elevation: 3,
+      }
+    ]}
+    onPress={handleAppleSignIn}
+    activeOpacity={0.8}
+  >
+    <View style={[
+      tw`w-5 h-5 rounded-full items-center justify-center mr-2`,
+      { backgroundColor: 'rgba(0,0,0,0.08)' }
+    ]}>
+      <Ionicons name="logo-apple" size={12} color="#000" />
+    </View>
+
+    <Text style={tw`text-sm font-medium text-gray-800`}>
+      Sign Up with Apple
+    </Text>
+  </TouchableOpacity>
+)}
+
+
+
 
               {/* Already have account link */}
               <TouchableOpacity
@@ -478,13 +579,24 @@ const ProfileScreen = () => {
           
           {/* Sign Out - Only for authenticated users */}
           {isAuthenticated && (
-            <MenuItem
-              icon="log-out-outline"
-              title="Sign Out"
-              subtitle="Sign out of your account"
-              onPress={handleSignOut}
-              isDestructive={true}
-            />
+            <>
+              <MenuItem
+                icon="log-out-outline"
+                title="Sign Out"
+                subtitle="Sign out of your account"
+                onPress={handleSignOut}
+                isDestructive={true}
+              />
+              
+              {/* Delete Account - Only for authenticated users */}
+              <MenuItem
+                icon="trash-outline"
+                title="Delete Account"
+                subtitle="Permanently delete your account and data"
+                onPress={handleDeleteAccount}
+                isDestructive={true}
+              />
+            </>
           )}
         </Animated.View>
 
@@ -745,10 +857,13 @@ const TermsContent = () => (
     <Text style={tw`font-bold`}>10. Modifications to Service{'\n'}</Text>
     We reserve the right to modify, suspend, or discontinue any aspect of StayGenie at any time without prior notice.{'\n\n'}
     
-    <Text style={tw`font-bold`}>11. Governing Law{'\n'}</Text>
+    <Text style={tw`font-bold`}>11. Account Termination{'\n'}</Text>
+    You may delete your account at any time through the Profile settings. Upon account deletion, all your data including favorite hotels and search history will be permanently deleted and cannot be recovered.{'\n\n'}
+    
+    <Text style={tw`font-bold`}>12. Governing Law{'\n'}</Text>
     These terms are governed by the laws of the United States and the State of California, without regard to conflict of law principles.{'\n\n'}
     
-    <Text style={tw`font-bold`}>12. Contact Us{'\n'}</Text>
+    <Text style={tw`font-bold`}>13. Contact Us{'\n'}</Text>
     For questions about these Terms, contact us at:{'\n'}
     Email: support@staygenie.app{'\n'}
     Response time: Within 48 hours
@@ -803,7 +918,7 @@ const PrivacyContent = () => (
     Your search queries and interactions help improve our AI models. Data is anonymized and aggregated. You can opt out of AI training by contacting us, though this may limit personalization.{'\n\n'}
 
     <Text style={tw`font-bold`}>5. Data Retention{'\n\n'}</Text>
-    Account information is retained while your account is active. Search history and usage data are kept for up to 2 years for analytics and AI training. You can request deletion at any time.{'\n\n'}
+    Account information is retained while your account is active. Search history and usage data are kept for up to 2 years for analytics and AI training. You can request deletion at any time through the Delete Account option in Profile settings.{'\n\n'}
 
     <Text style={tw`font-bold`}>6. Your Rights{'\n\n'}</Text>
     • Access your personal data{'\n'}

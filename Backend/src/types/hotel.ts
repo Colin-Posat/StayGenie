@@ -23,6 +23,9 @@ export interface ParsedSearchQuery {
   // Date fields
   checkin: string;
   checkout: string;
+
+  countryName: any;
+  useCoordinateSearch: any;
   
   // NEW: Location fields (coordinate-based search)
   specificPlace: string;           // e.g., "Central Park, New York, New York, United States"
@@ -217,6 +220,7 @@ export interface RoomType {
 }
 
 export interface HotelWithRates {
+  id: string;
   hotelId: string;
   roomTypes?: RoomType[];
   hotelInfo?: HotelInfo;

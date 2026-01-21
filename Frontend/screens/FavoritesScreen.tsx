@@ -25,6 +25,7 @@ import { getFlagEmoji } from '../utils/flagMapping';
 import EmailSignUpModal from '../components/SignupLogin/EmailSignUpModal';
 import EmailSignInModal from '../components/SignupLogin/EmailSignInModal';
 import { useNavigation, NavigationProp } from '@react-navigation/native';
+import { appleAuth } from '@invertase/react-native-apple-authentication';
 
 
 type FindStackParamList = {
@@ -543,7 +544,8 @@ const FavoritesScreen = () => {
     removeFavoriteHotel,
     onFavoritesChange,
     isLoading: authLoading,
-    signInWithGoogle
+    signInWithGoogle,
+    signInWithApple
   } = useAuth();
 
   const createDataHash = useCallback((hotels: FavoritedHotel[]): string => {
@@ -593,6 +595,20 @@ const FavoritesScreen = () => {
 
     return folders;
   }, [uiState.expandedFolders]);
+
+
+  const handleAppleSignUp = useCallback(async () => {
+    try {
+      await signInWithApple();
+      console.log('✅ Apple sign up successful');
+    } catch (error: any) {
+      console.log('❌ Apple sign up error:', error.message);
+      // Don't show alert if user cancelled
+      if (!error.message.includes('cancelled')) {
+        Alert.alert('Sign Up Failed', 'Failed to sign up with Apple. Please try again.');
+      }
+    }
+  }, [signInWithApple]);
 
   const loadFavorites = useCallback(async (forceRefresh = false) => {
     if (!isAuthenticated) {
@@ -656,6 +672,18 @@ const FavoritesScreen = () => {
       HapticFeedback.impactAsync(HapticFeedback.ImpactFeedbackStyle.Light);
     }
   }, [loadFavorites, isAuthenticated]);
+
+const handleAppleSignIn = async () => {
+  try {
+    await signInWithApple();
+  } catch (e: any) {
+    Alert.alert(
+      'Sign In Failed',
+      e?.message || 'Unable to sign in with Apple. Please try again.'
+    );
+  }
+};
+
 
   const toggleCityFolder = useCallback((displayName: string) => {
     if (Platform.OS === 'ios') {
@@ -821,7 +849,7 @@ const handleExplore = useCallback(() => {
           </Text>
         </View>
 
-        {/* Profile section - matches ProfileScreen exactly */}
+  {/* Profile section - matches ProfileScreen exactly */}
         <View style={tw`px-6 pb-8`}>
           <View style={[
             tw`p-6 rounded-2xl`,
@@ -858,7 +886,9 @@ const handleExplore = useCallback(() => {
                 Create an account to save favorites and get personalized recommendations
               </Text>
 
-              {/* Updated Sign Up with Email Button */}
+              {/* Sign Up Buttons - All equal weight */}
+              
+              {/* Sign Up with Email Button */}
               <TouchableOpacity
                 style={[
                   tw`px-4 py-4 rounded-xl flex-row items-center justify-center w-full mb-3 bg-white border border-gray-200`,
@@ -891,10 +921,10 @@ const handleExplore = useCallback(() => {
                 </Text>
               </TouchableOpacity>
 
-              {/* Updated Sign Up with Google Button */}
+              {/* Sign Up with Google Button */}
               <TouchableOpacity
                 style={[
-                  tw`px-4 py-4 rounded-xl flex-row items-center justify-center w-full mb-4 bg-white border border-gray-200`,
+                  tw`px-4 py-4 rounded-xl flex-row items-center justify-center w-full mb-3 bg-white border border-gray-200`,
                   {
                     shadowColor: '#000',
                     shadowOffset: {
@@ -924,6 +954,35 @@ const handleExplore = useCallback(() => {
                 </Text>
               </TouchableOpacity>
 
+            {Platform.OS === 'ios' && appleAuth.isSupported && (
+  <TouchableOpacity
+    style={[
+      tw`px-4 py-4 rounded-xl flex-row items-center justify-center w-full mb-3 bg-white border border-gray-200`,
+      {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 1 },
+        shadowOpacity: 0.1,
+        shadowRadius: 2,
+        elevation: 3,
+      }
+    ]}
+    onPress={handleAppleSignIn}
+    activeOpacity={0.8}
+  >
+    <View style={[
+      tw`w-6 h-6 rounded-full items-center justify-center mr-3`,
+      { backgroundColor: 'rgba(0,0,0,0.08)' }
+    ]}>
+      <Ionicons name="logo-apple" size={14} color="#000" />
+    </View>
+
+    <Text style={tw`text-base font-medium text-gray-800`}>
+      Sign Up with Apple
+    </Text>
+  </TouchableOpacity>
+)}
+
+
               {/* Already have account link */}
               <TouchableOpacity
                 style={tw`mt-2 items-center`}
@@ -938,6 +997,7 @@ const handleExplore = useCallback(() => {
           </View>
         </View>
 
+        
         <EmailSignUpModal
           visible={showEmailSignUpModal}
           onClose={() => setShowEmailSignUpModal(false)}

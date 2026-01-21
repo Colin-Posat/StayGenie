@@ -603,7 +603,7 @@ const handleViewDetailsPress = async () => {
       placeId,
       occupancies
     );
-    await openInAppBrowser(url);
+    await Linking.openURL(url);
   } catch {
     Alert.alert('Error', 'Failed to open hotel page. Please try again.');
   }

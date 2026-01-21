@@ -1,0 +1,62 @@
+
+=== HOTEL MATCHING PROMPT LOG ===
+Search ID: 3d6af9ad-5139-4f74-a8fb-b0803e040810
+Timestamp: 2026-01-21T19:10:49.486Z
+User Query: hotels in paris near bars and relatively close ot eiffel tower • 5 adults
+Destination: Paris, Ile-de-France, Metropolitan France, France
+Hotel Count: 11
+Character Count: 6424
+Estimated Tokens: ~1606
+
+=== PROMPT CONTENT ===
+USER REQUEST: "hotels in paris near bars and relatively close ot eiffel tower • 5 adults"
+STAY: 3 nights
+
+🎯 RANKING PRIORITY ORDER:
+1. MATCH USER REQUEST: "hotels in paris near bars and relatively close ot eiffel tower • 5 adults" (Most Important)
+2. Distance from Paris, Île-de-France, France (if relevant to search!) MAKE SURE THE HOTEL IS IN THE CITY/PLACE THE USER WANTS
+2. Location quality and convenience 
+3. Star rating and overall quality
+4. Value for money
+
+📋 STEP-BY-STEP MATCHING PROCESS:
+1. READ AI SEARCH CONTEXT carefully: "hotels in paris near bars and relatively close ot eiffel tower • 5 adults"
+3. Match specific amenities mentioned (rooftop bar, infinity pool, spa, gym, etc.)
+4. Match vibe/style (romantic, family-friendly, business, boutique, modern, etc.)
+5. RANK by relevance to the complete AI search context, NOT by list position
+
+🔍 KEYWORD MATCHING EXAMPLES:
+- Context: "hotels under $200 per night with rooftop bar" → Price < $200 AND rooftop bar
+- Context: "luxury hotels over $400 per night" → Price > $400 AND luxury features
+- Context: "romantic hotels with infinity pool" → Romantic amenities AND infinity pool
+- Context: "cool boutique hotels" → Boutique style, unique character
+
+⚠️ CRITICAL RULES:
+- IGNORE the order hotels appear in the list - analyze content only
+- You MUST select exactly 15 hotels using their exact names from the list
+- Base rankings on how well each hotel matches "hotels in paris near bars and relatively close ot eiffel tower • 5 adults"
+- If specific amenities mentioned, hotels MUST have those amenities to rank high
+- PRIORITIZE HOTELS THAT HAVE LISTED FEATURES THAT SAY WHAT THE USER IS ASKING FOR (eg. prioritze hotels that have rooftop bar over rooftop pool if user explocitly asked for rooftop bar)
+
+📝 REQUIRED OUTPUT FORMAT:
+1. [exact hotel name from list] | [match percentage 1-100]%
+2. [exact hotel name from list] | [match percentage 1-100]%
+3. [exact hotel name from list] | [match percentage 1-100]%
+...continue through 15
+
+HOTELS AVAILABLE:
+1: Aparthotel Adagio Paris Centre Tour Eiffel (Paris, fr) | $432/night | 1.7mi from Paris, Île-de-France, France | Central Location near Eiffel TowerPanoramic Views Fully Equipped ApartmentsConvenient Amenities ServicesBook now to perfect blend of comfort convenience Aparthotel Adagio Paris Centre Tour Eiffel. | 
+2: Yooma Urban Lodge Tour Eiffel (Paris, FR) | $363/night | 1.7mi from Paris, Île-de-France, France | Recreational AmenitiesIndulge relaxation sauna gym, some fun arcade/game room.Dining Drinking OptionsSavor delectable meals on-site restaurant grab snack snack bar/deli. Top day refreshing beverage bar/lounge.Centrally Located Modern ComfortsStay one of 106 guestrooms featuring memory foam bed | 
+3: Hôtel Suites Unic Renoir Saint Germain (Paris, FR) | $259/night | 1.2mi from Paris, Île-de-France, France | Stay ParisEnjoy delightful buffet breakfast elegant hotel heart of Paris. With 24h desk airport shuttle service, comfort priority.Chic roomssRelax one of 17 well-appointed guestrooms featuring minibars LCD televisions. Stay connected complimentary Wi-Fi unwind satellite TV.Prime LocationExplore | 
+4: Hotel Eden (Paris, FR) | $587/night | 1.6mi from Paris, Île-de-France, France | Spa relaxing massages pamper yourself full-service spa. Unwind steam room hitting gym.Top-Notch AmenitiesEnjoy complimentary Wi-Fi, concierges, banquet hall. Don't miss sipping refreshing drink bar/lounge.Central LocationStay one of 37 modern rooms free Wi-Fi, flat-screen TVs, iPod docking | 
+5: Molitor Hotel & Spa Paris - MGallery Collection (Paris, FR) | $774/night | 3.2mi from Paris, Île-de-France, France | retreat Molitor Hôtel & Spa Paris – MGallery Collection, comfort meets elegance heart of city.Spa Wellness ParadiseIndulge relaxing full-service spa, offering variety of massages, body treatments, facials, complemented indoor outdoor pools rejuvenation leisure.Culinary DelightsSavor exquisite | 
+6: Pullman Paris Montparnasse Hotel (Paris, FR) | $1009/night | 1.4mi from Paris, Île-de-France, France | elegance of Pullman Paris Montparnasse Hotel, perfect blend of comfort heart of Paris.Recreational AmenitiesTake full advantage of 24-hour gym rent bicycle to beautiful city leisure.Culinary DelightsSavor flavors of Italy onsite restaurant, FI LIA, 24-hour room svc cozy dining from comfort of | 
+7: Pullman Paris Centre - Bercy (Paris, fr) | $790/night | 3.6mi from Paris, Île-de-France, France | Unique s AmenitiesThe Pullman Paris Centre-Bercy, designed Tom Dixon, creative casual atmosphere inspired vibrant Bercy district. the wellness facilities, including pool, Spa Sothys, barber shop, Power Fitness, summer terrace.Diverse Dining EntertainmentIndulge trendy Ariette Bar & Restaurant, | 
+8: Aparthotel Adagio Paris Bercy Village (Paris, fr) | $391/night | 3.6mi from Paris, Île-de-France, France | Convenient Location ParisAparthotel Adagio Paris Bercy Village vibrant 12th district, steps away from Cour Saint-Emilion Metro Station, making ideal base exploring city.Fully Equipped ApartmentsThe studios apartments Adagio Paris Bercy Village cater to 2 to 4 guests, featuring well-appointed | 
+9: Résidence & Spa Le Prince Régent (Paris, fr) | $661/night | 1.1mi from Paris, Île-de-France, France | Apartments Spa CentreLocated 2 minutes from Sorbonne University, Résidence & Spa Le Prince Régent spacious apartments spa centre indulgent stay Paris. Each air-conditioned unit flat-screen TV, fully equipped kitchen, Nespresso coffee machine. access to wellness spa indoor pool, hammam, massages, | 
+10: Sax Paris, LXR Hotels & Resorts (Paris, FR) | $2787/night | 0.9mi from Paris, Île-de-France, France | perfect blend of comfort Sax Paris, LXR Hotels & Resorts, heart of vibrant 7th Arrondissement.Indulgent Spa ServicesPamper yourself revitalizing onsite massages, body treatments, facials designed to rejuvenate spirit enhance well-being.Exquisite Dining ChoicesSavor delightful culinary creations two | 
+11: Hôtel Helzear Montparnasse (Paris, FR) | $385/night | 1.7mi from Paris, Île-de-France, France | Stunning Views Convenient AmenitiesTake breathtaking views from terrace garden enjoying complimentary wireless internet access. Delightful Dining ServicesSavor tasty continental breakfast each morning fee make use of room svc during limited hours. Featured amenities include dry cleaning, | 
+
+REMEMBER: Always select 15 hotels using exact names from the list above.
+
+=== END LOG ===
