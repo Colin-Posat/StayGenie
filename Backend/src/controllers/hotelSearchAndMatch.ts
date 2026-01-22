@@ -1033,7 +1033,6 @@ const extractHotelImages = (hotelInfo: any): string[] => {
   
   return [...new Set(images)].slice(0, 8);
 };
-
 const calculatePriceInfo = (hotel: HotelWithRates, nights: number) => {
   let priceRange = null;
   let pricePerNightInfo = 'Price not available';
@@ -1045,8 +1044,8 @@ const calculatePriceInfo = (hotel: HotelWithRates, nights: number) => {
       .flatMap(room => room.rates || [])
       .map(rate => ({
         retailPrice: rate.retailRate?.total?.[0]?.amount,
-        suggestedPrice: rate.retailRate?.suggestedSellingPrice?.[0]?.amount,
-        provider: rate.retailRate?.suggestedSellingPrice?.[0]?.source,
+        suggestedPrice: rate.retailRate?.suggestedSellingPrice?.[0]?.amount, // ✅ This gets 1315.42
+        provider: rate.retailRate?.suggestedSellingPrice?.[0]?.source, // ✅ This gets "providerDirect"
         currency: rate.retailRate?.total?.[0]?.currency || 'USD',
         refundableTag: rate.cancellationPolicies?.refundableTag || null
       }))
@@ -1063,12 +1062,13 @@ const calculatePriceInfo = (hotel: HotelWithRates, nights: number) => {
         const currency = priceData[0].currency;
         
         priceRange = {
-          min: minRetailPrice,
+          min: minRetailPrice, // 1212.47
           max: maxRetailPrice,
           currency: currency,
           display: minRetailPrice === maxRetailPrice ? `${minRetailPrice}` : `${minRetailPrice} - ${maxRetailPrice}`
         };
 
+        // ✅ CRITICAL: Find the suggested selling price
         const suggestedPriceData = priceData.find(data => 
           data.suggestedPrice !== undefined && 
           data.suggestedPrice !== null && 
@@ -1079,22 +1079,20 @@ const calculatePriceInfo = (hotel: HotelWithRates, nights: number) => {
         if (suggestedPriceData && nights > 0 && 
             suggestedPriceData.suggestedPrice !== undefined && 
             suggestedPriceData.suggestedPrice !== null) {
-          const pricePerNight = Math.round(suggestedPriceData.suggestedPrice / nights);
+          const pricePerNight = Math.round(suggestedPriceData.suggestedPrice / nights); // 1315.42 / 3 = 438.47
           suggestedPrice = {
-            amount: pricePerNight,
+            amount: pricePerNight, // ✅ This should be 438 (rounded from 438.47)
             currency: currency,
-            display: `${pricePerNight}`,
-            totalAmount: suggestedPriceData.suggestedPrice
+            display: `${pricePerNight}`, // ✅ "438"
+            totalAmount: suggestedPriceData.suggestedPrice // ✅ 1315.42
           };
-          priceProvider = suggestedPriceData.provider;
+          priceProvider = suggestedPriceData.provider; // ✅ "providerDirect"
         }
 
+        // ✅ USE SUGGESTED PRICE if available, otherwise fall back to retail
         if (nights > 0) {
-          const basePrice = suggestedPrice ? suggestedPrice.amount : minRetailPrice;
-          if (basePrice !== undefined) {
-            const pricePerNight = suggestedPrice ? suggestedPrice.amount : Math.round(basePrice / nights);
-            pricePerNightInfo = `${pricePerNight}/night`;
-          }
+          const basePrice = suggestedPrice ? suggestedPrice.amount : Math.round(minRetailPrice / nights);
+          pricePerNightInfo = `${basePrice}/night`; // ✅ Should be "438/night"
         }
       }
     }
@@ -1991,7 +1989,14 @@ if (hasExplicitCity && hotels.length === 0) {
       timeout: 4,
       maxRatesPerHotel: 1,
       limit: 600,
-      hotelIds: hotelIds
+      hotelIds: hotelIds,
+      sort: [ // ✅ Correct format with 'direction' instead of 'order'
+    {
+      field: 'price',
+      direction: 'ascending'
+    }
+  ]
+
     }, { timeout: 20000 });
 
     let hotelsWithRates = ratesResponse.data?.data || ratesResponse.data || [];
@@ -2253,6 +2258,60 @@ logger.endStep('6-CohereRerank', {
     const totalSearchCost = searchCostTracker.finishSearch(searchId);
     const performanceReport = logger.getDetailedReport();
     console.log(`🚀 ${isSSERequest ? 'SSE' : 'POST'} Hotel Search Complete in ${performanceReport.totalTime}ms ✅`);
+
+
+    // 🔍 LOG FULL RATE DATA FOR TOP 5 AI-SELECTED HOTELS
+    console.log('\n\n========================================');
+    console.log('🎯 FULL RATE DATA FOR TOP 5 AI-SELECTED HOTELS');
+    console.log('========================================\n');
+
+    const top5Hotels = enrichedHotels.slice(0, 5).filter((h): h is NonNullable<typeof h> => h !== null);
+
+    top5Hotels.forEach((hotel, index) => {
+      console.log(`\n━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
+      console.log(`🏨 HOTEL #${index + 1}: ${hotel.name}`);
+      console.log(`━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`);
+      console.log(`Hotel ID: ${hotel.hotelId}`);
+      console.log(`AI Match: ${hotel.aiMatchPercent}%`);
+      console.log(`Location: ${hotel.city}, ${hotel.country}`);
+      
+      // Find the original rate data
+      const matchingHotel = hotelsWithRates.find((h: any) => {
+        const hotelId = h.hotelId || h.id || h.hotel_id;
+        return hotelId === hotel.hotelId;
+      });
+
+      if (matchingHotel) {
+        console.log('\n📋 FULL RATE RESPONSE:');
+        console.log(JSON.stringify({
+          hotelId: matchingHotel.hotelId,
+          roomTypes: matchingHotel.roomTypes
+        }, null, 2));
+      } else {
+        console.log('\n⚠️ No matching rate data found');
+      }
+      
+      console.log('\n');
+    });
+
+    console.log('========================================');
+    console.log('END OF RATE DATA LOG');
+    console.log('========================================\n\n');
+
+    // 📅 LOG SEARCH DATES AND PARAMETERS
+    console.log('\n\n========================================');
+    console.log('📅 SEARCH DATE PARAMETERS USED');
+    console.log('========================================');
+    console.log(`User Input: "${userInput}"`);
+    console.log(`Check-in Date: ${parsedQuery.checkin}`);
+    console.log(`Check-out Date: ${parsedQuery.checkout}`);
+    console.log(`Number of Nights: ${nights}`);
+    console.log(`Adults: ${parsedQuery.adults || 2}`);
+    console.log(`Children: ${parsedQuery.children || 0}`);
+    console.log(`Location: ${parsedQuery.fullPlaceName || parsedQuery.specificPlace}`);
+    console.log(`Search Radius: ${parsedQuery.searchRadius}m`);
+    console.log(`Coordinates: ${parsedQuery.latitude}, ${parsedQuery.longitude}`);
+    console.log('========================================\n\n');
 
     if (isSSERequest) {
       sendUpdate('complete', {
