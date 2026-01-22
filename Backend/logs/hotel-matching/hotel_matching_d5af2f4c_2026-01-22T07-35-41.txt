@@ -1,0 +1,70 @@
+
+=== HOTEL MATCHING PROMPT LOG ===
+Search ID: d5af2f4c-1233-43b4-b8f8-f6fd3cc40e80
+Timestamp: 2026-01-22T07:35:41.050Z
+User Query: camp curry
+Destination: Camp Curry Road, Benton, Marshall County, Kentucky, 42025, USA
+Hotel Count: 19
+Character Count: 10184
+Estimated Tokens: ~2546
+
+=== PROMPT CONTENT ===
+USER REQUEST: "camp curry"
+STAY: 3 nights
+
+🎯 RANKING PRIORITY ORDER:
+1. MATCH USER REQUEST: "camp curry" (Most Important)
+2. Distance from Camp Curry, Yosemite National Park, California, United States (if relevant to search!) MAKE SURE THE HOTEL IS IN THE CITY/PLACE THE USER WANTS
+2. Location quality and convenience 
+3. Star rating and overall quality
+4. Value for money
+
+📋 STEP-BY-STEP MATCHING PROCESS:
+1. READ AI SEARCH CONTEXT carefully: "camp curry"
+3. Match specific amenities mentioned (rooftop bar, infinity pool, spa, gym, etc.)
+4. Match vibe/style (romantic, family-friendly, business, boutique, modern, etc.)
+5. RANK by relevance to the complete AI search context, NOT by list position
+
+🔍 KEYWORD MATCHING EXAMPLES:
+- Context: "hotels under $200 per night with rooftop bar" → Price < $200 AND rooftop bar
+- Context: "luxury hotels over $400 per night" → Price > $400 AND luxury features
+- Context: "romantic hotels with infinity pool" → Romantic amenities AND infinity pool
+- Context: "cool boutique hotels" → Boutique style, unique character
+
+⚠️ CRITICAL RULES:
+- IGNORE the order hotels appear in the list - analyze content only
+- You MUST select exactly 15 hotels using their exact names from the list
+- Base rankings on how well each hotel matches "camp curry"
+- If specific amenities mentioned, hotels MUST have those amenities to rank high
+- PRIORITIZE HOTELS THAT HAVE LISTED FEATURES THAT SAY WHAT THE USER IS ASKING FOR (eg. prioritze hotels that have rooftop bar over rooftop pool if user explocitly asked for rooftop bar)
+
+📝 REQUIRED OUTPUT FORMAT:
+1. [exact hotel name from list] | [match percentage 1-100]%
+2. [exact hotel name from list] | [match percentage 1-100]%
+3. [exact hotel name from list] | [match percentage 1-100]%
+...continue through 15
+
+HOTELS AVAILABLE:
+1: Super 8 by Wyndham Eddyville/Kuttawa (Eddyville, us) | $64/night | 15.5mi from Camp Curry, Yosemite National Park, California, United States | Convenient Location near Lake Barkleyin Kentucky’s Eddyville, Super 8 Eddyville easy access to fishing Lake Barkley, 1 mile away.Comfort ConvenienceEnjoy comfortable stay amenities such AC, 24h desk, business ctr. in hot breakfast featuring eggs biscuits gravy to start day right.Relaxation | 
+2: Regency Inn of Eddyville Kuttawa (Eddyville, us) | $89/night | 15.7mi from Camp Curry, Yosemite National Park, California, United States | rooms Family-Friendly Amenities comfort convenience Regency Inn of Eddyville Kuttawa. Our property seasonal outdoor pool, free private parking, shared lounge barbecue facilities. Families love spacious family rooms sun terrace.Modern Rooms Free WiFiRelax air-conditioned rooms equipped flat-screen | 
+3: AmeriVu Inn-Gilbertsville (Gilbertsville, us) | $66/night | 11.7mi from Camp Curry, Yosemite National Park, California, United States | Convenient LocationLocated short distance from Union Station Lowertown Arts District, AmeriVu Inn-Gilbertsville easy access to popular attractions.Comfortable roomssRelax well-appointed rooms featuring modern amenities like flat-screen TVs, free WiFi, cozy bedding restful stay.Family-Friendly | 
+4: Quality Inn Calvert City - Paducah East (Calvert City, us) | $75/night | 10.4mi from Camp Curry, Yosemite National Park, California, United States | Outdoor Pool Hot BreakfastThe Kentucky motel outdoor pool daily hot continental breakfast, providing guests relaxing delicious start to day.Modern AmenitiesEach guest room equipped flat-screen cable TV, microwave, small refrigerator convenience. The Super 8 coffee-making facilities comfortable | 
+5: Days Inn by Wyndham Calvert City - Paducah East (Calvert City, us) | $76/night | 10.4mi from Camp Curry, Yosemite National Park, California, United States | Convenient Location AmenitiesThe Days Inn of Calvert City, interstate 24 Interstate 69, comfortable stay outdoor pool free wifi access. The proximity to Kentucky Lake recreational areas adds to allure of this property.Cozy Rooms Modern hasEach room hotel equipped plush bedding, 39-inch | 
+6: The Stratton Inn (Princeton, us) | $76/night | 24.2mi from Camp Curry, Yosemite National Park, California, United States | Convenient Location Comfortable StayThe Stratton Inn, Princeton, convenient stay stone's throw away from Prizer Point Public Use Area Lake Barkley State Park. Guests ease of free private parking shared lounge, making perfect choice those exploring area car.Modern Amenities Cozy Rooms comfort | 
+7: Quality Inn & Suites Benton - Draffenville (Draffenville, us) | $78/night | 7.9mi from Camp Curry, Yosemite National Park, California, United States | Heated Indoor Pool Free WiFiQuality Inn & Suites Benton - Draffenville heated indoor pool free wifi guests to during stay.large rooms Kitchen Facilitiesrooms hotel equipped range of amenities including coffee makers, curved shower rods, flat-screen televisions. Some rooms feature kitchen | 
+8: American Inn Princeton (Princeton, us) | $82/night | 23.5mi from Camp Curry, Yosemite National Park, California, United States | Convenient LocationLocated 15 miles from Venture River Water Park, Americas Best Value Inn Princeton easy access to nearby attractions like Mineral Mounds State Park Black Oak Vineyard.Comfortable roomssEach room equipped Cable TV, work desk, seating area, en suite bathroom, ensuring comfortable | 
+9: Early American Motel (Aurora, us) | $96/night | 8.4mi from Camp Curry, Yosemite National Park, California, United States | Outdoor Pool BBQ FacilitiesEarly American Motel delightful seasonal outdoor pool barbecue facilities. Guests unwind relaxing day sun savoring delicious grilled meals.Convenient AmenitiesWith air-conditioned rooms featuring free WiFi, shared kitchen, 24h desk, Early American Motel ensures | 
+10: Quality Inn Murray University Area (Murray, US) | $97/night | 18.5mi from Camp Curry, Yosemite National Park, California, United States | Convenient AmenitiesMake use of indoor pool complimentary wireless internet access during stay. our complimentary buffet breakfast every morning to kick start day.Business FacilitiesTake advantage of business ctr, express check-out, complimentary newspapers available lobby. Stay productive | 
+11: Relax Inn & Suites (Kuttawa, US) | $106/night | 14.3mi from Camp Curry, Yosemite National Park, California, United States | Convenient Amenities: complimentary wireless internet, tour assistance, vending machine convenience during stay.Buffet Breakfast: Start day complimentary buffet breakfast served daily fuel adventures Kuttawa.Comfortable roomss: Make yourself home guestrooms featuring amenities like refrigerators, | 
+12: Hotel Barkley (Kuttawa, us) | $108/night | 13.8mi from Camp Curry, Yosemite National Park, California, United States | Convenient Location near InterstatesLocated close to Interstate 24 Interstate 69, Days Inn Kuttawa easy access travelers. nearby Vista Ridge Park 3 miles away.Comfortable Rooms AmenitiesEach room Kuttawa Days Inn work desk, seating area, microwave, refrigerator. coffee making facilities | 
+13: Motel 6-Grand Rivers, KY (Grand Rivers, us) | $108/night | 11.0mi from Camp Curry, Yosemite National Park, California, United States | Convenient LocationThe Motel 6 Grand Rivers located 5 miles from picturesque Kentucky Dam Village State Park, offering easy access to nature outdoor activities.Modern AmenitiesEnjoy convenience of free Wi-Fi, cable TV, microwave, refrigerator every room. The hotel launderette, business ctr, 24-hour | 
+14: Best Western University Inn (Murray, us) | $104/night | 18.2mi from Camp Curry, Yosemite National Park, California, United States | Convenient LocationBest Western University Inn Murray, stone's throw away from popular attractions like Roy Stewart Stadium CFSB Center. With prime location near Murray State College, hotel perfect choice both leisure business travelers.Modern AmenitiesEnjoy refreshing dip outdoor pool break sweat | 
+15: Holiday Inn Express Hotel & Suites Murray by IHG (Murray, us) | $120/night | 18.2mi from Camp Curry, Yosemite National Park, California, United States | Comfort ConvenienceLuxurious roomss: large rooms flat-screen TV, coffee maker, work desk Holiday Inn Express Hotel & Suites Murray.Delightful Amenities: Take dip indoor pool, work gym, delicious breakfast omelets cinnamon rolls.Prime Location: Situated 1.5 km from Murray State University, hotel | 
+16: Patti's Inn and Suites (Grand Rivers, us) | $144/night | 11.0mi from Camp Curry, Yosemite National Park, California, United States | Convenient LocationLocated Grand Rivers, Patti's Inn Suites easy access to nearby attractions like Lowertown Arts District Museum of American Quilter's Society.Comfortable AmenitiesEnjoy relaxing stay air-conditioned rooms, free WiFi, seasonal outdoor pool. The hotel free private parking gym | 
+17: SpringHill Suites by Marriott Murray (Murray, us) | $147/night | 18.1mi from Camp Curry, Yosemite National Park, California, United States | Modern Amenities Convenient LocationDiscover 3-star oasis 2.9 km from Murray State University. SpringHill Suites Marriott Murray gym, shared lounge, bar. the indoor pool free WiFi, all stone's throw away from local attractions like Jonathan Creek Cabin Area Kentucky Woodlands National Wildlife | 
+18: Hampton Inn by Hilton of Kuttawa Eddyville (Kuttawa, us) | $153/night | 13.8mi from Camp Curry, Yosemite National Park, California, United States | Convenient Location Outdoor PoolLocated Kuttawa, Kentucky, Hampton Inn Hilton easy access to Barkley Lake water sports enthusiasts. Guests outdoor pool relaxing swim day of activities.Comfortable Rooms Modern AmenitiesEach room well-equipped microwaves, refrigerators, 32-inch LCD HD TVs. The | 
+19: Hampton Inn & Suites Murray (Murray, us) | $164/night | 18.9mi from Camp Curry, Yosemite National Park, California, United States | Convenient Location near Murray State UniversityLocated mile away from Murray State University, Murray Hampton Inn prime location visitors to campus.Top-Notch AmenitiesEnjoy indoor pool, on-site gym, comfortable rooms 32-inch flat-screen TVs. Stay connected free Wi-Fi unwind favorite shows cable | 
+
+REMEMBER: Always select 15 hotels using exact names from the list above.
+
+=== END LOG ===

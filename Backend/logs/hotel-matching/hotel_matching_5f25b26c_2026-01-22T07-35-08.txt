@@ -1,0 +1,54 @@
+
+=== HOTEL MATCHING PROMPT LOG ===
+Search ID: 5f25b26c-9ef6-424a-9f0b-25c3e1995586
+Timestamp: 2026-01-22T07:35:08.441Z
+User Query: htoels i can stay in when i go to yosmeite june
+Destination: Yosemite National Park, California, USA
+Hotel Count: 3
+Character Count: 3265
+Estimated Tokens: ~817
+
+=== PROMPT CONTENT ===
+USER REQUEST: "htoels i can stay in when i go to yosmeite june"
+STAY: 3 nights
+
+🎯 RANKING PRIORITY ORDER:
+1. MATCH USER REQUEST: "htoels i can stay in when i go to yosmeite june" (Most Important)
+2. Distance from Yosemite National Park, California, United States (if relevant to search!) MAKE SURE THE HOTEL IS IN THE CITY/PLACE THE USER WANTS
+2. Location quality and convenience 
+3. Star rating and overall quality
+4. Value for money
+
+📋 STEP-BY-STEP MATCHING PROCESS:
+1. READ AI SEARCH CONTEXT carefully: "htoels i can stay in when i go to yosmeite june"
+3. Match specific amenities mentioned (rooftop bar, infinity pool, spa, gym, etc.)
+4. Match vibe/style (romantic, family-friendly, business, boutique, modern, etc.)
+5. RANK by relevance to the complete AI search context, NOT by list position
+
+🔍 KEYWORD MATCHING EXAMPLES:
+- Context: "hotels under $200 per night with rooftop bar" → Price < $200 AND rooftop bar
+- Context: "luxury hotels over $400 per night" → Price > $400 AND luxury features
+- Context: "romantic hotels with infinity pool" → Romantic amenities AND infinity pool
+- Context: "cool boutique hotels" → Boutique style, unique character
+
+⚠️ CRITICAL RULES:
+- IGNORE the order hotels appear in the list - analyze content only
+- You MUST select exactly 15 hotels using their exact names from the list
+- Base rankings on how well each hotel matches "htoels i can stay in when i go to yosmeite june"
+- If specific amenities mentioned, hotels MUST have those amenities to rank high
+- PRIORITIZE HOTELS THAT HAVE LISTED FEATURES THAT SAY WHAT THE USER IS ASKING FOR (eg. prioritze hotels that have rooftop bar over rooftop pool if user explocitly asked for rooftop bar)
+
+📝 REQUIRED OUTPUT FORMAT:
+1. [exact hotel name from list] | [match percentage 1-100]%
+2. [exact hotel name from list] | [match percentage 1-100]%
+3. [exact hotel name from list] | [match percentage 1-100]%
+...continue through 15
+
+HOTELS AVAILABLE:
+1: Cedar Lodge (El Portal, us) | $363/night | 22.1mi from Yosemite National Park, California, United States | Nature's BeautyNestled 5 minutes from Yosemite National Park, Cedar Lodge serene escape both indoor outdoor pools.Comfort ConvenienceEach room equipped AC, TV, refrigerator, coffee-making facilities. the rustic charm of period wood furnishings vibrant accents during stay.Delight Taste BudsSavor | 
+2: Yosemite View Lodge (El Portal, us) | $425/night | 17.5mi from Yosemite National Park, California, United States | Riverside Oasis luxuryScenic Views Relaxation: Nestled along Merced River, Yosemite View Lodge stunning river views variety of pools hot tubs relaxing.Delicious Dining Options: classic American cuisine River Restaurant & Lounge, open year-round breakfast dinner, ensuring delightful dining.Abundant | 
+3: Yosemite Valley Lodge (Yosemite Village, us) | $607/night | 8.0mi from Yosemite National Park, California, United States | Prime Location Yosemite VillageSituated 3.9 km from iconic El Capitan, Yosemite Valley Lodge convenient picturesque retreat. Nestled 700 meters of Yosemite Valley, guests themselves beauty of surroundings.Comfortable rooms Scenic ViewsEach room lodge equipped modern amenities including flat-screen | 
+
+REMEMBER: Always select 15 hotels using exact names from the list above.
+
+=== END LOG ===

@@ -660,6 +660,14 @@ REMEMBER: Always select 15 hotels using exact names from the list above.`;
     parsedQuery.fullPlaceName || 'Unknown location'
   );
 
+  const hasCityOrPlace =
+  typeof parsedQuery.cityName === 'string' && parsedQuery.cityName.trim().length > 0 ||
+  typeof parsedQuery.specificPlace === 'string' && parsedQuery.specificPlace.trim().length > 0;
+
+const hasCoordinates =
+  typeof parsedQuery.latitude === 'number' &&
+  typeof parsedQuery.longitude === 'number';
+
   const stream = await openai.chat.completions.create({
     model: 'gpt-4o-mini',
     messages: [

@@ -1,0 +1,79 @@
+
+=== HOTEL MATCHING PROMPT LOG ===
+Search ID: 785a3540-40ed-48e7-aa39-234576f43ab3
+Timestamp: 2026-01-22T07:29:00.224Z
+User Query: hotels in france
+Destination: France
+Hotel Count: 28
+Character Count: 12459
+Estimated Tokens: ~3115
+
+=== PROMPT CONTENT ===
+USER REQUEST: "hotels in france"
+STAY: 3 nights
+
+🎯 RANKING PRIORITY ORDER:
+1. MATCH USER REQUEST: "hotels in france" (Most Important)
+2. Distance from France (if relevant to search!) MAKE SURE THE HOTEL IS IN THE CITY/PLACE THE USER WANTS
+2. Location quality and convenience 
+3. Star rating and overall quality
+4. Value for money
+
+📋 STEP-BY-STEP MATCHING PROCESS:
+1. READ AI SEARCH CONTEXT carefully: "hotels in france"
+3. Match specific amenities mentioned (rooftop bar, infinity pool, spa, gym, etc.)
+4. Match vibe/style (romantic, family-friendly, business, boutique, modern, etc.)
+5. RANK by relevance to the complete AI search context, NOT by list position
+
+🔍 KEYWORD MATCHING EXAMPLES:
+- Context: "hotels under $200 per night with rooftop bar" → Price < $200 AND rooftop bar
+- Context: "luxury hotels over $400 per night" → Price > $400 AND luxury features
+- Context: "romantic hotels with infinity pool" → Romantic amenities AND infinity pool
+- Context: "cool boutique hotels" → Boutique style, unique character
+
+⚠️ CRITICAL RULES:
+- IGNORE the order hotels appear in the list - analyze content only
+- You MUST select exactly 15 hotels using their exact names from the list
+- Base rankings on how well each hotel matches "hotels in france"
+- If specific amenities mentioned, hotels MUST have those amenities to rank high
+- PRIORITIZE HOTELS THAT HAVE LISTED FEATURES THAT SAY WHAT THE USER IS ASKING FOR (eg. prioritze hotels that have rooftop bar over rooftop pool if user explocitly asked for rooftop bar)
+
+📝 REQUIRED OUTPUT FORMAT:
+1. [exact hotel name from list] | [match percentage 1-100]%
+2. [exact hotel name from list] | [match percentage 1-100]%
+3. [exact hotel name from list] | [match percentage 1-100]%
+...continue through 15
+
+HOTELS AVAILABLE:
+1: Hotel de la Gare – urban by balladins (Chateauroux, FR) | $61/night | 16.9mi from France | Amenities hasEnjoy picturesque terrace garden views staying connected complimentary wireless internet. The hotel television common area, vending machine, convenient area shuttle easy access to nearby attractions.Dining RefreshmentsSavor French cuisine Brasserie La Berrichone opt room svc during | 
+2: Première Classe Chateauroux - Saint Maur (Saint-Maur, fr) | $59/night | 16.5mi from France | Convenient LocationPremière Classe Chateauroux-Saint Maur situated 2 km from A20 motorway 6 km from center of Châteauroux, offering easy access travelers.Comfortable roomsThe air-conditioned rooms direct exterior access, TV, ensuites ensure comfortable stay. Some rooms designed guests reduced | 
+3: Hotel Christina (Châteauroux, fr) | $56/night | 16.2mi from France | Convenient LocationThe Christina Hotel, serene city centre of Chateauroux, tranquil escape charming neighborhood. With convenient bus stop right next to property, guests easy access to city leisure.Natural SurroundingsSurrounded lush forests picturesque Brenne region, Chateauroux hidden gem heart | 
+4: Résidence Valissou (Châteauroux, FR) | $68/night | 17.1mi from France | City Views Free WiFiEnjoy stunning city views from Résidence Valissou stay connected complimentary high-speed WiFi throughout stay.Fully Equipped Kitchen Modern Amenities convenience fully equipped kitchen featuring oven, microwave, fridge, stovetop, coffee machine. Each unit includes flat-screen | 
+5: Kyriad Châteauroux - Saint-Maur (Saint-Maur, fr) | $68/night | 16.5mi from France | Scenic LocationLocated charming city of Châteauroux, surrounded 450 acres of green landscape stone's throw away from picturesque Green Valley.Warm Hospitality warm welcome hotel Campanile Châteauroux, dedicated staff go beyond to ensure stay comfortable memorable.Well-Equipped RoomsEach room | 
+6: B&B HOTEL Châteauroux Aéroport (Deols, FR) | $69/night | 19.2mi from France | Convenient AmenitiesMake most of complimentary wireless internet access vending machine during stay. the convenience ease of these right fingertips.Buffet BreakfastsStart day right delicious buffet breakfasts available daily fee. Fuel day of exploring adventures ahead.Star Quality ServiceAs rated | 
+7: Hotel Le Boischaut - Citotel Chateauroux (Châteauroux, fr) | $74/night | 16.4mi from France | Personalized rooms stay like no other Citotel Le Boischaut 27 uniquely decorated soundproofed rooms. Each room equipped modern amenities including flat-screen TV, direct telephone, ensuite comfort. Family rooms option those traveling loved ones.Delicious Continental BreakfastStart day right | 
+8: B&B HOTEL Châteauroux Déols (Deols, FR) | $72/night | 19.2mi from France | Convenient AmenitiesEnjoy complimentary wireless internet access convenient vending machine during stay.Buffet BreakfastStart day right buffet breakfast served weekdays weekends fee.Star-Rated PropertyOfficially rated French Tourism Development Agency, ATOUT France.Book stay B&B HOTEL Châteauroux | 
+9: Kyriad Chateauroux (Chateauroux, FR) | $76/night | 15.5mi from France | delightful stay Kyriad Chateauroux, comfort meets convenience heart of Chateauroux.Gourmet DiningSavor delicious meals RESTAURANT KYRIAD, offering inviting atmosphere lunch dinner. Prefer quick bite? Visit coffee shop/cafe snacks relax favorite drink bar/lounge.Modern AmenitiesStay connected | 
+10: B&B HOTEL Châteauroux A20 L'Occitane (Deols, FR) | $73/night | 19.2mi from France | Welcome to B&B HOTEL Châteauroux A20 L'Occitane, perfect getaway near serene Plage de Belle-Isle.Comfortable roomssUnwind one of 66 meticulously designed guestrooms equipped flat-screen televisions complimentary wireless internet access, ensuring stay connected throughout visit.Delicious Dining | 
+11: Le petit belge (Montgivray, FR) | $79/night | 4.4mi from France | Sustainable Bed Breakfast :Le petit belge Montgivray sustainable stay beautiful garden barbecue facilities guests to enjoy.Family-Friendly rooms:With family rooms indoor play area, this property perfect guests traveling children.Convenient Amenities:Guests benefit from shared kitchen, picnic area, | 
+12: Hotel Restaurant Maurice (Chateauroux, FR) | $82/night | 16.8mi from France | luxuryIndulge complimentary wireless internet access access to banquet hall during stay.Fine Dining delicious meal on-site restaurant unwind drink bar/lounge.Convenient LocationStay heart of Chateauroux easy access to popular attractions such Hotel Bertrand Museum Museum of Cordeliers Convent.Take | 
+13: Domaine de la Rue (La Berthenoux, FR) | $91/night | 9.1mi from France | Terrace Garden ViewsEnjoy picturesque views from terrace garden, perfect spot to unwind relax during stay.Delicious Dining satisfying meal Table d'hôtes, chefs serve delectable dishes culinary pleasure.Complimentary AmenitiesBenefit from complimentary wireless internet access start day right free | 
+14: L'étoile de la fontchevrière (Neuvy-Saint-Sepulchre, FR) | $101/night | 3.9mi from France | Terrace Garden ViewsEnjoy stunning views from terrace garden L'étoile de la fontchevrière Neuvy-Saint-Sepulchre.Amenities GaloreIndulge complimentary wireless internet, arcade/game room, daily buffet breakfast during stay.Convenience ComfortFeel home individually decorated guestrooms flat-screen | 
+15: Kyriad Chateauroux Nord Aeroport (Deols, FR) | $94/night | 19.1mi from France | Outdoor Pool Complimentary Amenities: refreshing dip seasonal outdoor pool stay connected complimentary wireless internet access.Convenient Dining Parking Options: drink bar/lounge buffet breakfasts. Free self-parking convenience.Nearby Attractions: nearby attractions like Plage de | 
+16: La Grange (Nohant-Vic, fr) | $109/night | 4.2mi from France | Charming B&B near George Sand's HouseSerene Garden Setting: La Grange B&B 1-hectare garden, boasting tranquil terrace relaxation free Wi-Fi convenience. Decorated Rooms: Each guest room La Grange uniquely adorned floral-inspired colors, offering en suite bathrooms picturesque views of area.Relaxing | 
+17: Domaine Le Rianon (Malleret-Boussac, FR) | $113/night | 21.6mi from France | Charming Sustainable Farm Stay Historic Buildingluxury: Domaine Le Rianon seasonal outdoor pool, garden, outdoor fireplace relaxing stay. the sun terrace, free WiFi, electric vehicle charging station.Comfortable roomss: Each unit coffee machine, some including balcony mountain views, fully equipped | 
+18: ibis Chateauroux (Châteauroux, fr) | $113/night | 17.1mi from France | Modern Amenities Comfortable RoomsThe ibis Chateauroux air-conditioned rooms free Wi-Fi, satellite TV, ensuites, providing modern comfort relaxing stay.Delicious Buffet BreakfastStart day delicious buffet breakfast featuring variety of sweet savory dishes, pastries baked site, fresh French | 
+19: L'Eléphant Heureux (Bétête, FR) | $122/night | 19.1mi from France | Lake Views Family RoomsL'Eléphant Heureux, Bétête, stunning lake views comfortable family rooms. With free WiFi parking, tranquility of quiet street views picnic area leisure. with AC, minibar, bathrobes every unit. Some rooms boast garden views, all offer shared bathrooms cozy bed linens. Start | 
+20: Odiel & Gabrielle (Montchevrier, FR) | $124/night | 10.6mi from France | Charming Bed Breakfast MontchevrierInner Courtyard Views Family-Friendly AtmosphereEnjoy serene inner courtyard views from room Odiel & Gabrielle. The family rooms picnic area make perfect choice relaxing getaway loved ones.Convenient Amenities Comfortable StayRelax cozy seating area equipped | 
+21: Le Fassardy (Châteauroux, FR) | $128/night | 17.2mi from France | Charming 18th-Century B&B Heart of ChâteaurouxElegant Rooms Modern AmenitiesIndulge cozy stay Le Fassardy, each room flat-screen TV, tea/coffee facilities, stylish en suite bathroom complimentary toiletries.Delightful Breakfast OptionsStart day delicious continental breakfast including homemade | 
+22: La cabane (Montipouret, FR) | $131/night | 3.1mi from France | roomsRecently renovated, La cabane Montipouret bed breakfast. The air-conditioned rooms come modern amenities, including flat-screen TV, guests lush garden surrounding property.Convenient LocationSituated 22 km from Dryades Golf 46 km from Val de l'Indre Golf Course, La cabane easy access to | 
+23: Camping le Rochat (Chateauroux, FR) | $132/night | 17.7mi from France | Recreational Amenities: outdoor pool, indoor pool, bicycles rent Camping le Rochat. The campground complimentary Wi-Fi, arcade/game room, common area television.Dining Socializing: meals restaurant grab snacks coffee shop/cafe. Join other guests daily complimentary reception unwind drink | 
+24: Le Domaine des Dryades (Pouligny-Notre-Dame, FR) | $138/night | 9.9mi from France | relaxation Le Domaine des Dryades, charm meets comfort heart of Pouligny-Notre-Dame.Indulgent Spa Unwind full-service spa, offering range of massages, body treatments, rejuvenating facials promise to soothe senses elevate stay.Recreational OasisWhether prefer invigorating outdoor pool serene indoor | 
+25: Best Western Plus Hôtel Colbert (Châteauroux, fr) | $143/night | 16.7mi from France | Historic Charm Modern EleganceBest Western Hôtel Colbert, former 19th-century tobacco factory, seamlessly blends historic charm modern elegance Châteauroux.Comfortable Air-Conditioned roomss spacious air-conditioned rooms suites provide perfect retreat day of exploring city.Culinary Delights La | 
+26: Le pré de la rue (Bouesse, FR) | $146/night | 9.4mi from France | Spa FacilitiesLe pré de la rue, located near Val de l'Indre Golf Course, tranquil escape access to spa facilities. Guests unwind pool stunning garden views, providing perfect retreat day of golf Dryades Golf.Comfortable roomssEach unit this bed breakfast equipped modern amenities, including kettle, | 
+27: Chateau de Linard (Linard, FR) | $161/night | 17.0mi from France | Sustainable Bed Breakfast Stunning Mountain ViewsGarden Oasis Family-Friendly Picnic Area tranquility garden picturesque mountain views. Families bond picnic area, creating unforgettable memories.Cozy Rooms Modern AmenitiesRelax comfort kettle every room free WiFi throughout property. Our packed | 
+28: Logis Hotel Relais Saint Jacques - Châteauroux (Déols, fr) | $169/night | 19.7mi from France | Garden Oasis:in sprawling 3000m² garden, Relais Saint Jacques - Châteauroux tranquil escape 6 km north of Châteauroux.Gastronomic Delights: exquisite gastronomic cuisine hotel's restaurant, treat taste buds day of exploration.Convenience & Comfort:With air-conditioned rooms offering countryside | 
+
+REMEMBER: Always select 15 hotels using exact names from the list above.
+
+=== END LOG ===

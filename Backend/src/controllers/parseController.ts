@@ -109,6 +109,20 @@ const validateParsedData = (parsed: any) => {
 
 const LOCATIONIQ_KEY = 'pk.79c544ae745ee83f91a7523c99939210';
 
+
+const isMiamiBeachIntent = (text: string) => {
+  const t = text.toLowerCase();
+  return (
+    t.includes('miami beach') ||
+    t.includes('south beach') ||
+    t.includes('sobé') ||
+    t.includes('sobe') ||
+    t.includes('ocean drive') ||
+    t.includes('south of fifth')
+  );
+};
+
+
 // NEW: Helper function to detect country code from place name
 const detectCountryCode = (placeName: string): string | undefined => {
   const place = placeName.toLowerCase();
@@ -261,6 +275,7 @@ export const parseSearchQuery = async (req: Request, res: Response) => {
   try {
     const { userInput } = req.body;
 
+    
     if (!userInput) {
       return res.status(400).json({ error: 'userInput is required' });
     }
@@ -434,10 +449,31 @@ Extract:
    - When user says "[city] + city center/downtown", treat it as just the city
    - Do NOT add "City Center" or "Downtown" to specificPlace
 
-5. **Country/Vague (LAST RESORT):**
-   - "cool hotels in USA" → specificPlace: "Manhattan, New York, New York, United States" (pick iconic place)
-   - "hotels in Japan" → specificPlace: "Shibuya, Tokyo, Japan" (pick popular district)
-   - "beach hotels" → specificPlace: "Miami Beach, Florida, United States" (pick popular beach)
+5. Country-level searches:
+- If the user mentions ONLY a country (or continent), do NOT choose a city.
+- specificPlace must be the country name only.
+- cityName must be null.
+- locationMentioned must be false.
+
+Examples:
+✅ "hotels in France"
+   → specificPlace: "France"
+   → cityName: null
+
+✅ "hotels in Japan"
+   → specificPlace: "Japan"
+   → cityName: null
+
+6. No location mentioned at all:
+- ONLY if the user provides NO city, NO country, NO landmark, NO neighborhood,
+  then choose a reasonable popular destination that matches the theme.
+
+Examples:
+✅ "beach hotels"
+   → specificPlace: "Miami Beach, Florida, United States"
+
+✅ "ski resorts"
+   → specificPlace: "Aspen, Colorado, United States"
 
 **CRITICAL RULES:**
 - NEVER default to just city name when a specific landmark is mentioned!
@@ -660,26 +696,35 @@ User input: "${userInput}"
       parsed.specificPOI = null;
     }
 
-    // --- City normalization rules ---
-    if (parsed.cityName?.toLowerCase() === 'miami') {
-      console.log('🌴 Normalizing cityName: Miami → Miami Beach');
+    // 🌴 Miami Beach override ONLY if user explicitly requested beach areas
+if (
+  parsed.cityName?.toLowerCase() === 'miami' &&
+  isMiamiBeachIntent(userInput)
+) {
+  console.log('🌴 Explicit Miami Beach intent detected from user input');
 
-      parsed.cityName = 'Miami Beach';
+  parsed.cityName = 'Miami Beach';
 
-      // Optional: also normalize specificPlace if it only says Miami
-      if (
-        typeof parsed.specificPlace === 'string' &&
-        parsed.specificPlace.toLowerCase().includes('miami') &&
-        !parsed.specificPlace.toLowerCase().includes('miami beach')
-      ) {
-        parsed.specificPlace = parsed.specificPlace.replace(/miami/gi, 'Miami Beach');
-      }
+  // Force specificPlace if not already Miami Beach
+  if (
+    typeof parsed.specificPlace !== 'string' ||
+    !parsed.specificPlace.toLowerCase().includes('miami beach')
+  ) {
+    parsed.specificPlace = 'Miami Beach, Florida, United States';
+  }
 
-      // Optional: ensure aiSearch reflects Miami Beach
-      if (typeof parsed.aiSearch === 'string' && parsed.aiSearch.toLowerCase().includes('miami')) {
-        parsed.aiSearch = parsed.aiSearch.replace(/miami/gi, 'Miami Beach');
-      }
-    }
+  // Ensure AI search reflects beach intent
+  if (
+    typeof parsed.aiSearch === 'string' &&
+    !parsed.aiSearch.toLowerCase().includes('miami beach')
+  ) {
+    parsed.aiSearch += ' in Miami Beach';
+  }
+}
+
+
+
+
 
     // Ensure price fields always exist
     if (typeof parsed.minCost !== 'number') parsed.minCost = null;
@@ -701,6 +746,15 @@ User input: "${userInput}"
         parsed.longitude = -74.0060;
         parsed.fullPlaceName = parsed.specificPlace || "New York, New York, United States";
       }
+      // 🇲🇽 Hard override for Mexico City to avoid POI-biased geocoding
+if (parsed.cityName?.toLowerCase() === 'mexico city') {
+  console.log('🇲🇽 Overriding coordinates for Mexico City metro centroid');
+
+  parsed.latitude = 19.432608;
+  parsed.longitude = -99.133209;
+  parsed.fullPlaceName = "Mexico City, CDMX, Mexico";
+}
+
     } else {
       // No specific place provided, use defaults
       console.warn('⚠️ No specificPlace provided, using default location');
