@@ -790,16 +790,28 @@ Generate content + safety rating (1-10 for tourist safety) for EACH hotel.
 GUIDELINES for topAmenities:
 - Pick EXACTLY 3 per hotel
 - First include amenities that match user search if any THEN INCLUDE MOST UNIQUE AMENITIES
-- CRITICAL: ONLY select from the AMENITIES list provided for each hotel - DO NOT make up or add amenities not in the list just to match users search!!
+- CRITICAL: ONLY select from the AMENITIES list OR hotel description (DESC field) provided - DO NOT make up amenities not mentioned anywhere!!
+- VERIFICATION RULES (IMPORTANT):
+  * You CAN use descriptors (rooftop, infinity, heated, etc.) IF they are explicitly mentioned in:
+    - The AMENITIES list provided, OR
+    - The hotel DESC (description) field
+  * Examples of ALLOWED usage:
+    - If DESC says "rooftop infinity pool" → You can say "Infinity pool" ✅
+    - If AMENITIES includes "Rooftop bar" → You can say "Rooftop bar" ✅
+    - If DESC mentions "heated swimming pool" → You can say "Heated pool" ✅
+    - If AMENITIES has "Michelin-starred restaurant" → You can say "Michelin-star restaurant" ✅
+  * Examples of FORBIDDEN usage:
+    - If AMENITIES only says "Pool" and DESC only says "outdoor pool" → DON'T say "Rooftop pool" ❌
+    - If AMENITIES only says "Gym" and DESC doesn't mention rooftop → DON'T say "Rooftop gym" ❌
+    - If nothing mentions "infinity" anywhere → DON'T add "Infinity pool" ❌
+  * RULE: The specific descriptor (rooftop, infinity, heated, etc.) MUST appear SOMEWHERE in the hotel's AMENITIES or DESC
+  * Check BOTH fields before adding any descriptor
+  * If neither field mentions the descriptor, DON'T add it
 - Then fill with most unique amenities from hotel's list
 - Capitalize first word
 - If a hotel has fewer than 3 amenities listed, only return what's available
-- CRITiCAL:MAKE SURE THE AMENTIEIS YOU LIST ARE INTERESTING AND NOT BORING STUFF LIKE "Free Wi-Fi" UNLESS IT'S REALLY RELEVANT TO THE SEARCH!!!
-- NEVER INCLUDE FREE WIFI PRIVATE CHECK IN CHECK OUT OR OUTDOOR CCTV IN THE LIST 
-
-- NEVER state that a hotel is good for a type of trip (e.g. "boys trip", "nightlife", "foodie", "romantic")
-  WITHOUT immediately justifying it using SPECIFIC, CONCRETE details from the hotel data.
-
+- CRITICAL: MAKE SURE THE AMENITIES YOU LIST ARE INTERESTING AND NOT BORING STUFF LIKE "Free Wi-Fi" UNLESS IT'S REALLY RELEVANT TO THE SEARCH!!!
+- NEVER INCLUDE FREE WIFI PRIVATE CHECK IN CHECK OUT OR OUTDOOR CCTV IN THE LIST
 
 - Instead, ALWAYS explain WHY using one of the following:
   • named amenities OR SOMETHING STATED IN HOTEL DESCRIPTION!!!
@@ -810,6 +822,12 @@ GUIDELINES for topAmenities:
 
 
 GUIDELINES for whyItMatches:
+- CRITICAL VERIFICATION RULES:
+  * If you mention "pool" - verify it says "rooftop pool" in amenities. If not, ONLY say "pool" or "outdoor pool"
+  * If you mention "gym" - verify it says "rooftop gym". If not, ONLY say "gym" or "fitness center"
+  * NEVER add location descriptors (rooftop, oceanfront, penthouse, skyline, etc.) unless EXPLICITLY in the data
+  * Example: If amenities say "Pool" → write "**outdoor pool**" NOT "**rooftop pool**"
+  * Example: If amenities say "Gym" → write "**fitness center**" NOT "**rooftop gym**"
 - Use **double asterisks** to bold ONLY 2 things:
   1. FIRST: Bold the specific feature that directly matches the FIRST/PRIMARY search requirement
   2. SECOND: Bold the feature that matches the SECOND search requirement (if user has 2+ requirements)
