@@ -1,0 +1,56 @@
+
+=== HOTEL MATCHING PROMPT LOG ===
+Search ID: fefa6c04-5c49-45dd-b2a6-1acb871f9b73
+Timestamp: 2026-01-23T20:17:19.499Z
+User Query: Ski hotels in Aspen with panoramic windows
+Destination: Aspen, Pitkin County, Colorado, USA
+Hotel Count: 5
+Character Count: 3968
+Estimated Tokens: ~992
+
+=== PROMPT CONTENT ===
+USER REQUEST: "Ski hotels in Aspen with panoramic windows"
+STAY: 3 nights
+
+🎯 RANKING PRIORITY ORDER:
+1. MATCH USER REQUEST: "Ski hotels in Aspen with panoramic windows" (Most Important)
+2. Distance from Aspen, Colorado, United States (if relevant to search!) MAKE SURE THE HOTEL IS IN THE CITY/PLACE THE USER WANTS
+2. Location quality and convenience 
+3. Star rating and overall quality
+4. Value for money
+
+📋 STEP-BY-STEP MATCHING PROCESS:
+1. READ AI SEARCH CONTEXT carefully: "Ski hotels in Aspen with panoramic windows"
+3. Match specific amenities mentioned (rooftop bar, infinity pool, spa, gym, etc.)
+4. Match vibe/style (romantic, family-friendly, business, boutique, modern, etc.)
+5. RANK by relevance to the complete AI search context, NOT by list position
+
+🔍 KEYWORD MATCHING EXAMPLES:
+- Context: "hotels under $200 per night with rooftop bar" → Price < $200 AND rooftop bar
+- Context: "luxury hotels over $400 per night" → Price > $400 AND luxury features
+- Context: "romantic hotels with infinity pool" → Romantic amenities AND infinity pool
+- Context: "cool boutique hotels" → Boutique style, unique character
+
+⚠️ CRITICAL RULES:
+- IGNORE the order hotels appear in the list - analyze content only
+- You MUST select exactly 15 hotels using their exact names from the list
+- Base rankings on how well each hotel matches "Ski hotels in Aspen with panoramic windows"
+- If specific amenities mentioned, hotels MUST have those amenities to rank high
+- PRIORITIZE HOTELS THAT HAVE LISTED FEATURES THAT SAY WHAT THE USER IS ASKING FOR (eg. prioritze hotels that have rooftop bar over rooftop pool if user explocitly asked for rooftop bar)
+
+📝 REQUIRED OUTPUT FORMAT:
+1. [exact hotel name from list] | [match percentage 1-100]%
+2. [exact hotel name from list] | [match percentage 1-100]%
+3. [exact hotel name from list] | [match percentage 1-100]%
+...continue through 15
+
+HOTELS AVAILABLE:
+1: Aspen Mountain Lodge (Aspen, US) | $722/night | 0.1mi from Aspen, Colorado, United States | perfect getaway Aspen Mountain Lodge, comfort meets convenience stunning heart of Aspen.Unwind LuxuryTake dip refreshing outdoor pool melt worries away hot tub. Our inviting amenities provide perfect setting relaxation rejuvenation.Stay ConnectedEnjoy complimentary wireless internet throughout | 
+2: St Moritz Lodge and Condominiums (Aspen, us) | $829/night | 0.2mi from Aspen, Colorado, United States | Year-Round Outdoor Heated Pool WhirlpoolIndulge relaxation St. Moritz Lodge & Condominiums year-round outdoor heated pool whirlpool. Unwind day of adventure Aspen's stunning surroundings.Cozy Rooms Modern Amenities comfort every corner rooms featuring flat-screen cable TVs, HBO, refrigerators. | 
+3: Limelight Hotel Aspen (Aspen, us) | $1989/night | 0.2mi from Aspen, Colorado, United States | roomss ultimate comfort Limelight Hotel, each guest room equipped modern amenities like free Wi-Fi, flat-screen TVs, iPod docking stations. Relax seating area take dip outdoor pool hot tub.Convenient ServicesStart day delicious breakfast hitting slopes ski guide service. Stay productive business | 
+4: The St. Regis Aspen Resort (Aspen, US) | $2749/night | 0.3mi from Aspen, Colorado, United States | Spa Wellness AmenitiesIndulge massages, body treatments, facials spa. Unwind spa tub sauna day of activities.Fine Dining Entertainment OptionsEnjoy American cuisine Velvet Buck opt 24-hour room svc. Sip drinks poolside bar one of two bars/lounges.Convenient Location Event SpacesCentrally located | 
+5: The Sky Residences at W Aspen (Aspen, us) | $4789/night | 0.5mi from Aspen, Colorado, United States | luxuryThe Sky Residences W Aspen outdoor pool, gym, hot tub guests to unwind relax style.Gourmet DiningIndulge exquisite dining s hotel's restaurant bar, offering variety of culinary delights to tantalize taste buds.Prime LocationConveniently situated near popular attractions like John Denver | 
+
+REMEMBER: Always select 15 hotels using exact names from the list above.
+
+=== END LOG ===

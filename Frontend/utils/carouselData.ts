@@ -19,62 +19,7 @@ export interface CarouselHotel {
 }
 
 export const carouselData: CarouselHotel[] = [
-  {
-    searchQuery: "Ski hotels in Aspen with panoramic windows",
-    hotelId: "lp225527",
-    name: "W Aspen",
-    image: "https://static.cupid.travel/hotels/500324327.jpg",
-    price: 1759,
-    priceDisplay: "$1759/night",
-    rating: 8.6,
-    location: "550 South Spring Street",
-    city: "Aspen",
-    country: "us",
-    fullAddress: "550 South Spring Street",
-    coordinates: { latitude: 39.1864, longitude: -106.816947 }
-  },
-  {
-    searchQuery: "Ski hotels in Aspen with panoramic windows",
-    hotelId: "lp2a9a8",
-    name: "Hotel Jerome, Auberge Collection",
-    image: "https://static.cupid.travel/hotels/571160698.jpg",
-    price: 2257,
-    priceDisplay: "$2257/night",
-    rating: 9.4,
-    location: "330 E Main Street",
-    city: "Aspen",
-    country: "US",
-    fullAddress: "330 E Main Street",
-    coordinates: { latitude: 39.190746, longitude: -106.819552 }
-  },
-  {
-    searchQuery: "Ski hotels in Aspen with panoramic windows",
-    hotelId: "lp41e31",
-    name: "Limelight Hotel Aspen",
-    image: "https://static.cupid.travel/hotels/25119362.jpg",
-    price: 2072,
-    priceDisplay: "$2072/night",
-    rating: 9.5,
-    location: "355 S. Monarch St",
-    city: "Aspen",
-    country: "us",
-    fullAddress: "355 S. Monarch St",
-    coordinates: { latitude: 39.189247, longitude: -106.821299 }
-  },
-  {
-    searchQuery: "Ski hotels in Aspen with panoramic windows",
-    hotelId: "lp1a7bb",
-    name: "Aspen Meadows Resort",
-    image: "https://static.cupid.travel/hotels/512412599.jpg",
-    price: 2147,
-    priceDisplay: "$2147/night",
-    rating: 9,
-    location: "845 Meadows Road",
-    city: "Aspen",
-    country: "us",
-    fullAddress: "845 Meadows Road",
-    coordinates: { latitude: 39.20129, longitude: -106.831462 }
-  },
+  
 
   {
     searchQuery: "Hotels in Los Angeles with rooftop pools",

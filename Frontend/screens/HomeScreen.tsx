@@ -1,4 +1,4 @@
-// HomeScreen.tsx - Updated with Two-Stage API functionality
+// HomeScreen.tsx - Updated with MorphingSearchChat
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
   View,
@@ -39,6 +39,7 @@ import MapViewScreen from '../screens/MapViewScreen';
 import { RecentSearch } from '../contexts/AuthContext';
 import FeedbackSystem from '../components/Feedback/FeedbackSystem';
 import { feedbackTrigger } from '../services/feedbackTrigger';
+import MorphingSearchChat from '../components/MorphingSearchChat';
 
 // Import test data
 import { testAISuggestions, generateTestSearchResponse } from '../components/HomeScreenTop/TestModeData';
@@ -120,8 +121,8 @@ interface Stage1Hotel {
   aiMatchPercent: number;
   starRating: number;
   images: string[];
-  photoGalleryImages?: string[]; // ADD: Photo gallery from stage 1
-  categoryRatings?: {  // ✅ ADD THIS
+  photoGalleryImages?: string[];
+  categoryRatings?: {
     cleanliness: number;
     service: number;
     location: number;
@@ -169,7 +170,7 @@ interface Stage1Hotel {
     country: string;
     isRefundable: boolean;
     refundableInfo: string;
-    photoGalleryImages?: string[]; // ADD: Also in summarized info
+    photoGalleryImages?: string[];
   };
 }
 
@@ -188,9 +189,8 @@ interface AIRecommendation {
   allHotelInfo?: string;
   safetyRating: number;
   safetyJustification: string;
-  photoGalleryImages: string[]; // ADD: Photo gallery array
+  photoGalleryImages: string[];
 }
-
 
 // Legacy interface for backward compatibility
 interface OptimizedSearchResponse {
@@ -267,7 +267,6 @@ interface HotelRecommendation {
   longitude: number | null;
   topAmenities: string[];
   
-  // NEW: Make refundable policy fields OPTIONAL (since API might not return them yet)
   isRefundable?: boolean;
   refundableTag?: string | null;
   refundableInfo?: string;
@@ -301,7 +300,7 @@ export interface Hotel {
   funFacts?: string[];
   aiMatchPercent?: number;
   images?: string[];
-  photoGalleryImages?: string[]; // ADD: Photo gallery for hotels
+  photoGalleryImages?: string[];
   
   pricePerNight?: {
     amount: number;
@@ -352,14 +351,10 @@ export interface Hotel {
     searchLocation?: string;
   } | null;
 }
-//const BASE_URL = __DEV__ ? 'http://localhost:3003' : "https://staygenie-wwpa.onrender.com";
+
 const BASE_URL ="https://staygenie-wwpa.onrender.com"
 
-
 import { Dimensions } from 'react-native';
-
-
-
 
 const HomeScreen = () => {
   const searchCompleted = useRef(false);
@@ -378,7 +373,6 @@ const [textIsTruncated, setTextIsTruncated] = useState(false);
 const [shouldShowChevron, setShouldShowChevron] = useState(false);
   // State management
   const [showPlaceholders, setShowPlaceholders] = useState(false);
-  // State management
   const [searchQuery, setSearchQuery] = useState('');
   const [isSearching, setIsSearching] = useState(false);
   const [isInsightsLoading, setIsInsightsLoading] = useState(false);
@@ -387,8 +381,7 @@ const [shouldShowChevron, setShouldShowChevron] = useState(false);
   const [scrollToHotelId, setScrollToHotelId] = useState<string | null>(null);
 const [showFeedbackPopup, setShowFeedbackPopup] = useState(false);
 
-  // Add error handling state
-const [searchError, setSearchError] = useState<{
+  const [searchError, setSearchError] = useState<{
   type: 'no_hotels_found' | 'processing_error' | 'timeout';
   message: string;
   originalQuery: string;
@@ -424,13 +417,13 @@ const [isEditingSearch, setIsEditingSearch] = useState(false);
 const [editedSearchQuery, setEditedSearchQuery] = useState('');
 const searchHasStarted = useRef(false);
 
-
 const editContainerHeight = useRef(new Animated.Value(0)).current;
 const editContentOpacity = useRef(new Animated.Value(0)).current;
 const editBackgroundScale = useRef(new Animated.Value(1)).current;
 const normalModeOpacity = useRef(new Animated.Value(1)).current;
 const [showFavoritesPopup, setShowFavoritesPopup] = useState(false);
 const [favoritedHotelName, setFavoritedHotelName] = useState('');
+  
   // Polling management
   const sentimentPollingRef = useRef<NodeJS.Timeout | null>(null);
   const pollingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -479,11 +472,9 @@ const handleFavoriteSuccess = useCallback((hotelName: string) => {
 
 const handleNavigateToFavorites = useCallback(() => {
     setShowFavoritesPopup(false);
-    // Navigate to the Favorites tab
     navigation.navigate('Favorites');
   }, [navigation]);
 
-// One driver for the whole edit mode animation: 0 = closed, 1 = open
 const editAnim = useRef(new Animated.Value(0)).current;
 
 const overlayOpacity = editAnim.interpolate({
@@ -493,7 +484,7 @@ const overlayOpacity = editAnim.interpolate({
 
 const cardTranslateY = editAnim.interpolate({
   inputRange: [0, 1],
-  outputRange: [-8, 0], // small slide down
+  outputRange: [-8, 0],
 });
 
 const cardOpacity = editAnim.interpolate({
@@ -503,9 +494,8 @@ const cardOpacity = editAnim.interpolate({
 
 const normalHeaderScale = editAnim.interpolate({
   inputRange: [0, 1],
-  outputRange: [1, 0.98], // subtle scale when edit is open
+  outputRange: [1, 0.98],
 });
-
 
 const saveRecentSearch = useCallback(async (searchQuery: string) => {
   if (!searchQuery.trim()) return;
@@ -520,18 +510,15 @@ const saveRecentSearch = useCallback(async (searchQuery: string) => {
 const replaceDateInSearch = (prev: string, newDate: string) => {
   if (!prev.trim()) return newDate;
 
-  // Match date ranges like "Nov 28, 2025 - Dec 3, 2025"
   const dateRegex = /\b([A-Z][a-z]{2}\s\d{1,2},\s\d{4})\s*-\s*([A-Z][a-z]{2}\s\d{1,2},\s\d{4})\b/;
 
   let cleaned = prev.replace(dateRegex, '').trim();
 
-  // Cleanup leftover bullets or spacing
   cleaned = cleaned.replace(/•\s*•/g, '•').trim();
   cleaned = cleaned.replace(/^•\s*/, '').replace(/\s*•$/, '');
 
   return cleaned.length > 0 ? `${cleaned} • ${newDate}` : newDate;
 };
-
 
 const debugHotelState = () => {
   console.log('🔍 HOTEL STATE DEBUG:', {
@@ -547,7 +534,6 @@ const debugHotelState = () => {
 
 const editSearchInputRef = useRef<TextInput>(null);
 
-// Add these helper functions before the return statement:
 const formatDateRange = (checkin: Date, checkout: Date) => {
   const checkinStr = checkin.toLocaleDateString('en-US', { 
     month: 'short', 
@@ -568,77 +554,13 @@ const formatGuestInfo = (adults: number, children: number) => {
   return guestStr;
 };
 
-
-// Simple edit handlers without animations
-const handleEditSearchPress = () => {
-  setEditedSearchQuery(searchQuery);
-  setIsEditingSearch(true);
-
-  // start with rAF for immediate responsiveness
-  requestAnimationFrame(() => {
-    Animated.spring(editAnim, {
-      toValue: 1,
-      // tuned for crisp, quick snap
-      stiffness: 520,
-      damping: 36,
-      mass: 0.9,
-      useNativeDriver: true,
-    }).start(() => {
-      // focus ASAP after the first frame
-      requestAnimationFrame(() => editSearchInputRef.current?.focus());
-    });
-  });
-};
-const handleCancelEdit = () => {
-  Keyboard.dismiss();
-  Animated.timing(editAnim, {
-    toValue: 0,
-    duration: 150,            // faster close
-    easing: Easing.out(Easing.cubic),
-    useNativeDriver: true,
-  }).start(() => {
-    setEditedSearchQuery(searchQuery);
-    setIsEditingSearch(false);
-  });
-};
-const {submitFeedback } = useAuth(); // ✅ Add submitFeedback
-
-
-const handleSaveSearch = async () => {
-  if (editedSearchQuery.trim() && editedSearchQuery.trim() !== searchQuery) {
-    const newQuery = editedSearchQuery.trim();
-    
-    // ✅ Cancel any ongoing search before starting new one
-    if ((global as any).cleanupSSESearch) {
-      (global as any).cleanupSSESearch();
-    }
-    
-    // Clear previous results AND date state
-    setDisplayHotels([]);
-    setStage1Results(null);
-    setStage2Results(null);
-    setShowPlaceholders(false);
-    setFirstHotelFound(false);
-    
-    // 🆕 CLEAR OLD DATE STATE - this is the key fix
-    setStreamingSearchParams(null);
-    
-    // 🆕 SET LOADING STATE FOR SEARCH PARAMS
-    setSearchParamsLoading(true);
-    
-    setSearchQuery(newQuery);
-    await executeSearch(newQuery);
-    await saveRecentSearch(newQuery);
-  }
-  handleCancelEdit();
-};
-
+const {submitFeedback } = useAuth();
 
 const generatePlaceholderHotels = useCallback((count: number = 10): Hotel[] => {
   return Array.from({ length: count }, (_, index) => ({
     id: `placeholder-${index}`,
-    name: '', // Empty for grey placeholder
-    image: '', // Empty for grey placeholder
+    name: '',
+    image: '',
     images: [],
     price: 0,
     originalPrice: 0,
@@ -654,7 +576,7 @@ const generatePlaceholderHotels = useCallback((count: number = 10): Hotel[] => {
     whyItMatches: '',
     funFacts: [],
     aiMatchPercent: 0,
-    isPlaceholder: true, // This identifies it as a placeholder
+    isPlaceholder: true,
   }));
 }, []);
 
@@ -662,7 +584,6 @@ const handleFeedbackSubmitted = async (rating: number, feedback?: string) => {
   console.log('📝 Feedback submitted:', { rating, feedback });
   
  if (rating > 0) {
-    // ✅ Store positive feedback too
     try {
       await submitFeedback({
         isHappy: true,
@@ -681,7 +602,6 @@ const handleFeedbackSubmitted = async (rating: number, feedback?: string) => {
   } else {
     await feedbackTrigger.markUserReviewed();
     
-    // ✅ Use Firestore instead of fetch
     try {
       await submitFeedback({
         isHappy: false,
@@ -697,7 +617,6 @@ const handleFeedbackSubmitted = async (rating: number, feedback?: string) => {
   setShowFeedbackPopup(false);
 };
 
-
 const handleStreamingUpdate = async (data: any, userInput?: string) => {
   console.log('📡 Streaming update received:', data.type);
 
@@ -709,11 +628,9 @@ case 'progress':
     message: data.message || 'Processing...'
   });
   
-  // UPDATE DATES IMMEDIATELY WHEN RECEIVED
   if (data.searchParams) {
     console.log('📅 Received parsed dates early:', data.searchParams);
     
-    // 🆕 CLEAR LOADING STATE WHEN REAL DATA ARRIVES
     setSearchParamsLoading(false);
     
     if (data.searchParams.checkin) {
@@ -811,7 +728,6 @@ case 'progress':
             updatedHotels[existingIndex] = {
               ...updatedHotels[existingIndex],
               ...enhancedHotel,
-              // Ensure these fields are properly updated
               aiExcerpt: enhancedHotel.whyItMatches || enhancedHotel.aiExcerpt,
               whyItMatches: enhancedHotel.whyItMatches || "Enhanced with AI insights",
               funFacts: enhancedHotel.funFacts || ["AI-curated facts"],
@@ -824,7 +740,7 @@ case 'progress':
               safetyRating: enhancedHotel.aiSafetyRating || enhancedHotel.safetyRating || updatedHotels[existingIndex].safetyRating,
               aiSafetyRating: enhancedHotel.aiSafetyRating,
               safetyJustification: enhancedHotel.safetyJustification || "AI-enhanced safety assessment",
-              photoGalleryImages: enhancedHotel.photoGalleryImages || [], // ADD: Update photo gallery
+              photoGalleryImages: enhancedHotel.photoGalleryImages || [],
               categoryRatings: data.hotel.categoryRatings
             };
             
@@ -846,7 +762,6 @@ case 'progress':
       console.log('🎉 All hotels found and AI-enhanced!');
       setSearchParamsLoading(false);
 
-      // Track search and check for feedback prompt
       (async () => {
         try {
           await feedbackTrigger.trackSearch();
@@ -910,11 +825,10 @@ case 'progress':
   }
 };
 
-
 const confirmedParams =
   stage1Results?.searchParams ||
   searchResults?.searchParams ||
-  (streamingSearchParams?.checkin && streamingSearchParams); // set on SSE 'complete'
+  (streamingSearchParams?.checkin && streamingSearchParams);
 
 const hasFinalizedDates = Boolean(
   confirmedParams?.checkin && confirmedParams?.checkout
@@ -938,7 +852,7 @@ const convertStreamedHotelToDisplay = (streamedHotel: any, index: number): Hotel
   });
   console.log('🔄 Converting streamed hotel:', streamedHotel.name);
   console.log(`   Hotel ID: ${streamedHotel.hotelId || streamedHotel.id || 'NO_ID'}`);
-  console.log(`   Photo gallery images: ${streamedHotel.photoGalleryImages?.length || 0}`); // ADD: Log photo gallery
+  console.log(`   Photo gallery images: ${streamedHotel.photoGalleryImages?.length || 0}`);
   
   const hotelId = streamedHotel.hotelId || streamedHotel.id || `fallback-${Date.now()}-${index}`;
 
@@ -949,17 +863,14 @@ const convertStreamedHotelToDisplay = (streamedHotel: any, index: number): Hotel
   const getHotelImage = (hotel: any): string => {
     const defaultImage = "https://images.unsplash.com/photo-1564501049412-61c2a3083791?auto=format&fit=crop&w=800&q=80";
     
-    // PRIORITY 1: Use firstRoomImage if available
     if (hotel.firstRoomImage && typeof hotel.firstRoomImage === 'string' && hotel.firstRoomImage.trim() !== '') {
       return hotel.firstRoomImage;
     }
     
-    // PRIORITY 2: Use secondRoomImage if firstRoomImage is not available
     if (hotel.secondRoomImage && typeof hotel.secondRoomImage === 'string' && hotel.secondRoomImage.trim() !== '') {
       return hotel.secondRoomImage;
     }
     
-    // PRIORITY 3: Use first image from photo gallery
     if (hotel.photoGalleryImages && hotel.photoGalleryImages.length > 0) {
       const firstGalleryImage = hotel.photoGalleryImages[0];
       if (firstGalleryImage && typeof firstGalleryImage === 'string' && firstGalleryImage.trim() !== '') {
@@ -967,7 +878,6 @@ const convertStreamedHotelToDisplay = (streamedHotel: any, index: number): Hotel
       }
     }
     
-    // FALLBACK: Use existing images array
     if (hotel.images && hotel.images.length > 0) {
       const firstImage = hotel.images[0];
       if (firstImage && typeof firstImage === 'string' && firstImage.trim() !== '') {
@@ -997,7 +907,7 @@ const convertStreamedHotelToDisplay = (streamedHotel: any, index: number): Hotel
     name: streamedHotel.name,
     image: getHotelImage(streamedHotel),
     images: streamedHotel.images || [],
-    photoGalleryImages: streamedHotel.photoGalleryImages || [], // ADD: Include photo gallery
+    photoGalleryImages: streamedHotel.photoGalleryImages || [],
     price: Math.round(price),
     originalPrice: Math.round(originalPrice),
     priceComparison: priceComparison,
@@ -1014,7 +924,6 @@ const convertStreamedHotelToDisplay = (streamedHotel: any, index: number): Hotel
     secondRoomImage: streamedHotel.secondRoomImage || null,
     topAmenities: streamedHotel.topAmenities || [],
     
-    // AI content - use enhanced if available, otherwise show loading
     aiExcerpt: isAIEnhanced 
       ? streamedHotel.whyItMatches 
       : streamedHotel.whyItMatches?.includes('Analyzing') 
@@ -1049,13 +958,11 @@ const convertStreamedHotelToDisplay = (streamedHotel: any, index: number): Hotel
         ? streamedHotel.locationHighlight 
         : "Prime location with easy access to everything",
     
-    // Match data
     aiMatchPercent: streamedHotel.aiMatchPercent,
     matchType: streamedHotel.aiMatchPercent >= 90 ? 'perfect' :
                streamedHotel.aiMatchPercent >= 85 ? 'excellent' : 
                streamedHotel.aiMatchPercent >= 75 ? 'great' : 'good',
     
-    // Hotel details
     pricePerNight: streamedHotel.pricePerNight,
     city: streamedHotel.city || streamedHotel.summarizedInfo?.city,
     country: streamedHotel.country || streamedHotel.summarizedInfo?.country,
@@ -1067,24 +974,18 @@ const convertStreamedHotelToDisplay = (streamedHotel: any, index: number): Hotel
     fullDescription: streamedHotel.description || streamedHotel.summarizedInfo?.description,
     fullAddress: streamedHotel.address || streamedHotel.summarizedInfo?.location,
     
-    // Refundable policy
     isRefundable: streamedHotel.isRefundable,
     refundableTag: streamedHotel.refundableTag,
     refundableInfo: streamedHotel.refundableInfo || streamedHotel.summarizedInfo?.refundableInfo,
     
-    // All hotel info
     allHotelInfo: streamedHotel.allHotelInfo || "Detailed hotel information loading...",
     
-    // AI Safety fields
     aiSafetyRating: streamedHotel.safetyRating || streamedHotel.aiSafetyRating,
     safetyJustification: streamedHotel.safetyJustification || "Safety assessment based on location and area knowledge",
     distanceFromSearch: streamedHotel.distanceFromSearch || null
   };
 };
 
-
-
-// FINAL FIX: Remove all custom event listeners - everything goes through 'message'
 const fmtDate = (iso: string) =>
   new Date(iso).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 
@@ -1102,20 +1003,17 @@ const executeStreamingSearch = async (userInput: string) => {
   try {
     console.log('🌊 Starting SSE Real-time Streaming Search...');
     
-    // Clear state first
     setStage1Results(null);
     setStage2Results(null);
     setCurrentSearchId(null);
     
     setSearchParamsLoading(true);
 
-    // Set loading state
     setShowPlaceholders(true);
     setIsStreamingSearch(true);
     setFirstHotelFound(false);
     setStreamingProgress({ step: 0, totalSteps: 8, message: 'Starting search...' });
 
-    // Set placeholders and KEEP them
     const placeholderHotels = generatePlaceholderHotels(10);
     setDisplayHotels(placeholderHotels);
     const searchParams = new URLSearchParams({
@@ -1126,7 +1024,6 @@ const executeStreamingSearch = async (userInput: string) => {
     const sseUrl = `${BASE_URL}/api/hotels/search-and-match/stream?${searchParams.toString()}`;
     console.log('🔗 SSE URL:', sseUrl);
 
-    // Create EventSource - use any to bypass TypeScript issues
     eventSource = new (EventSource as any)(sseUrl, {
       headers: {
         'Cache-Control': 'no-cache',
@@ -1135,14 +1032,10 @@ const executeStreamingSearch = async (userInput: string) => {
       withCredentials: false,
     });
 
-    // ONLY USE STANDARD SSE EVENTS - no custom event names
-
-    // Connection opened
     eventSource.addEventListener('open', () => {
       console.log('✅ SSE Connection opened');
     });
 
-    // ALL messages come through here - this is the key fix
     eventSource.addEventListener('message', async (event: any) => {
       try {
         const data = JSON.parse(event.data);
@@ -1150,7 +1043,6 @@ const executeStreamingSearch = async (userInput: string) => {
         
         console.log('📡 SSE Message received:', eventType);
         
-        // Route based on data.type instead of using custom event listeners
         switch (eventType) {
           case 'connected':
             console.log('🔌 SSE Connected:', data.message);
@@ -1171,7 +1063,6 @@ const executeStreamingSearch = async (userInput: string) => {
           case 'complete':
             const realHotelsCount = displayHotels.filter(h => !h.isPlaceholder).length;
   
-  // ✅ ADD THIS
   await AnalyticsService.trackSearchSuccess(
     searchQuery,
     realHotelsCount
@@ -1180,7 +1071,6 @@ const executeStreamingSearch = async (userInput: string) => {
             searchCompleted.current = true; 
             handleStreamingUpdate({ type: 'complete', ...data }, userInput);
             
-            // Close connection on completion
             console.log('✅ Search completed, closing SSE connection');
             if (eventSource) {
               eventSource.close();
@@ -1212,7 +1102,6 @@ const executeStreamingSearch = async (userInput: string) => {
             break;
             
           default:
-            // Handle any other message types
             console.log('📝 Unknown SSE message type:', eventType, data);
             break;
         }
@@ -1222,7 +1111,6 @@ const executeStreamingSearch = async (userInput: string) => {
       }
     });
 
-    // Connection error
     eventSource.addEventListener('error', (error: any) => {
   console.error('❌ SSE Connection error:', error);
   
@@ -1236,7 +1124,6 @@ const executeStreamingSearch = async (userInput: string) => {
   setShowErrorScreen(true);
 });
 
-    // Set timeout for safety (30 seconds)
     timeoutId = setTimeout(() => {
        AnalyticsService.trackSearchFailed(searchQuery, 'timeout');
   
@@ -1273,7 +1160,6 @@ const executeStreamingSearch = async (userInput: string) => {
   setShowErrorScreen(true);
 }
 
-  // Store cleanup function
   (global as any).cleanupSSESearch = () => {
     console.log('🧹 Cleaning up SSE connection');
     
@@ -1291,171 +1177,9 @@ const executeStreamingSearch = async (userInput: string) => {
   };
 };
 
-  // TEST MODE: Load pre-loaded AI suggestions
-  const loadTestAiSuggestions = useCallback(async () => {
-    console.log('🧪 TEST MODE: Loading pre-loaded AI suggestions...');
-    setIsLoadingAiSuggestions(true);
-    setAiSuggestionsError(null);
-
-    // Simulate loading time
-    await new Promise(resolve => setTimeout(resolve, 500));
-
-    setAiSuggestions(testAISuggestions);
-    setIsLoadingAiSuggestions(false);
-    console.log('✅ TEST MODE: AI suggestions loaded');
-  }, []);
-
-  // PRODUCTION: Pre-load AI suggestions during hotel search
-  const preloadAiSuggestions = useCallback(async (searchQuery: string, searchContext?: any) => {
-    try {
-      console.log('🤖 Pre-loading AI suggestions during search...');
-      setIsLoadingAiSuggestions(true);
-      setAiSuggestionsError(null);
-
-      const response = await makeRequest('/api/hotels/ai-suggestions', {
-        currentSearch: searchQuery,
-        searchContext: searchContext
-      });
-
-      if (response.success && response.suggestions) {
-        console.log(`✅ Pre-loaded ${response.suggestions.length} AI suggestions`);
-        setAiSuggestions(response.suggestions);
-        
-        if (response.metadata?.model) {
-          console.log(`🤖 Suggestions generated by: ${response.metadata.model}`);
-        }
-      } else {
-        throw new Error('Invalid response format');
-      }
-
-    } catch (error: any) {
-      console.error('❌ Failed to pre-load AI suggestions:', error);
-      setAiSuggestionsError(error.message);
-      
-      // Fallback to basic suggestions
-      const fallbackSuggestions = generateFallbackSuggestions(searchQuery);
-      setAiSuggestions(fallbackSuggestions);
-    } finally {
-      setIsLoadingAiSuggestions(false);
-    }
-  }, []);
-
-  // Generate fallback suggestions (production only)
-  const generateFallbackSuggestions = useCallback((searchQuery: string): AISuggestion[] => {
-    const query = searchQuery.toLowerCase();
-    const suggestionTexts: string[] = [];
-
-    // Budget suggestions
-    if (!query.includes('$') && !query.includes('budget')) {
-      suggestionTexts.push('under $150 per night', 'under $300 per night');
-    }
-
-    // Guest count
-    if (!query.includes('people') && !query.includes('guest')) {
-      suggestionTexts.push('for 2 people', 'for 4+ people');
-    }
-
-    // Location based
-    if (query.includes('beach')) {
-      suggestionTexts.push('with ocean view', 'walking distance to beach');
-    } else if (query.includes('city') || query.includes('downtown')) {
-      suggestionTexts.push('in walkable area', 'near public transport');
-    } else {
-      suggestionTexts.push('in city center', 'in quiet area');
-    }
-
-    // Amenities
-    if (!query.includes('wifi') && !query.includes('breakfast')) {
-      suggestionTexts.push('with free WiFi', 'with free breakfast');
-    }
-    
-    if (!query.includes('pool') && !query.includes('parking')) {
-      suggestionTexts.push('with pool access', 'with free parking');
-    }
-
-    // Quality
-    if (!query.includes('rating') && !query.includes('star')) {
-      suggestionTexts.push('with 4+ star rating', 'with recent positive reviews');
-    }
-
-    // Flexibility
-    if (!query.includes('cancel')) {
-      suggestionTexts.push('with free cancellation');
-    }
-
-    // Default suggestions for empty search
-    if (!query.trim()) {
-      const defaultTexts = [
-        'under $200 per night',
-        'for 2 people', 
-        'with free WiFi',
-        'in city center',
-        'with 4+ star rating',
-        'with free breakfast'
-      ];
-      
-      return defaultTexts.map((text, index) => ({
-        id: `fallback-${index}`,
-        text,
-        category: 'general',
-        priority: 'medium'
-      }));
-    }
-
-    // Take first 6 unique suggestions
-    const uniqueTexts = [...new Set(suggestionTexts)].slice(0, 6);
-    
-    return uniqueTexts.map((text, index) => ({
-      id: `fallback-${index}-${Date.now()}`,
-      text,
-      category: 'general',
-      priority: 'medium'
-    }));
-  }, []);
-
-  // NEW: Convert Stage 1 hotel to display format (basic info with loading placeholders)
-  
-
-  
-
-
-
-  // NEW: Two-stage optimized search
-  
-
-  const makeRequest = async (endpoint: string, data?: any) => {
-  try {
-    const config: RequestInit = {
-      method: data ? 'POST' : 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    };
-
-    if (data) {
-      config.body = JSON.stringify(data);
-    }
-
-    const response = await fetch(`${BASE_URL}${endpoint}`, config);
-
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      throw new Error(errorData.error || errorData.message || `HTTP error! status: ${response.status}`);
-    }
-
-    return await response.json();
-  } catch (error: any) {
-    console.error(`❌ API Error: ${error.message}`);
-    throw error;
-  }
-};
-  
-
-  // MAIN SEARCH FUNCTION - routes to test, two-stage, or legacy
 const executeSearch = async (userInput: string) => {
   if (TEST_MODE) {
   } else {
-    // Always try streaming for immediate results
     try {
       await executeStreamingSearch(userInput);
     } catch (error: any) {
@@ -1470,8 +1194,6 @@ useEffect(() => {
   }
 }, [displayHotels, showPlaceholders, isStreamingSearch]);
 
-
-  // Handle search query from InitialSearchScreen
   useEffect(() => {
     if (params?.searchQuery && params.searchQuery !== searchQuery) {
       console.log('📥 Received search query from InitialSearchScreen:', params.searchQuery);
@@ -1480,11 +1202,8 @@ useEffect(() => {
     }
   }, [params?.searchQuery]);
 
-
-
   useEffect(() => {
   return () => {
-    // Clean up SSE connection when component unmounts
     if ((global as any).cleanupSSESearch) {
       (global as any).cleanupSSESearch();
     }
@@ -1498,7 +1217,6 @@ useEffect(() => {
   };
 }, []);
 
-  // Event handlers
   const handleAiSearch = useCallback(() => {
     console.log('AI search button pressed');
     setShowAiOverlay(true);
@@ -1507,27 +1225,18 @@ useEffect(() => {
   const handleCloseAiOverlay = useCallback(() => {
     setShowAiOverlay(false);
   }, []);
-  const replaceRecentSearch = useCallback(async (originalSearch: string, newSearch: string) => {
-  try {
-    await addRecentSearch(newSearch, originalSearch); // Pass both parameters
-    console.log(`Replaced "${originalSearch}" with "${newSearch}" in recent searches`);
-  } catch (error) {
-    console.error('Failed to replace recent search:', error);
-  }
-}, [addRecentSearch]);
-
 
   const handleSearchUpdate = useCallback((newSearch: string, originalSearch?: string) => {
   setSearchQuery(newSearch);
   if (newSearch.trim()) {
     executeSearch(newSearch);
     
-    // Replace the original search with the refined one in recent searches
+    // Use addRecentSearch with replaceQuery parameter
     if (originalSearch && originalSearch !== newSearch) {
-      replaceRecentSearch(originalSearch, newSearch);
+      addRecentSearch(newSearch, originalSearch);
     }
   }
-}, []);
+}, [addRecentSearch]);
 
   const handleDateChange = useCallback((type: 'checkin' | 'checkout', date: Date) => {
     if (type === 'checkin') {
@@ -1562,7 +1271,6 @@ const handleBookNow = useCallback((hotel: Hotel) => {
     bookingMessage += `💰 Price: ${hotel.price}/night\n`;
   }
   
-  // NEW: Include refundable policy information
   if (hotel.isRefundable !== undefined) {
     const refundIcon = hotel.isRefundable ? '✅' : '❌';
     bookingMessage += `${refundIcon} Refundable: ${hotel.refundableInfo || (hotel.isRefundable ? 'Yes' : 'No')}\n`;
@@ -1578,7 +1286,6 @@ const handleBookNow = useCallback((hotel: Hotel) => {
   
   bookingMessage += `\n`;
   
-  // Use Stage 1 results if available, otherwise fallback to legacy
   const searchParams = stage1Results?.searchParams || searchResults?.searchParams;
   
   if (searchParams) {
@@ -1614,212 +1321,15 @@ const handleBookNow = useCallback((hotel: Hotel) => {
 
 const handleViewDetails = useCallback((hotel: Hotel) => {
   console.log('View details pressed for:', hotel.name);
-  
-  let detailsMessage = `🏨 ${hotel.name}\n\n`;
-  
-  if (TEST_MODE) {
-    detailsMessage += `🧪 TEST MODE DATA\n\n`;
-  }
-  
-  if (hotel.aiMatchPercent) {
-    detailsMessage += `🤖 AI Analysis:\n`;
-    detailsMessage += `• Match Score: ${hotel.aiMatchPercent}%\n`;
-    detailsMessage += `• Match Type: ${hotel.matchType || 'good'}\n`;
-    
-    const hasEnhancedInsights = hotel.whyItMatches && 
-                                !hotel.whyItMatches.includes('Analyzing') && 
-                                !hotel.whyItMatches.includes('progress');
-    
-    if (hasEnhancedInsights) {
-      detailsMessage += `• Why it matches: ${hotel.whyItMatches}\n`;
-      detailsMessage += `• ✨ Real-time AI insights active\n`;
-    } else {
-      detailsMessage += `• 🔄 AI insights generating...\n`;
-    }
-    detailsMessage += `\n`;
-  }
-  
-  // NEW: Add safety information section
-  detailsMessage += `🛡️ Safety Assessment:\n`;
-  if (hotel.aiSafetyRating) {
-    detailsMessage += `• AI Safety Rating: ${hotel.aiSafetyRating}/10\n`;
-    if (hotel.safetyJustification) {
-      detailsMessage += `• Assessment: ${hotel.safetyJustification}\n`;
-    }
-    detailsMessage += `• ✨ AI-enhanced safety analysis\n`;
-  } else {
-    detailsMessage += `• General Safety: ${hotel.safetyRating.toFixed(1)}/10\n`;
-    detailsMessage += `• Standard area assessment\n`;
-  }
-  detailsMessage += `\n`;
-  
-  detailsMessage += `📍 Location Details:\n`;
-  if (hotel.city && hotel.country) {
-    detailsMessage += `• City: ${hotel.city}, ${hotel.country}\n`;
-  }
-  if (hotel.fullAddress) {
-    detailsMessage += `• Address: ${hotel.fullAddress}\n`;
-  }
-  if (hotel.latitude && hotel.longitude) {
-    detailsMessage += `• Coordinates: ${hotel.latitude}, ${hotel.longitude}\n`;
-  }
-  if (hotel.locationHighlight && !hotel.locationHighlight.includes('Analyzing')) {
-    detailsMessage += `• Highlight: ${hotel.locationHighlight}\n`;
-  }
-  detailsMessage += `• Transit: ${hotel.transitDistance}\n\n`;
-  
-  if (hotel.nearbyAttractions && hotel.nearbyAttractions.length > 0 && !hotel.nearbyAttractions[0].includes('Finding')) {
-    detailsMessage += `🗺️ Nearby Attractions:\n`;
-    hotel.nearbyAttractions.forEach(attraction => {
-      detailsMessage += `• ${attraction}\n`;
-    });
-    detailsMessage += `\n`;
-  }
-  
-  detailsMessage += `⭐ Ratings & Reviews:\n`;
-  detailsMessage += `• Star Rating: ${hotel.rating}/5\n`;
-  detailsMessage += `• Guest Reviews: ${hotel.reviews.toLocaleString()} reviews\n`;
-  detailsMessage += `• Safety Rating: ${hotel.safetyRating.toFixed(1)}/10\n\n`;
-  
-  const hasEnhancedGuestInsights = hotel.guestInsights && !hotel.guestInsights.includes('Processing');
-  if (hasEnhancedGuestInsights) {
-    detailsMessage += `💬 Guest Insights (AI-Enhanced):\n${hotel.guestInsights}\n\n`;
-  } else {
-    detailsMessage += `💬 Guest Insights:\n🔄 AI analyzing guest feedback...\n\n`;
-  }
-  
-  if (hotel.topAmenities && hotel.topAmenities.length > 0) {
-    detailsMessage += `🏨 Top Amenities:\n`;
-    hotel.topAmenities.forEach(amenity => {
-      detailsMessage += `• ${amenity}\n`;
-    });
-    detailsMessage += `\n`;
-  }
-  
-  if (hotel.funFacts && hotel.funFacts.length > 0 && !hotel.funFacts[0].includes('Generating')) {
-    detailsMessage += `🎉 AI-Curated Fun Facts:\n`;
-    hotel.funFacts.forEach(fact => {
-      detailsMessage += `• ${fact}\n`;
-    });
-    detailsMessage += `\n`;
-  }
-  
-  if (hotel.hasAvailability !== undefined || hotel.totalRooms) {
-    detailsMessage += `🛏️ Accommodation:\n`;
-    if (hotel.hasAvailability !== undefined) {
-      detailsMessage += `• Availability: ${hotel.hasAvailability ? 'Available' : 'Limited'}\n`;
-    }
-    if (hotel.totalRooms) {
-      detailsMessage += `• Room Types: ${hotel.totalRooms} different options\n`;
-    }
-    detailsMessage += `\n`;
-  }
-  
-  detailsMessage += `💰 Pricing Information:\n`;
-  if (hotel.pricePerNight) {
-    detailsMessage += `• Per Night: ${hotel.pricePerNight.display}\n`;
-    detailsMessage += `• Currency: ${hotel.pricePerNight.currency}\n`;
-    if (hotel.pricePerNight.provider) {
-      detailsMessage += `• Provider: ${hotel.pricePerNight.provider}\n`;
-    }
-    if (hotel.pricePerNight.isSupplierPrice) {
-      detailsMessage += `• Rate Type: Supplier rate\n`;
-    } else {
-      detailsMessage += `• Rate Type: Retail rate\n`;
-    }
-    if (hotel.pricePerNight.totalAmount) {
-      detailsMessage += `• Total Stay Cost: ${hotel.pricePerNight.currency} ${hotel.pricePerNight.totalAmount}\n`;
-    }
-  } else {
-    detailsMessage += `• Per Night: ${hotel.price}\n`;
-    detailsMessage += `• Original Price: ${hotel.originalPrice}\n`;
-    detailsMessage += `• Comparison: ${hotel.priceComparison}\n`;
-  }
-  
-  // Add refundable policy info
-  if (hotel.isRefundable !== undefined) {
-    detailsMessage += `\n🔄 Refund Policy:\n`;
-    detailsMessage += `• Refundable: ${hotel.isRefundable ? 'Yes' : 'No'}\n`;
-    if (hotel.refundableInfo) {
-      detailsMessage += `• Details: ${hotel.refundableInfo}\n`;
-    }
-    if (hotel.refundableTag) {
-      detailsMessage += `• Policy Code: ${hotel.refundableTag}\n`;
-    }
-  }
-  
 }, [handleBookNow]);
 
 const handleHotelPress = useCallback((hotel: Hotel) => {
   console.log('Hotel selected:', hotel.name);
-  
-  let alertMessage = '';
-  
-  if (TEST_MODE) {
-    alertMessage += `🧪 TEST MODE\n\n`;
-  }
-  
-  if (hotel.aiMatchPercent) {
-    alertMessage += `🤖 AI Match: ${hotel.aiMatchPercent}% (${hotel.matchType || 'good'} match)\n\n`;
-  }
-  
-  if (hotel.city && hotel.country) {
-    alertMessage += `📍 ${hotel.city}, ${hotel.country}\n`;
-  }
-  
-  if (hotel.locationHighlight && !hotel.locationHighlight.includes('Analyzing')) {
-    alertMessage += `🎯 ${hotel.locationHighlight}\n\n`;
-  }
-  
-  // Check if AI insights are enhanced or still loading
-  const hasEnhancedInsights = hotel.whyItMatches && 
-                              !hotel.whyItMatches.includes('Analyzing') && 
-                              !hotel.whyItMatches.includes('progress');
-  
-  if (hasEnhancedInsights) {
-    alertMessage += `✨ Why it matches: ${hotel.whyItMatches}\n\n`;
-    
-    if (hotel.guestInsights && !hotel.guestInsights.includes('Processing')) {
-      alertMessage += `💬 Guest Insights: ${hotel.guestInsights}\n\n`;
-    }
-    
-    if (hotel.nearbyAttractions && hotel.nearbyAttractions.length > 0 && !hotel.nearbyAttractions[0].includes('Finding')) {
-      alertMessage += `🗺️ Nearby: ${hotel.nearbyAttractions.slice(0, 2).join(', ')}\n\n`;
-    }
-  } else {
-    alertMessage += `🔄 AI insights generating in real-time...\n\n`;
-  }
-  
-  if (hotel.topAmenities && hotel.topAmenities.length > 0) {
-    alertMessage += `🏨 Top Amenities: ${hotel.topAmenities.join(', ')}\n\n`;
-  }
-  
-  if (hotel.pricePerNight) {
-    alertMessage += `💰 ${hotel.pricePerNight.display}`;
-    if (hotel.pricePerNight.provider) {
-      alertMessage += ` (via ${hotel.pricePerNight.provider})`;
-    }
-    alertMessage += `\n`;
-    if (hotel.pricePerNight.isSupplierPrice) {
-      alertMessage += `🏷️  Supplier rate\n`;
-    }
-  } else {
-    alertMessage += `💰 ${hotel.price}/night\n`;
-  }
-  
-  alertMessage += `⭐ ${hotel.rating}/5 (${hotel.reviews.toLocaleString()} reviews)\n`;
-  
-  if (hotel.hasAvailability !== undefined) {
-    alertMessage += `🏨 ${hotel.hasAvailability ? 'Available' : 'Limited availability'}`;
-  }
-  
-
 }, [handleViewDetails]);
 
 const handleBackPress = useCallback(() => {
   console.log('Back button pressed - starting transition animation');
   
-  // Cleanup first
   if ((global as any).cleanupSSESearch) {
     (global as any).cleanupSSESearch();
   }
@@ -1832,10 +1342,9 @@ const handleBackPress = useCallback(() => {
     pollingTimeoutRef.current = null;
   }
   
-  // Animate out (opposite direction - slide to the right)
   Animated.parallel([
     Animated.timing(screenSlideOut, {
-      toValue: width, // Slide to the right (opposite of InitialSearch)
+      toValue: width,
       duration: 400,
       useNativeDriver: true,
     }),
@@ -1851,7 +1360,6 @@ const handleBackPress = useCallback(() => {
     }),
   ]).start(() => {
     navigation.goBack();
-    
   });
 }, [navigation]);
 
@@ -1872,266 +1380,33 @@ const handleBackPress = useCallback(() => {
       ]}
     >
 
-{/* UPDATED HEADER - Matches Hotel Card Style */}
-<View style={tw`px-4 pt-2 pb-3 bg-gray-50`}>
-  {searchQuery.trim().length > 0 ? (
-    <Animated.View
-      style={[
-        {
-          borderRadius: 16,
-          backgroundColor: '#fff',
-          shadowColor: '#000',
-          shadowOffset: { width: 0, height: 1 },
-          shadowOpacity: 0.1,
-          shadowRadius: 2,
-          elevation: 3,
-          transform: [{ scale: normalHeaderScale }]
-        }
-      ]}
-    >
-      <View style={{
-        borderRadius: 16,
-        borderWidth: 1,
-        borderColor: '#E5E7EB',
-        backgroundColor: '#fff',
-        overflow: 'hidden',
-      }}>
-        {!isEditingSearch ? (
-          // NORMAL MODE
-          <TouchableOpacity
-            style={tw`px-4 py-3`}
-            onPress={handleEditSearchPress}
-            activeOpacity={0.8}
-          >
-            <View style={tw`flex-row items-center justify-between`}>
-              <View style={tw`flex-row items-center flex-1 min-w-0`}>
-                <TouchableOpacity
-                  style={[
-                    tw`w-8 h-8 items-center justify-center rounded-xl mr-3 flex-shrink-0`,
-                    { backgroundColor: '#F9FAFB' }
-                  ]}
-                  onPress={handleBackPress}
-                  activeOpacity={0.7}
-                  hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-                >
-                  <Ionicons name="arrow-back" size={16} color="#374151" />
-                </TouchableOpacity>
-                
-                <View style={tw`flex-1 min-w-0`}>
-                  <Text 
-                    style={{
-                      fontFamily: 'Merriweather-Regular',
-                      fontSize: 14,
-                      lineHeight: 18,
-                      color: '#111827',
-                      marginBottom: 4,
-                    }}
-                    numberOfLines={2}
-                    ellipsizeMode="tail"
-                  >
-                    {searchQuery}
-                  </Text>
-                  
-<View style={tw`flex-row items-center flex-wrap`}>
-  <View style={tw`flex-row items-center`}>
-    <Ionicons name="calendar-outline" size={11} color="#6B7280" />
-    <Text style={{
-      fontFamily: 'Merriweather-Regular',
-      fontSize: 11,
-      color: searchParamsLoading ? '#9CA3AF' : '#6B7280',
-      marginLeft: 4,
-      fontStyle: searchParamsLoading ? 'italic' : 'normal'
-    }}>
-      {searchParamsLoading 
-        ? 'Loading dates...'
-        : (hasFinalizedDates && confirmedCheckInDate && confirmedCheckOutDate
-            ? formatDateRange(confirmedCheckInDate, confirmedCheckOutDate)
-            : formatDateRange(checkInDate, checkOutDate)
-          )
-      }
-    </Text>
-  </View>
-  
-  <View style={[tw`rounded-full mx-2`, { width: 3, height: 3, backgroundColor: '#D1D5DB' }]} />
-  
-  <View style={tw`flex-row items-center`}>
-    <Ionicons name="people-outline" size={11} color="#6B7280" />
-    <Text style={{
-      fontFamily: 'Merriweather-Regular',
-      fontSize: 11,
-      color: searchParamsLoading ? '#9CA3AF' : '#6B7280',
-      marginLeft: 4,
-      fontStyle: searchParamsLoading ? 'italic' : 'normal'
-    }}>
-      {searchParamsLoading 
-        ? 'Loading...'
-        : formatGuestInfo(adults, children)
-      }
-    </Text>
-  </View>
-  
-
-</View>
-                </View>
-              </View>
-
-              <View style={[
-                tw`w-8 h-8 rounded-xl items-center justify-center flex-shrink-0`,
-                { backgroundColor: 'rgba(29, 249, 255, 0.1)', marginLeft: 12 }
-              ]}>
-                <Ionicons name="pencil" size={14} color="#00D4E6" />
-              </View>
-            </View>
-          </TouchableOpacity>
-          
-        ) : (
-          // EDIT MODE
-          <View style={tw`p-4`}>
-            <View style={tw`mb-3`}>
-              <View style={[
-                tw`rounded-xl border`,
-                { borderColor: '#E5E7EB', backgroundColor: '#F9FAFB' }
-              ]}>
-                <TextInput
-                  ref={editSearchInputRef}
-                  style={[
-                    {
-                      fontFamily: 'Merriweather-Regular',
-                      fontSize: 14,
-                      lineHeight: 20,
-                      color: '#111827',
-                      padding: 14,
-                      minHeight: 90,
-                      maxHeight: 130,
-                      textAlignVertical: 'top',
-                    }
-                  ]}
-                  value={editedSearchQuery}
-                  onChangeText={setEditedSearchQuery}
-                  placeholder="Describe your perfect stay..."
-                  placeholderTextColor="#9CA3AF"
-                  multiline
-                  maxLength={1600}
-                  selectionColor="#1DF9FF"
-                  autoFocus={false}
-                />
-              </View>
-            </View>
-
-            <View style={tw`-mx-1 mb-3`}>
-              <SearchGuidePills
-  onDateSelect={(dateText) => {
-    setEditedSearchQuery(prev => replaceDateInSearch(prev, dateText));
+{/* MorphingSearchChat - Replaces old header */}
+<MorphingSearchChat
+  currentSearch={searchQuery}
+  onSearchRefined={handleSearchUpdate}
+  onBackPress={handleBackPress}
+  hotelContext={displayHotels.slice(0, 10).map(hotel => ({
+    id: hotel.id,
+    name: hotel.name,
+    city: hotel.city,
+    country: hotel.country,
+    price: hotel.price,
+    rating: hotel.rating,
+    aiMatchPercent: hotel.aiMatchPercent,
+    topAmenities: hotel.topAmenities,
+    distanceFromSearch: hotel.distanceFromSearch ? {
+      formatted: hotel.distanceFromSearch.formatted,
+      fromLocation: hotel.distanceFromSearch.fromLocation,
+    } : undefined,
+  }))}
+  searchParams={{
+    location: streamingSearchParams?.cityName || stage1Results?.searchParams?.cityName,
+    checkin: streamingSearchParams?.checkin || stage1Results?.searchParams?.checkin,
+    checkout: streamingSearchParams?.checkout || stage1Results?.searchParams?.checkout,
+    adults: streamingSearchParams?.adults || stage1Results?.searchParams?.adults || adults,
+    children: streamingSearchParams?.children || stage1Results?.searchParams?.children || children,
   }}
-                onBudgetSelect={(budgetText) => {
-                  setEditedSearchQuery(prev => 
-                    prev.trim() ? `${prev.trim()} • ${budgetText}` : budgetText
-                  );
-                }}
-                onGuestsSelect={(guestsText) => {
-                  setEditedSearchQuery(prev => 
-                    prev.trim() ? `${prev.trim()} • ${guestsText}` : guestsText
-                  );
-                }}
-                onAmenitiesSelect={(amenitiesText) => {
-                  setEditedSearchQuery(prev => 
-                    prev.trim() ? `${prev.trim()} • ${amenitiesText}` : amenitiesText
-                  );
-                }}
-                onStyleSelect={(styleText) => {
-                  setEditedSearchQuery(prev => 
-                    prev.trim() ? `${prev.trim()} • ${styleText}` : styleText
-                  );
-                }}
-              />
-            </View>
-
-            <View style={tw`flex-row justify-end items-center gap-2`}>
-  <TouchableOpacity
-    style={[
-      tw`px-4 py-2.5 rounded-xl border border-gray-200`,
-      { 
-        backgroundColor: '#ffffff',
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 1 },
-        shadowOpacity: 0.1,
-        shadowRadius: 2,
-        elevation: 3,
-      }
-    ]}
-    onPress={handleCancelEdit}
-    activeOpacity={0.8}
-  >
-    <Text style={{
-      fontFamily: 'Merriweather-Regular',
-      fontSize: 14,
-      color: '#374151',
-    }}>
-      Cancel
-    </Text>
-  </TouchableOpacity>
-
-  <TouchableOpacity
-    style={[
-      tw`px-5 py-2.5 rounded-xl`,
-      editedSearchQuery.trim() && editedSearchQuery.trim() !== searchQuery
-        ? { 
-            backgroundColor: '#00d4e6',
-            shadowColor: '#000',
-            shadowOffset: { width: 0, height: 1 },
-            shadowOpacity: 0.1,
-            shadowRadius: 2,
-            elevation: 3,
-          }
-        : { 
-            backgroundColor: '#E5E7EB',
-            borderWidth: 1,
-            borderColor: '#D1D5DB'
-          }
-    ]}
-    onPress={handleSaveSearch}
-    activeOpacity={0.8}
-    disabled={!editedSearchQuery.trim() || editedSearchQuery.trim() === searchQuery}
-  >
-    <Text style={{
-      fontFamily: 'Merriweather-Bold',
-      fontSize: 14,
-      color: editedSearchQuery.trim() && editedSearchQuery.trim() !== searchQuery
-        ? '#ffffff'
-        : '#9CA3AF',
-    }}>
-      Search
-    </Text>
-  </TouchableOpacity>
-</View>
-
-          </View>
-        )}
-      </View>
-    </Animated.View>
-  ) : (
-    <View style={tw`flex-row items-center`}>
-      <TouchableOpacity
-        style={[
-          tw`w-8 h-8 items-center justify-center rounded-xl flex-shrink-0`,
-          { 
-            backgroundColor: '#fff',
-            shadowColor: '#000',
-            shadowOffset: { width: 0, height: 1 },
-            shadowOpacity: 0.1,
-            shadowRadius: 2,
-            elevation: 3,
-          }
-        ]}
-        onPress={handleBackPress}
-        activeOpacity={0.7}
-        hitSlop={{ top: 10, bottom: 10, left: 10, right: 10 }}
-      >
-        <Ionicons name="arrow-back" size={16} color="#374151" />
-      </TouchableOpacity>
-    </View>
-  )}
-</View>
+/>
 
 {/* Map/List Toggle Button - Floating above content */}
 {displayHotels.length > 0 && !showPlaceholders && !showErrorScreen && (
@@ -2139,7 +1414,7 @@ const handleBackPress = useCallback(() => {
     style={[
       tw`absolute bottom-19 right-4 z-50 w-16 h-16 rounded-full items-center justify-center`,
       {
-        backgroundColor: isStreamingSearch ? 'rgba(156, 163, 175, 0.9)' : 'rgba(0, 212, 230, 0.9)', // ✅ Added transparency
+        backgroundColor: isStreamingSearch ? 'rgba(156, 163, 175, 0.9)' : 'rgba(0, 212, 230, 0.9)',
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 4 },
         shadowOpacity: 0.3,
@@ -2174,11 +1449,8 @@ const handleBackPress = useCallback(() => {
   </TouchableOpacity>
 )}
 
-
-
-
 {/* CONTENT VIEW - Story View OR Map View */}
-<View style={tw`flex-1 bg-gray-50`}>
+<View style={[tw`flex-1 bg-gray-50`, { paddingTop: 80 }]}>
   {showErrorScreen ? (
     <SearchErrorScreen
       onTryAgain={() => {
@@ -2212,9 +1484,8 @@ const handleBackPress = useCallback(() => {
       onScrollToPosition={(pos) => {
         AnalyticsService.trackScrollDepth(pos, displayHotels.length);
       }}
-      // ✅ FIX: Use confirmed dates OR fall back to state
-      checkInDate={hasFinalizedDates && confirmedCheckInDate ? confirmedCheckInDate : checkInDate}  // ✅ SAME AS HEADER
-  checkOutDate={hasFinalizedDates && confirmedCheckOutDate ? confirmedCheckOutDate : checkOutDate} 
+      checkInDate={hasFinalizedDates && confirmedCheckInDate ? confirmedCheckInDate : checkInDate}
+      checkOutDate={hasFinalizedDates && confirmedCheckOutDate ? confirmedCheckOutDate : checkOutDate} 
       adults={adults}
       children={children}
       showPlaceholders={showPlaceholders && displayHotels.length > 0 && displayHotels.every(h => h.isPlaceholder)}
@@ -2228,24 +1499,19 @@ const handleBackPress = useCallback(() => {
   )}
 </View>
 
-
       <Modal
   visible={showAiOverlay}
   transparent
   animationType="fade"
   statusBarTranslucent
   presentationStyle="overFullScreen"
-  onRequestClose={handleCloseAiOverlay}  // Android back button
+  onRequestClose={handleCloseAiOverlay}
 >
-  {/* Backdrop to close on outside press */}
   <TouchableWithoutFeedback onPress={handleCloseAiOverlay}>
     <View style={[StyleSheet.absoluteFillObject, { backgroundColor: 'rgba(0,0,0,0.1)' }]} />
   </TouchableWithoutFeedback>
 
-  {/* Centered panel (or bottom sheet—your call) */}
   <View style={[StyleSheet.absoluteFillObject, tw`items-center justify-center`]}>
-    {/* If AISearchOverlay already draws its own panel/backdrop,
-        give it a prop to render just the inner content */}
     <AISearchOverlay
       visible
       onClose={handleCloseAiOverlay}
@@ -2266,24 +1532,21 @@ const handleBackPress = useCallback(() => {
         resultCount: displayHotels.length || stage1Results?.matchedHotelsCount || searchResults?.aiRecommendationsCount || 0
       }}
     />
-     
   </View>
-
- 
 </Modal>
+
   <FavoritesPopup
   visible={showFavoritesPopup}
   hotelName={favoritedHotelName}
   onPress={handleNavigateToFavorites}
   onHide={() => setShowFavoritesPopup(false)}
 />
+
 <FeedbackSystem
     visible={showFeedbackPopup}
     onClose={() => setShowFeedbackPopup(false)}
     onFeedbackSubmitted={handleFeedbackSubmitted}
   />
-
-
 
       </Animated.View>
     </SafeAreaView>

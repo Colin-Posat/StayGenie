@@ -24,9 +24,9 @@ router.post('/hotels/budget-relevance', hotelBudgetRelevanceController); // Budg
 router.post('/hotels/ai-suggestions', generateSuggestions); // AI search suggestions
 router.post('/hotels/conversational-refine', conversationalRefineController); // Conversational search refinement
 
-// NEW: AI Search Chat route - Conversational search interface with hotel context
-router.post('/ai-search-chat', aiSearchChatController); // POST for full chat
-router.get('/ai-search-chat/stream', aiSearchChatController); // SSE for streaming responses
+// AI Search Chat route - Conversational search interface with hotel context
+router.post('/hotels/ai-search-chat', aiSearchChatController); // POST for full chat
+router.get('/hotels/ai-search-chat/stream', aiSearchChatController); // SSE for streaming responses (future)
 
 // Hotel chat routes - fetch details first, then chat
 router.post('/hotels/fetch-details-for-chat', fetchHotelDetailsForChatController); // Fetch hotel details for chat context
@@ -62,8 +62,8 @@ router.get('/test', (req, res) => {
       'POST /api/hotels/budget-relevance - Budget-aware relevance search with GPT scoring',
       'POST /api/hotels/ai-suggestions - Generate AI search suggestions',
       'POST /api/hotels/conversational-refine - Conversational search refinement',
-      'POST /api/ai-search-chat - Conversational AI search assistant (NEW)',
-      'GET /api/ai-search-chat/stream - Streaming AI search chat (NEW)',
+      'POST /api/hotels/ai-search-chat - Conversational AI search assistant',
+      'GET /api/hotels/ai-search-chat/stream - Streaming AI search chat (future)',
       'POST /api/hotels/fetch-details-for-chat - Fetch comprehensive hotel details for chat context',
       'POST /api/hotels/chat - Hotel-specific AI chat assistant',
       'POST /api/hotels/reviews - Fetch hotel reviews with sentiment analysis',
@@ -78,11 +78,11 @@ router.get('/test', (req, res) => {
       aiSearchChat: {
         feature: 'Conversational AI Search Assistant',
         endpoints: {
-          post: 'POST /api/ai-search-chat',
-          stream: 'GET /api/ai-search-chat/stream'
+          post: 'POST /api/hotels/ai-search-chat',
+          stream: 'GET /api/hotels/ai-search-chat/stream (future)'
         },
         features: [
-          'Real-time streaming AI responses',
+          'Real-time AI responses',
           'Hotel context awareness',
           'Search refinement suggestions',
           'Natural language conversation',
