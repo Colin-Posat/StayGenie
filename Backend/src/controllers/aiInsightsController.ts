@@ -19,14 +19,14 @@ export interface AIRecommendation {
   locationHighlight: string;
   guestInsights: string;
   sentimentData: any;
-  firstRoomImage: string | null;  // CHANGE FROM thirdImageHd
+  firstRoomImage: string | null;
   secondRoomImage: string | null;
   allHotelInfo: string;
-  safetyRating: number;           // NEW: Safety rating out of 10
+  safetyRating: number;
   safetyJustification: string; 
   topAmenities: string[];
   photoGalleryImages: string[];
-  categoryRatings?: {  // ✅ ADD THIS
+  categoryRatings?: {
     cleanliness: number;
     service: number;
     location: number;
@@ -262,8 +262,7 @@ interface HotelSummaryForInsights {
     name: string;
     description: string;
     amenities: string[];
-    // ADD THIS: Include amenitiesText in the interface
-    amenitiesText?: string; // Made optional for backward compatibility
+    amenitiesText?: string;
     starRating: number;
     reviewCount: number;
     pricePerNight: string;
@@ -274,6 +273,7 @@ interface HotelSummaryForInsights {
     longitude: number | null;
   };
 }
+
 const getHotelSentimentOptimized = async (hotelId: string): Promise<HotelSentimentData | null> => {
   try {
     console.log(`🎭 Fetching hotel details with sentiment analysis for hotel ID: ${hotelId}`);
@@ -322,41 +322,6 @@ const getHotelSentimentOptimized = async (hotelId: string): Promise<HotelSentime
   }
 };
 
-const getPhotoGalleryImages = (hotelDetailsData: HotelSentimentData | null): string[] => {
-  try {
-    const imgs = hotelDetailsData?.data?.hotelImages;
-    if (!Array.isArray(imgs) || imgs.length === 0) {
-      console.warn('⚠️ No hotel images array found for photo gallery');
-      return [];
-    }
-
-    // Build index order: every other first (0,2,4,...), then fill the gaps (1,3,5,...)
-    const evens: number[] = [];
-    const odds: number[] = [];
-    for (let i = 0; i < imgs.length; i++) {
-      (i % 2 === 0 ? evens : odds).push(i);
-    }
-    const orderedIdx = [...evens, ...odds];
-
-    const out: string[] = [];
-    const seen = new Set<string>();
-
-    for (const i of orderedIdx) {
-      if (out.length >= 10) break;
-      const candidate = imgs[i];
-      const url = (candidate?.urlHd || candidate?.url || '').trim();
-      if (!url || seen.has(url)) continue;
-      seen.add(url);
-      out.push(url);
-    }
-
-    console.log(`✅ Photo gallery (every-other strategy) created with ${out.length} images`);
-    return out;
-  } catch (err) {
-    console.warn('❌ Error extracting photo gallery images:', err);
-    return [];
-  }
-};
 const getRoomOrHotelImages = (hotelDetailsData: HotelSentimentData | null): { firstImage: string | null; secondImage: string | null } => {
   try {
     if (!hotelDetailsData?.data) {
@@ -417,6 +382,7 @@ const getRoomOrHotelImages = (hotelDetailsData: HotelSentimentData | null): { fi
     return { firstImage: null, secondImage: null };
   }
 };
+
 import fs from 'fs';
 
 const writeHotelInfoToFile = (hotelName: string, hotelId: string, allHotelInfo: string): void => {
@@ -644,7 +610,6 @@ const generateInsightsFromSentiment = async (hotelName: string, sentimentData: H
   }
 };
 
-// Add this function around line 480, right after generateInsightsFromSentiment
 const extractCategoryRatings = (sentimentData: HotelSentimentData | null): { cleanliness: number; service: number; location: number; roomQuality: number } | undefined => {
   try {
     if (!sentimentData?.data?.sentiment_analysis?.categories) {
@@ -699,6 +664,7 @@ const getFallbackSafetyRating = (city: string, country: string): number => {
     return 6; // Conservative default
   }
 };
+
 // Helper function to extract default amenities when AI fails
 const getDefaultAmenities = (amenitiesText: string): string[] => {
   if (!amenitiesText || amenitiesText.trim() === '') {
@@ -754,15 +720,18 @@ const getDefaultAmenities = (amenitiesText: string): string[] => {
   return selectedAmenities.slice(0, 3);
 };
 
+// ✅ UPDATED: Batch AI content generation now includes photo selection
 const generateBatchAIContent = async (
   hotels: HotelSummaryForInsights[],
+  hotelDetailsMap: Map<string, HotelSentimentData | null>,
   userQuery?: string,
   nights?: number,
   searchId?: string
 ): Promise<Record<string, any>> => {
   
-  console.log(`🧠 Generating BATCH content for ${hotels.length} hotels in single call`);
+  console.log(`🧠 Generating BATCH content + photo selection for ${hotels.length} hotels in single call`);
   
+  // Build hotel summaries with image catalogs
   const hotelSummaries = hotels.map((hotel, index) => {
     const summary = hotel.summarizedInfo;
     const amenitiesForAI = summary.amenitiesText || 
@@ -770,13 +739,29 @@ const generateBatchAIContent = async (
                            ? summary.amenities.join(', ') 
                            : 'Standard hotel amenities');
     
+    // Get hotel details for this hotel
+    const hotelDetails = hotelDetailsMap.get(hotel.hotelId);
+    const images = hotelDetails?.data?.hotelImages || [];
+    
+    // Build image catalog (first 30 images)
+    const imageCatalog = images.slice(0, 30).map((img, idx) => ({
+      index: idx,
+      caption: (img.caption || 'general').toLowerCase().trim()
+    }));
+    
+    const imageCatalogText = imageCatalog.length > 0 
+      ? imageCatalog.map(img => `${img.index}: ${img.caption}`).join(', ')
+      : 'No images available';
+    
     return `HOTEL ${index + 1}: ${summary.name}
+ID: ${hotel.hotelId}
 LOCATION: ${summary.city}, ${summary.country}
 ADDRESS: ${summary.location}
 DESC: ${summary.description}
 AMENITIES: ${amenitiesForAI}
 PRICE: ${summary.pricePerNight}
-RATING: ${summary.starRating} stars`;
+RATING: ${summary.starRating} stars
+IMAGE_CATALOG: ${imageCatalogText}`;
   }).join('\n\n');
 
   const hasSpecificPreferences = userQuery && userQuery.trim() !== '';
@@ -785,7 +770,7 @@ RATING: ${summary.starRating} stars`;
 
 ${hotelSummaries}
 
-Generate content + safety rating (1-10 for tourist safety) for EACH hotel.
+Generate content + safety rating + photo gallery selection for EACH hotel.
 
 GUIDELINES for topAmenities:
 - Pick EXACTLY 3 per hotel
@@ -812,14 +797,12 @@ GUIDELINES for topAmenities:
 - If a hotel has fewer than 3 amenities listed, only return what's available
 - CRITICAL: MAKE SURE THE AMENITIES YOU LIST ARE INTERESTING AND NOT BORING STUFF LIKE "Free Wi-Fi" UNLESS IT'S REALLY RELEVANT TO THE SEARCH!!!
 - NEVER INCLUDE FREE WIFI PRIVATE CHECK IN CHECK OUT OR OUTDOOR CCTV IN THE LIST
-
 - Instead, ALWAYS explain WHY using one of the following:
   • named amenities OR SOMETHING STATED IN HOTEL DESCRIPTION!!!
   • named neighborhood or street (if explicitly provided)
   • explicit hotel features that tie into what the user asked
   • clearly stated proximity phrased as "located in [area]" ONLY if that area is in the data
-   CRITICAL: REALLY SELL THEM THE IDEA THAT THIS MATCHES THEIR SEARCH DONT JSUT SAY RANDOM BULLSHIT AMENITIES
-
+  CRITICAL: REALLY SELL THEM THE IDEA THAT THIS MATCHES THEIR SEARCH DONT JUST SAY RANDOM BULLSHIT AMENITIES
 
 GUIDELINES for whyItMatches:
 - CRITICAL VERIFICATION RULES:
@@ -842,17 +825,44 @@ GUIDELINES for nearbyAttractions:
 - ALWAYS include distance in **minute walk or minute drive**
 - Use format: "Place Name – short description – X-minute walk/drive"
 
+GUIDELINES for photoGalleryIndices:
+- Select EXACTLY 10 image indices for each hotel's photo gallery
+- Use the IMAGE_CATALOG provided for each hotel
+${hasSpecificPreferences ? `
+- SELECTION STRATEGY (based on user search: "${userQuery}"):
+  1. FIRST IMAGE (index 0): Choose image showing PROPERTY AS A WHOLE (building, exterior, property view)
+  2. NEXT 2-4 IMAGES: Choose images matching USER'S SPECIFIC REQUESTS in order of mention
+     - If user mentioned "pool" → select best pool image
+     - If user mentioned "spa" → select spa image  
+     - If user mentioned "ocean view" → select view/balcony image
+     - ONLY select if clearly relevant captions exist
+  3. NEXT 3-4 IMAGES: Choose ROOM images (bedroom, suite, room interior)
+  4. REMAINING IMAGES: Choose variety of property features (restaurant, lobby, amenities, etc.)
+` : `
+- SELECTION STRATEGY (no specific user search):
+  1. FIRST IMAGE (index 0): Property exterior/building
+  2. NEXT 3 IMAGES: Best room images
+  3. NEXT 3 IMAGES: Top amenities (pool, restaurant, gym, spa)
+  4. LAST 3 IMAGES: Variety (lobby, views, other features)
+`}
+- RULES:
+  * Return EXACTLY 10 valid indices from IMAGE_CATALOG
+  * Prioritize lower indices (usually better quality)
+  * Ensure variety (don't select 5 restaurant images)
+  * If hotel has <10 images, use what's available and fill with lower indices
+
 Return JSON array with exactly ${hotels.length} objects:
 [
   {
-    "hotelIndex": 1,
+    "hotelId": "hotel_id_here",
     "whyItMatches": "${hasSpecificPreferences ? '25 words - why fits search, use **bold** for key matches' : '20 words - why great choice, use **bold** for standout features'}",
     "funFacts": ["fact1", "fact2"],
     "nearbyAttractions": ["name – desc – time", "name – desc – time"],
-    "locationHighlight":"Highlight location perks in ≤10 words; avoid 'in <city>'; make sure it ties to orginal search and is specific not vauge obvious stuff optionally note a relevant nearby attraction THAT IS RELEVANT TO THE SEARCH!. ALSO SAY ITS OFFICIAL NAME SO MY PLACES API CAN PICK IT UP",
+    "locationHighlight": "Highlight location perks in ≤10 words; avoid 'in <city>'; make sure it ties to original search and is specific not vague obvious stuff optionally note a relevant nearby attraction THAT IS RELEVANT TO THE SEARCH!. ALSO SAY ITS OFFICIAL NAME SO MY PLACES API CAN PICK IT UP",
     "topAmenities": ["amenity1", "amenity2", "amenity3"],
     "safetyRating": number 1-10,
-    "safetyJustification": "15-25 words about safety"
+    "safetyJustification": "15-25 words about safety",
+    "photoGalleryIndices": [0, 5, 12, 3, 8, 15, 2, 9, 18, 6]
   },
   // ... continue for all ${hotels.length} hotels
 ]`;
@@ -861,11 +871,11 @@ Return JSON array with exactly ${hotels.length} objects:
     const completion = await openai.chat.completions.create({
       model: 'gpt-4o-mini',
       messages: [
-        { role: 'system', content: 'Generate hotel content for multiple hotels. Reply only with valid JSON array.' },
+        { role: 'system', content: 'Generate hotel content including photo gallery selection for multiple hotels. Reply only with valid JSON array.' },
         { role: 'user', content: prompt }
       ],
       temperature: 0.7,
-      max_tokens: Math.min(4000, 300 * hotels.length), // Scale tokens with hotel count
+      max_tokens: Math.min(5000, 350 * hotels.length),
     });
 
     if (searchId) {
@@ -880,23 +890,53 @@ Return JSON array with exactly ${hotels.length} objects:
     // Create map of results by hotel ID
     const resultMap: Record<string, any> = {};
     
-    results.forEach((result: any, index: number) => {
-      if (hotels[index]) {
-        const safetyRating = Math.max(1, Math.min(10, Math.round(result.safetyRating || 7)));
-        
-        resultMap[hotels[index].hotelId] = {
-          whyItMatches: result.whyItMatches || "Great choice for your stay",
-          funFacts: result.funFacts || ["Modern amenities", "Excellent service"],
-          nearbyAttractions: result.nearbyAttractions || getDefaultAttractionsBySearch(userQuery, hotels[index].summarizedInfo.city),
-          locationHighlight: result.locationHighlight || "Convenient location",
-          topAmenities: result.topAmenities || getDefaultAmenities(hotels[index].summarizedInfo.amenitiesText || ''),
-          safetyRating,
-          safetyJustification: result.safetyJustification || "Generally safe area"
-        };
+    results.forEach((result: any) => {
+      if (!result.hotelId) {
+        console.warn('⚠️ Result missing hotelId, skipping');
+        return;
       }
+      
+      const hotel = hotels.find(h => h.hotelId === result.hotelId);
+      if (!hotel) {
+        console.warn(`⚠️ No hotel found for ID ${result.hotelId}`);
+        return;
+      }
+      
+      const safetyRating = Math.max(1, Math.min(10, Math.round(result.safetyRating || 7)));
+      
+      // Convert photo indices to actual URLs
+      const hotelDetails = hotelDetailsMap.get(hotel.hotelId);
+      const images = hotelDetails?.data?.hotelImages || [];
+      const photoGalleryImages: string[] = [];
+      
+      if (result.photoGalleryIndices && Array.isArray(result.photoGalleryIndices)) {
+        const seen = new Set<string>();
+        for (const idx of result.photoGalleryIndices) {
+          if (photoGalleryImages.length >= 10) break;
+          if (idx >= 0 && idx < images.length) {
+            const url = (images[idx].urlHd || images[idx].url || '').trim();
+            if (url && !seen.has(url)) {
+              seen.add(url);
+              photoGalleryImages.push(url);
+            }
+          }
+        }
+        console.log(`✅ Selected ${photoGalleryImages.length} gallery images for ${hotel.name}`);
+      }
+      
+      resultMap[hotel.hotelId] = {
+        whyItMatches: result.whyItMatches || "Great choice for your stay",
+        funFacts: result.funFacts || ["Modern amenities", "Excellent service"],
+        nearbyAttractions: result.nearbyAttractions || getDefaultAttractionsBySearch(userQuery, hotel.summarizedInfo.city),
+        locationHighlight: result.locationHighlight || "Convenient location",
+        topAmenities: result.topAmenities || getDefaultAmenities(hotel.summarizedInfo.amenitiesText || ''),
+        safetyRating,
+        safetyJustification: result.safetyJustification || "Generally safe area",
+        photoGalleryImages
+      };
     });
     
-    console.log(`✅ Batch content generated for ${Object.keys(resultMap).length} hotels`);
+    console.log(`✅ Batch content + photo selection generated for ${Object.keys(resultMap).length} hotels`);
     return resultMap;
     
   } catch (error) {
@@ -907,6 +947,22 @@ Return JSON array with exactly ${hotels.length} objects:
     
     hotels.forEach(hotel => {
       const summary = hotel.summarizedInfo;
+      
+      // Fallback photo selection - simple default strategy
+      const hotelDetails = hotelDetailsMap.get(hotel.hotelId);
+      const images = hotelDetails?.data?.hotelImages || [];
+      const photoGalleryImages: string[] = [];
+      const seen = new Set<string>();
+      
+      // Take first 10 unique images
+      for (let i = 0; i < Math.min(30, images.length) && photoGalleryImages.length < 10; i++) {
+        const url = (images[i].urlHd || images[i].url || '').trim();
+        if (url && !seen.has(url)) {
+          seen.add(url);
+          photoGalleryImages.push(url);
+        }
+      }
+      
       fallbackMap[hotel.hotelId] = {
         whyItMatches: "Great choice with excellent amenities and location",
         funFacts: ["Modern facilities", "Excellent reviews"],
@@ -914,17 +970,14 @@ Return JSON array with exactly ${hotels.length} objects:
         locationHighlight: "Prime location",
         topAmenities: getDefaultAmenities(summary.amenitiesText || ''),
         safetyRating: getFallbackSafetyRating(summary.city, summary.country),
-        safetyJustification: "Generally safe area with standard precautions"
+        safetyJustification: "Generally safe area with standard precautions",
+        photoGalleryImages
       };
     });
     
     return fallbackMap;
   }
 };
-
-
-
-
 
 // Helper function to generate search-relevant description
 const getSearchRelevantDescription = (userQuery: string, attractionName: string): string => {
@@ -1032,8 +1085,7 @@ const getDefaultAttractionsBySearch = (userQuery?: string, city?: string): strin
   ];
 };
 
-
-// Update the function around line 675
+// ✅ SIMPLIFIED: Fetch hotel details and generate insights (photo selection now in batch)
 const fetchHotelDetailsAndGenerateInsights = async (
   hotel: HotelSummaryForInsights,
   delayMs: number = 0
@@ -1044,8 +1096,7 @@ const fetchHotelDetailsAndGenerateInsights = async (
   firstRoomImage: string | null;
   secondRoomImage: string | null;
   allHotelInfo: string;
-  photoGalleryImages: string[];
-  categoryRatings?: {  // ✅ ADD THIS
+  categoryRatings?: {
     cleanliness: number;
     service: number;
     location: number;
@@ -1060,16 +1111,32 @@ const fetchHotelDetailsAndGenerateInsights = async (
   try {
     console.log(`🎭 Starting hotel details fetch and insights for ${hotel.name}`);
     
+    // STEP 1: Fetch hotel details (required for everything else)
     const hotelDetailsData = await getHotelSentimentOptimized(hotel.hotelId);
-    const guestInsights = await generateInsightsFromSentiment(hotel.name, hotelDetailsData);
-    const roomImages = getRoomOrHotelImages(hotelDetailsData);
-    const allHotelInfo = consolidateAllHotelInfo(hotelDetailsData);
-    const photoGalleryImages = getPhotoGalleryImages(hotelDetailsData);
-    const categoryRatings = extractCategoryRatings(hotelDetailsData); // ✅ ADD THIS
+    
+    // STEP 2: Run ALL processing in parallel (insights, images, etc.) - NO photo gallery here
+    const [
+      guestInsights,
+      roomImages,
+      allHotelInfo,
+      categoryRatings
+    ] = await Promise.all([
+      // Parallel 1: Generate guest insights from sentiment
+      generateInsightsFromSentiment(hotel.name, hotelDetailsData),
+      
+      // Parallel 2: Extract room images (synchronous but wrapped in Promise)
+      Promise.resolve(getRoomOrHotelImages(hotelDetailsData)),
+      
+      // Parallel 3: Consolidate hotel info (synchronous but wrapped in Promise)
+      Promise.resolve(consolidateAllHotelInfo(hotelDetailsData)),
+      
+      // Parallel 4: Extract category ratings (synchronous but wrapped in Promise)
+      Promise.resolve(extractCategoryRatings(hotelDetailsData))
+    ]);
 
     console.log(`✅ Completed hotel details and insights for ${hotel.name}`);
-    console.log(`🖼️  Images found: first=${!!roomImages.firstImage}, second=${!!roomImages.secondImage}, gallery=${photoGalleryImages.length}`);
-    console.log(`📊 Category ratings: ${categoryRatings ? 'found' : 'not available'}`); // ✅ ADD THIS
+    console.log(`🖼️  Images found: first=${!!roomImages.firstImage}, second=${!!roomImages.secondImage}`);
+    console.log(`📊 Category ratings: ${categoryRatings ? 'found' : 'not available'}`);
     
     return {
       hotelId: hotel.hotelId,
@@ -1078,8 +1145,7 @@ const fetchHotelDetailsAndGenerateInsights = async (
       firstRoomImage: roomImages.firstImage,
       secondRoomImage: roomImages.secondImage,
       allHotelInfo,
-      photoGalleryImages,
-      categoryRatings // ✅ ADD THIS
+      categoryRatings
     };
     
   } catch (error) {
@@ -1092,8 +1158,7 @@ const fetchHotelDetailsAndGenerateInsights = async (
       firstRoomImage: null,
       secondRoomImage: null,
       allHotelInfo: 'Detailed hotel information not available',
-      photoGalleryImages: [],
-      categoryRatings: undefined // ✅ ADD THIS
+      categoryRatings: undefined
     };
   }
 };
@@ -1133,105 +1198,79 @@ export const aiInsightsController = async (req: Request, res: Response) => {
 
     console.log(`📝 Processing ${validHotels.length} valid hotels`);
 
-    // PARALLEL PROCESSING: Start both AI content generation AND sentiment+insights processing simultaneously
-    logger.startStep('ParallelProcessing', { hotelCount: validHotels.length });
-
-// BATCH: Generate detailed AI content for all hotels in single call
-logger.startStep('BatchAIContent', { hotelCount: validHotels.length });
-
-const batchAIResults = await generateBatchAIContent(validHotels, userQuery, nights, searchId);
-
-const batchProcessedResults = validHotels.map(hotel => {
-  const batchResult = batchAIResults[hotel.hotelId];
-  
-  if (!batchResult) {
-    console.warn(`⚠️ No batch result for hotel ${hotel.name}, using fallback`);
-    return {
-      hotelId: hotel.hotelId,
-      name: hotel.name,
-      aiMatchPercent: hotel.aiMatchPercent,
-      whyItMatches: "Great choice with excellent amenities and location",
-      funFacts: ["Modern facilities", "Excellent guest reviews"],
-      nearbyAttractions: [`${hotel.summarizedInfo.city} center`, "Local landmarks"],
-      locationHighlight: "Prime location",
-      safetyRating: 7,
-      safetyJustification: "Generally safe area with standard city precautions recommended",
-      topAmenities: getDefaultAmenities(hotel.summarizedInfo.amenitiesText || "")
-    };
-  }
-  
-  return {
-    hotelId: hotel.hotelId,
-    name: hotel.name,
-    aiMatchPercent: hotel.aiMatchPercent,
-    ...batchResult
-  };
-});
-
-logger.endStep('BatchAIContent', { resultsGenerated: batchProcessedResults.length });
-
-    // Promise 2: Fetch hotel details and generate insights for all hotels
-// Promise 2: Fetch hotel details and generate insights for all hotels
-const hotelDetailsInsightsPromises = validHotels.map(async (hotel, index) => {
-  // FIX: Handle single hotel requests differently
-  if (validHotels.length === 1) {
-    // Single hotel request (like from processHotelWithImmediateInsights)
-    console.log(`🔄 Processing single hotel request for: ${hotel.name}`);
-    return await fetchHotelDetailsAndGenerateInsights(hotel, 0);
-  } else if (index < 3) {
-    // First 3 hotels in multi-hotel request
-    console.log(`🔄 Processing top hotel ${index + 1} (${hotel.name}) sequentially`);
-    return await fetchHotelDetailsAndGenerateInsights(hotel, 0);
-  } else {
-    // Rest get normal delays
-    const delayMs = (index - 3) * 1000;
-    console.log(`⏰ Hotel ${index + 1} (${hotel.name}) will be processed after ${delayMs}ms delay`);
-    return await fetchHotelDetailsAndGenerateInsights(hotel, delayMs);
-  }
-});
-
-    // Execute both sets of operations in parallel
-    const [aiContentResults, hotelDetailsInsightsResults] = await Promise.all([
-  Promise.resolve(batchProcessedResults), // Already processed
-  Promise.all(hotelDetailsInsightsPromises)
-]);
-
-    logger.endStep('ParallelProcessing', { 
-      aiContentGenerated: aiContentResults.length,
-      hotelDetailsInsightsGenerated: hotelDetailsInsightsResults.length
+    // STEP 1: Fetch hotel details for all hotels (needed for batch AI and insights)
+    logger.startStep('FetchHotelDetails', { hotelCount: validHotels.length });
+    
+    const hotelDetailsPromises = validHotels.map(async (hotel, index) => {
+      if (validHotels.length === 1) {
+        console.log(`🔄 Fetching single hotel details: ${hotel.name}`);
+        return await fetchHotelDetailsAndGenerateInsights(hotel, 0);
+      } else if (index < 3) {
+        console.log(`🔄 Fetching top hotel ${index + 1} (${hotel.name}) details sequentially`);
+        return await fetchHotelDetailsAndGenerateInsights(hotel, 0);
+      } else {
+        const delayMs = (index - 3) * 1000;
+        console.log(`⏰ Hotel ${index + 1} (${hotel.name}) will be fetched after ${delayMs}ms delay`);
+        return await fetchHotelDetailsAndGenerateInsights(hotel, delayMs);
+      }
     });
-
-    // STEP: Combine all results
-    logger.startStep('CombineResults', { hotelCount: validHotels.length });
-
-    // Create maps for quick lookup
-    const hotelDetailsInsightsMap = new Map(
-      hotelDetailsInsightsResults.map(result => [result.hotelId, result])
+    
+    const hotelDetailsResults = await Promise.all(hotelDetailsPromises);
+    logger.endStep('FetchHotelDetails', { hotelsProcessed: hotelDetailsResults.length });
+    
+    // Create map of hotel details
+    const hotelDetailsMap = new Map(
+      hotelDetailsResults.map(result => [result.hotelId, result.sentimentData])
     );
 
-const finalRecommendations: AIRecommendation[] = aiContentResults.map(aiContent => {
-  const hotelDetailsInsights = hotelDetailsInsightsMap.get(aiContent.hotelId);
+    // STEP 2: Generate batch AI content (now includes photo selection)
+    logger.startStep('BatchAIContent', { hotelCount: validHotels.length });
+    
+    const batchAIResults = await generateBatchAIContent(
+      validHotels, 
+      hotelDetailsMap, 
+      userQuery, 
+      nights, 
+      searchId
+    );
+    
+    logger.endStep('BatchAIContent', { resultsGenerated: Object.keys(batchAIResults).length });
 
-  return {
-    hotelId: aiContent.hotelId,
-    hotelName: aiContent.name,
-    aiMatchPercent: aiContent.aiMatchPercent,
-    whyItMatches: aiContent.whyItMatches,
-    funFacts: aiContent.funFacts,
-    nearbyAttractions: aiContent.nearbyAttractions,
-    locationHighlight: aiContent.locationHighlight,
-    guestInsights: hotelDetailsInsights?.guestInsights || "Loading insights...",
-    sentimentData: hotelDetailsInsights?.sentimentData || null,
-    firstRoomImage: hotelDetailsInsights?.firstRoomImage || null,
-    secondRoomImage: hotelDetailsInsights?.secondRoomImage || null,
-    allHotelInfo: hotelDetailsInsights?.allHotelInfo || 'Detailed information not available',
-    safetyRating: aiContent.safetyRating,
-    safetyJustification: aiContent.safetyJustification,
-    topAmenities: aiContent.topAmenities,
-    photoGalleryImages: hotelDetailsInsights?.photoGalleryImages || [],
-    categoryRatings: hotelDetailsInsights?.categoryRatings // ✅ ADD THIS
-  };
-});
+    // STEP 3: Combine all results
+    logger.startStep('CombineResults', { hotelCount: validHotels.length });
+
+    const hotelDetailsInsightsMap = new Map(
+      hotelDetailsResults.map(result => [result.hotelId, result])
+    );
+
+    const finalRecommendations: AIRecommendation[] = validHotels.map(hotel => {
+      const batchResult = batchAIResults[hotel.hotelId];
+      const hotelDetailsInsights = hotelDetailsInsightsMap.get(hotel.hotelId);
+
+      if (!batchResult) {
+        console.warn(`⚠️ No batch result for hotel ${hotel.name}, using fallback`);
+      }
+
+      return {
+        hotelId: hotel.hotelId,
+        hotelName: hotel.name,
+        aiMatchPercent: hotel.aiMatchPercent,
+        whyItMatches: batchResult?.whyItMatches || "Great choice with excellent amenities and location",
+        funFacts: batchResult?.funFacts || ["Modern facilities", "Excellent reviews"],
+        nearbyAttractions: batchResult?.nearbyAttractions || getDefaultAttractionsBySearch(userQuery, hotel.summarizedInfo.city),
+        locationHighlight: batchResult?.locationHighlight || "Convenient location",
+        guestInsights: hotelDetailsInsights?.guestInsights || "Loading insights...",
+        sentimentData: hotelDetailsInsights?.sentimentData || null,
+        firstRoomImage: hotelDetailsInsights?.firstRoomImage || null,
+        secondRoomImage: hotelDetailsInsights?.secondRoomImage || null,
+        allHotelInfo: hotelDetailsInsights?.allHotelInfo || 'Detailed information not available',
+        safetyRating: batchResult?.safetyRating || 7,
+        safetyJustification: batchResult?.safetyJustification || "Generally safe area",
+        topAmenities: batchResult?.topAmenities || getDefaultAmenities(hotel.summarizedInfo.amenitiesText || ''),
+        photoGalleryImages: batchResult?.photoGalleryImages || [],
+        categoryRatings: hotelDetailsInsights?.categoryRatings
+      };
+    });
 
     logger.endStep('CombineResults', { finalRecommendations: finalRecommendations.length });
 
@@ -1244,7 +1283,7 @@ const finalRecommendations: AIRecommendation[] = aiContentResults.map(aiContent 
       processedHotels: validHotels.length,
       recommendations: finalRecommendations,
       aiModels: {
-        content: "gpt-4o-mini",
+        content: "gpt-4o-mini (batch with photo selection)",
         insights: "direct_processing"
       },
       generatedAt: new Date().toISOString(),
@@ -1253,10 +1292,10 @@ const finalRecommendations: AIRecommendation[] = aiContentResults.map(aiContent 
         stepBreakdown: performanceReport.steps,
         bottlenecks: performanceReport.bottlenecks,
         optimizations: [
-          "Parallel processing of AI content and hotel details analysis",
-          "Combined hotel details fetch with insights generation",
-          "Reduced API call delays",
-          "Direct sentiment processing from hotel details endpoint"
+          "Batch AI content generation includes photo selection",
+          "Parallel hotel details fetching with staggered delays",
+          "Combined sentiment processing with insights generation",
+          "Single AI call for all content including image selection"
         ]
       }
     });

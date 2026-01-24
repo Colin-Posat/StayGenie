@@ -1014,6 +1014,8 @@ function topRatedCap(hotels: HotelSummaryForAI[], limit = 250): HotelSummaryForA
     .slice(0, limit);
 }
 
+
+
 const extractHotelImages = (hotelInfo: any): string[] => {
   const images: string[] = [];
   
@@ -1155,7 +1157,7 @@ const createOptimizedHotelSummaryForAI = (
   const fakeReviewCount = Math.floor(Math.random() * (1100 - 700 + 1)) + 700;
 
   const rawDescription = hotelInfo.hotelDescription || hotelInfo.description || 'No description available';
-  const optimizedDescription = optimizeHotelDescription(rawDescription, 300);
+  const optimizedDescription = optimizeHotelDescription(rawDescription, 1000);
 
   let displayPrice = pricePerNightInfo;
   if (suggestedPrice && priceProvider) {
