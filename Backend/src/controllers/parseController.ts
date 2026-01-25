@@ -311,10 +311,12 @@ You are a travel assistant converting user hotel search requests into structured
   "checkout": "YYYY-MM-DD",           // Default: ${formattedCheckout}
   "specificPlace": "Full specific place name with city and country for geocoding",
   "cityName": string | null,   
-  "searchOriginName": string | null ,  // NEW - What to show user
+ "countryCode": string | null,       // NEW - ISO-2 country code (e.g., "BE", "FR", "US")
+  "searchOriginName": string | null,  // What to show user
   "locationMentioned": boolean,
-  "specificPOI": string | null,        // NEW - clean POI name for display
+  "specificPOI": string | null,       // clean POI name for display
   "searchRadius": number (in meters, minimum 5000, max 15000 (unless national park)),
+  "useCoordinateSearch": boolean,     // NEW - Whether to use coordinate-based search
   "language": "ISO 639-1 code, default 'en'",
   "adults": number (default 2),
   "children": number (default 0),
@@ -323,24 +325,89 @@ You are a travel assistant converting user hotel search requests into structured
   "aiSearch": "Complete search context string combining price preferences and specific requirements"
 }
 
+**COORDINATE SEARCH DECISION (useCoordinateSearch):**
+
+Set "useCoordinateSearch": false when:
+- User mentions ONLY a country (e.g., "hotels in France", "Japan hotels", "cool hotels in Spain")
+- User mentions ONLY a city (e.g., "hotels in Paris", "Tokyo hotels", "Barcelona hotels")
+- User mentions vague locations without specific place (e.g., "beach hotels", "mountain resort", "ski hotels")
+- User mentions a country + vague descriptor (e.g., "beach hotels in Thailand", "cool hotels in Italy", "luxury hotels in France")
+
+Set "useCoordinateSearch": true ONLY when:
+- User mentions a specific landmark/POI (e.g., "near Eiffel Tower", "by Central Park", "near Sagrada Familia")
+- User mentions a specific neighborhood (e.g., "hotels in Shibuya", "South Beach hotels", "hotels in Montmartre")
+- User mentions a specific area/street (e.g., "Las Vegas Strip", "Fifth Avenue", "Ocean Drive")
+
+CRITICAL: Just saying a city name like "Paris" or "Tokyo" is NOT specific enough - use city/country search!
+ONLY use coordinate search when there's a MORE SPECIFIC location than just the city name.
+
+**CITY SELECTION FOR COUNTRY-LEVEL SEARCHES:**
+
+When useCoordinateSearch is FALSE (country-level, city-only, or vague search), you MUST intelligently choose a city that matches the user's preferences:
+
+Examples of useCoordinateSearch: FALSE:
+✅ "hotels in France" → specificPlace: "Paris, Île-de-France, France", cityName: "Paris", countryCode: "FR", useCoordinateSearch: false
+✅ "beach hotels in Thailand" → specificPlace: "Phuket, Thailand", cityName: "Phuket", countryCode: "TH", useCoordinateSearch: false
+✅ "luxury hotels in Japan" → specificPlace: "Tokyo, Japan", cityName: "Tokyo", countryCode: "JP", useCoordinateSearch: false
+✅ "ski resorts in Switzerland" → specificPlace: "Zermatt, Valais, Switzerland", cityName: "Zermatt", countryCode: "CH", useCoordinateSearch: false
+✅ "cool hotels in Italy" → specificPlace: "Rome, Lazio, Italy", cityName: "Rome", countryCode: "IT", useCoordinateSearch: false
+✅ "beach hotels" → specificPlace: "Miami Beach, Florida, United States", cityName: "Miami Beach", countryCode: "US", useCoordinateSearch: false
+✅ "mountain resorts" → specificPlace: "Aspen, Colorado, United States", cityName: "Aspen", countryCode: "US", useCoordinateSearch: false
+✅ "hotels in Paris" → specificPlace: "Paris, Île-de-France, France", cityName: "Paris", countryCode: "FR", useCoordinateSearch: false
+✅ "hotels in Tokyo" → specificPlace: "Tokyo, Japan", cityName: "Tokyo", countryCode: "JP", useCoordinateSearch: false
+✅ "Barcelona hotels" → specificPlace: "Barcelona, Catalonia, Spain", cityName: "Barcelona", countryCode: "ES", useCoordinateSearch: false
+City Selection Guidelines by Theme:
+- Beach/tropical → Phuket (Thailand), Cancun (Mexico), Miami Beach (USA), Bali/Seminyak (Indonesia), Pattaya (Thailand)
+- Luxury/upscale → Tokyo (Japan), Paris (France), Dubai (UAE), London (UK), Singapore (Singapore)
+- Ski/mountain → Zermatt (Switzerland), Aspen (USA), Chamonix (France), Whistler (Canada), Innsbruck (Austria)
+- Cultural/historic → Rome (Italy), Athens (Greece), Kyoto (Japan), Barcelona (Spain), Cairo (Egypt)
+- Budget/backpacker → Bangkok (Thailand), Lisbon (Portugal), Prague (Czech Republic), Hanoi (Vietnam)
+- Party/nightlife → Ibiza (Spain), Las Vegas (USA), Bangkok (Thailand), Miami (USA), Amsterdam (Netherlands)
+- Family-friendly → Orlando (USA), Tokyo (Japan), Barcelona (Spain), Singapore (Singapore)
+- Business/modern → Tokyo (Japan), Singapore (Singapore), Dubai (UAE), Seoul (South Korea)
+
+**WHEN useCoordinateSearch is TRUE (ONLY specific locations MORE SPECIFIC than city):**
+
+Examples of useCoordinateSearch: TRUE (POIs, neighborhoods, specific areas):
+
+1. **Specific Landmark/POI:**
+   ✅ "hotels near Eiffel Tower" → specificPlace: "Eiffel Tower, Paris, France", cityName: "Paris", useCoordinateSearch: true
+   ✅ "hotels with Central Park views" → specificPlace: "Central Park, New York, New York, United States", cityName: "New York", useCoordinateSearch: true
+   ✅ "near Times Square" → specificPlace: "Times Square, New York, New York, United States", cityName: "New York", useCoordinateSearch: true
+
+2. **Specific Neighborhood/District:**
+   ✅ "hotels in South Beach Miami" → specificPlace: "South Beach, Miami, Florida, United States", cityName: "Miami", useCoordinateSearch: true
+   ✅ "hotels in Shibuya Tokyo" → specificPlace: "Shibuya, Tokyo, Japan", cityName: "Tokyo", useCoordinateSearch: true
+   ✅ "hotels in Montmartre" → specificPlace: "Montmartre, Paris, France", cityName: "Paris", useCoordinateSearch: true
+
+3. **Specific Street/Area:**
+   ✅ "hotels on Las Vegas Strip" → specificPlace: "Las Vegas Strip, Las Vegas, Nevada, United States", cityName: "Las Vegas", useCoordinateSearch: true
+   ✅ "hotels on Fifth Avenue" → specificPlace: "Fifth Avenue, New York, New York, United States", cityName: "New York", useCoordinateSearch: true
+
+CRITICAL DISTINCTION:
+❌ "hotels in Paris" → useCoordinateSearch: FALSE (just a city, not specific enough)
+✅ "hotels near Eiffel Tower in Paris" → useCoordinateSearch: TRUE (specific POI within the city)
+
 **CITY NAME EXTRACTION RULES**
 
 - Only generate "cityName" if the user explicitly mentions a city
-  OR a landmark/neighborhood that clearly belongs to a well-known city.
+  OR a landmark/neighborhood that clearly belongs to a well-known city
+  OR you intelligently selected a city for a country-level search.
 
 Examples where cityName SHOULD be generated:
 ✅ "hotels in Paris" → cityName: "Paris"
 ✅ "near Times Square" → cityName: "New York"
 ✅ "near Eiffel Tower" → cityName: "Paris"
 ✅ "in Shibuya" → cityName: "Tokyo"
+✅ "hotels in France" → cityName: "Paris" (intelligently selected)
+✅ "beach hotels in Thailand" → cityName: "Phuket" (intelligently selected)
 
 Examples where cityName MUST be null:
-❌ "cool beach hotels"
-❌ "random hotel"
+❌ "cool beach hotels" (if you can't confidently select a city)
 
 Rules:
 - cityName must be ONLY the city (no state, no country, no region).
-- Never guess or infer a city unless it is clearly implied by the user input.
+- Never guess or infer a city unless it is clearly implied by the user input OR you're making an intelligent selection for country-level search.
 - If uncertain, set cityName = null.
 
 **SEARCH ORIGIN NAME & POI DETECTION:**
@@ -348,10 +415,9 @@ Rules:
 Extract:
 1. searchOriginName - SHORT display name (2-4 words)
 2. locationMentioned - TRUE only for POIs (landmarks/attractions)
-3. specificPOI - CLEAN display name if POI mentioned, otherwise null  // NEW
+3. specificPOI - CLEAN display name if POI mentioned, otherwise null
 
 **POI = Famous landmark, attraction, or iconic place**
-
 
 ✅ POIs (locationMentioned: TRUE):
 - Landmarks: Eiffel Tower, Statue of Liberty, Big Ben
@@ -359,191 +425,22 @@ Extract:
 - Monuments: Arc de Triomphe, Lincoln Memorial
 - Buildings: Burj Khalifa, Empire State Building, Sagrada Familia
 - Squares: Times Square, Trafalgar Square
-- Bridges: Golden Gate Bridge, Brooklyn Bridge
-- Museums: Louvre, British Museum
-- Attractions: Disneyland, Colosseum
 
 ❌ NOT POIs (locationMentioned: FALSE):
 - Cities: Paris, Tokyo, New York
-- Neighborhoods: SoHo, Shibuya, Brooklyn
-- Districts: Downtown, Midtown
-- Generic areas: beach, city center, waterfront
-
-**Examples:**
-✅ "hotels near Eiffel Tower" 
-   → searchOriginName: "Eiffel Tower"
-   → locationMentioned: true
-   → specificPOI: "Eiffel Tower"
-
-✅ "near Central Park" 
-   → searchOriginName: "Central Park"
-   → locationMentioned: true
-   → specificPOI: "Central Park"
-
-❌ "hotels in Paris" 
-   → searchOriginName: "Paris"
-   → locationMentioned: false
-   → specificPOI: null
-
-❌ "hotels in Barcelona"
-   → searchOriginName: "Barcelona"
-   → locationMentioned: false
-   → specificPOI: null
-
-❌ "paris city center"
-   → searchOriginName: "Paris City Center"
-   → locationMentioned: false
-   → specificPOI: null
-
-**CRITICAL PLACE EXTRACTION RULES:**
-
-**GEOGRAPHIC DISAMBIGUATION - ALWAYS INCLUDE COUNTRY FOR MAJOR CITIES:**
-- "Paris" → "Paris, Île-de-France, France" (NOT "Paris, Texas")
-- "London" → "London, Greater London, United Kingdom" (NOT "London, Ontario")
-- "Barcelona" → "Barcelona, Catalonia, Spain"
-- "Rome" → "Rome, Lazio, Italy"
-- "Tokyo" → "Tokyo, Japan"
-- "Dubai" → "Dubai, United Arab Emirates"
-- "Singapore" → "Singapore"
-- "city center" or "downtown" → Use the internationally famous city by default
-- Example: "Paris city center" → "Paris City Center, Paris, Île-de-France, France"
-
-**ALWAYS PRIORITIZE THE MOST SPECIFIC LOCATION MENTIONED!**
-
-1. **Specific Landmark/POI (HIGHEST PRIORITY):**
-   - "hotels near Eiffel Tower" → specificPlace: "Eiffel Tower, Paris, France"
-   - "hotels with Central Park views" → specificPlace: "Central Park, New York, New York, United States"
-   - "hotels near Times Square" → specificPlace: "Times Square, New York, New York, United States"
-   - "hotels by Sagrada Familia" → specificPlace: "Sagrada Familia, Barcelona, Catalonia, Spain"
-   - "hotels near Golden Gate Bridge" → specificPlace: "Golden Gate Bridge, San Francisco, California, United States"
-   - "hotels with view of Burj Khalifa" → specificPlace: "Burj Khalifa, Dubai, United Arab Emirates"
-   - ALWAYS use the landmark name first, then city/country
-
-2. **Specific Neighborhood/District:**
-   - "hotels in South Beach Miami" → specificPlace: "South Beach, Miami, Florida, United States"
-   - "hotels in La Rambla Barcelona" → specificPlace: "La Rambla, Barcelona, Catalonia, Spain"
-   - "hotels in Shibuya Tokyo" → specificPlace: "Shibuya, Tokyo, Japan"
-   - "hotels in SoHo New York" → specificPlace: "SoHo, Manhattan, New York, United States"
-   - "hotels in Montmartre" → specificPlace: "Montmartre, Paris, France"
-
-3. **Specific Street/Area:**
-   - "hotels on Fifth Avenue" → specificPlace: "Fifth Avenue, New York, New York, United States"
-   - "hotels on Las Vegas Strip" → specificPlace: "Las Vegas Strip, Las Vegas, Nevada, United States"
-   - "hotels on Ocean Drive Miami" → specificPlace: "Ocean Drive, Miami Beach, Florida, United States"
-
-4. **City Only (ONLY if no specific area mentioned) - ALWAYS INCLUDE COUNTRY:**
-   - "hotels in Paris" → specificPlace: "Paris, Île-de-France, France"
-   - "hotels in New York" → specificPlace: "New York, New York, United States"
-   - "hotels in Tokyo" → specificPlace: "Tokyo, Japan"
-   - "hotels in London" → specificPlace: "London, Greater London, United Kingdom"
-   - "hotels in Barcelona" → specificPlace: "Barcelona, Catalonia, Spain"
-   - "hotels in Rome" → specificPlace: "Rome, Lazio, Italy"
-   - "hotels in Dubai" → specificPlace: "Dubai, United Arab Emirates"
-   
-**SPECIAL RULE - Generic "City Center" / "Downtown":**
-   - "paris city center" → specificPlace: "Paris, Île-de-France, France" (NOT "Paris City Center")
-   - "london city centre" → specificPlace: "London, Greater London, United Kingdom"
-   - "downtown tokyo" → specificPlace: "Tokyo, Japan"
-   - "barcelona city center" → specificPlace: "Barcelona, Catalonia, Spain"
-   - "new york downtown" → specificPlace: "New York, New York, United States"
-   - When user says "[city] + city center/downtown", treat it as just the city
-   - Do NOT add "City Center" or "Downtown" to specificPlace
-
-5. Country-level searches:
-- If the user mentions ONLY a country (or continent), do NOT choose a city.
-- specificPlace must be the country name only.
-- cityName must be null.
-- locationMentioned must be false.
-
-Examples:
-✅ "hotels in France"
-   → specificPlace: "France"
-   → cityName: null
-
-✅ "hotels in Japan"
-   → specificPlace: "Japan"
-   → cityName: null
-
-6. No location mentioned at all:
-- ONLY if the user provides NO city, NO country, NO landmark, NO neighborhood,
-  then choose a reasonable popular destination that matches the theme.
-
-Examples:
-✅ "beach hotels"
-   → specificPlace: "Miami Beach, Florida, United States"
-
-✅ "ski resorts"
-   → specificPlace: "Aspen, Colorado, United States"
-
-**CRITICAL RULES:**
-- NEVER default to just city name when a specific landmark is mentioned!
-- ALWAYS include country name for international cities to avoid US geocoding errors
-- The geocoding API will use country name to bias results correctly
-- Format: [Most Specific Place], [City], [State/Region if applicable], [Country]
-- If the specific place is truly unknown/random, THEN fall back to next most specific level
-
-**EXAMPLES OF CORRECT BEHAVIOR:**
-✅ "Eiffel Tower views" → "Eiffel Tower, Paris, France" (NOT just "Paris, France")
-✅ "near Central Park" → "Central Park, New York, New York, United States" (NOT just "New York")
-✅ "La Rambla Barcelona" → "La Rambla, Barcelona, Catalonia, Spain" (NOT just "Barcelona")
-✅ "Times Square hotels" → "Times Square, New York, New York, United States"
-✅ "South Beach" → "South Beach, Miami, Florida, United States"
-✅ "Paris city center" → "Paris City Center, Paris, Île-de-France, France"
-✅ "downtown London" → "London City Centre, London, Greater London, United Kingdom"
-
-**WRONG BEHAVIOR TO AVOID:**
-❌ "Eiffel Tower" → "Paris, France" (TOO GENERIC!)
-❌ "Central Park" → "New York, United States" (TOO GENERIC!)
-❌ "La Rambla" → "Barcelona, Spain" (TOO GENERIC!)
-❌ "Paris" → "Paris, Texas" (WRONG COUNTRY!)
+- Countries: France, Thailand, Japan
+- Vague locations: beach, mountains, countryside
 
 **SEARCH RADIUS RULES (in meters, MINIMUM 5000):**
 
-1. **National Parks & Remote Locations:** 30000 meters (SPECIAL CASE)
-   - "Yellowstone National Park" → 30000
-   - "Grand Canyon" → 30000
-   - "Yosemite" → 30000
-   - "Zion National Park" → 30000
-   - "Rocky Mountain National Park" → 30000
-   - "Banff National Park" → 30000
-   - "Joshua Tree" → 30000
-   - "Sedona" → 30000
-   - "Monument Valley" → 30000
-   - Any location clearly without hotels in immediate vicinity
+When useCoordinateSearch is TRUE:
+1. **Specific Landmark/POI:** 5000-12000 meters
+2. **Specific Neighborhood:** 10000-15000 meters
+3. **City:** 15000 meters
+4. **National Parks:** 30000 meters
 
-2. **Specific Landmark/POI:** 5000-12000 meters
-   - "near Central Park" → 8000
-   - "near Eiffel Tower" → 6000
-   - "by Times Square" → 8000
-   - "near Sagrada Familia" → 6000
-   - "by Golden Gate Bridge" → 8000
-
-3. **Specific Neighborhood/Beach:** 10000-15000 meters
-   - "in South Beach" → 12000
-   - "in Shibuya" → 12000
-   - "La Rambla Barcelona" → 10000
-   - "in SoHo" → 10000
-
-4. **City District:** 15000 meters
-   - "Manhattan hotels" → 15000
-   - "hotels in Brooklyn" → 15000
-   - "downtown Miami" → 15000
-
-5. **Entire City:** 15000 meters
-   - "hotels in New York" → 15000
-   - "hotels in Paris" → 15000
-   - "hotels in Tokyo" → 15000
-   - "hotels in Barcelona" → 15000
-
-6. **Large Metro Area:** 30000 meters
-   - "hotels in Los Angeles area" → 30000
-   - "hotels in greater London" → 30000
-   - "hotels in Bay Area" → 30000
-
-7. **Vague/Country-level:** 30000-50000 meters (use popular area)
-   - "cool hotels in USA" → 30000 (around picked location)
-   - "beach hotels" → 25000
-   - "hotels in Europe" → 30000
+When useCoordinateSearch is FALSE:
+- Set searchRadius to 15000 (default, but it won't be used for actual search)
 
 **AI SEARCH STRING CONSTRUCTION:**
 
@@ -552,121 +449,42 @@ Build a single comprehensive string that includes ALL user requirements:
 1. **Price Context (if mentioned):**
    - User says "cheap" → Include "cheap hotels"
    - User says "under $200" → Include "hotels under $200 per night"
-   - User says "luxury" or "over $400" → Include "luxury hotels over $400 per night"
-   - User says "budget" → Include "budget-friendly hotels"
 
 2. **Location Context (ALWAYS INCLUDE if specific location mentioned):**
    - User says "near Central Park" → Include "near Central Park"
-   - User says "by Times Square" → Include "by Times Square"
-   - User says "in South Beach" → Include "in South Beach"
-   - User says "La Rambla Barcelona" → Include "on La Rambla"
-   - If only city mentioned, don't add location to aiSearch
+   - If only city/country mentioned, don't add location to aiSearch
 
 3. **Specific Requirements (if mentioned):**
-   - Add ANY specific features: "rooftop bar", "infinity pool", "spa", "gym", "ocean view"
-   - Add vibes: "romantic", "family-friendly", "business", "party", "quiet"
-   - Add styles: "modern", "boutique", "historic", "minimalist", "luxury"
-
-4. **Combine Everything Naturally:**
-   - Merge all elements into one natural sentence
-   - Keep it concise but include all key requirements
-   
-**EXAMPLES:**
-
-Input: "cheap hotels near Times Square with rooftop bar"
-→ aiSearch: "cheap hotels near Times Square with rooftop bar"
-
-Input: "hotels by central park under 200"
-→ aiSearch: "hotels near Central Park under $200 per night"
-
-Input: "luxury hotel in Paris under $500 with spa"
-→ aiSearch: "luxury hotels under $500 per night with spa"
-(Note: "in Paris" is just the city, so not included since it's already in specificPlace)
-
-Input: "romantic hotels in Santorini with infinity pool"
-→ aiSearch: "romantic hotels with infinity pool"
-(Note: "in Santorini" is just the city)
-
-Input: "find me hotels near Eiffel Tower"
-→ aiSearch: "hotels near Eiffel Tower"
-
-Input: "cool boutique hotel in Tokyo near Shibuya Crossing"
-→ aiSearch: "cool boutique hotels near Shibuya Crossing"
-
-Input: "beach hotels with pool"
-→ aiSearch: "beach hotels with pool"
-
-Input: "hotels over $300 with gym and business center near Wall Street"
-→ aiSearch: "hotels over $300 per night with gym and business center near Wall Street"
+   - Add ANY specific features: "rooftop bar", "infinity pool", "spa"
+   - Add vibes: "romantic", "family-friendly", "business"
+   - Add styles: "modern", "boutique", "historic"
 
 **COMPREHENSIVE DATE PARSING RULES:**
 
 **1. Explicit Dates (HIGHEST PRIORITY):**
 - "March 15" → 2025-03-15 (assume current year if not specified)
 - "March 15, 2025" → 2025-03-15
-- "3/15" or "3/15/25" → 2025-03-15
-- "15th March" → 2025-03-15
-- "Mar 15" → 2025-03-15
 - If year not specified, use ${currentYear} if month >= ${currentMonth}, otherwise use ${currentYear + 1}
 
 **2. Relative Date References:**
 - "tomorrow" → ${new Date(today.getTime() + 86400000).toISOString().split('T')[0]}
 - "next week" → ${new Date(today.getTime() + 7*86400000).toISOString().split('T')[0]}
 - "next month" → ${new Date(today.getFullYear(), today.getMonth() + 1, today.getDate()).toISOString().split('T')[0]}
-- "in 2 weeks" → ${new Date(today.getTime() + 14*86400000).toISOString().split('T')[0]}
-- "in 3 days" → ${new Date(today.getTime() + 3*86400000).toISOString().split('T')[0]}
 
-**3. Seasonal/Holiday References:**
-- "Christmas" → 2025-12-25
-- "New Year's" → 2025-12-31 (or 2026-01-01 if after December)
-- "Valentine's Day" → 2026-02-14 (if current date is after Feb 14, 2025)
-- "Easter" → 2025-04-20
-- "Thanksgiving" → 2025-11-27
-- "Memorial Day weekend" → 2025-05-24
-- "Labor Day weekend" → 2025-09-01
-- "4th of July" → 2025-07-04
-
-**4. Month/Season References:**
-- "in March" → First reasonable date in March
-- "spring" → March 20 of appropriate year
-- "summer" → June 21 of appropriate year
-- "fall/autumn" → September 22 of appropriate year
-- "winter" → December 21 of appropriate year
-
-**5. Day of Week References:**
-- "this Friday" → Next upcoming Friday
-- "next Tuesday" → Tuesday of next week
-- "weekend" → Next upcoming Saturday
-
-**6. Duration Parsing for Checkout:**
+**3. Duration Parsing for Checkout:**
 - If only check-in specified:
   - "3 nights" → checkout = checkin + 3 days
   - "1 week" → checkout = checkin + 7 days
-  - "2 weeks" → checkout = checkin + 14 days
-  - "long weekend" → checkout = checkin + 3 days
   - No duration specified → checkout = checkin + 3 days (default)
-
-**CRITICAL DATE VALIDATION:**
-- ALL dates must be in the future (>= tomorrow: ${new Date(today.getTime() + 86400000).toISOString().split('T')[0]})
-- Checkout MUST be after checkin
-- If parsed dates are invalid/in past, fall back to defaults
-- Maximum reasonable stay: 30 days
-
-IMPORTANT:
-If the user mentions a CITY (explicitly or implicitly via a landmark),
-you MUST include the city name in the aiSearch string — even if it already exists in specificPlace.
-
-Examples:
-- "hotels near Times Square" → "hotels near Times Square in New York"
-- "luxury hotel near Eiffel Tower" → "luxury hotels near Eiffel Tower in Paris"
-- "cheap hotels in Tokyo" → "cheap hotels in Tokyo"
-
 
 **OUTPUT VALIDATION RULES**
 
 - "cityName" must always exist in the JSON output.
+- "countryCode" must always exist in the JSON output.
+- "useCoordinateSearch" must always be a boolean.
 - If no city is clearly specified, output: "cityName": null
-- Do NOT omit the field.
+- If no country specified, output: "countryCode": null
+- Do NOT omit these fields.
 - Do NOT guess.
 
 Output ONLY the JSON object - no explanations or extra text.
@@ -696,72 +514,90 @@ User input: "${userInput}"
       parsed.specificPOI = null;
     }
 
+    // Validate new fields
+    if (typeof parsed.useCoordinateSearch !== 'boolean') {
+      // Default to true for backward compatibility
+      parsed.useCoordinateSearch = true;
+      console.log('⚠️ useCoordinateSearch not specified, defaulting to true');
+    }
+
+    if (typeof parsed.countryCode !== 'string' && parsed.countryCode !== null) {
+      parsed.countryCode = null;
+    }
+
+    console.log(`🎯 Search mode: ${parsed.useCoordinateSearch ? 'COORDINATE-BASED' : 'CITY/COUNTRY-BASED'}`);
+    if (!parsed.useCoordinateSearch) {
+      console.log(`🏙️ Selected city: ${parsed.cityName} in ${parsed.countryCode}`);
+    }
+
     // 🌴 Miami Beach override ONLY if user explicitly requested beach areas
-if (
-  parsed.cityName?.toLowerCase() === 'miami' &&
-  isMiamiBeachIntent(userInput)
-) {
-  console.log('🌴 Explicit Miami Beach intent detected from user input');
+    if (
+      parsed.cityName?.toLowerCase() === 'miami' &&
+      isMiamiBeachIntent(userInput)
+    ) {
+      console.log('🌴 Explicit Miami Beach intent detected from user input');
 
-  parsed.cityName = 'Miami Beach';
+      parsed.cityName = 'Miami Beach';
 
-  // Force specificPlace if not already Miami Beach
-  if (
-    typeof parsed.specificPlace !== 'string' ||
-    !parsed.specificPlace.toLowerCase().includes('miami beach')
-  ) {
-    parsed.specificPlace = 'Miami Beach, Florida, United States';
-  }
+      // Force specificPlace if not already Miami Beach
+      if (
+        typeof parsed.specificPlace !== 'string' ||
+        !parsed.specificPlace.toLowerCase().includes('miami beach')
+      ) {
+        parsed.specificPlace = 'Miami Beach, Florida, United States';
+      }
 
-  // Ensure AI search reflects beach intent
-  if (
-    typeof parsed.aiSearch === 'string' &&
-    !parsed.aiSearch.toLowerCase().includes('miami beach')
-  ) {
-    parsed.aiSearch += ' in Miami Beach';
-  }
-}
-
-
-
-
+      // Ensure AI search reflects beach intent
+      if (
+        typeof parsed.aiSearch === 'string' &&
+        !parsed.aiSearch.toLowerCase().includes('miami beach')
+      ) {
+        parsed.aiSearch += ' in Miami Beach';
+      }
+    }
 
     // Ensure price fields always exist
     if (typeof parsed.minCost !== 'number') parsed.minCost = null;
     if (typeof parsed.maxCost !== 'number') parsed.maxCost = null;
 
-
-    // Geocode the specific place ONLY if we have one
-    if (parsed.specificPlace && typeof parsed.specificPlace === 'string' && parsed.specificPlace.trim()) {
-      const geocodeResult = await geocodePlace(parsed.specificPlace);
-      
-      if (geocodeResult) {
-        parsed.latitude = geocodeResult.latitude;
-        parsed.longitude = geocodeResult.longitude;
-        parsed.fullPlaceName = geocodeResult.fullPlaceName;
+    // Geocode ONLY if using coordinate search
+    if (parsed.useCoordinateSearch) {
+      if (parsed.specificPlace && typeof parsed.specificPlace === 'string' && parsed.specificPlace.trim()) {
+        const geocodeResult = await geocodePlace(parsed.specificPlace);
+        
+        if (geocodeResult) {
+          parsed.latitude = geocodeResult.latitude;
+          parsed.longitude = geocodeResult.longitude;
+          parsed.fullPlaceName = geocodeResult.fullPlaceName;
+        } else {
+          console.warn('⚠️ Geocoding failed, falling back to defaults');
+          // Fallback to New York City coordinates
+          parsed.latitude = 40.7128;
+          parsed.longitude = -74.0060;
+          parsed.fullPlaceName = parsed.specificPlace || "New York, New York, United States";
+        }
+        
+        // 🇲🇽 Hard override for Mexico City to avoid POI-biased geocoding
+        if (parsed.cityName?.toLowerCase() === 'mexico city') {
+          console.log('🇲🇽 Overriding coordinates for Mexico City metro centroid');
+          parsed.latitude = 19.432608;
+          parsed.longitude = -99.133209;
+          parsed.fullPlaceName = "Mexico City, CDMX, Mexico";
+        }
       } else {
-        console.warn('⚠️ Geocoding failed, falling back to defaults');
-        // Fallback to New York City coordinates
+        // No specific place provided, use defaults
+        console.warn('⚠️ No specificPlace provided for coordinate search, using default location');
+        parsed.specificPlace = "New York, New York, United States";
         parsed.latitude = 40.7128;
         parsed.longitude = -74.0060;
-        parsed.fullPlaceName = parsed.specificPlace || "New York, New York, United States";
+        parsed.fullPlaceName = "New York, New York, United States";
       }
-      // 🇲🇽 Hard override for Mexico City to avoid POI-biased geocoding
-if (parsed.cityName?.toLowerCase() === 'mexico city') {
-  console.log('🇲🇽 Overriding coordinates for Mexico City metro centroid');
-
-  parsed.latitude = 19.432608;
-  parsed.longitude = -99.133209;
-  parsed.fullPlaceName = "Mexico City, CDMX, Mexico";
-}
-
     } else {
-      // No specific place provided, use defaults
-      console.warn('⚠️ No specificPlace provided, using default location');
-      parsed.specificPlace = "New York, New York, United States";
-      parsed.latitude = 40.7128;
-      parsed.longitude = -74.0060;
-      parsed.fullPlaceName = "New York, New York, United States";
+      // Country/city-based search - no coordinates needed
+      console.log('🌍 Country/city-based search - skipping geocoding');
+      parsed.latitude = null;
+      parsed.longitude = null;
+      parsed.fullPlaceName = parsed.specificPlace;
     }
 
     // Ensure searchRadius has minimum of 5000 meters
@@ -780,7 +616,6 @@ if (parsed.cityName?.toLowerCase() === 'mexico city') {
       );
       parsed.searchRadius = MAX_RADIUS;
     }
-
 
     // Ensure aiSearch exists
     if (!parsed.aiSearch || typeof parsed.aiSearch !== 'string') {
@@ -808,10 +643,13 @@ if (parsed.cityName?.toLowerCase() === 'mexico city') {
         checkin: checkin.toISOString().split('T')[0],
         checkout: checkout.toISOString().split('T')[0],
         specificPlace: "Manhattan, New York, New York, United States",
+        cityName: "Manhattan",
+        countryCode: "US",
         latitude: 40.7589,
         longitude: -73.9851,
         fullPlaceName: "Manhattan, New York, United States",
         searchRadius: 20000,
+        useCoordinateSearch: true,
         language: "en",
         adults: 2,
         children: 0,

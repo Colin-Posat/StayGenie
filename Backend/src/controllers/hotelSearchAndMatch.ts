@@ -1424,6 +1424,15 @@ const getAllAmenitiesForAI = (hotelInfo: any): string[] => {
   return filteredArray;
 };
 
+// Helper function for hotel search
+const runHotelSearch = async (params: any) => {
+  const res = await liteApiInstance.get('/data/hotels', {
+    params,
+    timeout: 30000
+  });
+  return res.data?.data || res.data || [];
+};
+
 // Add this helper function near the top of the file, after the imports
 const calculateDistance = (
   lat1: number,
@@ -1833,106 +1842,180 @@ console.log('🎯 Using Cohere query:', cohereQuery);
       }
     });
 
-    if (!parsedQuery.checkin || !parsedQuery.checkout || !parsedQuery.latitude || !parsedQuery.longitude) {
-      if (isSSERequest) {
-        sendUpdate('error', { 
-          message: 'Could not understand your search request. Please try again with clearer details.',
-          parsed: parsedQuery
-        });
-        res.end();
-        return;
-      } else {
-        return res.status(400).json({ 
-          error: 'Incomplete search parameters',
-          message: 'Could not extract all required search parameters from your input',
-          parsed: parsedQuery
-        });
-      }
-    }
+    // Validate dates (always required)
+if (!parsedQuery.checkin || !parsedQuery.checkout) {
+  if (isSSERequest) {
+    sendUpdate('error', { 
+      message: 'Could not determine check-in/check-out dates.',
+      parsed: parsedQuery
+    });
+    res.end();
+    return;
+  } else {
+    return res.status(400).json({ 
+      error: 'Incomplete search parameters',
+      message: 'Could not extract check-in/check-out dates',
+      parsed: parsedQuery
+    });
+  }
+}
+
+// Validate location (coordinates required ONLY if useCoordinateSearch is true)
+if (parsedQuery.useCoordinateSearch && (!parsedQuery.latitude || !parsedQuery.longitude)) {
+  if (isSSERequest) {
+    sendUpdate('error', { 
+      message: 'Could not determine location coordinates.',
+      parsed: parsedQuery
+    });
+    res.end();
+    return;
+  } else {
+    return res.status(400).json({ 
+      error: 'Incomplete search parameters',
+      message: 'Could not extract location coordinates',
+      parsed: parsedQuery
+    });
+  }
+}
+
+// For city/country search, validate city or country is present
+if (!parsedQuery.useCoordinateSearch && (!parsedQuery.cityName && !parsedQuery.countryCode)) {
+  if (isSSERequest) {
+    sendUpdate('error', { 
+      message: 'Could not determine search location. Please specify a city or country.',
+      parsed: parsedQuery
+    });
+    res.end();
+    return;
+  } else {
+    return res.status(400).json({ 
+      error: 'Incomplete search parameters',
+      message: 'Could not extract city or country',
+      parsed: parsedQuery
+    });
+  }
+}
 
     const nights = Math.ceil((new Date(parsedQuery.checkout).getTime() - new Date(parsedQuery.checkin).getTime()) / (1000 * 60 * 60 * 24));
 
-    // STEP 2: Fetch hotels using coordinates and radius
-    sendUpdate('progress', { 
-      message: `Searching for hotels near ${parsedQuery.fullPlaceName || parsedQuery.specificPlace}...`, 
-      step: 2, 
-      totalSteps: 8,
-      location: parsedQuery.fullPlaceName || parsedQuery.specificPlace,
-      radius: parsedQuery.searchRadius
-    });
-    
-    logger.startStep('2-FetchHotelsWithCoordinates', {
-      latitude: parsedQuery.latitude,
-      longitude: parsedQuery.longitude,
-      radius: parsedQuery.searchRadius,
-      hotelTypeIds: HOTEL_TYPE_IDS
-    });
-    
-   const hotelSearchParams: any = {
-  latitude: parsedQuery.latitude,
-  longitude: parsedQuery.longitude,
-  radius: parsedQuery.searchRadius,
-  hotelTypeIds: HOTEL_TYPE_IDS.join(','),
-  language: 'en',
-  limit: 900
-};
+   // STEP 2: Fetch hotels - Choose search method based on useCoordinateSearch flag
+let hotels: any[] = [];
 
-// ✅ Inject cityName ONLY if explicitly present (not Paris-only anymore)
-const hasExplicitCity =
-  typeof parsedQuery.cityName === 'string' &&
-  parsedQuery.cityName.trim().length > 0;
+if (parsedQuery.useCoordinateSearch === false) {
+  // ========================================
+  // CITY/COUNTRY-BASED SEARCH (No coordinates)
+  // ========================================
+  sendUpdate('progress', { 
+    message: `Searching for hotels in ${parsedQuery.cityName || parsedQuery.specificPlace}...`, 
+    step: 2, 
+    totalSteps: 8,
+location: parsedQuery.cityName ? `${parsedQuery.cityName}, ${parsedQuery.countryCode}` : parsedQuery.specificPlace,
+    searchMode: 'city-country'
+  });
+  
+logger.startStep('2-FetchHotelsWithCityCountry', {
+  cityName: parsedQuery.cityName,
+  countryCode: parsedQuery.countryCode,
+  hotelTypeIds: HOTEL_TYPE_IDS
+});
+  
+  const hotelSearchParams: any = {
+    hotelTypeIds: HOTEL_TYPE_IDS.join(','),
+    language: 'en',
+    limit: 900
+  };
 
-if (hasExplicitCity) {
-  hotelSearchParams.cityName = parsedQuery.cityName;
-  console.log(`🏙️ Injecting cityName into LiteAPI query: ${parsedQuery.cityName}`);
+  // Add city name if available
+  if (parsedQuery.cityName && typeof parsedQuery.cityName === 'string' && parsedQuery.cityName.trim().length > 0) {
+    hotelSearchParams.cityName = parsedQuery.cityName;
+    console.log(`🏙️ Using cityName filter: ${parsedQuery.cityName}`);
+  }
+
+  // Add country if available
+// Add countryCode if available
+if (parsedQuery.countryCode && typeof parsedQuery.countryCode === 'string' && parsedQuery.countryCode.trim().length > 0) {
+  hotelSearchParams.countryCode = parsedQuery.countryCode;
+  console.log(`🌍 Using countryCode filter: ${parsedQuery.countryCode}`);
 }
 
-// ---- helper ----
-const runHotelSearch = async (params: any) => {
-  const res = await liteApiInstance.get('/data/hotels', {
-    params,
-    timeout: 30000
+  hotels = await runHotelSearch(hotelSearchParams);
+  
+  console.log(`🏨 LiteAPI city/country search returned ${hotels?.length || 0} hotels`);
+  
+  logger.endStep('2-FetchHotelsWithCityCountry', { hotelCount: hotels?.length || 0 });
+
+} else {
+  // ========================================
+  // COORDINATE-BASED SEARCH (Specific locations)
+  // ========================================
+  sendUpdate('progress', { 
+    message: `Searching for hotels near ${parsedQuery.fullPlaceName || parsedQuery.specificPlace}...`, 
+    step: 2, 
+    totalSteps: 8,
+    location: parsedQuery.fullPlaceName || parsedQuery.specificPlace,
+    radius: parsedQuery.searchRadius,
+    searchMode: 'coordinates'
   });
-  return res.data?.data || res.data || [];
-};
+  
+  logger.startStep('2-FetchHotelsWithCoordinates', {
+    latitude: parsedQuery.latitude,
+    longitude: parsedQuery.longitude,
+    radius: parsedQuery.searchRadius,
+    hotelTypeIds: HOTEL_TYPE_IDS
+  });
+  
+  const hotelSearchParams: any = {
+    latitude: parsedQuery.latitude,
+    longitude: parsedQuery.longitude,
+    radius: parsedQuery.searchRadius,
+    hotelTypeIds: HOTEL_TYPE_IDS.join(','),
+    language: 'en',
+    limit: 900
+  };
 
-// ---- Primary search ----
-let hotels = await runHotelSearch(hotelSearchParams);
+  // Optionally inject cityName for coordinate searches too
+  const hasExplicitCity =
+    typeof parsedQuery.cityName === 'string' &&
+    parsedQuery.cityName.trim().length > 0;
 
-console.log(
-  `🏨 LiteAPI primary search returned ${hotels.length} hotels` +
-  (hasExplicitCity ? ` (city=${parsedQuery.cityName})` : '')
-);
+  if (hasExplicitCity) {
+    hotelSearchParams.cityName = parsedQuery.cityName;
+    console.log(`🏙️ Injecting cityName into coordinate search: ${parsedQuery.cityName}`);
+  }
 
-// ---- Fallback ONLY if zero ----
-if (hasExplicitCity && hotels.length === 0) {
-  console.warn(
-    `⚠️ Zero hotels returned with city="${parsedQuery.cityName}". Retrying without city filter...`
-  );
-
-  const relaxedParams = { ...hotelSearchParams };
-  delete relaxedParams.cityName;
-
-  const fallbackHotels = await runHotelSearch(relaxedParams);
+  hotels = await runHotelSearch(hotelSearchParams);
 
   console.log(
-    `🔁 LiteAPI fallback search returned ${fallbackHotels.length} hotels (no city filter)`
+    `🏨 LiteAPI coordinate search returned ${hotels.length} hotels` +
+    (hasExplicitCity ? ` (city=${parsedQuery.cityName})` : '')
   );
 
-  hotels = fallbackHotels;
+  // Fallback ONLY if zero results
+  if (hasExplicitCity && hotels.length === 0) {
+    console.warn(
+      `⚠️ Zero hotels with city="${parsedQuery.cityName}". Retrying without city filter...`
+    );
+
+    const relaxedParams = { ...hotelSearchParams };
+    delete relaxedParams.cityName;
+
+    hotels = await runHotelSearch(relaxedParams);
+
+    console.log(
+      `🔁 Fallback search returned ${hotels.length} hotels (no city filter)`
+    );
+  }
+
+  logger.endStep('2-FetchHotelsWithCoordinates', { hotelCount: hotels?.length || 0 });
 }
-
- 
-
-
-    logger.endStep('2-FetchHotelsWithCoordinates', { hotelCount: hotels?.length || 0 });
-
-    if (!hotels || !Array.isArray(hotels) || hotels.length === 0) {
-      if (isSSERequest) {
-        sendUpdate('error', {
-          message: `No hotels found near ${parsedQuery.fullPlaceName || parsedQuery.specificPlace}. Try a different location or larger radius.`,
-          searchParams: parsedQuery
-        });
+if (!hotels || !Array.isArray(hotels) || hotels.length === 0) {
+  if (isSSERequest) {
+    sendUpdate('error', {
+      message: parsedQuery.useCoordinateSearch 
+        ? `No hotels found near ${parsedQuery.fullPlaceName || parsedQuery.specificPlace}.`
+        : `No hotels found in ${parsedQuery.cityName || parsedQuery.specificPlace}.`,
+      searchParams: parsedQuery
+    });
         res.end();
         return;
       } else {
