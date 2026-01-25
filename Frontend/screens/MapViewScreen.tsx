@@ -399,31 +399,44 @@ const MapViewScreen: React.FC<MapViewScreenProps> = ({
     return url.toString();
   };
 
-  const handleBookPress = async () => {
-    if (!selectedHotel) return;
-    
-    try {
-      await AnalyticsService.trackBookClick(
-        selectedHotel.id,
-        selectedHotel.name,
-        0,
-        selectedHotel.pricePerNight?.amount || selectedHotel.price
-      );
+const handleBookPress = async () => {
+  if (!selectedHotel) return;
+  
+  try {
+    console.log('🔵 Map View - Generating deep link with dates:', {
+      checkInDate: checkInDate?.toISOString(),
+      checkOutDate: checkOutDate?.toISOString(),
+      adults,
+      children,
+      placeId,
+      occupancies
+    });
 
-      const url = generateHotelDeepLink(
-        selectedHotel,
-        checkInDate,
-        checkOutDate,
-        adults,
-        children,
-        placeId,
-        occupancies
-      );
-      await openInAppBrowser(url);
-    } catch {
-      Alert.alert('Error', 'Failed to open hotel page. Please try again.');
-    }
-  };
+    await AnalyticsService.trackBookClick(
+      selectedHotel.id,
+      selectedHotel.name,
+      0,
+      selectedHotel.pricePerNight?.amount || selectedHotel.price
+    );
+
+    const url = generateHotelDeepLink(
+      selectedHotel,
+      checkInDate,
+      checkOutDate,
+      adults,
+      children,
+      placeId,
+      occupancies
+    );
+    
+    console.log('🔗 Map View - Generated deep link:', url);
+    
+    await Linking.openURL(url);  // ✅ USE THIS INSTEAD
+  } catch (error) {
+    console.error('❌ Error opening hotel page:', error);
+    Alert.alert('Error', 'Failed to open hotel page. Please try again.');
+  }
+};
 
   const handleShowReviews = async () => {
     if (!selectedHotel) return;

@@ -1,4 +1,4 @@
-// MorphingSearchChat.tsx - Single morphing input that becomes chat composer
+// MorphingSearchChat.tsx - Fixed height locking
 import React, { useState, useRef, useEffect } from 'react';
 import {
   View,
@@ -7,7 +7,6 @@ import {
   Animated,
   Keyboard,
   Platform,
-  KeyboardAvoidingView,
   ScrollView,
   Dimensions,
   TouchableWithoutFeedback,
@@ -17,11 +16,17 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 import tw from 'twrnc';
 import { Text } from '../components/CustomText';
+import DateSelectionModal from './SearchGuideModals/DateSelectionModal';
+import BudgetSelectionModal from './SearchGuideModals/BudgetSelectionModal';
+import GuestsSelectionModal from './SearchGuideModals/GuestSelectionModal';
+import AmenitiesSelectionModal from './SearchGuideModals/AmenitiesSelectionModal';
+import HotelStylesSelectionModal from './SearchGuideModals/HotelStylesSelectionModal';
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
-const TURQUOISE = '#00d4e6'; // Softer turquoise for better text readability
+const TURQUOISE = '#00d4e6';
+const TURQUOISE_LIGHT = 'rgba(29, 249, 255, 0.15)';
 
-// API Base URLs - switch between local dev and production
+// API Base URLs
 //const BASE_URL = 'http://localhost:3003';
 const BASE_URL = 'https://staygenie-wwpa.onrender.com';
 
@@ -44,6 +49,44 @@ interface MorphingSearchChatProps {
   searchParams?: any;
 }
 
+interface RefinePill {
+  id: string;
+  icon: keyof typeof Ionicons.glyphMap;
+  label: string;
+  action: string;
+}
+
+// Helper function to parse text with bold formatting
+const parseMessageText = (text: string) => {
+  const parts: Array<{ text: string; bold: boolean }> = [];
+  const regex = /\*\*(.*?)\*\*/g;
+  let lastIndex = 0;
+  let match;
+
+  while ((match = regex.exec(text)) !== null) {
+    if (match.index > lastIndex) {
+      parts.push({
+        text: text.substring(lastIndex, match.index),
+        bold: false,
+      });
+    }
+    parts.push({
+      text: match[1],
+      bold: true,
+    });
+    lastIndex = regex.lastIndex;
+  }
+
+  if (lastIndex < text.length) {
+    parts.push({
+      text: text.substring(lastIndex),
+      bold: false,
+    });
+  }
+
+  return parts.length > 0 ? parts : [{ text, bold: false }];
+};
+
 const MorphingSearchChat: React.FC<MorphingSearchChatProps> = ({
   currentSearch,
   onSearchRefined,
@@ -55,52 +98,92 @@ const MorphingSearchChat: React.FC<MorphingSearchChatProps> = ({
   
   // State
   const [isChatOpen, setIsChatOpen] = useState(false);
+  const [isCooldown, setIsCooldown] = useState(false);
+
   const [message, setMessage] = useState('');
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoadingResponse, setIsLoadingResponse] = useState(false);
-  const [keyboardHeight, setKeyboardHeight] = useState(0);
+  
+  // Modal states
+  const [showDateModal, setShowDateModal] = useState(false);
+  const [showBudgetModal, setShowBudgetModal] = useState(false);
+  const [showGuestsModal, setShowGuestsModal] = useState(false);
+  const [showAmenitiesModal, setShowAmenitiesModal] = useState(false);
+  const [showStylesModal, setShowStylesModal] = useState(false);
   
   // Refs
+  const closeCooldownRef = useRef(false);
+
+  const canOpenRef = useRef(true);
   const inputRef = useRef<TextInput>(null);
   const scrollViewRef = useRef<ScrollView>(null);
+const lastKeyboardHeightRef = useRef(0);
   
   // Animations
   const chatExpanded = useRef(new Animated.Value(0)).current;
+  const inputTranslateY = useRef(new Animated.Value(0)).current;
   
   // Constants
   const INPUT_HEIGHT = 56;
-  const TOP_POSITION = 10; // Where input sits when collapsed
-  const KEYBOARD_OFFSET = -25; // Negative = closer to keyboard
+  const TOP_POSITION = 1;
+  const KEYBOARD_OFFSET = -25;
+  const PILLS_HEIGHT = 56;
+  const isAnimatingRef = useRef(false);
+const chatBottomPositionRef = useRef(0);
+  // Refine pills
+  const refinePills: RefinePill[] = [
+    {
+      id: 'dates',
+      icon: 'calendar-outline',
+      label: 'Add dates',
+      action: 'ADD_DATES'
+    },
+    {
+      id: 'budget',
+      icon: 'card-outline',
+      label: 'Set budget',
+      action: 'SET_BUDGET'
+    },
+    {
+      id: 'guests',
+      icon: 'people-outline',
+      label: 'Add guests',
+      action: 'ADD_GUESTS'
+    },
+    {
+      id: 'amenities',
+      icon: 'options-outline',
+      label: 'Amenities',
+      action: 'SELECT_AMENITIES'
+    },
+    {
+      id: 'style',
+      icon: 'home-outline',
+      label: 'Hotel style',
+      action: 'SELECT_STYLE'
+    }
+  ];
   
-  // No animation needed - using static shadow
-  
-  // Keyboard listeners
-  useEffect(() => {
-    const showListener = Keyboard.addListener(
-      Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
-      (e) => {
-        // Use endCoordinates.height which is standard across iOS and Android
-        const height = e.endCoordinates.height;
-        setKeyboardHeight(height);
-      }
-    );
-    
-    const hideListener = Keyboard.addListener(
-      Platform.OS === 'ios' ? 'keyboardWillHide' : 'keyboardDidHide',
-      () => {
-        setKeyboardHeight(0);
-      }
-    );
-    
-    return () => {
-      showListener.remove();
-      hideListener.remove();
-    };
-  }, []);
+// Keyboard listeners - LOCK on first show, ignore all other changes
+// Always track last known keyboard height
+useEffect(() => {
+  const showListener = Keyboard.addListener(
+    Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
+    (e) => {
+      lastKeyboardHeightRef.current = e.endCoordinates.height;
+    }
+  );
+
+  return () => {
+    showListener.remove();
+  };
+}, []);
+
+
   
   // Generate initial welcome message
   const generateInitialMessage = async () => {
-    if (messages.length > 0) return; // Only generate if no messages exist
+    if (messages.length > 0) return;
     
     setIsLoadingResponse(true);
     
@@ -114,7 +197,7 @@ const MorphingSearchChat: React.FC<MorphingSearchChatProps> = ({
           currentSearch,
           hotelContext,
           searchParams,
-          isInitialMessage: true, // Flag for backend to know this is the welcome message
+          isInitialMessage: true,
         }),
       });
       
@@ -130,7 +213,6 @@ const MorphingSearchChat: React.FC<MorphingSearchChatProps> = ({
       setMessages([welcomeMessage]);
     } catch (error) {
       console.error('Failed to generate initial message:', error);
-      // Fallback welcome message
       const fallbackMessage: Message = {
         id: Date.now().toString(),
         role: 'assistant',
@@ -144,63 +226,102 @@ const MorphingSearchChat: React.FC<MorphingSearchChatProps> = ({
   };
   
   // Open chat animation
-  const openChat = () => {
-    setIsChatOpen(true);
+const openChat = () => {
+  if (closeCooldownRef.current) return;
+  chatExpanded.setValue(0);
+  inputTranslateY.setValue(0);
+
+  setIsChatOpen(true);
+  
+  // Wait for keyboard to show, then lock position
+  setTimeout(() => {
+    const keyboardHeight = lastKeyboardHeightRef.current || 350;
+
+    const targetY = SCREEN_HEIGHT - keyboardHeight - INPUT_HEIGHT - insets.bottom - TOP_POSITION + KEYBOARD_OFFSET;
     
-    Animated.spring(chatExpanded, {
-      toValue: 1,
-      tension: 280,
-      friction: 30,
-      useNativeDriver: true,
-    }).start();
+    // LOCK the bottom position for all elements
+    chatBottomPositionRef.current = keyboardHeight + INPUT_HEIGHT + insets.bottom - 40 + PILLS_HEIGHT;
     
-    // Generate initial message only if chat is empty
-    if (messages.length === 0) {
-      generateInitialMessage();
-    }
-    setTimeout(() => inputRef.current?.focus(), 100);
-  };
+    Animated.parallel([
+      Animated.spring(chatExpanded, {
+        toValue: 1,
+        tension: 280,
+        friction: 30,
+        useNativeDriver: true,
+      }),
+      Animated.spring(inputTranslateY, {
+        toValue: targetY,
+        tension: 280,
+        friction: 30,
+        useNativeDriver: true,
+      })
+    ]).start();
+  }, 100);
+  
+  if (messages.length === 0) {
+    generateInitialMessage();
+  }
+  
+  setTimeout(() => {
+    scrollViewRef.current?.scrollToEnd({ animated: true });
+  }, 300);
+  
+  setTimeout(() => inputRef.current?.focus(), 100);
+};
   
   // Close chat animation
-  const closeChat = () => {
-    Keyboard.dismiss();
-    setMessage(''); // Clear any typed text when closing
-    
+const closeChat = () => {
+  if (closeCooldownRef.current) return;
+
+  closeCooldownRef.current = true;
+setIsCooldown(true); // 🔒 disable input + buttons
+Keyboard.dismiss();
+setMessage('');
+  
+  Animated.parallel([
     Animated.spring(chatExpanded, {
       toValue: 0,
       tension: 280,
       friction: 30,
       useNativeDriver: true,
-    }).start(() => {
-      setIsChatOpen(false);
-      // Keep messages so chat history persists
-      // setMessages([]);
-    });
-  };
+    }),
+    Animated.spring(inputTranslateY, {
+      toValue: 0,
+      tension: 280,
+      friction: 30,
+      useNativeDriver: true,
+    })
+  ]).start(() => {
+   setTimeout(() => {
+  closeCooldownRef.current = false;
+  setIsCooldown(false);
+}, 800);
+
+
+    // Reset everything AFTER animation completes
+    setIsChatOpen(false);
+    chatBottomPositionRef.current = 0;
+  });
+};
+
   
   // Send message handler
   const handleSendMessage = async () => {
     if (!message.trim()) return;
     
     const trimmedMessage = message.trim().toLowerCase();
-    
-    // Check if there are any pending refinement suggestions
     const pendingRefinement = messages.find(msg => msg.refinementData);
     
-    // If user types "yes" or "no" and there's a pending refinement, handle it
     if (pendingRefinement && (trimmedMessage === 'yes' || trimmedMessage === 'no')) {
       if (trimmedMessage === 'yes') {
-        // User confirmed the refinement
         handleConfirmRefinement(pendingRefinement.refinementData!.query, pendingRefinement.id);
       } else {
-        // User declined the refinement
         handleDeclineRefinement(pendingRefinement.id);
       }
-      setMessage(''); // Clear the input
-      return; // Don't process as a regular message
+      setMessage('');
+      return;
     }
     
-    // If there are any pending refinement suggestions (and user didn't type yes/no), auto-dismiss them
     const hasPendingRefinements = messages.some(msg => msg.refinementData);
     if (hasPendingRefinements) {
       setMessages(prev => 
@@ -221,19 +342,17 @@ const MorphingSearchChat: React.FC<MorphingSearchChatProps> = ({
     setMessage('');
     setIsLoadingResponse(true);
     
-    // Scroll to bottom
     setTimeout(() => {
       scrollViewRef.current?.scrollToEnd({ animated: true });
     }, 100);
     
     try {
-      // Call your AI chat endpoint
       const response = await fetch(`${BASE_URL}/api/hotels/ai-search-chat`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           message: userMessage.content,
-          conversationHistory: messages.filter(msg => !msg.refinementData), // Don't send dismissed refinements
+          conversationHistory: messages.filter(msg => !msg.refinementData),
           currentSearch,
           hotelContext,
           searchParams,
@@ -242,7 +361,6 @@ const MorphingSearchChat: React.FC<MorphingSearchChatProps> = ({
       
       const data = await response.json();
       
-      // Create assistant message with optional refinement data
       const assistantMessage: Message = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
@@ -257,8 +375,6 @@ const MorphingSearchChat: React.FC<MorphingSearchChatProps> = ({
       };
       
       setMessages(prev => [...prev, assistantMessage]);
-      
-      // Note: We no longer auto-refine - user must confirm via buttons
       
     } catch (error) {
       console.error('Chat error:', error);
@@ -281,7 +397,6 @@ const MorphingSearchChat: React.FC<MorphingSearchChatProps> = ({
   
   // Handle refinement confirmation
   const handleConfirmRefinement = (query: string, messageId: string) => {
-    // Remove refinement data first so buttons disappear
     setMessages(prev => 
       prev.map(msg => 
         msg.id === messageId 
@@ -291,11 +406,10 @@ const MorphingSearchChat: React.FC<MorphingSearchChatProps> = ({
     );
     
     onSearchRefined(query, currentSearch);
-    closeChat(); // Close chat when confirming refinement
+    closeChat();
   };
 
   const handleDeclineRefinement = (messageId: string) => {
-    // Remove refinement data from the message
     setMessages(prev => 
       prev.map(msg => 
         msg.id === messageId 
@@ -304,7 +418,6 @@ const MorphingSearchChat: React.FC<MorphingSearchChatProps> = ({
       )
     );
     
-    // Add a follow-up message from Genie
     const followUpMessage: Message = {
       id: (Date.now() + 2).toString(),
       role: 'assistant',
@@ -314,19 +427,88 @@ const MorphingSearchChat: React.FC<MorphingSearchChatProps> = ({
     
     setMessages(prev => [...prev, followUpMessage]);
     
-    // Scroll to bottom to show new message
     setTimeout(() => {
       scrollViewRef.current?.scrollToEnd({ animated: true });
     }, 100);
   };
   
-  const inputTranslateY = chatExpanded.interpolate({
-    inputRange: [0, 1],
-    outputRange: [
-      0, 
-      SCREEN_HEIGHT - keyboardHeight - INPUT_HEIGHT - insets.bottom - TOP_POSITION + KEYBOARD_OFFSET
-    ],
-  });
+  // Handle pill presses
+  const handlePillPress = (pill: RefinePill) => {
+    console.log('Pill pressed:', pill.id, pill.action);
+    
+    Keyboard.dismiss();
+    
+    setTimeout(() => {
+      if (pill.action === 'ADD_DATES') {
+        setShowDateModal(true);
+        return;
+      }
+      
+      if (pill.action === 'SET_BUDGET') {
+        setShowBudgetModal(true);
+        return;
+      }
+      
+      if (pill.action === 'ADD_GUESTS') {
+        setShowGuestsModal(true);
+        return;
+      }
+      
+      if (pill.action === 'SELECT_AMENITIES') {
+        setShowAmenitiesModal(true);
+        return;
+      }
+      
+      if (pill.action === 'SELECT_STYLE') {
+        setShowStylesModal(true);
+        return;
+      }
+    }, 100);
+  };
+
+  // Modal handlers
+  const handleDateSelect = (checkIn: Date, checkOut: Date) => {
+    const formatDateForSearch = (date: Date): string => {
+      const options: Intl.DateTimeFormatOptions = { 
+        month: 'short', 
+        day: 'numeric',
+        year: 'numeric'
+      };
+      return date.toLocaleDateString('en-US', options);
+    };
+
+    const checkInText = formatDateForSearch(checkIn);
+    const checkOutText = formatDateForSearch(checkOut);
+    const searchText = `${checkInText} - ${checkOutText}`;
+    
+    console.log('Date selected:', searchText);
+    setShowDateModal(false);
+    setMessage(searchText);
+  };
+
+  const handleBudgetSelect = (budgetText: string) => {
+    console.log('Budget selected:', budgetText);
+    setShowBudgetModal(false);
+    setMessage(budgetText);
+  };
+
+  const handleGuestsSelect = (guestsText: string) => {
+    console.log('Guests selected:', guestsText);
+    setShowGuestsModal(false);
+    setMessage(guestsText);
+  };
+
+  const handleAmenitiesSelect = (amenitiesText: string) => {
+    console.log('Amenities selected:', amenitiesText);
+    setShowAmenitiesModal(false);
+    setMessage(amenitiesText);
+  };
+
+  const handleStylesSelect = (stylesText: string) => {
+    console.log('Hotel styles selected:', stylesText);
+    setShowStylesModal(false);
+    setMessage(stylesText);
+  };
   
   const chatContainerOpacity = chatExpanded.interpolate({
     inputRange: [0, 0.3, 1],
@@ -343,16 +525,23 @@ const MorphingSearchChat: React.FC<MorphingSearchChatProps> = ({
     outputRange: [0, 0.5],
   });
   
+  // Calculate fixed bottom position using locked height
+ const fixedBottom =
+  (lastKeyboardHeightRef.current || 350) +
+  INPUT_HEIGHT +
+  insets.bottom -
+  40 +
+  PILLS_HEIGHT;
   return (
     <>
-      {/* Overlay behind chat (dims results feed) */}
+      {/* Overlay behind chat */}
       {isChatOpen && (
         <TouchableWithoutFeedback onPress={closeChat}>
           <Animated.View
             style={[
               {
                 position: 'absolute',
-                top: -insets.top, // Extend to cover status bar
+                top: -insets.top,
                 left: 0,
                 right: 0,
                 bottom: 0,
@@ -366,176 +555,274 @@ const MorphingSearchChat: React.FC<MorphingSearchChatProps> = ({
         </TouchableWithoutFeedback>
       )}
       
-      {/* Chat Messages Container */}
+      {/* Chat Messages Container - FIXED HEIGHT */}
       {isChatOpen && (
-        <Animated.View
+        <View
           style={[
             {
               position: 'absolute',
-              top: TOP_POSITION + INPUT_HEIGHT - 45,
+              top: TOP_POSITION + INPUT_HEIGHT - 50,
               left: 0,
               right: 0,
-              bottom: keyboardHeight + INPUT_HEIGHT + insets.bottom - 20,
+              bottom: fixedBottom,
               zIndex: 999,
-              opacity: chatContainerOpacity,
-              transform: [{ translateY: chatContainerTranslateY }],
             },
           ]}
           pointerEvents="box-none"
         >
-          <View style={tw`flex-1 px-4`}>
-            {/* Chat Header */}
-            <View style={[
-              tw`bg-white rounded-t-2xl px-4 py-3 border-b border-gray-200`,
+          <Animated.View 
+            style={[
+              tw`flex-1`,
               {
-                shadowColor: '#000',
-                shadowOffset: { width: 0, height: 2 },
-                shadowOpacity: 0.1,
-                shadowRadius: 4,
-                elevation: 3,
+                opacity: chatContainerOpacity,
+                transform: [{ translateY: chatContainerTranslateY }],
               }
-            ]}>
-              <Text style={{
-                fontFamily: 'Merriweather-Bold',
-                fontSize: 16,
-                color: '#111827',
-              }}>
-                Chat with Genie
-              </Text>
-
-            </View>
-            
-            {/* Messages List */}
-            <ScrollView
-              ref={scrollViewRef}
-              style={tw`flex-1 bg-white`}
-              contentContainerStyle={tw`px-4 py-4`}
-              showsVerticalScrollIndicator={false}
-              keyboardShouldPersistTaps="handled"
-            >
-              {messages.map((msg) => (
-                <View key={msg.id}>
-                  <View
-                    style={[
-                      tw`mb-3 flex-row items-start`,
-                      msg.role === 'user' ? tw`justify-end` : tw`justify-start`,
-                    ]}
-                  >
-                    {/* Genie icon for assistant messages */}
-                    {msg.role === 'assistant' && (
-                      <View style={tw`mr-2 mt-0.5`}>
-                        <Image
-                          source={require('../assets/images/logo.png')}
-                          style={tw`w-6 h-6`}
-                          resizeMode="contain"
-                        />
-                      </View>
-                    )}
-                    
+            ]}
+          >
+            <View style={tw`flex-1 px-4`}>
+              {/* Chat Header */}
+              <View style={[
+                tw`bg-white rounded-t-2xl px-4 py-3 border-b border-gray-200`,
+                {
+                  shadowColor: '#000',
+                  shadowOffset: { width: 0, height: 2 },
+                  shadowOpacity: 0.1,
+                  shadowRadius: 4,
+                  elevation: 3,
+                }
+              ]}>
+                <Text style={{
+                  fontFamily: 'Merriweather-Bold',
+                  fontSize: 16,
+                  color: '#111827',
+                }}>
+                  Chat with Genie
+                </Text>
+              </View>
+              
+              {/* Messages List */}
+              <ScrollView
+                ref={scrollViewRef}
+                style={tw`flex-1 bg-white`}
+                contentContainerStyle={tw`px-4 py-4`}
+                showsVerticalScrollIndicator={false}
+                keyboardShouldPersistTaps="handled"
+              >
+                {messages.map((msg) => (
+                  <View key={msg.id}>
                     <View
                       style={[
-                        tw`px-4 py-3 rounded-2xl max-w-[80%]`,
-                        msg.role === 'user'
-                          ? { backgroundColor: TURQUOISE }
-                          : tw`bg-gray-100`,
+                        tw`mb-3 flex-row items-start`,
+                        msg.role === 'user' ? tw`justify-end` : tw`justify-start`,
                       ]}
                     >
+                      {msg.role === 'assistant' && (
+                        <View style={tw`mr-2 mt-0.5`}>
+                          <Image
+                            source={require('../assets/images/logo.png')}
+                            style={tw`w-6 h-6`}
+                            resizeMode="contain"
+                          />
+                        </View>
+                      )}
+                      
+                      <View
+                        style={[
+                          tw`px-4 py-3 rounded-2xl max-w-[80%]`,
+                          msg.role === 'user'
+                            ? { backgroundColor: TURQUOISE }
+                            : tw`bg-gray-100`,
+                        ]}
+                      >
+                        <Text style={{
+                          fontFamily: 'Merriweather-Regular',
+                          fontSize: 14,
+                          color: msg.role === 'user' ? '#fff' : '#111827',
+                          lineHeight: 20,
+                        }}>
+                          {parseMessageText(msg.content).map((part, index) => (
+                            <Text
+                              key={index}
+                              style={{
+                                fontFamily: part.bold ? 'Merriweather-Bold' : 'Merriweather-Regular',
+                                fontSize: 14,
+                                color: msg.role === 'user' ? '#fff' : '#111827',
+                              }}
+                            >
+                              {part.text}
+                            </Text>
+                          ))}
+                        </Text>
+                      </View>
+                    </View>
+                    
+                    {/* Refinement Confirmation Buttons */}
+                    {msg.role === 'assistant' && msg.refinementData && (
+                      <View style={[
+                        tw`ml-8 mb-3 bg-white border border-gray-200 rounded-xl p-3`,
+                        {
+                          shadowColor: '#000',
+                          shadowOffset: { width: 0, height: 1 },
+                          shadowOpacity: 0.05,
+                          shadowRadius: 2,
+                          elevation: 2,
+                        }
+                      ]}>
+                        <Text style={{
+                          fontFamily: 'Merriweather-Regular',
+                          fontSize: 13,
+                          color: '#6B7280',
+                          marginBottom: 8,
+                        }}>
+                          Ready to see new results?
+                        </Text>
+                        <View style={tw`flex-row gap-2`}>
+                          <TouchableOpacity
+                            style={[
+                              tw`flex-1 py-2.5 rounded-lg items-center`,
+                              { backgroundColor: TURQUOISE }
+                            ]}
+                            onPress={() => handleConfirmRefinement(msg.refinementData!.query, msg.id)}
+                            activeOpacity={0.8}
+                          >
+                            <Text style={{
+                              fontFamily: 'Merriweather-Bold',
+                              fontSize: 14,
+                              color: '#fff',
+                            }}>
+                              Yes
+                            </Text>
+                          </TouchableOpacity>
+                          <TouchableOpacity
+                            style={tw`flex-1 py-2.5 rounded-lg items-center bg-gray-100`}
+                            onPress={() => handleDeclineRefinement(msg.id)}
+                            activeOpacity={0.8}
+                          >
+                            <Text style={{
+                              fontFamily: 'Merriweather-Bold',
+                              fontSize: 14,
+                              color: '#374151',
+                            }}>
+                              No
+                            </Text>
+                          </TouchableOpacity>
+                        </View>
+                      </View>
+                    )}
+                  </View>
+                ))}
+                
+                {isLoadingResponse && (
+                  <View style={tw`mb-3 flex-row items-start justify-start`}>
+                    <View style={tw`mr-2 mt-0.5`}>
+                      <Image
+                        source={require('../assets/images/logo.png')}
+                        style={tw`w-6 h-6`}
+                        resizeMode="contain"
+                      />
+                    </View>
+                    <View style={tw`bg-gray-100 px-4 py-3 rounded-2xl`}>
                       <Text style={{
                         fontFamily: 'Merriweather-Regular',
                         fontSize: 14,
-                        color: msg.role === 'user' ? '#fff' : '#111827',
-                        lineHeight: 20,
-                      }}>
-                        {msg.content}
-                      </Text>
-                    </View>
-                  </View>
-                  
-                  {/* Refinement Confirmation Buttons */}
-                  {msg.role === 'assistant' && msg.refinementData && (
-                    <View style={[
-                      tw`ml-8 mb-3 bg-white border border-gray-200 rounded-xl p-3`,
-                      {
-                        shadowColor: '#000',
-                        shadowOffset: { width: 0, height: 1 },
-                        shadowOpacity: 0.05,
-                        shadowRadius: 2,
-                        elevation: 2,
-                      }
-                    ]}>
-                      <Text style={{
-                        fontFamily: 'Merriweather-Regular',
-                        fontSize: 13,
                         color: '#6B7280',
-                        marginBottom: 8,
                       }}>
-                        Would you like me to refresh the search?
+                        Genie is typing...
                       </Text>
-                      <View style={tw`flex-row gap-2`}>
-                        <TouchableOpacity
-                          style={[
-                            tw`flex-1 py-2.5 rounded-lg items-center`,
-                            { backgroundColor: TURQUOISE }
-                          ]}
-                          onPress={() => handleConfirmRefinement(msg.refinementData!.query, msg.id)}
-                          activeOpacity={0.8}
-                        >
-                          <Text style={{
-                            fontFamily: 'Merriweather-Bold',
-                            fontSize: 14,
-                            color: '#fff',
-                          }}>
-                            Yes
-                          </Text>
-                        </TouchableOpacity>
-                        <TouchableOpacity
-                          style={tw`flex-1 py-2.5 rounded-lg items-center bg-gray-100`}
-                          onPress={() => handleDeclineRefinement(msg.id)}
-                          activeOpacity={0.8}
-                        >
-                          <Text style={{
-                            fontFamily: 'Merriweather-Bold',
-                            fontSize: 14,
-                            color: '#374151',
-                          }}>
-                            No
-                          </Text>
-                        </TouchableOpacity>
-                      </View>
                     </View>
-                  )}
-                </View>
-              ))}
+                  </View>
+                )}
+              </ScrollView>
               
-              {isLoadingResponse && (
-                <View style={tw`mb-3 flex-row items-start justify-start`}>
-                  <View style={tw`mr-2 mt-0.5`}>
-                    <Image
-                      source={require('../assets/images/logo.png')}
-                      style={tw`w-6 h-6`}
-                      resizeMode="contain"
-                    />
-                  </View>
-                  <View style={tw`bg-gray-100 px-4 py-3 rounded-2xl`}>
-                    <Text style={{
-                      fontFamily: 'Merriweather-Regular',
-                      fontSize: 14,
-                      color: '#6B7280',
-                    }}>
-                      Genie is typing...
-                    </Text>
-                  </View>
-                </View>
-              )}
-            </ScrollView>
-            
-            {/* Bottom rounded corners */}
-            <View style={tw`bg-white h-2 rounded-b-2xl`} />
-          </View>
-        </Animated.View>
+              {/* Bottom rounded corners */}
+              <View style={tw`bg-white h-2 rounded-b-2xl`} />
+            </View>
+          </Animated.View>
+        </View>
       )}
       
-      {/* MORPHING INPUT - Moves from top to keyboard */}
+      {/* REFINE PILLS - FIXED POSITION */}
+      {isChatOpen && (
+        <View
+          style={[
+            {
+              position: 'absolute',
+              bottom: fixedBottom - PILLS_HEIGHT - 8,
+              left: 0,
+              right: 0,
+              height: PILLS_HEIGHT,
+              zIndex: 999,
+            },
+          ]}
+          pointerEvents="box-none"
+        >
+          <Animated.View
+            style={{
+              opacity: chatContainerOpacity,
+            }}
+          >
+            <View style={tw`px-4`}>
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={tw`py-2`}
+                keyboardShouldPersistTaps="always"
+                keyboardDismissMode="on-drag"
+                style={tw`flex-grow-0`}
+              >
+                {refinePills.map((pill) => (
+                  <TouchableOpacity
+                    key={pill.id}
+                    onPress={() => handlePillPress(pill)}
+                    activeOpacity={0.8}
+                    style={[
+                      tw`mr-2 px-2.5 py-2.5 rounded-xl flex-row items-center bg-white border border-gray-200`,
+                      {
+                        shadowColor: '#000',
+                        shadowOffset: {
+                          width: 0,
+                          height: 1,
+                        },
+                        shadowOpacity: 0.1,
+                        shadowRadius: 2,
+                        elevation: 3,
+                      }
+                    ]}
+                  >
+                    <View style={[
+                      tw`w-6 h-6 rounded-full items-center justify-center mr-2`,
+                      { backgroundColor: TURQUOISE_LIGHT }
+                    ]}>
+                      <Ionicons
+                        name={pill.icon}
+                        size={14}
+                        color={TURQUOISE}
+                      />
+                    </View>
+                    
+                    <Text style={{
+                      fontFamily: 'Merriweather-Regular',
+                      fontSize: 13,
+                      color: '#374151',
+                      marginRight: 4,
+                    }}>
+                      {pill.label}
+                    </Text>
+                    
+                    <Ionicons
+                      name="add"
+                      size={14}
+                      color="#9CA3AF"
+                    />
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            </View>
+          </Animated.View>
+        </View>
+      )}
+      
+      {/* MORPHING INPUT - Animated position */}
       <Animated.View
         style={[
           {
@@ -558,12 +845,11 @@ const MorphingSearchChat: React.FC<MorphingSearchChatProps> = ({
               shadowColor: isChatOpen ? '#000' : TURQUOISE,
               shadowOffset: { width: 0, height: 2 },
               shadowOpacity: isChatOpen ? 0.1 : 0.15,
-              shadowRadius: isChatOpen ? 4 : 8,
+              shadowRadius: isChatOpen ? 4 : 6,
               elevation: 5,
             },
           ]}
         >
-          {/* Back Button (only when collapsed) */}
           {!isChatOpen && (
             <TouchableOpacity
               style={tw`w-8 h-8 items-center justify-center mr-3`}
@@ -574,7 +860,6 @@ const MorphingSearchChat: React.FC<MorphingSearchChatProps> = ({
             </TouchableOpacity>
           )}
           
-          {/* Close Button (only when expanded) */}
           {isChatOpen && (
             <TouchableOpacity
               style={tw`w-8 h-8 items-center justify-center mr-3`}
@@ -585,7 +870,6 @@ const MorphingSearchChat: React.FC<MorphingSearchChatProps> = ({
             </TouchableOpacity>
           )}
           
-          {/* Input */}
           <TextInput
             ref={inputRef}
             style={{
@@ -603,18 +887,18 @@ const MorphingSearchChat: React.FC<MorphingSearchChatProps> = ({
             placeholderTextColor="#9CA3AF"
             value={message}
             onChangeText={setMessage}
-            onFocus={() => {
-              if (!isChatOpen) {
-                openChat();
-              }
-            }}
+            editable={!isCooldown}
+  onFocus={() => {
+    if (!isChatOpen && !isCooldown) {
+      openChat();
+    }
+  }}
             returnKeyType="send"
             onSubmitEditing={handleSendMessage}
             blurOnSubmit={false}
-            editable={true}
+     
           />
           
-          {/* Send Button (only when chat is open and message exists) */}
           {isChatOpen && message.trim().length > 0 && (
             <TouchableOpacity
               style={[
@@ -628,7 +912,6 @@ const MorphingSearchChat: React.FC<MorphingSearchChatProps> = ({
             </TouchableOpacity>
           )}
           
-          {/* Chat Icon (only when collapsed) */}
           {!isChatOpen && (
             <TouchableOpacity
               style={tw`w-8 h-8 items-center justify-center ml-2`}
@@ -640,6 +923,47 @@ const MorphingSearchChat: React.FC<MorphingSearchChatProps> = ({
           )}
         </View>
       </Animated.View>
+      
+      {/* Modals */}
+      {showDateModal && (
+        <DateSelectionModal
+          visible={showDateModal}
+          onClose={() => setShowDateModal(false)}
+          onDateSelect={handleDateSelect}
+        />
+      )}
+
+      {showBudgetModal && (
+        <BudgetSelectionModal
+          visible={showBudgetModal}
+          onClose={() => setShowBudgetModal(false)}
+          onBudgetSelect={handleBudgetSelect}
+        />
+      )}
+
+      {showGuestsModal && (
+        <GuestsSelectionModal
+          visible={showGuestsModal}
+          onClose={() => setShowGuestsModal(false)}
+          onGuestsSelect={handleGuestsSelect}
+        />
+      )}
+
+      {showAmenitiesModal && (
+        <AmenitiesSelectionModal
+          visible={showAmenitiesModal}
+          onClose={() => setShowAmenitiesModal(false)}
+          onAmenitiesSelect={handleAmenitiesSelect}
+        />
+      )}
+
+      {showStylesModal && (
+        <HotelStylesSelectionModal
+          visible={showStylesModal}
+          onClose={() => setShowStylesModal(false)}
+          onStylesSelect={handleStylesSelect}
+        />
+      )}
     </>
   );
 };

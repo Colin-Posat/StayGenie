@@ -350,10 +350,11 @@ export interface Hotel {
     showInUI?: boolean;
     searchLocation?: string;
   } | null;
+  description?: string; 
 }
 
 const BASE_URL ="https://staygenie-wwpa.onrender.com"
-
+//const BASE_URL = "http://localhost:3003"
 import { Dimensions } from 'react-native';
 
 const HomeScreen = () => {
@@ -1385,20 +1386,37 @@ const handleBackPress = useCallback(() => {
   currentSearch={searchQuery}
   onSearchRefined={handleSearchUpdate}
   onBackPress={handleBackPress}
-  hotelContext={displayHotels.slice(0, 10).map(hotel => ({
-    id: hotel.id,
-    name: hotel.name,
-    city: hotel.city,
-    country: hotel.country,
-    price: hotel.price,
-    rating: hotel.rating,
-    aiMatchPercent: hotel.aiMatchPercent,
-    topAmenities: hotel.topAmenities,
-    distanceFromSearch: hotel.distanceFromSearch ? {
-      formatted: hotel.distanceFromSearch.formatted,
-      fromLocation: hotel.distanceFromSearch.fromLocation,
-    } : undefined,
-  }))}
+  hotelContext={(() => {
+    const context = displayHotels.slice(0, 15).map(hotel => ({
+      id: hotel.id,
+      name: hotel.name,
+      city: hotel.city,
+      country: hotel.country,
+      price: hotel.price,
+      rating: hotel.rating,
+      aiMatchPercent: hotel.aiMatchPercent,
+       description: hotel.fullDescription,
+      topAmenities: hotel.topAmenities,
+      distanceFromSearch: hotel.distanceFromSearch ? {
+        formatted: hotel.distanceFromSearch.formatted,
+        fromLocation: hotel.distanceFromSearch.fromLocation,
+      } : undefined,
+    }));
+    
+    // Debug log
+    console.log('🏨 Hotel Context Being Passed:', {
+      totalHotels: context.length,
+      hasDescriptions: context.filter(h => h.description).length,
+      sampleHotel: context[0],
+      allDescriptions: context.map(h => ({
+        name: h.name,
+        hasDescription: !!h.description,
+        descriptionLength: h.description?.length || 0
+      }))
+    });
+    
+    return context;
+  })()}
   searchParams={{
     location: streamingSearchParams?.cityName || stage1Results?.searchParams?.cityName,
     checkin: streamingSearchParams?.checkin || stage1Results?.searchParams?.checkin,

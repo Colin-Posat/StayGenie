@@ -19,7 +19,7 @@ interface FeedbackTriggerConfig {
 
 const DEFAULT_CONFIG: FeedbackTriggerConfig = {
   minSessionsBeforePrompt: 3, // After 3 app opens
-  minSearchesBeforePrompt: 5, // After 5 searches
+  minSearchesBeforePrompt: 10, // After 5 searches
   daysBetweenPrompts: 30, // Once per month max
   maxPromptCount: 1, // Stop after 3 prompts total
 };
