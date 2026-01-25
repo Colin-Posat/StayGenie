@@ -419,17 +419,21 @@ Extract:
 
 **POI = Famous landmark, attraction, or iconic place**
 
-✅ POIs (locationMentioned: TRUE):
-- Landmarks: Eiffel Tower, Statue of Liberty, Big Ben
-- Parks: Central Park, Hyde Park
+✅ POIs (locationMentioned: TRUE) - MUST be a specific NAMED place:
+- Landmarks: Eiffel Tower, Statue of Liberty, Big Ben, Burj Khalifa
+- Parks: Central Park, Hyde Park, Griffith Park
 - Monuments: Arc de Triomphe, Lincoln Memorial
-- Buildings: Burj Khalifa, Empire State Building, Sagrada Familia
+- Buildings: Empire State Building, Sagrada Familia
 - Squares: Times Square, Trafalgar Square
+- Neighborhoods: Shibuya, Montmartre, South Beach
 
 ❌ NOT POIs (locationMentioned: FALSE):
 - Cities: Paris, Tokyo, New York
 - Countries: France, Thailand, Japan
 - Vague locations: beach, mountains, countryside
+- **Descriptive features: cliffside, beachfront, oceanview, mountain view, lakeside**
+- **Hotel types: boutique, luxury, budget**
+- **Vibes: romantic, family-friendly, party**
 
 **SEARCH RADIUS RULES (in meters, MINIMUM 5000):**
 
