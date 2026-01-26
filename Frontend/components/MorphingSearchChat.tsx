@@ -21,6 +21,7 @@ import BudgetSelectionModal from './SearchGuideModals/BudgetSelectionModal';
 import GuestsSelectionModal from './SearchGuideModals/GuestSelectionModal';
 import AmenitiesSelectionModal from './SearchGuideModals/AmenitiesSelectionModal';
 import HotelStylesSelectionModal from './SearchGuideModals/HotelStylesSelectionModal';
+import { useAuth } from '../contexts/AuthContext';
 
 const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 const TURQUOISE = '#00d4e6';
@@ -116,7 +117,9 @@ const MorphingSearchChat: React.FC<MorphingSearchChatProps> = ({
   const [showGuestsModal, setShowGuestsModal] = useState(false);
   const [showAmenitiesModal, setShowAmenitiesModal] = useState(false);
   const [showStylesModal, setShowStylesModal] = useState(false);
-  
+  const { startChatConversation, logChatMessage } = useAuth();
+const [conversationId, setConversationId] = useState<string | null>(null);
+
   // Refs
   const closeCooldownRef = useRef(false);
   const canOpenRef = useRef(true);
@@ -258,6 +261,8 @@ const MorphingSearchChat: React.FC<MorphingSearchChatProps> = ({
   
   // Open chat animation
   const openChat = () => {
+    const id = startChatConversation(currentSearch);
+  setConversationId(id);
     if (closeCooldownRef.current) return;
     chatExpanded.setValue(0);
     inputTranslateY.setValue(0);
@@ -306,6 +311,8 @@ const MorphingSearchChat: React.FC<MorphingSearchChatProps> = ({
   
   // Close chat animation
   const closeChat = () => {
+    setConversationId(null);
+
     if (closeCooldownRef.current) return;
     
     closeCooldownRef.current = true;
@@ -374,6 +381,16 @@ const MorphingSearchChat: React.FC<MorphingSearchChatProps> = ({
       content: message.trim(),
       timestamp: new Date(),
     };
+
+    if (conversationId) {
+  await logChatMessage({
+    conversationId,
+    role: 'user',
+    text: userMessage.content,
+    searchQuery: currentSearch,
+  });
+}
+
     
     setMessages(prev => [...prev, userMessage]);
     setMessage('');
@@ -410,9 +427,27 @@ const MorphingSearchChat: React.FC<MorphingSearchChatProps> = ({
           }
         })
       };
+      if (conversationId) {
+  await logChatMessage({
+    conversationId,
+    role: 'assistant',
+    text: assistantMessage.content,
+    searchQuery: currentSearch,
+  });
+}
+
       
       setMessages(prev => [...prev, assistantMessage]);
       
+      if (conversationId) {
+  await logChatMessage({
+    conversationId,
+    role: 'assistant',
+    text: assistantMessage.content,
+    searchQuery: currentSearch,
+  });
+}
+
     } catch (error) {
       console.error('Chat error:', error);
       
@@ -578,7 +613,15 @@ const handleConfirmRefinement = (query: string, messageId: string) => {
       content: conversationalText,
       timestamp: new Date(),
     };
-    
+    if (conversationId) {
+  logChatMessage({
+    conversationId,
+    role: 'user',
+    text: conversationalText,
+    searchQuery: currentSearch,
+  });
+}
+
     setMessages(prev => [...prev, userMessage]);
     setIsLoadingResponse(true);
     
@@ -605,6 +648,15 @@ const handleConfirmRefinement = (query: string, messageId: string) => {
       content: conversationalText,
       timestamp: new Date(),
     };
+    if (conversationId) {
+  logChatMessage({
+    conversationId,
+    role: 'user',
+    text: conversationalText,
+    searchQuery: currentSearch,
+  });
+}
+
     
     setMessages(prev => [...prev, userMessage]);
     setIsLoadingResponse(true);
@@ -632,6 +684,15 @@ const handleConfirmRefinement = (query: string, messageId: string) => {
       content: conversationalText,
       timestamp: new Date(),
     };
+    if (conversationId) {
+  logChatMessage({
+    conversationId,
+    role: 'user',
+    text: conversationalText,
+    searchQuery: currentSearch,
+  });
+}
+
     
     setMessages(prev => [...prev, userMessage]);
     setIsLoadingResponse(true);
@@ -659,6 +720,16 @@ const handleConfirmRefinement = (query: string, messageId: string) => {
       content: conversationalText,
       timestamp: new Date(),
     };
+
+    if (conversationId) {
+  logChatMessage({
+    conversationId,
+    role: 'user',
+    text: conversationalText,
+    searchQuery: currentSearch,
+  });
+}
+
     
     setMessages(prev => [...prev, userMessage]);
     setIsLoadingResponse(true);
@@ -687,6 +758,15 @@ const handleConfirmRefinement = (query: string, messageId: string) => {
       timestamp: new Date(),
     };
     
+    if (conversationId) {
+  logChatMessage({
+    conversationId,
+    role: 'user',
+    text: conversationalText,
+    searchQuery: currentSearch,
+  });
+}
+
     setMessages(prev => [...prev, userMessage]);
     setIsLoadingResponse(true);
     

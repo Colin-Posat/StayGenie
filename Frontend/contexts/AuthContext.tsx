@@ -15,6 +15,14 @@ const IS_WEB = Platform.OS === 'web';
 // Type alias for Firebase User
 export type FirebaseUser = FirebaseAuthTypes.User;
 
+export interface ChatMessageLog {
+  conversationId: string;
+  role: 'user' | 'assistant';
+  text: string;
+  searchQuery?: string;
+}
+
+
 // Updated User interface with favorites
 export interface User {
   id: string;
@@ -151,6 +159,9 @@ interface AuthContextType {
   // UI helpers
   requireAuth: (action: () => void, showSignUpModal: () => void) => void;
   submitFeedback: (feedback: { isHappy: boolean; rating: number | null; feedback?: string; searchQuery?: string }) => Promise<void>;
+  startChatConversation: (searchQuery?: string) => string;
+  logChatMessage: (msg: ChatMessageLog) => Promise<void>;
+
 
   trackFailedSearch: (
     query: string, 
@@ -214,6 +225,38 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     const cleanUsername = username.replace(/[^a-zA-Z]/g, '');
     return cleanUsername.charAt(0).toUpperCase() + cleanUsername.slice(1) || 'User';
   };
+
+  const startChatConversation = (searchQuery?: string): string => {
+  const id = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
+  return id;
+};
+
+const logChatMessage = async ({ conversationId, role, text, searchQuery }: ChatMessageLog) => {
+  try {
+     if (shouldSkipAnalytics(firebaseUser?.email)) {
+      console.log('🧪 Skipping chat log for test account');
+      return;
+    }
+    if (IS_WEB) {
+      console.log('[Web] Chat log:', { conversationId, role, text });
+      return;
+    }
+
+    await firestore().collection('chat_messages').add({
+      conversationId,
+      role,
+      text,
+      searchQuery: searchQuery || null,
+      userId: firebaseUser?.uid || 'anonymous',
+      userEmail: firebaseUser?.email || 'anonymous',
+      platform: Platform.OS,
+      createdAt: firestore.FieldValue.serverTimestamp(),
+    });
+  } catch (err) {
+    console.error('❌ Failed to log chat message:', err);
+  }
+};
+
 
   // Notify all listeners that favorites have changed
   const notifyFavoritesChanged = useCallback(() => {
@@ -1152,6 +1195,9 @@ if (IS_WEB) {
     submitFeedback,
     trackFailedSearch,
     trackSuccessfulSearch,
+    startChatConversation,
+logChatMessage,
+
   };
 
   return (

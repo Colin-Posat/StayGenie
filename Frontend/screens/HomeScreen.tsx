@@ -634,6 +634,12 @@ case 'progress':
     console.log('📅 Received parsed dates early:', data.searchParams);
     
     setSearchParamsLoading(false);
+
+    setStreamingSearchParams((prev: any) => ({
+    ...prev,
+    ...data.searchParams
+  }));
+
     
     if (data.searchParams.checkin) {
       const checkinDate = new Date(data.searchParams.checkin + 'T12:00:00');
@@ -828,13 +834,13 @@ case 'progress':
 };
 
 const confirmedParams =
+  streamingSearchParams ||
   stage1Results?.searchParams ||
-  searchResults?.searchParams ||
-  (streamingSearchParams?.checkin && streamingSearchParams);
+  searchResults?.searchParams;
 
-const hasFinalizedDates = Boolean(
-  confirmedParams?.checkin && confirmedParams?.checkout
-);
+const hasFinalizedDates =
+  !!confirmedParams?.checkin && !!confirmedParams?.checkout;
+
 
 const confirmedCheckInDate = hasFinalizedDates
   ? new Date(`${confirmedParams!.checkin}T12:00:00`)
