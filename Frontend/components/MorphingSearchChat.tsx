@@ -27,6 +27,7 @@ const { height: SCREEN_HEIGHT } = Dimensions.get('window');
 const TURQUOISE = '#00d4e6';
 const TURQUOISE_LIGHT = 'rgba(29, 249, 255, 0.15)';
 
+
 // API Base URLs
 const BASE_URL = 'https://staygenie-wwpa.onrender.com';
 
@@ -104,6 +105,8 @@ const MorphingSearchChat: React.FC<MorphingSearchChatProps> = ({
 }) => {
   const insets = useSafeAreaInsets();
   
+  const pillsTopYRef = useRef(0);
+const inputStartYRef = useRef(0);
   // State
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [isCooldown, setIsCooldown] = useState(false);
@@ -259,56 +262,70 @@ const [conversationId, setConversationId] = useState<string | null>(null);
     }
   };
   
-  // Open chat animation
-  const openChat = () => {
-    const id = startChatConversation(currentSearch);
+const openChat = () => {
+  const id = startChatConversation(currentSearch);
   setConversationId(id);
-    if (closeCooldownRef.current) return;
-    chatExpanded.setValue(0);
-    inputTranslateY.setValue(0);
-    
-    setIsChatOpen(true);
-    
-    // Fade out info display
-    Animated.timing(infoOpacity, {
-      toValue: 0,
-      duration: 200,
-      useNativeDriver: true,
-    }).start();
-    
-    setTimeout(() => {
-      const keyboardHeight = lastKeyboardHeightRef.current || 350;
-      const targetY = SCREEN_HEIGHT - keyboardHeight - INPUT_HEIGHT - insets.bottom - TOP_POSITION + KEYBOARD_OFFSET;
-      
-      chatBottomPositionRef.current = keyboardHeight + INPUT_HEIGHT + insets.bottom - 40 + PILLS_HEIGHT;
-      
-      Animated.parallel([
-        Animated.spring(chatExpanded, {
-          toValue: 1,
-          tension: 280,
-          friction: 30,
-          useNativeDriver: true,
-        }),
-        Animated.spring(inputTranslateY, {
-          toValue: targetY,
-          tension: 280,
-          friction: 30,
-          useNativeDriver: true,
-        })
-      ]).start();
-    }, 100);
-    
-    if (messages.length === 0) {
-      generateInitialMessage();
+
+  if (closeCooldownRef.current) return;
+
+  chatExpanded.setValue(0);
+  inputTranslateY.setValue(0);
+
+  setIsChatOpen(true);
+
+  // Fade out date/guest info
+  Animated.timing(infoOpacity, {
+    toValue: 0,
+    duration: 200,
+    useNativeDriver: true,
+  }).start();
+
+  // wait for pills to mount & layout
+  setTimeout(() => {
+    const gap = -115;
+
+    if (!pillsTopYRef.current || !inputStartYRef.current) {
+      console.warn('Layout not ready for morph animation');
+      return;
     }
-    
-    setTimeout(() => {
-      scrollViewRef.current?.scrollToEnd({ animated: true });
-    }, 300);
-    
-    setTimeout(() => inputRef.current?.focus(), 100);
-  };
-  
+
+    // absolute Y where input should land
+    const targetAbsY =
+      pillsTopYRef.current - INPUT_HEIGHT - gap;
+
+    // translate delta from starting Y
+    const deltaY =
+      targetAbsY - inputStartYRef.current;
+
+    chatBottomPositionRef.current = gap + INPUT_HEIGHT;
+
+    Animated.parallel([
+      Animated.spring(chatExpanded, {
+        toValue: 1,
+        tension: 280,
+        friction: 30,
+        useNativeDriver: true,
+      }),
+      Animated.spring(inputTranslateY, {
+        toValue: deltaY,
+        tension: 280,
+        friction: 30,
+        useNativeDriver: true,
+      }),
+    ]).start();
+  }, 60);
+
+  if (messages.length === 0) {
+    generateInitialMessage();
+  }
+
+  setTimeout(() => {
+    scrollViewRef.current?.scrollToEnd({ animated: true });
+  }, 300);
+
+  setTimeout(() => inputRef.current?.focus(), 120);
+};
+
   // Close chat animation
   const closeChat = () => {
     setConversationId(null);
@@ -1027,20 +1044,24 @@ const handleConfirmRefinement = (query: string, messageId: string) => {
       )}
       
       {/* REFINE PILLS */}
-      {isChatOpen && (
-        <View
-          style={[
-            {
-              position: 'absolute',
-              bottom: fixedBottom - PILLS_HEIGHT - 8,
-              left: 0,
-              right: 0,
-              height: PILLS_HEIGHT,
-              zIndex: 999,
-            },
-          ]}
-          pointerEvents="box-none"
-        >
+{isChatOpen && (
+  <View
+    onLayout={(e) => {
+      pillsTopYRef.current = e.nativeEvent.layout.y;
+    }}
+    style={[
+      {
+        position: 'absolute',
+        bottom: fixedBottom - PILLS_HEIGHT - 8,
+        left: 0,
+        right: 0,
+        height: PILLS_HEIGHT,
+        zIndex: 999,
+      },
+    ]}
+  >
+
+
           <Animated.View
             style={{
               opacity: chatContainerOpacity,
@@ -1108,20 +1129,24 @@ const handleConfirmRefinement = (query: string, messageId: string) => {
       )}
       
       {/* MORPHING INPUT */}
-      <Animated.View
-        style={[
-          {
-            position: 'absolute',
-            top: TOP_POSITION,
-            left: 16,
-            right: 16,
-            height: INPUT_HEIGHT,
-            zIndex: 1000,
-            transform: [{ translateY: inputTranslateY }],
-          },
-        ]}
-        pointerEvents="box-none"
-      >
+<Animated.View
+  onLayout={(e) => {
+    inputStartYRef.current = e.nativeEvent.layout.y;
+  }}
+  style={[
+    {
+      position: 'absolute',
+      top: TOP_POSITION,
+      left: 16,
+      right: 16,
+      height: INPUT_HEIGHT,
+      zIndex: 1000,
+      transform: [{ translateY: inputTranslateY }],
+    },
+  ]}
+  pointerEvents="box-none"
+>
+
         <View
           style={[
             tw`bg-white rounded-2xl border border-gray-200 flex-row items-center px-4`,
