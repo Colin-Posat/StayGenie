@@ -959,7 +959,7 @@ const handleExplore = useCallback(() => {
 {Platform.OS === 'ios' && appleAuth?.isSupported && (
   <TouchableOpacity
     style={[
-      tw`px-3 py-3 rounded-xl flex-row items-center justify-center mb-2 bg-white border border-gray-200`,
+      tw`px-4 py-4 rounded-xl flex-row items-center justify-center w-full mb-3 bg-white border border-gray-200`,
       {
         shadowColor: '#000',
         shadowOffset: { width: 0, height: 1 },
@@ -972,12 +972,12 @@ const handleExplore = useCallback(() => {
     activeOpacity={0.8}
   >
     <View style={[
-      tw`w-5 h-5 rounded-full items-center justify-center mr-2`,
+      tw`w-6 h-6 rounded-full items-center justify-center mr-3`,
       { backgroundColor: 'rgba(0,0,0,0.08)' }
     ]}>
-      <Ionicons name="logo-apple" size={12} color="#000" />
+      <Ionicons name="logo-apple" size={14} color="#000" />
     </View>
-    <Text style={tw`text-sm font-medium text-gray-800`}>
+    <Text style={tw`text-base font-medium text-gray-800`}>
       Sign Up with Apple
     </Text>
   </TouchableOpacity>

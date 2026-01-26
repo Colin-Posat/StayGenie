@@ -16,7 +16,13 @@ const TEST_EMAILS = [
 // ============================================================================
 
 export type SearchMethod = 'text' | 'voice' | 'recent_search' | 'carousel' | 'pill';
-export type SearchFailureReason = 'no_results' | 'timeout' | 'api_error';
+export type SearchFailureReason = 
+  | 'no_results' 
+  | 'timeout' 
+  | 'api_error'
+  | 'no_hotels_found'      // ✅ NEW
+  | 'processing_error'     // ✅ NEW
+  | 'network_error'; 
 type FirstAction = 
   | 'photo_gallery'
   | 'review_modal'
@@ -25,7 +31,9 @@ type FirstAction =
   | 'book_now'
   | 'share'
   | 'favorite'
-  | 'google_maps'; 
+  | 'google_maps'
+    | 'no_hotels_found'      // ✅ Add this
+  | 'processing_error'; 
 
 // ============================================================================
 // ANALYTICS SERVICE - ONLY ESSENTIALS

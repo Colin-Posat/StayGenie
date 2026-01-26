@@ -1,4 +1,4 @@
-// MorphingSearchChat.tsx - Fixed height locking
+// MorphingSearchChat.tsx - With date/guests info display
 import React, { useState, useRef, useEffect } from 'react';
 import {
   View,
@@ -27,7 +27,6 @@ const TURQUOISE = '#00d4e6';
 const TURQUOISE_LIGHT = 'rgba(29, 249, 255, 0.15)';
 
 // API Base URLs
-//const BASE_URL = 'http://localhost:3003';
 const BASE_URL = 'https://staygenie-wwpa.onrender.com';
 
 interface Message {
@@ -46,7 +45,14 @@ interface MorphingSearchChatProps {
   onSearchRefined: (newQuery: string, originalQuery: string) => void;
   onBackPress: () => void;
   hotelContext?: any[];
-  searchParams?: any;
+  searchParams?: {
+    checkin?: string;
+    checkout?: string;
+    adults?: number;
+    children?: number;
+    location?: string;
+  };
+  searchParamsLoading?: boolean;
 }
 
 interface RefinePill {
@@ -93,13 +99,13 @@ const MorphingSearchChat: React.FC<MorphingSearchChatProps> = ({
   onBackPress,
   hotelContext = [],
   searchParams = {},
+  searchParamsLoading = false,
 }) => {
   const insets = useSafeAreaInsets();
   
   // State
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [isCooldown, setIsCooldown] = useState(false);
-
   const [message, setMessage] = useState('');
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoadingResponse, setIsLoadingResponse] = useState(false);
@@ -113,23 +119,25 @@ const MorphingSearchChat: React.FC<MorphingSearchChatProps> = ({
   
   // Refs
   const closeCooldownRef = useRef(false);
-
   const canOpenRef = useRef(true);
   const inputRef = useRef<TextInput>(null);
   const scrollViewRef = useRef<ScrollView>(null);
-const lastKeyboardHeightRef = useRef(0);
+  const lastKeyboardHeightRef = useRef(0);
   
   // Animations
   const chatExpanded = useRef(new Animated.Value(0)).current;
   const inputTranslateY = useRef(new Animated.Value(0)).current;
+  const infoOpacity = useRef(new Animated.Value(1)).current;
   
   // Constants
   const INPUT_HEIGHT = 56;
+  const INFO_HEIGHT = 32;
   const TOP_POSITION = 1;
   const KEYBOARD_OFFSET = -25;
   const PILLS_HEIGHT = 56;
   const isAnimatingRef = useRef(false);
-const chatBottomPositionRef = useRef(0);
+  const chatBottomPositionRef = useRef(0);
+  
   // Refine pills
   const refinePills: RefinePill[] = [
     {
@@ -164,22 +172,45 @@ const chatBottomPositionRef = useRef(0);
     }
   ];
   
-// Keyboard listeners - LOCK on first show, ignore all other changes
-// Always track last known keyboard height
-useEffect(() => {
-  const showListener = Keyboard.addListener(
-    Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
-    (e) => {
-      lastKeyboardHeightRef.current = e.endCoordinates.height;
-    }
-  );
-
-  return () => {
-    showListener.remove();
+  // Format date range helper
+  const formatDateRange = (checkin?: string, checkout?: string) => {
+    if (!checkin || !checkout) return null;
+    
+    const formatDate = (dateStr: string) => {
+      const date = new Date(dateStr + 'T12:00:00');
+      return date.toLocaleDateString('en-US', { 
+        month: 'short', 
+        day: 'numeric' 
+      });
+    };
+    
+    return `${formatDate(checkin)} - ${formatDate(checkout)}`;
   };
-}, []);
+  
+  // Format guests helper
+  const formatGuestInfo = (adults?: number, children?: number) => {
+    if (adults === undefined || adults === null) return null;
+    
+    let guestStr = `${adults} adult${adults !== 1 ? 's' : ''}`;
+    if (children && children > 0) {
+      guestStr += `, ${children} child${children !== 1 ? 'ren' : ''}`;
+    }
+    return guestStr;
+  };
+  
+  // Keyboard listeners
+  useEffect(() => {
+    const showListener = Keyboard.addListener(
+      Platform.OS === 'ios' ? 'keyboardWillShow' : 'keyboardDidShow',
+      (e) => {
+        lastKeyboardHeightRef.current = e.endCoordinates.height;
+      }
+    );
 
-
+    return () => {
+      showListener.remove();
+    };
+  }, []);
   
   // Generate initial welcome message
   const generateInitialMessage = async () => {
@@ -226,84 +257,90 @@ useEffect(() => {
   };
   
   // Open chat animation
-const openChat = () => {
-  if (closeCooldownRef.current) return;
-  chatExpanded.setValue(0);
-  inputTranslateY.setValue(0);
-
-  setIsChatOpen(true);
-  
-  // Wait for keyboard to show, then lock position
-  setTimeout(() => {
-    const keyboardHeight = lastKeyboardHeightRef.current || 350;
-
-    const targetY = SCREEN_HEIGHT - keyboardHeight - INPUT_HEIGHT - insets.bottom - TOP_POSITION + KEYBOARD_OFFSET;
+  const openChat = () => {
+    if (closeCooldownRef.current) return;
+    chatExpanded.setValue(0);
+    inputTranslateY.setValue(0);
     
-    // LOCK the bottom position for all elements
-    chatBottomPositionRef.current = keyboardHeight + INPUT_HEIGHT + insets.bottom - 40 + PILLS_HEIGHT;
+    setIsChatOpen(true);
+    
+    // Fade out info display
+    Animated.timing(infoOpacity, {
+      toValue: 0,
+      duration: 200,
+      useNativeDriver: true,
+    }).start();
+    
+    setTimeout(() => {
+      const keyboardHeight = lastKeyboardHeightRef.current || 350;
+      const targetY = SCREEN_HEIGHT - keyboardHeight - INPUT_HEIGHT - insets.bottom - TOP_POSITION + KEYBOARD_OFFSET;
+      
+      chatBottomPositionRef.current = keyboardHeight + INPUT_HEIGHT + insets.bottom - 40 + PILLS_HEIGHT;
+      
+      Animated.parallel([
+        Animated.spring(chatExpanded, {
+          toValue: 1,
+          tension: 280,
+          friction: 30,
+          useNativeDriver: true,
+        }),
+        Animated.spring(inputTranslateY, {
+          toValue: targetY,
+          tension: 280,
+          friction: 30,
+          useNativeDriver: true,
+        })
+      ]).start();
+    }, 100);
+    
+    if (messages.length === 0) {
+      generateInitialMessage();
+    }
+    
+    setTimeout(() => {
+      scrollViewRef.current?.scrollToEnd({ animated: true });
+    }, 300);
+    
+    setTimeout(() => inputRef.current?.focus(), 100);
+  };
+  
+  // Close chat animation
+  const closeChat = () => {
+    if (closeCooldownRef.current) return;
+    
+    closeCooldownRef.current = true;
+    setIsCooldown(true);
+    Keyboard.dismiss();
+    setMessage('');
     
     Animated.parallel([
       Animated.spring(chatExpanded, {
-        toValue: 1,
+        toValue: 0,
         tension: 280,
         friction: 30,
         useNativeDriver: true,
       }),
       Animated.spring(inputTranslateY, {
-        toValue: targetY,
+        toValue: 0,
         tension: 280,
         friction: 30,
         useNativeDriver: true,
+      }),
+      Animated.timing(infoOpacity, {
+        toValue: 1,
+        duration: 300,
+        useNativeDriver: true,
       })
-    ]).start();
-  }, 100);
-  
-  if (messages.length === 0) {
-    generateInitialMessage();
-  }
-  
-  setTimeout(() => {
-    scrollViewRef.current?.scrollToEnd({ animated: true });
-  }, 300);
-  
-  setTimeout(() => inputRef.current?.focus(), 100);
-};
-  
-  // Close chat animation
-const closeChat = () => {
-  if (closeCooldownRef.current) return;
-
-  closeCooldownRef.current = true;
-setIsCooldown(true); // 🔒 disable input + buttons
-Keyboard.dismiss();
-setMessage('');
-  
-  Animated.parallel([
-    Animated.spring(chatExpanded, {
-      toValue: 0,
-      tension: 280,
-      friction: 30,
-      useNativeDriver: true,
-    }),
-    Animated.spring(inputTranslateY, {
-      toValue: 0,
-      tension: 280,
-      friction: 30,
-      useNativeDriver: true,
-    })
-  ]).start(() => {
-   setTimeout(() => {
-  closeCooldownRef.current = false;
-  setIsCooldown(false);
-}, 800);
-
-
-    // Reset everything AFTER animation completes
-    setIsChatOpen(false);
-    chatBottomPositionRef.current = 0;
-  });
-};
-
+    ]).start(() => {
+      setTimeout(() => {
+        closeCooldownRef.current = false;
+        setIsCooldown(false);
+      }, 800);
+      
+      setIsChatOpen(false);
+      chatBottomPositionRef.current = 0;
+    });
+  };
   
   // Send message handler
   const handleSendMessage = async () => {
@@ -396,18 +433,19 @@ setMessage('');
   };
   
   // Handle refinement confirmation
-  const handleConfirmRefinement = (query: string, messageId: string) => {
-    setMessages(prev => 
-      prev.map(msg => 
-        msg.id === messageId 
-          ? { ...msg, refinementData: undefined }
-          : msg
-      )
-    );
-    
-    onSearchRefined(query, currentSearch);
-    closeChat();
-  };
+// Handle refinement confirmation
+const handleConfirmRefinement = (query: string, messageId: string) => {
+  setMessages(prev => 
+    prev.map(msg => 
+      msg.id === messageId 
+        ? { ...msg, refinementData: undefined }
+        : msg
+    )
+  );
+  
+  onSearchRefined(query, currentSearch);
+  closeChat();
+};
 
   const handleDeclineRefinement = (messageId: string) => {
     setMessages(prev => 
@@ -466,7 +504,57 @@ setMessage('');
     }, 100);
   };
 
-  // Modal handlers
+  // Extract API call logic
+  const sendMessageToAPI = async (messageContent: string) => {
+    try {
+      const response = await fetch(`${BASE_URL}/api/hotels/ai-search-chat`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          message: messageContent,
+          conversationHistory: messages.filter(msg => !msg.refinementData),
+          currentSearch,
+          hotelContext,
+          searchParams,
+        }),
+      });
+      
+      const data = await response.json();
+      
+      const assistantMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        role: 'assistant',
+        content: data.response || "I'm here to help!",
+        timestamp: new Date(),
+        ...(data.shouldRefineSearch && data.refinedQuery && {
+          refinementData: {
+            query: data.refinedQuery,
+            originalMessage: data.response
+          }
+        })
+      };
+      
+      setMessages(prev => [...prev, assistantMessage]);
+      
+    } catch (error) {
+      console.error('Chat error:', error);
+      
+      const errorMessage: Message = {
+        id: (Date.now() + 1).toString(),
+        role: 'assistant',
+        content: "Sorry, I'm having trouble connecting. Please try again!",
+        timestamp: new Date(),
+      };
+      
+      setMessages(prev => [...prev, errorMessage]);
+    } finally {
+      setIsLoadingResponse(false);
+      setTimeout(() => {
+        scrollViewRef.current?.scrollToEnd({ animated: true });
+      }, 100);
+    }
+  };
+
   const handleDateSelect = (checkIn: Date, checkOut: Date) => {
     const formatDateForSearch = (date: Date): string => {
       const options: Intl.DateTimeFormatOptions = { 
@@ -479,35 +567,138 @@ setMessage('');
 
     const checkInText = formatDateForSearch(checkIn);
     const checkOutText = formatDateForSearch(checkOut);
-    const searchText = `${checkInText} - ${checkOutText}`;
+    const conversationalText = `I'm looking for hotels from ${checkInText} to ${checkOutText}`;
     
-    console.log('Date selected:', searchText);
+    console.log('Date selected:', conversationalText);
     setShowDateModal(false);
-    setMessage(searchText);
+    
+    const userMessage: Message = {
+      id: Date.now().toString(),
+      role: 'user',
+      content: conversationalText,
+      timestamp: new Date(),
+    };
+    
+    setMessages(prev => [...prev, userMessage]);
+    setIsLoadingResponse(true);
+    
+    setTimeout(() => {
+      scrollViewRef.current?.scrollToEnd({ animated: true });
+    }, 100);
+    
+    sendMessageToAPI(conversationalText);
+    
+    setTimeout(() => {
+      inputRef.current?.focus();
+    }, 300);
   };
 
   const handleBudgetSelect = (budgetText: string) => {
     console.log('Budget selected:', budgetText);
+    const conversationalText = `I'd like to keep my budget ${budgetText}`;
+    
     setShowBudgetModal(false);
-    setMessage(budgetText);
+    
+    const userMessage: Message = {
+      id: Date.now().toString(),
+      role: 'user',
+      content: conversationalText,
+      timestamp: new Date(),
+    };
+    
+    setMessages(prev => [...prev, userMessage]);
+    setIsLoadingResponse(true);
+    
+    setTimeout(() => {
+      scrollViewRef.current?.scrollToEnd({ animated: true });
+    }, 100);
+    
+    sendMessageToAPI(conversationalText);
+    
+    setTimeout(() => {
+      inputRef.current?.focus();
+    }, 300);
   };
 
   const handleGuestsSelect = (guestsText: string) => {
     console.log('Guests selected:', guestsText);
+    const conversationalText = `I'm traveling with ${guestsText}`;
+    
     setShowGuestsModal(false);
-    setMessage(guestsText);
+    
+    const userMessage: Message = {
+      id: Date.now().toString(),
+      role: 'user',
+      content: conversationalText,
+      timestamp: new Date(),
+    };
+    
+    setMessages(prev => [...prev, userMessage]);
+    setIsLoadingResponse(true);
+    
+    setTimeout(() => {
+      scrollViewRef.current?.scrollToEnd({ animated: true });
+    }, 100);
+    
+    sendMessageToAPI(conversationalText);
+    
+    setTimeout(() => {
+      inputRef.current?.focus();
+    }, 300);
   };
 
   const handleAmenitiesSelect = (amenitiesText: string) => {
     console.log('Amenities selected:', amenitiesText);
+    const conversationalText = `I need hotels with ${amenitiesText}`;
+    
     setShowAmenitiesModal(false);
-    setMessage(amenitiesText);
+    
+    const userMessage: Message = {
+      id: Date.now().toString(),
+      role: 'user',
+      content: conversationalText,
+      timestamp: new Date(),
+    };
+    
+    setMessages(prev => [...prev, userMessage]);
+    setIsLoadingResponse(true);
+    
+    setTimeout(() => {
+      scrollViewRef.current?.scrollToEnd({ animated: true });
+    }, 100);
+    
+    sendMessageToAPI(conversationalText);
+    
+    setTimeout(() => {
+      inputRef.current?.focus();
+    }, 300);
   };
 
   const handleStylesSelect = (stylesText: string) => {
     console.log('Hotel styles selected:', stylesText);
+    const conversationalText = `I'm looking for ${stylesText} hotels`;
+    
     setShowStylesModal(false);
-    setMessage(stylesText);
+    
+    const userMessage: Message = {
+      id: Date.now().toString(),
+      role: 'user',
+      content: conversationalText,
+      timestamp: new Date(),
+    };
+    
+    setMessages(prev => [...prev, userMessage]);
+    setIsLoadingResponse(true);
+    
+    setTimeout(() => {
+      scrollViewRef.current?.scrollToEnd({ animated: true });
+    }, 100);
+    
+    sendMessageToAPI(conversationalText);
+    
+    setTimeout(() => {
+      inputRef.current?.focus();
+    }, 300);
   };
   
   const chatContainerOpacity = chatExpanded.interpolate({
@@ -525,13 +716,27 @@ setMessage('');
     outputRange: [0, 0.5],
   });
   
-  // Calculate fixed bottom position using locked height
- const fixedBottom =
-  (lastKeyboardHeightRef.current || 350) +
-  INPUT_HEIGHT +
-  insets.bottom -
-  40 +
-  PILLS_HEIGHT;
+  const fixedBottom =
+    (lastKeyboardHeightRef.current || 350) +
+    INPUT_HEIGHT +
+    insets.bottom -
+    40 +
+    PILLS_HEIGHT;
+  
+  // Only show dates/guests if we have CONFIRMED data from search params (not defaults)
+  // We check if the data is coming from actual search params, not just fallback values
+  const hasConfirmedDates = !searchParamsLoading && 
+                            searchParams.checkin && 
+                            searchParams.checkout;
+  
+  const hasConfirmedGuests = !searchParamsLoading && 
+                             searchParams.adults !== undefined && 
+                             searchParams.adults !== null &&
+                             (searchParams.checkin !== undefined); // Only show if we have search params at all
+  
+  const dateRange = hasConfirmedDates ? formatDateRange(searchParams.checkin, searchParams.checkout) : null;
+  const guestInfo = hasConfirmedGuests ? formatGuestInfo(searchParams.adults, searchParams.children) : null;
+  
   return (
     <>
       {/* Overlay behind chat */}
@@ -555,7 +760,7 @@ setMessage('');
         </TouchableWithoutFeedback>
       )}
       
-      {/* Chat Messages Container - FIXED HEIGHT */}
+      {/* Chat Messages Container */}
       {isChatOpen && (
         <View
           style={[
@@ -741,7 +946,7 @@ setMessage('');
         </View>
       )}
       
-      {/* REFINE PILLS - FIXED POSITION */}
+      {/* REFINE PILLS */}
       {isChatOpen && (
         <View
           style={[
@@ -822,7 +1027,7 @@ setMessage('');
         </View>
       )}
       
-      {/* MORPHING INPUT - Animated position */}
+      {/* MORPHING INPUT */}
       <Animated.View
         style={[
           {
@@ -882,21 +1087,27 @@ setMessage('');
             placeholder={
               isChatOpen 
                 ? "Type to refine search or ask questions..."
-                : "Tap to chat with Genie"
+                : "Refine your search with Genie"
             }
             placeholderTextColor="#9CA3AF"
             value={message}
             onChangeText={setMessage}
             editable={!isCooldown}
-  onFocus={() => {
-    if (!isChatOpen && !isCooldown) {
-      openChat();
-    }
-  }}
+            onFocus={() => {
+              if (!isChatOpen && !isCooldown) {
+                openChat();
+              }
+            }}
+            onBlur={() => {
+              if (isChatOpen && !isCooldown) {
+                setTimeout(() => {
+                  inputRef.current?.focus();
+                }, 0);
+              }
+            }}
             returnKeyType="send"
             onSubmitEditing={handleSendMessage}
             blurOnSubmit={false}
-     
           />
           
           {isChatOpen && message.trim().length > 0 && (
@@ -923,6 +1134,65 @@ setMessage('');
           )}
         </View>
       </Animated.View>
+      
+      {/* DATE/GUESTS INFO DISPLAY - Below input, disappears when chat opens */}
+      {!isChatOpen && (
+        <Animated.View
+          style={[
+            {
+              position: 'absolute',
+              top: TOP_POSITION + INPUT_HEIGHT + 8,
+              left: 16,
+              right: 16,
+              height: INFO_HEIGHT,
+              zIndex: 999,
+              opacity: infoOpacity,
+            },
+          ]}
+        >
+          <View style={tw`flex-row items-center justify-center`}>
+            {/* Date Info */}
+            <View style={tw`flex-row items-center mr-4`}>
+              <Ionicons name="calendar-outline" size={13} color="#6B7280" />
+              <Text style={{
+                fontFamily: 'Merriweather-Regular',
+                fontSize: 12,
+                color: hasConfirmedDates ? '#6B7280' : '#9CA3AF',
+                marginLeft: 6,
+                fontStyle: hasConfirmedDates ? 'normal' : 'italic'
+              }}>
+                {hasConfirmedDates 
+                  ? dateRange 
+                  : 'Loading dates...'
+                }
+              </Text>
+            </View>
+            
+            {/* Separator */}
+            <View style={[
+              tw`rounded-full`,
+              { width: 3, height: 3, backgroundColor: '#D1D5DB' }
+            ]} />
+            
+            {/* Guest Info */}
+            <View style={tw`flex-row items-center ml-4`}>
+              <Ionicons name="people-outline" size={13} color="#6B7280" />
+              <Text style={{
+                fontFamily: 'Merriweather-Regular',
+                fontSize: 12,
+                color: hasConfirmedGuests ? '#6B7280' : '#9CA3AF',
+                marginLeft: 6,
+                fontStyle: hasConfirmedGuests ? 'normal' : 'italic'
+              }}>
+                {hasConfirmedGuests 
+                  ? guestInfo 
+                  : 'Loading guest info...'
+                }
+              </Text>
+            </View>
+          </View>
+        </Animated.View>
+      )}
       
       {/* Modals */}
       {showDateModal && (

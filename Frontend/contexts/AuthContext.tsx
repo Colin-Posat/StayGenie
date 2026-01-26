@@ -25,6 +25,14 @@ export interface User {
   createdAt: string;
 }
 
+trackSuccessfulSearch: (
+  query: string,
+  resultCount: number,
+  searchParams?: any,
+  performance?: any
+) => Promise<void>;
+
+
 // Add this new interface after the FavoriteHotel interface
 export interface RecentSearch {
   id: string;
@@ -39,6 +47,24 @@ export interface RecentSearch {
   };
   resultCount?: number;
   createdAt: string;
+}
+
+export interface FailedSearch {
+  id: string;
+  query: string;
+  userId: string;
+  userEmail: string;
+  failureType: 'no_hotels_found' | 'processing_error' | 'timeout' | 'api_error';
+  timestamp: string;
+  searchParams?: {
+    checkin?: string;
+    checkout?: string;
+    cityName?: string;
+    countryCode?: string;
+    adults?: number;
+    children?: number;
+  };
+  errorMessage?: string;
 }
 
 // Hotel interface for favorites with all the rich data
@@ -125,6 +151,20 @@ interface AuthContextType {
   // UI helpers
   requireAuth: (action: () => void, showSignUpModal: () => void) => void;
   submitFeedback: (feedback: { isHappy: boolean; rating: number | null; feedback?: string; searchQuery?: string }) => Promise<void>;
+
+  trackFailedSearch: (
+    query: string, 
+    failureType: 'no_hotels_found' | 'processing_error' | 'timeout' | 'api_error',
+    errorMessage?: string,
+    searchParams?: any
+  ) => Promise<void>;
+
+  trackSuccessfulSearch: (
+    query: string,
+    resultCount: number,
+    searchParams?: any,
+    performance?: any
+  ) => Promise<void>;
 }
 
 // Create context
@@ -141,6 +181,17 @@ const WEB_MOCK_USER: User = {
   recentSearches: [],
   createdAt: new Date().toISOString(),
 };
+const BLOCKED_ANALYTICS_EMAILS = new Set([
+  'c@c.com',
+  'test@staygenie.com',
+  'test@gmail.com',
+]);
+
+const shouldSkipAnalytics = (email?: string | null) => {
+  if (!email) return false; // anonymous users are allowed
+  return BLOCKED_ANALYTICS_EMAILS.has(email.toLowerCase());
+};
+
 
 // In-memory storage for web testing
 let webMockFavorites: FavoriteHotel[] = [];
@@ -446,6 +497,105 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
       console.error('Error message:', error.message);
     }
   };
+
+  const trackSuccessfulSearch = async (
+  query: string,
+  resultCount: number,
+  searchParams?: any,
+  performance?: any
+): Promise<void> => {
+  try {
+if (shouldSkipAnalytics(firebaseUser?.email)) {
+  console.log('🧪 Skipping successful search analytics for test account');
+  return;
+}
+
+if (IS_WEB) {
+  console.log('[Web] Mock successful search tracking:', { query, resultCount });
+  return;
+}
+
+
+const successDoc = {
+  query: query.trim(),
+  resultCount,
+  userId: firebaseUser?.uid || 'anonymous',
+  userEmail: firebaseUser?.email || 'anonymous',
+  timestamp: new Date().toISOString(),
+
+      searchParams: searchParams ? {
+        checkin: searchParams.checkin,
+        checkout: searchParams.checkout,
+        cityName: searchParams.cityName,
+        countryCode: searchParams.countryCode,
+        adults: searchParams.adults,
+        children: searchParams.children,
+        minCost: searchParams.minCost,
+        maxCost: searchParams.maxCost,
+      } : undefined,
+
+      performance: performance || null,
+      platform: Platform.OS,
+    };
+
+    await firestore()
+      .collection('successfulSearches')
+      .add(successDoc);
+
+    console.log('✅ Successful search tracked:', query, resultCount);
+  } catch (error) {
+    console.error('Failed to track successful search:', error);
+  }
+};
+
+
+  const trackFailedSearch = async (
+  query: string,
+  failureType: 'no_hotels_found' | 'processing_error' | 'timeout' | 'api_error',
+  errorMessage?: string,
+  searchParams?: any
+): Promise<void> => {
+  try {
+
+if (shouldSkipAnalytics(firebaseUser?.email)) {
+  console.log('🧪 Skipping failed search analytics for test account');
+  return;
+}
+
+if (IS_WEB) {
+  console.log('[Web] Mock failed search tracking:');
+  return;
+}
+
+
+    // NATIVE MODE - Store in Firestore
+    const failedSearchDoc: Omit<FailedSearch, 'id'> = {
+      query: query.trim(),
+      userId: firebaseUser?.uid || 'anonymous',
+      userEmail: firebaseUser?.email || 'anonymous',
+      failureType,
+      timestamp: new Date().toISOString(),
+      searchParams: searchParams ? {
+        checkin: searchParams.checkin,
+        checkout: searchParams.checkout,
+        cityName: searchParams.cityName,
+        countryCode: searchParams.countryCode,
+        adults: searchParams.adults,
+        children: searchParams.children,
+      } : undefined,
+      errorMessage: errorMessage || `Search failed: ${failureType}`,
+    };
+
+    await firestore()
+      .collection('failedSearches')
+      .add(failedSearchDoc);
+
+    console.log('✅ Failed search tracked:', query, failureType);
+  } catch (error) {
+    console.error('Failed to track failed search:', error);
+    // Don't throw - we don't want tracking failures to break the app
+  }
+};
 
   // ============================================================================
   // AUTHENTICATION METHODS
@@ -1000,6 +1150,8 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     clearRecentSearches,
     requireAuth,
     submitFeedback,
+    trackFailedSearch,
+    trackSuccessfulSearch,
   };
 
   return (

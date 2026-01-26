@@ -304,6 +304,7 @@ const SwipeableHotelStoryCard: React.FC<SwipeableHotelStoryCardProps> = ({
   searchMode = 'two-stage',
   placeId,
   occupancies,
+  searchParams,
   safetyRating,
   safetyJustification,
   safetySource = 'Standard',
@@ -770,36 +771,6 @@ const isLoading = isInsightsLoading || insightsStatus === "loading" || insightsS
   </View>
 </View>
 
-{/* Availability Mini-Bar (matching other bars) */}
-{hotel.hasAvailability !== false && checkInDate && checkOutDate && (
-  <View
-    style={[
-      tw`absolute bottom-14 left-2.5 z-40 flex-row items-center`,
-      {
-        backgroundColor: 'rgba(0,0,0,0.5)',
-        paddingHorizontal: 10,
-        paddingVertical: 5,
-        borderRadius: 10,
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.2,
-        shadowRadius: 3,
-      },
-    ]}
-  >
-
-
-    {/* Text */}
-    <Text
-      style={[
-        tw`text-[10px] text-white`,
-        { fontFamily: 'Merriweather-Regular', letterSpacing: 0.2 }
-      ]}
-    >
-      Available {formatShortDateRange(checkInDate, checkOutDate)}
-    </Text>
-  </View>
-)}
 
 
 

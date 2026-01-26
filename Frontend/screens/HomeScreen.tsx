@@ -357,10 +357,11 @@ const BASE_URL ="https://staygenie-wwpa.onrender.com"
 //const BASE_URL = "http://localhost:3003"
 import { Dimensions } from 'react-native';
 
+
 const HomeScreen = () => {
   const searchCompleted = useRef(false);
 
-  const { addRecentSearch } = useAuth();
+const { addRecentSearch, trackFailedSearch, trackSuccessfulSearch } = useAuth();
   const screenSlideOut = useRef(new Animated.Value(0)).current;
   const contentFadeOut = useRef(new Animated.Value(1)).current;
   const scaleTransition = useRef(new Animated.Value(1)).current;
@@ -992,43 +993,49 @@ const fmtDate = (iso: string) =>
 
 const executeStreamingSearch = async (userInput: string) => {
   if (!userInput.trim()) return;
+
+  // Kill any previous stream
   if ((global as any).cleanupSSESearch) {
     (global as any).cleanupSSESearch();
   }
 
   let eventSource: any = null;
   let timeoutId: NodeJS.Timeout | null = null;
-   searchHasStarted.current = true; 
-   searchCompleted.current = false; 
+
+  // ✅ SINGLE source of truth
+  const sseDoneRef = { current: false };
+
+  // ✅ REAL success metric
+  let hotelsReceived = 0;
 
   try {
     console.log('🌊 Starting SSE Real-time Streaming Search...');
-    
+
     setStage1Results(null);
     setStage2Results(null);
     setCurrentSearchId(null);
-    
-    setSearchParamsLoading(true);
 
+    setSearchParamsLoading(true);
     setShowPlaceholders(true);
     setIsStreamingSearch(true);
     setFirstHotelFound(false);
+    setShowErrorScreen(false);
+
     setStreamingProgress({ step: 0, totalSteps: 8, message: 'Starting search...' });
 
     const placeholderHotels = generatePlaceholderHotels(10);
     setDisplayHotels(placeholderHotels);
+
     const searchParams = new URLSearchParams({
       userInput: userInput,
-      q: userInput
+      q: userInput,
     });
 
     const sseUrl = `${BASE_URL}/api/hotels/search-and-match/stream?${searchParams.toString()}`;
     console.log('🔗 SSE URL:', sseUrl);
 
     eventSource = new (EventSource as any)(sseUrl, {
-      headers: {
-        'Cache-Control': 'no-cache',
-      },
+      headers: { 'Cache-Control': 'no-cache' },
       polyfill: true,
       withCredentials: false,
     });
@@ -1038,144 +1045,193 @@ const executeStreamingSearch = async (userInput: string) => {
     });
 
     eventSource.addEventListener('message', async (event: any) => {
+      if (sseDoneRef.current) return;
+
       try {
         const data = JSON.parse(event.data);
         const eventType = data.type || 'message';
-        
+
         console.log('📡 SSE Message received:', eventType);
-        
+
         switch (eventType) {
           case 'connected':
-            console.log('🔌 SSE Connected:', data.message);
             break;
-            
+
           case 'progress':
             handleStreamingUpdate({ type: 'progress', ...data }, userInput);
             break;
-            
+
           case 'hotel_found':
+            hotelsReceived++; // ✅ count here
             handleStreamingUpdate({ type: 'hotel_found', ...data }, userInput);
             break;
-            
+
           case 'hotel_enhanced':
             handleStreamingUpdate({ type: 'hotel_enhanced', ...data }, userInput);
             break;
-            
+
           case 'complete':
-            const realHotelsCount = displayHotels.filter(h => !h.isPlaceholder).length;
-  
-  await AnalyticsService.trackSearchSuccess(
-    searchQuery,
-    realHotelsCount
-  );
+            sseDoneRef.current = true;
 
-            searchCompleted.current = true; 
-            handleStreamingUpdate({ type: 'complete', ...data }, userInput);
-            
-            console.log('✅ Search completed, closing SSE connection');
-            if (eventSource) {
-              eventSource.close();
-              eventSource = null;
-            }
-            setIsStreamingSearch(false);
-            
-            if (timeoutId) {
-              clearTimeout(timeoutId);
-              timeoutId = null;
+            console.log('🎉 SSE complete. Hotels received:', hotelsReceived);
+
+            if (hotelsReceived === 0) {
+              console.warn('⚠️ Search completed but no hotels found');
+
+              try {
+                trackFailedSearch(
+                  userInput,
+                  'no_hotels_found',
+                  'Search completed but no hotels were returned',
+                  data.searchParams
+                );
+                await AnalyticsService.trackSearchFailed(searchQuery, 'no_hotels_found');
+              } catch (e) {
+                console.error('Tracking failed:', e);
+              }
+
+              cleanup();
+              setShowErrorScreen(true);
+              return;
             }
 
-            await saveRecentSearch(userInput);
+            // ✅ SUCCESS PATH
+            try {
+              AnalyticsService.trackSearchSuccess(searchQuery, hotelsReceived);
+
+              trackSuccessfulSearch(
+                userInput,
+                hotelsReceived,
+                data.searchParams,
+                data.performance
+              );
+
+              handleStreamingUpdate({ type: 'complete', ...data }, userInput);
+
+              await saveRecentSearch(userInput);
+            } catch (e) {
+              console.error('Completion error:', e);
+            }
+
+            cleanup();
             break;
-            
+
           case 'error':
-             await AnalyticsService.trackSearchFailed(
-    searchQuery,
-    'api_error'
-  );
-            console.error('❌ Server error:', data.message);
-            if (eventSource) {
-              eventSource.close();
-              eventSource = null;
-            }
-            setIsSearching(false);
-            setIsStreamingSearch(false);
-            Alert.alert('Search Error', data.message || 'An error occurred', [{ text: 'OK' }]);
-            break;
-            
-          default:
-            console.log('📝 Unknown SSE message type:', eventType, data);
-            break;
-        }
+            if (sseDoneRef.current) return;
+            sseDoneRef.current = true;
 
-      } catch (parseError) {
-        console.warn('⚠️ Failed to parse SSE data:', parseError, 'Raw data:', event.data);
+            console.error('❌ Server streaming error:', data.message);
+
+            try {
+              trackFailedSearch(
+                userInput,
+                'api_error',
+                data.message || 'Server error during search',
+                data.searchParams
+              );
+              await AnalyticsService.trackSearchFailed(searchQuery, 'api_error');
+            } catch (e) {
+              console.error('Tracking failed:', e);
+            }
+
+            cleanup();
+            setShowErrorScreen(true);
+            break;
+
+          default:
+            console.log('📝 Unknown SSE event:', data);
+        }
+      } catch (err) {
+        console.warn('⚠️ SSE parse error:', err);
       }
     });
 
-    eventSource.addEventListener('error', (error: any) => {
-  console.error('❌ SSE Connection error:', error);
-  
-  if (eventSource) {
-    eventSource.close();
-    eventSource = null;
-  }
-  
-  setIsSearching(false);
-  setIsStreamingSearch(false);
-  setShowErrorScreen(true);
-});
+    eventSource.addEventListener('error', async () => {
+      if (sseDoneRef.current) return;
 
-    timeoutId = setTimeout(() => {
-       AnalyticsService.trackSearchFailed(searchQuery, 'timeout');
-  
-  console.warn('⏰ SSE search timeout after 30 seconds');
-  
-  if (eventSource) {
-    eventSource.close();
-    eventSource = null;
-  }
-  
-  setIsSearching(false);
-  setIsStreamingSearch(false);
-  setShowErrorScreen(true);
-}, 40000);
+      sseDoneRef.current = true;
+      console.error('🚨 SSE connection error');
+
+      try {
+        trackFailedSearch(
+          userInput,
+          hotelsReceived > 0 ? 'processing_error' : 'no_hotels_found',
+          'Connection lost during streaming',
+          streamingSearchParams
+        );
+        await AnalyticsService.trackSearchFailed(searchQuery, 'network_error');
+      } catch (e) {
+        console.error('Tracking failed:', e);
+      }
+
+      cleanup();
+      setShowErrorScreen(true);
+    });
+
+    // ⏰ Timeout
+    timeoutId = setTimeout(async () => {
+      if (sseDoneRef.current) return;
+
+      sseDoneRef.current = true;
+      console.warn('⏰ SSE timeout');
+
+      try {
+        trackFailedSearch(
+          userInput,
+          'timeout',
+          'Search timed out after 40 seconds',
+          streamingSearchParams
+        );
+        await AnalyticsService.trackSearchFailed(searchQuery, 'timeout');
+      } catch (e) {
+        console.error('Tracking failed:', e);
+      }
+
+      cleanup();
+      setShowErrorScreen(true);
+    }, 40000);
+
+    const cleanup = () => {
+      console.log('🧹 Cleaning up SSE');
+
+      if (eventSource) {
+        eventSource.close();
+        eventSource = null;
+      }
+
+      if (timeoutId) {
+        clearTimeout(timeoutId);
+        timeoutId = null;
+      }
+
+      setIsSearching(false);
+      setIsStreamingSearch(false);
+      setShowPlaceholders(false);
+    };
+
+    (global as any).cleanupSSESearch = cleanup;
 
   } catch (error: any) {
-  console.error('💥 SSE streaming search failed:', error);
+    console.error('💥 SSE setup failed:', error);
 
-  setShowPlaceholders(false);
-  setDisplayHotels([]);
-  
-  if (eventSource) {
-    eventSource.close();
-    eventSource = null;
-  }
-  
-  if (timeoutId) {
-    clearTimeout(timeoutId);
-  }
-  
-  setIsSearching(false);
-  setIsStreamingSearch(false);
-  
-  setShowErrorScreen(true);
-}
+    try {
+      trackFailedSearch(
+        userInput,
+        'processing_error',
+        error.message || 'Search failed',
+        streamingSearchParams
+      );
+      await AnalyticsService.trackSearchFailed(searchQuery, 'network_error');
+    } catch (e) {
+      console.error('Tracking failed:', e);
+    }
 
-  (global as any).cleanupSSESearch = () => {
-    console.log('🧹 Cleaning up SSE connection');
-    
-    if (eventSource) {
-      eventSource.close();
-      eventSource = null;
-    }
-    
-    if (timeoutId) {
-      clearTimeout(timeoutId);
-      timeoutId = null;
-    }
-    
+    setShowPlaceholders(false);
+    setDisplayHotels([]);
+    setIsSearching(false);
     setIsStreamingSearch(false);
-  };
+    setShowErrorScreen(true);
+  }
 };
 
 const executeSearch = async (userInput: string) => {
@@ -1227,12 +1283,19 @@ useEffect(() => {
     setShowAiOverlay(false);
   }, []);
 
-  const handleSearchUpdate = useCallback((newSearch: string, originalSearch?: string) => {
+const handleSearchUpdate = useCallback((newSearch: string, originalSearch?: string) => {
+  // ✅ CLEAR ALL CONFIRMED DATA
+  setStreamingSearchParams(null);  // This clears confirmed params
+  setStage1Results(null);           // Clear stage 1 results
+  setStage2Results(null);           // Clear stage 2 results
+  
+  // ✅ SET LOADING STATE
+  setSearchParamsLoading(true);
+  
   setSearchQuery(newSearch);
   if (newSearch.trim()) {
     executeSearch(newSearch);
     
-    // Use addRecentSearch with replaceQuery parameter
     if (originalSearch && originalSearch !== newSearch) {
       addRecentSearch(newSearch, originalSearch);
     }
@@ -1468,7 +1531,7 @@ const handleBackPress = useCallback(() => {
 )}
 
 {/* CONTENT VIEW - Story View OR Map View */}
-<View style={[tw`flex-1 bg-gray-50`, { paddingTop: 80 }]}>
+<View style={[tw`flex-1 bg-gray-50`, { paddingTop: 90 }]}>
   {showErrorScreen ? (
     <SearchErrorScreen
       onTryAgain={() => {
